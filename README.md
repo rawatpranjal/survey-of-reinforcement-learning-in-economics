@@ -1,1 +1,1 @@
-# barto-sutton
+# reinforcement-learning
