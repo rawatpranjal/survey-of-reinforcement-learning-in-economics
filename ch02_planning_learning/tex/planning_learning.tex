@@ -155,4 +155,72 @@ In contrast, DQN scales efficiently and maintains high solution quality, with re
 
 \subsection{Performance of Reinforcement Learning on Optimization Problems}
 
-Multiple empirical studies provide evidence that Deep RL can indeed overcome the curse of dimensionality that limits traditional Dynamic Programming. \cite{nomura2025} showed that for perishable inventory control with dynamic pricing, PPO achieved near-optimal solutions with a 75\% reduction in computation time compared to DP, with authors explicitly noting that increasing problem dimensionality would render DP impractical while DRL would remain viable. \cite{sabri2024} demonstrated that attention-based DRL delivered maintenance schedules with 30.5\% lower costs than DP-based heuristics on combinatorial problems, computing in seconds what DP required over an hour to solve. For high-dimensional inventory problems where exact DP was infeasible, \cite{boute2022} showed that A3C matched the performance of the best specialized heuristics and approximate DP methods across three inventory settings. These preliminary results show that while Deep RL requires substantial initial training experiences and hyperparameter tuning, they can effectively approximate optimal policies in high-dimensional state spaces where exact DP becomes computationally prohibitive. 
+Multiple empirical studies provide evidence that Deep RL can indeed overcome the curse of dimensionality that limits traditional Dynamic Programming. \cite{nomura2025} showed that for perishable inventory control with dynamic pricing, PPO achieved near-optimal solutions with a 75\% reduction in computation time compared to DP, with authors explicitly noting that increasing problem dimensionality would render DP impractical while DRL would remain viable. \cite{sabri2024} demonstrated that attention-based DRL delivered maintenance schedules with 30.5\% lower costs than DP-based heuristics on combinatorial problems, computing in seconds what DP required over an hour to solve. For high-dimensional inventory problems where exact DP was infeasible, \cite{boute2022} showed that A3C matched the performance of the best specialized heuristics and approximate DP methods across three inventory settings. These preliminary results show that while Deep RL requires substantial initial training experiences and hyperparameter tuning, they can effectively approximate optimal policies in high-dimensional state spaces where exact DP becomes computationally prohibitive.
+
+\subsection{Theoretical Foundations Connecting DP and RL (2020--2025)}
+
+The relationship between Dynamic Programming and Reinforcement Learning has become mathematically precise in recent years, with tight sample complexity bounds, convergence guarantees, and formal equivalence results now available across multiple settings relevant to structural econometrics. We survey the key theoretical advances organized by theme.
+
+\subsubsection{Convergence and Sample Complexity: Q-Learning Meets Minimax Optimality}
+
+The most significant recent theoretical advance establishes \textbf{tight sample complexity bounds} that precisely characterize when RL algorithms match DP's efficiency. \citet{li2024minimax} prove that vanilla Q-learning is strictly suboptimal, requiring $\tilde{O}(SA/(1-\gamma)^5\varepsilon^2)$ samples---worse than the minimax lower bound $\Omega(SA/(1-\gamma)^3\varepsilon^2)$ by a factor of $(1-\gamma)^{-1}$. This gap arises from overestimation bias in bootstrapping, connecting directly to the Bellman optimality equation's maximum operator.
+
+\citet{bhandari2021finite} establish finite-time convergence rates for TD learning with linear function approximation by connecting TD updates to online gradient descent. Their analysis extends to TD($\lambda$) and Q-learning for optimal stopping, providing explicit non-asymptotic bounds under both i.i.d.\ and Markovian sampling. For average-reward settings, \citet{lee2025optimal} characterize optimal $O(1/k)$ convergence rates for Value Iteration, establishing span-based complexity that matches lower bounds within a factor of 8.
+
+\citet{carvalho2020convergence} address the ``deadly triad'' directly, proving convergence of modified Q-learning with linear function approximation under general assumptions. Their work establishes rigorous bounds connecting the Q-learning fixed point to the DP optimal Q-function---a result particularly relevant for econometric applications using linear approximations.
+
+Additional contributions include \citet{he2021nearly}, who establish nearly minimax optimal RL for discounted MDPs, and \citet{rowland2024quantile}, who provide a rigorous analysis of quantile temporal-difference learning.
+
+\subsubsection{Model-Based Methods Provably Dominate in Stationary Environments}
+
+A striking theoretical consensus has emerged: \textbf{model-based RL (closer to DP) achieves optimal sample complexity} while model-free methods typically incur polynomial overhead. \citet{zhang2024settling} settle a long-standing open problem by proving that model-based algorithms achieve minimax-optimal regret $\tilde{O}(\sqrt{SAH^3K})$ without any burn-in cost---eliminating the warmup requirements that plagued model-free methods.
+
+\citet{li2024offline} prove that the model-based plug-in approach achieves minimax-optimal sample complexity for offline RL with distribution shift, achieving $SC^*/(1-\gamma)^3\varepsilon^2$ where $C^*$ is a concentrability coefficient. Their companion paper \citep{li2024breaking} breaks the $S^2A$ sample size barrier, showing model-based algorithms need only $\tilde{O}(SA/(1-\gamma)^3\varepsilon^2)$ samples.
+
+\citet{zhu2024representation} provide a novel \textbf{circuit complexity explanation} for these gaps: transition and reward functions can be represented by constant-depth polynomial-size circuits, while optimal Q-functions require exponential circuit complexity. This fundamental representation asymmetry explains model-based advantages from first principles.
+
+The one exception is non-stationary environments. \citet{mao2021nonstationary} prove that model-free methods achieve superior dynamic regret $\tilde{O}(S^{1/3}A^{1/3}\Delta^{1/3}HT^{2/3})$ when dynamics change, since model estimation becomes a liability---an important consideration for econometric applications with structural breaks.
+
+\subsubsection{Value Equivalence: When Learned Models Suffice for Planning}
+
+The theoretical foundations for combining DP-style planning with learned models have matured considerably. \citet{grimm2020value} introduce the \textbf{value equivalence principle}: two models are value equivalent if they yield identical Bellman operator updates for a given set of policies and value functions. As these sets expand, the class of value-equivalent models contracts to the true model---but crucially, smaller sets permit useful approximations.
+
+\citet{grimm2021proper} extend this with \textbf{proper value equivalence (PVE)}, proving that PVE models are sufficient for planning even when they differ from ground truth. They construct a loss function for learning PVE models and demonstrate that MuZero minimizes an upper bound of this loss, providing the first rigorous justification for MuZero's empirical success.
+
+\citet{ayoub2020value} introduce value-targeted regression, proving regret bounds that depend on value function structure rather than state space size. Learning models to minimize value prediction error (rather than maximum likelihood) yields better sample complexity---a decision-aware approach directly relevant to structural estimation where the goal is policy evaluation, not dynamics prediction.
+
+\citet{lobel2024simulation} provide optimally tight bounds for the \textbf{simulation lemma}, the foundational result quantifying value-prediction error under model misspecification. Their bound is sub-linear in transition function misspecification, improving error propagation analysis for all model-based methods. Additional contributions include \citet{janner2019model} on deciding when to trust learned models, and \citet{grill2020planning} on gap-dependent sample complexity for planning.
+
+\subsubsection{Neural Network Approximation: Bridging Approximate DP and Deep RL}
+
+The theoretical gap between classical approximate DP and deep RL has narrowed substantially. \citet{fan2020dqn} provide the first rigorous analysis of DQN, establishing that neural Fitted Q-Iteration converges geometrically to the optimal Q-function up to intrinsic statistical error induced by \textbf{ReLU network approximation bias} and finite sample size. They provide theoretical justification for experience replay and target networks.
+
+\citet{zhang2021target} prove that target networks can break the deadly triad by proposing Polyak-averaging updates with projections that converge to regularized TD fixed points. \citet{gaur2023fqi} establish \textbf{order-optimal sample complexity} $\tilde{O}(1/\varepsilon^2)$ for Fitted Q-Iteration with two-layer ReLU networks without requiring linear or low-rank MDP structure.
+
+\citet{wang2020eluder} establish the first provably efficient RL algorithm with general nonlinear value function approximation, achieving regret $\tilde{O}(\mathrm{poly}(dH)\sqrt{T})$ where $d$ depends on \textbf{eluder dimension} and log-covering numbers---a complexity measure that extends beyond linear settings while remaining tractable.
+
+On estimation bias, \citet{ren2021underestimation} provide rigorous analysis of underestimation bias in Double Q-learning, while \citet{lan2020maxmin} show how Maxmin Q-learning can systematically control bias from positive to negative. These results connect to DP's Bellman operator properties. \citet{lim2024regularized} contribute further with analysis of regularized Q-learning.
+
+\subsubsection{Generalized Policy Iteration Achieves Linear Convergence}
+
+The interaction between policy evaluation and policy improvement---the core of both DP and RL---is now understood through the lens of \textbf{gradient domination properties}. \citet{agarwal2021theory} establish global convergence for policy gradient using a Polyak-like gradient domination property, introducing the distribution mismatch coefficient framework that governs GPI convergence rates.
+
+\citet{xiao2022convergence} develops weak gradient-mapping dominance theory, proving $O(1/k)$ convergence for projected policy gradient and showing policy mirror descent achieves linear convergence with geometrically increasing step sizes---without entropy regularization. Crucially, as step sizes approach infinity, policy mirror descent reduces to classical Policy Iteration, establishing a continuum between gradient-based and value-based methods.
+
+\citet{cen2022fast} prove non-asymptotic linear convergence (plus local quadratic convergence) for entropy-regularized Natural Policy Gradient, with iteration complexity $O((1/(1-\gamma))\log(1/\varepsilon))$. \citet{wu2020twotimescale} provide the first non-asymptotic analysis of \textbf{two-timescale actor-critic} with single Markovian sample paths, establishing $O(\varepsilon^{-2.5})$ sample complexity.
+
+For deep networks, \citet{li2023actorcritic} extend actor-critic convergence from shallow to arbitrary-depth networks, showing convergence to neighborhoods where average squared gradients scale as $\tilde{O}(1/\sqrt{m}) + O(\varepsilon)$. \citet{muller2024npg} analyze NPG as gradient flows in Hessian geometries, proving local quadratic convergence when step sizes equal inverse regularization strength. Additional foundational work includes \citet{geist2019regularized} on regularized MDPs.
+
+\subsubsection{Synthesis: Implications for Structural Econometrics}
+
+The theoretical literature reveals several key insights for integrating RL into structural econometric methods.
+
+\paragraph{Model-based approaches align with structural estimation.} The proven optimality of model-based RL \citep{zhang2024settling,li2024breaking} supports econometric approaches that estimate structural primitives before solving for optimal policies. The $(1-\gamma)^{-1}$ factor advantage over model-free methods becomes substantial for patient agents with high discount factors---precisely the long-horizon settings common in lifecycle models.
+
+\paragraph{Value equivalence relaxes full-model requirements.} The value equivalence principle \citep{grimm2020value} suggests that structural models need not perfectly replicate all dynamics---only those relevant for policy evaluation. This provides theoretical grounding for parsimonious structural specifications that capture decision-relevant features without full realism.
+
+\paragraph{Function approximation bounds inform practical choices.} The eluder dimension framework \citep{wang2020eluder} and neural network convergence results \citep{fan2020dqn,gaur2023fqi} provide guidance on approximation architectures. Linear function approximation retains strong guarantees \citep{bhandari2021finite}, while neural approximations require careful bias control.
+
+\paragraph{GPI theory unifies estimation and optimization.} The gradient domination framework establishes that policy evaluation and improvement can be interleaved without losing convergence guarantees---supporting iterative estimation-optimization procedures common in structural work. The continuum between policy gradient and policy iteration \citep{xiao2022convergence} offers flexibility in algorithm design.
+
+\paragraph{Distribution mismatch matters for counterfactuals.} The distribution mismatch coefficient \citep{agarwal2021theory} and concentrability coefficients \citep{li2024offline} quantify how off-policy evaluation degrades with distribution shift---directly relevant for counterfactual policy analysis where target policies differ substantially from observed behavior.

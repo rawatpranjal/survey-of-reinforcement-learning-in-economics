@@ -20,3 +20,12 @@ __pycache__/
 *.fls
 *.fdb_latexmk
 *.dvi
+
+# Downloaded reference PDFs (large, copyrighted)
+**/papers/*.pdf
+
+# Sister survey (separate repo)
+ORE_main/
+
+# Paper download script cache
+scripts/.paper_cache.json
