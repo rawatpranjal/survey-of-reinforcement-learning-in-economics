@@ -1,0 +1,106 @@
+
+Multi-armed bandit (MAB) problems represent a class of state-less reinforcement learning tasks where an agent repeatedly selects among different actions (arms) to maximize cumulative reward. Unlike regular reinforcement learning which are run in simulation, bandits are typically deployed in real-time which implies that sample efficiency and optimal exploration is critical. Integrating economic structure can improve bandit performance. 
+
+The central concept to evaluate bandits is \textit{regret}, which measures the difference between the expected reward under an optimal strategy and the expected reward of the algorithm:
+
+\begin{equation}
+R(T) = T \cdot \max_i \mu_i - \mathbb{E}\left[\sum_{t=1}^T r_t\right]
+\end{equation}
+
+where $\mu_i$ is the expected reward of arm $i$, and $r_t$ is the observed reward at time $t$. Lower regret indicates better performance, with $O(\sqrt{T})$ representing a standard baseline for general bandit problems, and improvements to $O(\log T)$ indicating exponentially faster learning.
+
+\subsection{Dynamic Pricing with Demand Learning}
+
+Consider a seller facing sequential customers with unknown demand. Let $\mathcal{P} = \{p_1, \ldots, p_K\}$ be a discrete price set. At time $t$, setting price $p$ yields a sale with probability $\theta(p)$ and revenue $R_t = p \cdot \mathbb{1}\{\text{sale}\}$. Standard bandits would treat each price as independent, requiring $\Omega(K)$ exploration rounds. Microeconomic theory contributes the structural assumption that $\theta(p)$ decreases monotonically with $p$ (consumers buy when valuation exceeds price). Under regularity conditions (monotone hazard rate), expected revenue $p\theta(p)$ is unimodal in $p$. \citet{Misra2019} exploit this structure with an upper-confidence bound algorithm computing an index for each price:
+
+\begin{equation}
+I_p(t) = \hat{\mu}_p(t) + \sqrt{\frac{2\ln t}{N_p(t)}}
+\end{equation}
+
+where $\hat{\mu}_p(t)$ is the average revenue for price $p$ and $N_p(t)$ the number of times $p$ was tried. This achieves polylogarithmic regret compared to $\Omega(\sqrt{T})$ for standard bandits, representing an exponential improvement in learning efficiency. Their field experiments show 43\% higher profits compared to static pricing during a month-long deployment.
+
+For multi-product settings, \citet{Mueller2019} consider demand:
+
+\begin{equation}
+\mathbf{q}_t = \mathbf{c}_t - \mathbf{B}_t\mathbf{p}_t + \boldsymbol{\varepsilon}_t
+\end{equation}
+
+where $\mathbf{q}_t \in \mathbb{R}^N$ is demand, $\mathbf{B}_t \in \mathbb{R}^{N \times N}$ is the price-sensitivity matrix, and $\mathbf{c}_t$ represents baseline demand. The key economic insight is imposing low-rank structure on $\mathbf{B}_t$, reflecting that cross-price elasticities are driven by a small number of latent factors. Their OPOL algorithm projects high-dimensional price vectors into a learned latent subspace, achieving regret of $O(T^{3/4}\sqrt{d})$ that scales with latent dimension $d \ll N$ rather than product count $N$. This enables efficient learning even with thousands of products. \citet{Xu2021} demonstrate that economic structure enables logarithmic regret even in adversarial settings. For contextual pricing where valuation $v_t = \boldsymbol{\theta}^\top \mathbf{x}_t$ follows a linear model with feature vector $\mathbf{x}_t$, they achieve optimal $O(d \log T)$ regret—an exponential improvement over standard $\Omega(\sqrt{T})$ bounds for adversarial contexts.
+
+\citet{Goyal2022} address multi-product pricing under the multinomial logit (MNL) choice model, where a consumer's utility for product $i$ is:
+
+\begin{equation}
+U_i(\mathbf{p}) = \alpha_i - \beta_i p_i + \epsilon_i
+\end{equation}
+
+and purchase probabilities follow:
+
+\begin{equation}
+\Pr(i|\mathbf{p}) = \frac{e^{U_i(\mathbf{p})}}{\sum_j e^{U_j(\mathbf{p})}}
+\end{equation}
+
+By incorporating this MNL structure into an Online Newton Step method with random price perturbations, they achieve $O(d\sqrt{T}\log T)$ regret despite adversarial context arrivals.
+
+\subsection{Bid Optimization in Auctions}
+
+In a second-price auction with reserve $r$, given bid profile $\mathbf{b} = (b_{(1)}, b_{(2)}, \ldots)$ (ordered decreasingly), revenue is:
+
+\begin{equation}
+\text{Revenue}(r,\mathbf{b}) = b_{(2)}\mathbb{1}\{b_{(2)} > r\} + r\mathbb{1}\{b_{(1)} \geq r > b_{(2)}\}
+\end{equation}
+
+Myerson's auction theory establishes that under regularity conditions, expected revenue $R(r)$ is unimodal in $r$. \citet{CesaBianchi2015} leverage this in a unimodal bandit algorithm maintaining two UCB indices bracketing the current best reserve, achieving $O(\log T)$ regret in favorable cases—a significant improvement over the $O(\sqrt{T})$ regret of standard bandits. \citet{Akcay2022} address the partial feedback challenge where losing bids are unobserved. Their algorithm incorporates auction rules into inference: if a sale occurs at price $r$, exactly one bid exceeded $r$, informing future exploration. These auction-specific inference rules convert censored observations into side information, accelerating learning in both stationary and non-stationary environments.
+
+\subsection{Budget Constraints}
+
+Many economic decisions involve resource constraints. Consider an advertiser bidding in repeated auctions with budget $B$. Let $X_t(a)$ and $C_t(a)$ denote the reward (e.g., clicks) and cost when taking action $a$ at time $t$. The objective is to maximize $\sum_{t=1}^T X_t(a_t)$ subject to $\sum_{t=1}^T C_t(a_t) \leq B$. \citet{Badanidiyuru2013} frame this as Bandits with Knapsacks (BwK) and introduce a primal-dual approach with dual price $\lambda_t$ for the budget constraint. Given estimates of arm reward $\hat{\mu}_i$ and cost $\hat{c}_i$, the algorithm selects the arm maximizing $\hat{\mu}_i - \lambda_t\hat{c}_i$, capturing the economic principle of marginal value versus marginal cost. This achieves near-optimal $\tilde{O}(\sqrt{T})$ regret while respecting budget constraints.\footnote{The notation $\tilde{O}$ suppresses logarithmic factors, i.e., $\tilde{O}(f(T)) = O(f(T) \cdot \text{polylog}(T))$.}
+
+\citet{Flajolet2017} extend this to contextual bidding for online advertising where click-through and cost distributions depend on observable features $\mathbf{x}_t$. Their UCB-based algorithm combines linear payoff estimation with stochastic binary search, achieving regret $\tilde{O}(d\sqrt{T})$ when the budget scales linearly with $T$. For combinatorial settings with multiple simultaneous auctions, \citet{Sankararaman2018} exploit economic structure by decoupling auctions but coupling their budgets through a shared Lagrange multiplier. This yields regret that grows polynomially rather than exponentially in the number of auctions, making previously intractable problems computationally feasible. \citet{Nuara2018} apply similar principles to joint bid and budget optimization across multiple advertising channels. Using Gaussian Process regression to model each subcampaign's click-through function and dynamic programming to enforce budget constraints, they achieved the same conversion volume as human experts with half the cost per acquisition in a two-month field experiment.
+
+\subsection{Strategic Interactions}
+
+Economic theory enhances multi-agent reinforcement learning in competitive markets. \citet{Guo2023} study dynamic pricing between firms where consumers follow a logit model with reference price effects:
+
+\begin{equation}
+U_t(i) = \alpha_i - \beta p_{i,t} + \gamma(r_t - p_{i,t}) + \epsilon_{i,t}
+\end{equation}
+
+where $r_t$ is the reference price evolving according to:
+
+\begin{equation}
+r_{t+1} = (1-\delta)r_t + \delta\frac{1}{n}\sum_i p_{i,t}
+\end{equation}
+
+By incorporating this behavioral economic insight into online projected gradient ascent, they prove $O(1/t)$ convergence to Nash equilibrium, substantially faster than model-free approaches that lack economic structure.
+
+\subsection{Causal Inference}
+
+Economic data often contains unobserved confounders that affect both actions and outcomes. Several recent works incorporate econometric identification strategies into reinforcement learning to address these challenges.
+
+\citet{liao2024} address confounding in offline RL by importing the econometric idea of instrumental variables (IV). They consider a setting where an agent learns from observational data in a Markov decision process with unobserved confounders affecting both actions and rewards. The paper defines valid IVs in the RL context as variables that influence state transitions only through their effect on the action. Using IVs, the authors derive conditional moment restrictions that identify the true transition dynamics despite unobserved confounders. Their IV-aided value iteration (IVVI) algorithm solves a primal-dual optimization problem:
+
+\begin{equation}
+\hat{\boldsymbol{\theta}} = \arg\min_{\boldsymbol{\theta}} \max_{\boldsymbol{\lambda}} \mathbb{E}_{(s,a,s',z)}\left[\boldsymbol{\lambda}(s,z)^{\top}(s' - f_{\boldsymbol{\theta}}(s,a))\right]
+\end{equation}
+
+This represents the first offline RL algorithm to leverage instruments for consistent value learning, combining causal inference tools with reinforcement learning.
+
+\citet{BennettKallus2023} propose a ``proximal reinforcement learning'' (PRL) framework that adapts proximal causal inference to RL. They focus on off-policy evaluation in partially observed MDPs, where hidden state variables confound the reward dynamics. The key insight is to assume the existence of certain bridge functions that link observed data to the target policy value. Under appropriate conditions, these functions allow identification of the true policy value from confounded data:
+
+\begin{equation}
+V(\pi) = \mathbb{E}\left[h(X, W, A) \mid Z=z\right]
+\end{equation}
+
+where $h$ is the bridge function, $X$ represents observed states, $W$ unobserved confounders, $A$ the action, and $Z$ a proxy variable. The authors construct estimators using these bridge functions and prove they attain semiparametric efficiency, demonstrating how incorporating structural assumptions leads to more accurate policy evaluation.
+
+\citet{WangQiShi2023} introduce ``Super RL,'' a paradigm for offline reinforcement learning that incorporates expert actions as an additional input to overcome unmeasured confounding. In many economic settings (e.g., medical treatment, policy interventions), historical data come from human experts whose decisions may contain information about unobserved factors. The super policy maps both the observed state and the expert action to a new action:
+
+\begin{equation}
+\pi_{\text{super}}(s, a_{\text{expert}}) \rightarrow a
+\end{equation}
+
+The authors establish identification conditions under which the super policy is guaranteed to strictly dominate both standard RL policies and expert policies in terms of performance. Their method effectively embeds the rationality of human experts and their private information into the RL training process, greatly improving sample efficiency and policy quality.
+
+\subsection{Discussion of Algorithmic Improvements}
+
+The integration of economic structure into reinforcement learning produces significant theoretical improvements across multiple domains. When demand curves satisfy regularity conditions, regret bounds improve from $O(\sqrt{T})$ to $O(\log T)$ or $O(\text{poly}(\log T))$. For multi-product settings, low-rank structure reduces dependence from product count $N$ to intrinsic dimension $d$. These theoretical gains translate to practical performance improvements. Structure-aware algorithms learn optimal policies with orders of magnitude fewer samples than model-free reinforcement learning. By leveraging domain knowledge about utility maximization, budget constraints, revealed prefernece, market equilibria, rational expectations or behavioural biases (e.g. representativeness or conservatism) we can improve the performance of reinforcement learning. 
