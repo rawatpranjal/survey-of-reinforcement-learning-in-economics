@@ -1,0 +1,158 @@
+In this section, we connect Dynamic Programming (DP) with Reinforcement Learning (RL) methods through a concrete navigation example. Both methods attempt to find optimal policies in Markov Decision Processes (MDPs). An MDP is defined as a tuple $(S, A, P, R, \gamma)$, where $S$ denotes the state space, $A$ the action or choice space, $P(s'|s,a)$ the transition probability function, $R(s,a,s')$ the reward or utility function, and $\gamma \in [0,1]$ the discount factor. Policies $\pi$ are conditional probabilities functions that tell us the probability of taking actions in states. 
+
+Following Sutton and Barto's formulation, Generalized Policy Iteration (GPI) refers to the interaction between policy evaluation and policy improvement processes. Policy evaluation makes the value of being in states, i.e. the an estimate of the expected discounted returns, when following the current policy. Policy improvement finds the best policy given a valuation of the states. When both processes stabilize, the resulting policy and value function is optimal.
+
+\subsubsection{Dynamic Programming}
+
+First, we look at two DP techniques. The solution is stored in value and policy tables, initialized at 0. which sweep through, updating all states at each iteration (full-width). They both look ahead one step (depth=1), and use the previous guess of the value function to update (bootstrapping). The learning rate is 1, i.e. it is a full update. At each iteration, Value Iteration (VI) computes the optimal value function through the Bellman optimality equation:
+\begin{equation}
+\text{Value Iteration:\quad} \forall s, V(s) \leftarrow \max_a \sum_{s'} P(s'|s,a)[R(s,a,s') + \gamma V(s')]
+\end{equation}
+
+The max operator delivers policy improvement, while the assignment delivers value evaluation. By requiring transition probabilities and potential rewards across all actions and future states, VI is inherently model-based. Theoretically, VI converges to the optimal value function at a linear rate, with error decaying geometrically with ratio $\gamma$ \cite{bertsekas1996}. For any finite MDP with $\gamma < 1$, VI guarantees convergence to $V^*$ from any initial $V_0$ \cite{sutton2018}.
+
+Policy Iteration (PI) Alternates between policy evaluation and improvement:
+\begin{align}
+ \text{Policy Iteration:\quad} V^{\pi}(s) &= \sum_{s'} P(s'|s,\pi(s))[R(s,\pi(s),s') + \gamma V^{\pi}(s')] \\
+\pi'(s) &= \argmax_a \sum_{s'} P(s'|s,a)[R(s,a,s') + \gamma V^{\pi}(s')]
+\end{align}
+
+This method separates policy evaluation and policy improvement, and begins with a random policy, and recursively finds the value of states for it. PI converges to an optimal policy in a finite number of iterations, with each policy improvement yielding a strictly better policy until optimality is reached \cite{bertsekas1996}.
+
+
+\subsubsection{Reinforcement Learning}
+
+We now turn to Reinforcement Learning (RL) methods, which do not require knowledge of $P$ and $R$ functions but only require access to transitions and rewards only at those particular actions and states (i.e. a simulator). The first two are temporal-difference methods that learn value tables. They begin from an initial state and explore their environment one state at a time (width=1) and look ahead one step (depth=1), using their previous estimate of the value function (bootstrapping). The actions are not selected greedily, but $\epsilon$-greedily which allows for randomness and exploration of the state space. The updates also happen incrementally with the learning rate $\alpha<1$.  
+
+Q-learning is an off-policy algorithm that updates action-values using individual sampled experiences, following the update rule:
+\begin{equation}
+\text{Q-learning:\quad} Q(s,a) \leftarrow Q(s,a) + \alpha [R + \gamma \max_{a'} Q(s',a') - Q(s,a)]
+\end{equation}
+
+At each step, the agent observes a tuple $(s,a,s',r)$, chooses actions using an $\varepsilon$-greedy policy (selecting random actions with probability $\varepsilon$ and the best-known actions with probability $1-\varepsilon$), and updates its value estimates. Over time, $\varepsilon$ typically decreases, shifting from exploration to exploitation. Under conditions of infinite exploration, diminishing learning rates, and greedy-in-the-limit behavior, Q-learning converges to the optimal action-value function $Q^*$ with probability 1 \citep{watkins1992_paper}.
+
+SARSA for State-Action-Reward-State-Action updates action-values using the action selected by the current policy for the next state:
+\begin{equation}
+\text{SARSA:\quad} Q(s,a) \leftarrow Q(s,a) + \alpha [R + \gamma Q(s',a') - Q(s,a)]
+\end{equation}
+
+Unlike Q-learning, SARSA computes the Bellman error based on actual behavior (next action chosen by the policy) and not greedy-behavior, making it on-policy i.e. the same policy that generated the samples is being updated. It similarly uses $\varepsilon$-greedy exploration to generate samples $(s,a,s',r,a')$. SARSA converges to the optimal $Q^*$ with probability 1 when coupled with a policy that becomes greedy in the limit, provided every state-action pair is visited infinitely often \cite{singh2000}.
+
+
+Monte Carlo methods are on-policy methods that learn from complete episodes, updating action-values based on observed returns:
+\begin{equation}
+\text{Monte Carlo:\quad} Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha[G_t - Q(s_t,a_t)]
+\end{equation}
+
+They begin from random policies, which are traced out till termination (reaching the goal or being truncated), and then updates are made to each state-action visited. Here, the return $G_t = \sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1}$ represents cumulative discounted rewards from time $t$ to the episode's end. This does use bootstrapping: it does not estimate value using existing estimates like $V(s')$ or $Q(s',a')$. Instead, it waits for the full return to be observed before making updates, making the updates unbiased. For episodic tasks with exploring starts, Monte Carlo methods converge to the optimal policy as the number of episodes approaches infinity \cite{tsitsiklis2002}.
+
+Lastly, we touch on policy-gradient methods. REINFORCE directly optimizes the policy parameters $\theta$ based on observed episode returns $G$, following the gradient direction that increases the probability of actions leading to higher rewards. The policy parameterized by, typically, a neural network:
+
+\begin{equation}
+\text{REINFORCE:\quad} \theta \leftarrow \theta + \alpha \nabla_\theta \log \pi_\theta(a|s) G
+\end{equation}
+
+One can interpret the REINFORCE as trying to generate data from a policy and re-estimating the policy parameters using maximum likelihood via gradient ascent, but with increased weight when the trajectory returns larger returns. This step pulls the policy towards generating larger returns. REINFORCE converges to a stationary point of the expected return function with probability 1 \citep{williams1992_reinforce}. In tabular settings with suitable exploration, it achieves global optimality at a geometric rate \cite{agarwal2020}.
+
+\subsection{Example 1: Grid Navigation}
+
+To illustrate the connection between DP and RL methods, we consider a 5$\times$5 grid world navigation problem forming a finite MDP where states are coordinates $(r,c)$ with $0 \leq r,c < 5$; actions are directional movements \{L, R, U, D, S\}$\footnote{L=Left, R=Right, U=Up, D=Down, S=Stay}$; transitions follow deterministic movement rules with boundary constraints; rewards include +10 at the terminal state $(4,4)$, smaller intermediate rewards throughout the grid, and a movement penalty of $-0.1$; and the discount factor $\gamma$ equals 0.95. Table~\ref{tab:results} presents solutions from all tabular methods.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=1.0\textwidth]{figs/paths.png}
+\caption{Paths found by each algorithm.}
+\label{fig:paths}
+\end{figure}
+
+\newpage
+
+\begin{table}[h]
+\centering
+\caption{Performance comparison of DP and RL methods on the grid world problem\footnote{
+$^*$MSE: Mean Squared Error between the learned value function and the optimal one from VI; \\
+Policy Match: fraction of states where the learned policy matches VI’s optimal policy; \\
+Episodes: average number of steps to reach the goal from the start; \\
+Return: average cumulative reward per episode.}}
+\label{tab:results}
+\begin{tabular}{lcccccc}
+\hline
+\textbf{Method} & \textbf{MSE}$^*$ & \textbf{Policy Match}$^*$ & \textbf{Time (s)} & \textbf{NumIter} & \textbf{Episodes}$^*$ & \textbf{Return}$^*$ \\
+\hline
+VI & 0.00 & 1.00 & 0.00 & 9 & 8.00 & 10.40 \\
+PI & 0.00 & 1.00 & 0.01 & 7 & 8.00 & 10.40 \\
+Q-Learning & 0.00 & 1.00 & 0.04 & 1211 & 8.00 & 10.40 \\
+SARSA & 1.57 & 0.92 & 0.08 & 5000 & 8.00 & 10.40 \\
+Monte Carlo & 0.12 & 0.88 & 0.09 & 5000 & 8.00 & 10.40 \\
+REINFORCE & 72.94 & 0.75 & 12.97 & 5008 & 8.00 & 9.40 \\
+\hline
+\end{tabular}
+
+\end{table}
+
+VI and PI converge exactly and rapidly to optimal solutions with perfect policy matches, leveraging their complete knowledge of the MDP. Q-learning achieves perfect policy matching despite lacking prior model knowledge, though requiring more iterations to converge. SARSA and Monte Carlo find valid paths to the goal but do not identify all optimal actions, instead converging to a single path with reasonable value approximation. As shown in Figure~\ref{fig:paths}, these RL methods favor consistent exploitation once a workable solution is found. REINFORCE shows the most variable performance, achieving only 75\% policy matching and suboptimal rewards, highlighting the sensitivity of policy gradient methods to hyperparameter tuning and neural network initialization. This example illustrates that while model-free RL methods can solve tasks without prior knowledge of transition and reward functions, they typically require more samples and tuning and may not identify all optimal actions that DP methods discover. 
+
+\subsection{Deep Reinforcement Learning}
+
+Deep Q-Network (DQN) extends Q-learning by approximating the action-value function with a deep neural network \(Q(s,a;\theta)\). Instead of storing values in a table, DQN uses a parameterized model trained on transition samples \((s,a,r,s')\) drawn from a replay buffer. Its objective is to minimize the temporal-difference (TD) error:
+
+\[
+L(\theta) \;=\; \mathbb{E}_{(s,a,r,s')}\!\Bigl[\bigl(r \,+ \,\gamma \,\max_{a'} Q(s',a';\theta^-)\;-\;Q(s,a;\theta)\bigr)^2\Bigr].
+\]
+
+Here, \(\theta^-\) denotes the parameters of a separate target network, periodically synchronized to prevent instability from moving targets. By replaying past transitions and using a target network, DQN decouples correlated updates and stabilizes learning, enabling it to scale to high-dimensional state spaces. Under proper conditions including Lipschitz-continuous Q-function and sufficient exploration, DQN converges to an approximate Bellman fixed point \cite{Ramaswamy2021}. With experience replay and target networks breaking the "deadly triad" instability, DQN can achieve geometric convergence to $Q^*$ when the network class can represent it \cite{Zhang2023}.
+
+\subsection{Example 2: Capital Replacement}
+We study a maintenance optimization problem with $N$ parallel engines formulated as a Markov Decision Process. Each engine $i$ has mileage state $m_i \in {0,1,2,3,4,5}$, with system state $s = (m_1,...,m_N)$. The action space $A(s)$ consists of all subsets of engines to replace, constrained by capacity $C=3$. The cost function is:
+\begin{equation}
+c(s,a) = \alpha \sum_{i=1}^{N} \mathbf{1}{m_i > 0} + \beta |a|
+\end{equation}
+where $\alpha=1.0$ is the cost of aged engines, $\beta=5.0$ is the replacement cost, and $|a|$ is the number of replaced engines. State transition is deterministic:
+\begin{equation}
+m_i' =
+\begin{cases}
+0 & \text{if } i \in a \
+\min(5, m_i+1) & \text{otherwise}
+\end{cases}
+\end{equation}
+The objective is to find policy $\pi^$ minimizing expected discounted cost with $\gamma=0.95$:
+\begin{equation}
+V^(s) = \min{\pi} \mathbb{E}{\pi} \left[ \sum{t=0}^{\infty} \gamma^t c(s_t, \pi(s_t)) \right]
+\end{equation}
+
+For the DQN implementation, we map the system state $s = (m_1,\ldots,m_N)$ directly to the neural network input\footnote{The neural network architecture consists of fully-connected layers (128-64) with ReLU activations, trained using Adam optimizer with learning rate 1e-3 and batch size 64. To ensure stability, we employ $\epsilon$-greedy exploration starting at $\epsilon=1.0$ and decaying by a factor of 0.995 per episode to a minimum of 0.01, along with a target network updated every 50 episodes.}, where each mileage value $m_i$ becomes a feature in the input vector. The action space is encoded as indices of a fixed-size output vector, where index $j$ corresponds to the $j$-th possible subset of engines to replace (e.g., empty set, single engines, pairs, and triples up to capacity $C=3$). 
+
+Dynamic Programming (DP) solves this exactly via value iteration, but faces exponential state growth $\mathcal{O}(6^N)$. For each state, DP evaluates all possible actions and selects the one minimizing the Bellman equation until convergence, measured by maximum value change between iterations falling below 1e-5. DQN addresses the scalability challenge by approximating the value function and learning from sampled experiences, with convergence measured through the Bellman residual—the average absolute difference between the current Q-value estimate and the target.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ccccccc}
+\toprule
+$N$ & \#States & DP Time & DP Reward & DQN Time & DQN Reward & DQN Bell Res \\
+\midrule
+1 & 6 & 0.00s & -19.80 & 1.58s & -19.83 & 0.44 \\
+2 & 36 & 0.02s & -39.64 & 1.43s & -39.63 & 0.86 \\
+3 & 216 & 0.29s & -59.42 & 6.27s & -59.53 & 0.79 \\
+4 & 1,296 & 3.64s & -79.35 & 23.60s & -79.43 & 2.13 \\
+5 & 7,776 & 44.82s & -99.26 & 111.33s & -99.15 & 1.82 \\
+6 & 46,656 & 500.98s & -119.10 & 67.81s & -118.88 & 2.79 \\
+7 & 279,936 & $\sim$6418.84s & -- & 64.18s & -138.93 & 2.58 \\
+8 & 1,679,616 & $\sim$78561.36s & -- & 69.25s & -158.80 & 2.92 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For small instances ($N \leq 3$), dynamic programming (DP) yields exact solutions in under 1 second, while deep Q-networks (DQN) require 20–30 seconds to achieve comparable performance.
+As the state space grows, DP becomes intractable—solving $N=6$ (46,656 states) takes over 500 seconds, and projections for $N=7$ exceed 6,000 seconds.
+In contrast, DQN scales efficiently and maintains high solution quality, with rewards closely matching those from DP wherever comparison is possible.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figs/dp_vs_dqn.png}
+\label{fig}
+\end{figure}
+
+
+\subsection{Performance of Reinforcement Learning on Optimization Problems}
+
+Multiple empirical studies provide evidence that Deep RL can indeed overcome the curse of dimensionality that limits traditional Dynamic Programming. \cite{nomura2025} showed that for perishable inventory control with dynamic pricing, PPO achieved near-optimal solutions with a 75\% reduction in computation time compared to DP, with authors explicitly noting that increasing problem dimensionality would render DP impractical while DRL would remain viable. \cite{sabri2024} demonstrated that attention-based DRL delivered maintenance schedules with 30.5\% lower costs than DP-based heuristics on combinatorial problems, computing in seconds what DP required over an hour to solve. For high-dimensional inventory problems where exact DP was infeasible, \cite{boute2022} showed that A3C matched the performance of the best specialized heuristics and approximate DP methods across three inventory settings. These preliminary results show that while Deep RL requires substantial initial training experiences and hyperparameter tuning, they can effectively approximate optimal policies in high-dimensional state spaces where exact DP becomes computationally prohibitive. 

@@ -1,0 +1,90 @@
+This section reviews reinforcement learning methods to solve structural economic models.
+
+
+\subsection{Experience-Based Equilibria}
+
+
+\citet{FershtmanPakes2012} introduced Experience-Based Equilibrium (EBE) for dynamic games with asymmetric information. The EBE concept defines equilibrium as a triple $(S^*, \{\pi_i\}, \{V_i\})$ consisting of recurrent states, strategies, and value functions satisfying recurrence, optimality, and consistency conditions.
+
+The computational algorithm involves simulating industry trajectories, updating strategies to best responses, and adjusting value estimates based on observed outcomes. This approach evaluates values only on recurrently visited states rather than the full state space, avoiding integration over unobserved state distributions.
+
+\citet{AskerEtAl2020} analyze pricing strategies in a Bertrand duopoly where firms repeatedly set prices for a homogeneous good. Each firm maintains a value estimate $Q(s,a)$ for state-action pairs that follows the Bellman equation:
+\begin{equation}
+Q(s,a) = \mathbb{E}[r(s,a) + \beta \max_{a'}Q(s',a')]
+\end{equation}
+
+After each pricing decision, firms update their Q-values using:
+\begin{equation}
+Q_i(s,a) \leftarrow Q_i(s,a) + \alpha[\pi_i + \beta \max_{a'}Q_i(s',a') - Q_i(s,a)]
+\end{equation}
+where $\alpha$ is the learning rate and $\beta$ the discount factor. The authors find certain learning protocols lead to supracompetitive pricing, while others converge to competitive outcomes.
+
+Building on the EBE concept, \citet{LomysMagnolfi2024} develop a structural estimation approach for strategic settings where agents use reinforcement learning rather than playing a fixed equilibrium. They impose an "asymptotic no-regret" (ANR) condition as a minimal rationality requirement, showing that the empirical distribution of play must satisfy certain Bayes correlated equilibrium conditions. Using these restrictions, they identify and estimate underlying payoff parameters of repeated games played by learning agents, providing dynamic foundations for structural econometric inference in multi-agent systems without assuming Nash equilibrium.
+
+\subsection{Approximating Auction Equilibria and Mechanism Design}
+
+\citet{GrafEtAl2024} evaluate deep RL in finding equilibria for sealed-bid auctions using Deep Deterministic Policy Gradient (DDPG). Through extensive hyperparameter tuning, they achieve 99\% convergence to the theoretical Bertrand-Nash equilibrium, providing rigorous validation that deep RL can find provable economic equilibria.
+
+\citet{BreroEtAl2021} pioneer the use of RL to design economic mechanisms, focusing on Sequential Price Mechanisms (SPM) – a class of indirect auction mechanisms where agents are approached in sequence and offered choice menus at posted prices. They formulate the mechanism design problem as a partially observed MDP: the "state" includes the history of past sales, and the mechanism's policy chooses prices and allocation order based on this history. Using deep RL (policy optimization), they learn optimal or near-optimal sequential pricing policies in various simulated environments, outperforming static pricing benchmarks. They also provide theoretical conditions for when an adaptive sequential mechanism can yield higher welfare or revenue than simpler static mechanisms.
+
+\citet{RavindranathEtAl2024} address the challenge of learning revenue-maximizing mechanisms for sequential combinatorial auctions involving multiple items and strategic bidders. They propose a specialized RL framework that leverages differentiable structure in the auction's transitions to enable gradient-based learning. By exploiting the fact that auction clearing and payment rules can be made differentiable, they integrate first-order optimization into the agent's policy update. Their results show significant improvements in revenue over both analytic benchmarks and conventional deep RL algorithms. Their approach scales to environments with up to 50 bidders and 50 items, effectively bridging the gap between auction theory's optimal mechanisms and practical implementable policies.
+
+\subsection{Dynamic Oligopoly Models}
+
+\citet{Hollenbeck2019} applies reinforcement learning to analyze merger effects on innovation in dynamic oligopoly. Firms update value estimates through temporal-difference learning:
+\begin{equation}
+V_{\text{new}}(s) \leftarrow V(s) + \alpha[\pi(s,a) + \beta V(s') - V(s)]
+\end{equation}
+
+The algorithm employs $\epsilon$-greedy exploration to prevent convergence to suboptimal equilibria. The RL approach handles high-dimensional state spaces that include multiple firms and quality levels, making traditional dynamic programming infeasible.
+
+\citet{Covarrubias2022} uses deep reinforcement learning to study oligopolistic pricing in a New Keynesian framework. Neural networks represent firms' pricing policies $\pi_\theta(a|s)$ and value functions, enabling firms to learn sophisticated strategies including history-dependent "trigger" strategies supporting tacit collusion. The method uncovers multiple equilibria ranging from competitive to collusive pricing with higher markups.
+
+\subsection{Dynamic Discrete Choice Models}
+
+\citet{HuYang2025} develop an estimator combining policy gradient methods with indirect inference for dynamic discrete choice models. Their approach employs a two-loop structure where the outer loop matches moments:
+\begin{equation}
+\hat{\theta} = \arg \min_{\theta} \left( \mathbf{M}_d - \mathbf{M}_s(\theta) \right)' \mathbf{W} \left( \mathbf{M}_d - \mathbf{M}_s(\theta) \right)
+\end{equation}
+
+The inner loop solves the dynamic programming problem via policy gradient:
+\begin{equation}
+\nabla_\gamma J(\gamma) = \mathbb{E}_{\tau \sim \pi_\gamma} \left[ \sum_{t=0}^T \nabla_\gamma \log \pi_\gamma(a_t|s_t) Q^\pi(s_t, a_t) \right]
+\end{equation}
+
+This direct policy parameterization sidesteps integration over continuous state transitions that burdens traditional nested fixed-point estimation. The policy is modeled as:
+\begin{equation}
+\pi(a_t | s_t, \eta_t; \gamma) = \frac{\exp\left( f_\gamma(s_t, \eta_t, a_t) \right)}{\sum_{j \in \mathcal{A}} \exp\left( f_\gamma(s_t, \eta_t, j) \right)}
+\end{equation}
+where $\eta_t$ denotes unobserved states and $f_\gamma$ is implemented as a neural network.
+
+\citet{AdusumilliEckardt2022} introduce temporal-difference (TD) learning methods to estimate structural parameters of dynamic discrete choice models. They adapt the econometric conditional choice probability approach to an RL-style algorithm, using function approximation to avoid explicit transition probability specification. Their two estimators (a linear TD method and an approximate value iteration) can handle continuous or high-dimensional state spaces and even multi-agent dynamic games without integrating over other players' actions. Monte Carlo experiments demonstrate these RL-based estimators are computationally fast and statistically consistent.
+
+\subsection{Macroeconomic Models}
+
+\citet{AtashbarShi2023} apply Deep Deterministic Policy Gradient to solve a Real Business Cycle model. They implement two neural networks: an actor $\mu_\theta(s)$ representing policy and a critic $Q_\phi(s,a)$ estimating action values. The critic network minimizes:
+\begin{equation}
+\mathcal{L}(\phi) = \mathbb{E}_{(s,a,r,s') \sim \mathcal{D}} \left[ \left( Q_\phi(s, a) - \left( r + \gamma Q_{\phi'}(s', \mu_{\theta'}(s')) \right) \right)^2 \right]
+\end{equation}
+
+The actor network updates via policy gradient:
+\begin{equation}
+\nabla_\theta J(\theta) = \mathbb{E}_{s \sim \mathcal{D}} \left[ \nabla_a Q_\phi(s, a) \big|_{a=\mu_\theta(s)} \nabla_\theta \mu_\theta(s) \right]
+\end{equation}
+
+Their learned policies closely approximate theoretical optimal policies without requiring explicit derivation of Euler equations.
+
+\citet{curry2022} employ multi-agent reinforcement learning to compute equilibria in heterogeneous agent macro models with up to 111 agents. They introduce structured learning curricula to stabilize training, gradually scaling from simplified economies to full models.
+
+\citet{HinterlangTaenzer2024} combine empirical model estimation with RL-based monetary policy optimization. They first estimate a neural network transition model, then optimize central bank policy to minimize:
+\begin{equation}
+\mathcal{L}_\text{policy} = \mathbb{E} \left[ \sum_t \lambda_\pi (\pi_t - \pi^*)^2 + \lambda_y (y_t - y^*)^2 \right]
+\end{equation}
+
+Their approach discovers nonlinear policy rules outperforming conventional Taylor rules by 27-43\%, demonstrating RL's ability to derive sophisticated policies in dynamic environments.
+
+\subsection{Advantages and Limitations}
+
+Reinforcement learning offers several key advantages for structural economic models. Firstly, RL methods with function approximation tackle high-dimensional state spaces that render traditional dynamic programming infeasible. Neural network representations can handle continuous state variables and state dependencies without discretization, as demonstrated by \citet{Covarrubias2022} and \citet{curry2022}. Secondly, by focusing computational resources on recurrently visited states rather than exhaustively solving for all possible states, RL methods achieve significant efficiency gains. \citet{FershtmanPakes2012} and \citet{Hollenbeck2019} leverage this property to solve models with many firms and state variables. Thirdly, experience-based equilibrium concepts integrated with RL provide tractable solutions for settings with private information where standard methods fail. This allows modeling strategic interactions without requiring explicit integration over belief states. Lastly, the stochastic nature of RL exploration helps uncover multiple equilibria in games. \citet{Covarrubias2022} demonstrates this by finding both competitive and collusive equilibria in the same model setup.
+
+Despite these strengths, RL methods face important limitations. Firstly, even single-agent deep RL lacks general theoretical convergence guarantees in economic applications. While empirical convergence can be validated through testing potential improvements (ε-equilibrium), verification remains computationally intensive. Secondly, MARL may fail to detect unstable equilibria, often oscillates during training, and can miss certain equilibria entirely. Learning dynamics are sensitive to initialization and equilibrium selection is not fully understood. Lastly, These methods remain computationally demanding, requiring GPU acceleration and careful hyperparameter tuning. As shown by \citet{GrafEtAl2024}, achieving reliable convergence requires systematic optimization of training parameters.

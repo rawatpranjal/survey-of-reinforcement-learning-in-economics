@@ -1,0 +1,49 @@
+\section{Reinforcement Learning from Human Feedback}
+\label{sec:rlhf}
+
+The structural estimation and IRL literatures are primarily concerned with recovering an agent's underlying reward function from observations of their enacted, often optimal, behavior. A distinct but related paradigm, Reinforcement Learning from Human Feedback (RLHF), has recently emerged for settings where expert demonstrations are unavailable or suboptimal. Instead of inverting an observed policy $\pi$ to find the reward function that rationalizes it, RLHF learns a reward function directly by eliciting preferences from a human evaluator over pairs of machine-generated behaviors. First demonstrated by \citet{christiano:2017} as a viable technique for training agents without an explicit reward function, this approach has become the predominant method for aligning large language models.
+
+\subsection{Learning Rewards from Preferences}
+
+The canonical RLHF framework is built on a formal model of human preference. The data we observe consists of tuples $(s, y_w, y_l)$, where $s$ is a context, and $y_w$ and $y_l$ are two outputs, with $y_w$ being the ``winner'' preferred by a human. If we assume preferences follow a latent utility model, the Bradley-Terry model gives the probability that $y_w$ is preferred: $P(y_w \succ y_l | s) = \sigma(r_\theta(s, y_w) - r_\theta(s, y_l))$, where $r_\theta$ is the reward model parameterized by $\theta$ and $\sigma(\cdot)$ is the logistic function. This formulation is a direct application of discrete choice theory and is equivalent to a binary logit model, a special case of the multinomial logit framework \citep{mcfadden:1973} that underpins DDC estimation as discussed in Section~\ref{sec:ddc}. The reward model parameters $\theta$ are estimated by minimizing the negative log-likelihood of the observed human choices:
+\begin{equation}
+    \mathcal{L}(\theta) = -\mathbb{E}_{(s, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( r_\theta(s, y_w) - r_\theta(s, y_l) \right) \right],
+\label{eq:rlhf_loss}
+\end{equation}
+where $\sigma(\cdot)$ is the logistic sigmoid function.
+
+\subsection{The RLHF Pipeline and Direct Optimization}
+
+We then use the learned $r_\theta$ as a proxy objective for policy optimization. The canonical approach, solidified in a series of works applying RLHF to language models \citep{ziegler2019fine,stiennon2020learning,ouyang2022training}, is a three-stage process. First, a base pretrained model is initialized via supervised fine-tuning (SFT) on a small dataset of high-quality demonstrations, yielding an initial policy $\pi^{SFT}$. This grounds the model in the desired style and format. The second step is the reward model training as described, using preference data generated from this $\pi^{SFT}$.
+
+In the third and final step, we optimize the policy using reinforcement learning. The $\pi^{SFT}$ policy, now denoted $\pi_\phi$, is fine-tuned to maximize the expected reward signal from the frozen reward model $r_\theta$. A critical component of this optimization is the inclusion of a regularization term that penalizes the Kullback-Leibler (KL) divergence between the learned policy $\pi_\phi$ and the initial reference policy $\pi^{SFT}$. The objective function for this final stage is:
+\begin{equation}
+    J(\phi) = \mathbb{E}_{s \sim \mathcal{D}, y \sim \pi_\phi(\cdot|s)} [r_\theta(s, y)] - \beta_{KL} \mathbb{E}_{s \sim \mathcal{D}} [D_{KL}(\pi_\phi(\cdot|s) \,||\, \pi^{SFT}(\cdot|s))],
+\label{eq:rlhf_objective}
+\end{equation}
+where $D_{KL}$ is the Kullback-Leibler divergence and $\beta_{KL}$ is a hyperparameter controlling the penalty strength. This KL-divergence term is essential: it prevents the policy $\pi_\phi$ from deviating too far from the distribution of text on which the reward model is reliable, thus mitigating ``reward hacking'' where the policy exploits inaccuracies in $r_\theta$ to achieve a high score with degenerate behavior.
+
+While empirically successful, the KL-regularized objective in Equation~(\ref{eq:rlhf_objective}) can seem ad-hoc. However, a more principled interpretation frames the entire process as a form of Bayesian inference \citep{korbak2022rl}. In this view, the reference policy $\pi^{SFT}$ acts as a prior distribution over plausible responses. The reward model $r_\theta$ provides evidence, specifying which responses are more desirable. The goal of alignment is to find the posterior distribution $\pi^*$ that optimally combines the prior with this evidence. This ideal posterior policy takes the form:
+\begin{equation}
+    \pi^*(y|s) \propto \pi^{SFT}(y|s) \exp\left(\frac{r_\theta(s, y)}{\beta_{KL}}\right).
+\label{eq:rlhf_posterior}
+\end{equation}
+This formulation directly parallels Bayes' rule, where the posterior is proportional to the prior times the likelihood. The reward function, scaled by $\beta_{KL}$, defines the log-likelihood of the preference evidence. From this perspective, the KL-regularized RL objective $J(\phi)$ is no longer arbitrary. It is mathematically equivalent to the Evidence Lower Bound (ELBO) for this Bayesian inference problem. Consequently, maximizing the RLHF objective via PPO is a form of variational inference, where the aim is to find the policy $\pi_\phi$ that minimizes the KL divergence to the ideal posterior $\pi^*$. This insight reframes RLHF from a pure reward-maximization task into a principled probabilistic inference problem, providing a solid theoretical justification for the KL penalty as a fundamental component rather than a mere regularizer.
+
+Despite this elegance, the three-stage RLHF pipeline is complex to implement, requiring training multiple large models and a computationally expensive reinforcement learning loop that involves sampling from the policy. Building on the analytical relationship between the optimal policy and the reward function, Direct Preference Optimization (DPO) was introduced by \citet{rafailov2023direct} as a simpler, RL-free method. DPO bypasses the explicit reward modeling step by reparameterizing the reward function directly in terms of the optimal policy $\pi^*$ and the reference policy $\pi^{SFT}$:
+\begin{equation}
+    r(s,y) = \beta_{KL} \log\left(\frac{\pi^*(y|s)}{\pi^{SFT}(y|s)}\right) + \beta_{KL} \log Z(s).
+\label{eq:dpo_reparameterize}
+\end{equation}
+When this analytical expression for the reward is substituted into the Bradley-Terry preference loss from Equation~(\ref{eq:rlhf_loss}), the unknown partition function $Z(s)$ cancels out. This yields a loss function that depends only on the policy $\pi_\phi$ being optimized and the fixed reference policy $\pi^{SFT}$. The DPO objective is thus a simple binary cross-entropy loss over policy likelihoods:
+\begin{equation}
+    \mathcal{L}_{DPO}(\phi; \pi^{SFT}) = -\mathbb{E}_{(s, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( \beta_{KL} \log \frac{\pi_\phi(y_w|s)}{\pi^{SFT}(y_w|s)} - \beta_{KL} \log \frac{\pi_\phi(y_l|s)}{\pi^{SFT}(y_l|s)} \right) \right].
+\label{eq:dpo_loss}
+\end{equation}
+This objective can be optimized directly on the policy parameters $\phi$ using standard supervised learning techniques with a static preference dataset. The gradient of this loss intuitively increases the likelihood of preferred responses $y_w$ while decreasing the likelihood of dispreferred responses $y_l$, relative to the reference policy. By recasting the constrained optimization problem as a simple likelihood maximization, DPO offers a more stable and computationally efficient alternative to the multi-stage RLHF pipeline, eliminating the need for an explicitly trained reward model and the complexities of RL-based policy optimization.
+
+\subsection{Recent Developments}
+
+A subsequent innovation leverages DPO to create an iterative self-improvement loop, reducing reliance on static, human-annotated data \citep{yuan2024self}. In this paradigm, dubbed Self-Rewarding Language Models, a single language model acts as both the instruction-following agent and its own reward model. The process begins with a base model fine-tuned to have both instruction-following and evaluation capabilities (``LLM-as-a-Judge''). In each subsequent iteration, the current model generates a new preference dataset for itself by producing multiple responses to a set of prompts and then evaluating its own outputs to assign scores. These scores are used to construct preference pairs $(y_w, y_l)$, which form an AI-generated feedback dataset. The model is then fine-tuned on this new data using the DPO loss. This iterative process, where the model generates its own training data and provides its own reward signal, creates a ``virtuous circle'' of improvement where enhancements in instruction-following ability lead to better reward modeling, which in turn fuels the next round of policy optimization.
+
+While RLHF and its successors have proven effective at aligning model behavior with human preferences, several open issues remain. The framework does not aim to solve the identification problem in the strict econometric sense; the learned reward model $r_\theta$ (whether explicit or implicit in DPO) is a proxy for preference, not necessarily the uniquely identified ``true'' utility function required for welfare analysis. Furthermore, the notion of ``human feedback'' is a significant simplification, as the preferences being optimized are those of a small, non-representative group of paid labelers, raising important questions about whose values are being embedded in these systems. Finally, the fine-tuning process can lead to a degradation of performance on standard academic benchmarks, a phenomenon sometimes referred to as an ``alignment tax'' \citep{ouyang2022training}. Mitigating these challenges while scaling alignment beyond the limits of human data collection remains a key frontier for the field.
