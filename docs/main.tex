@@ -1,0 +1,211 @@
+\documentclass[11pt,notitlepage,a4paper]{article}
+
+\usepackage{graphicx}
+
+\usepackage{booktabs}
+\usepackage[round]{natbib}
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{amsfonts}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[most]{tcolorbox}
+\usepackage{soul}      % for \hl highlighting
+\soulregister\ref7
+\usepackage{geometry}
+\geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in, rmargin=1in,}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{pdflscape}
+\usepackage[dvipsnames]{xcolor}
+\definecolor{linkcolor}{rgb}{0, 0, 0.35}
+\definecolor{linkbordercolor}{rgb}{.9, .9, .9}
+\definecolor{block-gray}{gray}{0.85}
+\newtcolorbox{blockquote}{colback=block-gray,grow to right by=-1mm,grow to left by=-1mm,boxrule=0pt,boxsep=0pt,breakable}
+
+
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{geometry}
+
+\usepackage{colortbl}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=linkcolor,
+    anchorcolor=linkcolor,
+    citecolor=linkcolor,
+    filecolor=linkcolor,
+    urlcolor=linkcolor,
+    bookmarks=true,
+    citebordercolor=linkbordercolor,
+    filebordercolor=linkbordercolor,
+    linkbordercolor=linkbordercolor,
+}
+\usepackage[doublespacing]{setspace}
+
+\usepackage{subfig}
+\renewcommand{\thesubfigure}{(\alph{subfigure})}
+\captionsetup[subfigure]{labelformat=default}
+
+
+\usepackage{fullpage}
+
+\usepackage{color,soul}
+\usepackage{verbatim}
+\usepackage{enumitem}
+
+\usepackage{minted}
+\definecolor{bg}{rgb}{0.95,0.95,0.95} % Light gray background
+\setlength{\fboxsep}{1mm}
+\setminted{
+    bgcolor=bg, % Apply the background color
+    frame=none,
+    linenos=false, % Enable line numbers
+    fontsize=\normalsize, % Adjust font size
+    breaklines=true, % Break long lines
+    breakanywhere=true,
+    tabsize=4, % Set tab size
+    breaksymbolleft={},
+    texcl=false,
+    escapeinside=||
+}
+\setmintedinline{
+    bgcolor=bg, % Apply background color
+    fontsize=\normalsize, % Set font size (adjust as needed)
+    breaklines=true, % Enable line wrapping for inline code
+}
+\definecolor{highlight}{rgb}{1,1,0.6} % Light yellow for highlighting
+\usepackage[smartEllipses,hybrid]{markdown}
+
+% Provides bold monospaced fonts
+\usepackage{lmodern}
+
+%Nice indicator function
+\usepackage{bbm}
+\newcommand{\indicator}[1]{\mathbbm{1}\{#1\}}
+
+%For theorem proofs in appendix
+\usepackage{thmtools, thm-restate}
+
+
+% Select what to do with todonotes:
+% \usepackage[disable]{todonotes} % notes not showed
+% markup for editing
+\setlength{\marginparwidth}{2cm}
+\usepackage[draft,textsize=small]{todonotes}   % notes showed
+\newcommand{\moveto}[2]{\todo[backgroundcolor=white, bordercolor=red, inline]{{\bf Move to $\longrightarrow$ #1}\\#2}}
+\usepackage[normalem]{ulem}
+\newcommand{\movedto}[2]{\todo[backgroundcolor=white, bordercolor=red, inline]{{\bf Moved to $\longrightarrow$ #1}\\\sout{#2}}}
+\newcommand{\note}[1]{\par {\bfseries \color{blue} #1 \par}} %comment shown
+
+
+\setcounter{MaxMatrixCols}{10}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\renewcommand\thelemma{L\arabic{lemma}}
+\newtheorem{assumption}{Assumption}
+\renewcommand\theassumption{A\arabic{assumption}}
+\newtheorem{definition}{Definition}
+\renewcommand\thedefinition{D\arabic{definition}}
+\newtheorem{corollary}{Corollary}[theorem]
+\renewcommand\thecorollary{C\arabic{corollary}}
+\newtheorem{conjecture}{Conjecture}
+\renewcommand\theconjecture{J\arabic{conjecture}}
+
+\renewcommand{\baselinestretch}{1.5}
+
+\def\argmin{\mathop{\it argmin}}
+\def\argmax{\mathop{\it argmax}}
+\DeclareRobustCommand\iff{\;\Longleftrightarrow\;}
+
+\usepackage{titlesec}
+
+\usepackage{appendix}
+
+%compact lists
+\setlist{noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt}
+\newcommand\Tstrut{\rule{0pt}{2.6ex}}         % = `top' strut
+\newcommand\Bstrut{\rule[-0.9ex]{0pt}{0pt}}   % = `bottom' strut
+
+\begin{document}
+
+\begin{titlepage}
+\begin{spacing}{1}
+\title{\textsc{Survey of Reinforcement Learning in Economics}}
+\author{
+\textsc{Pranjal Rawat, Georgetown University}\\
+}
+\date{\textsc{January 2026}}
+
+\maketitle
+\thispagestyle{empty}
+
+
+\begin{abstract}
+\noindent
+\input{../ch00_introduction/tex/abstract}
+\bigskip
+
+\noindent \textsc{Keywords: Reinforcement Learning, Economics, Structural Estimation, Inverse Reinforcement Learning, Multi-Agent, Bandits, RLHF}
+
+\end{abstract}
+
+\end{spacing}
+\end{titlepage}
+
+
+\large
+
+\section{Introduction}
+\label{section:intro}
+\input{../ch00_introduction/tex/intro}
+
+\section{Historical Developments}
+\label{section:history}
+\input{../ch01_history/tex/history}
+
+\section{Planning and Learning}
+\label{section:planning_learning}
+\input{../ch02_planning_learning/tex/planning_learning}
+
+\section{Reinforcement Learning for Structural Estimation}
+\label{section:rl_structural_est}
+\input{../ch03_rl_structural_est/tex/rl_in_se}
+
+\section{Inverse Reinforcement Learning}
+\label{section:inverse_rl}
+\input{../ch04_inverse_rl/tex/irl}
+
+\section{Reinforcement Learning in Games}
+\label{section:rl_in_games}
+\input{../ch05_rl_in_games/tex/marl}
+
+\section{Bandits and Online Learning}
+\label{section:bandits}
+\input{../ch06_bandits/tex/se_in_rl_full}
+
+\section{Real World Applications and Deployments}
+\label{section:applications}
+\input{../ch07_applications/tex/applications}
+
+\section{RLHF and Preference Learning}
+\label{section:rlhf}
+\input{../ch08_rlhf/tex/rlhf}
+
+\section{Conclusions and Discussion}
+\label{section:conclusion}
+\input{../ch09_conclusion/tex/conclusion}
+
+% REFERENCES
+\bibliographystyle{plainnat}
+\setcitestyle{maxcitenames=2}
+
+\singlespacing
+\bibliography{refs}
+\newpage
+\appendix
+\renewcommand{\thesection}{Appendix \Alph{section}}
+\renewcommand{\thefigure}{\Alph{section}\arabic{figure}}
+
+\end{document}
