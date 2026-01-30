@@ -1,0 +1,255 @@
+% Chapter 5: RL in Games - Imperfect Information and Equilibrium Computation
+% Focus: Computing equilibria in imperfect-information games via RL methods
+
+The economist's problem of equilibrium computation predates computational game theory by decades. Existence theorems guarantee that Nash equilibria exist under mild conditions, yet finding them in games of practical interest remains computationally intractable. \citet{Daskalakis2009} established that computing a Nash equilibrium is PPAD-complete even in two-player games, implying that no polynomial-time algorithm exists unless PPAD equals P. This hardness result does not preclude progress in structured domains: the RL methods surveyed in this chapter exploit the sequential structure of extensive-form games to compute approximate equilibria in games with state spaces exceeding $10^{160}$ possible configurations.
+
+The central challenge is imperfect information. In perfect-information games like chess or Go, the minimax theorem applies directly: backward induction yields optimal play, and Monte Carlo tree search with learned value functions achieves superhuman performance \citep{Silver2016, Silver2017}. Imperfect-information games, where players hold private signals unknown to opponents, require fundamentally different approaches. A player cannot simply maximize expected value at each decision point; she must reason about opponent beliefs, which depend on her own strategy, creating a fixed-point problem. Poker serves as the canonical benchmark: a player's betting pattern reveals information about her private cards, and optimal play requires balancing value extraction against information leakage.
+
+This chapter presents methods that provably converge to Nash equilibria in two-player zero-sum extensive-form games. We begin with formal definitions of extensive-form games and information sets, then develop counterfactual regret minimization (CFR) and its deep learning extensions. The landmark results section documents the progression from Libratus (2017) through Pluribus (2019) in poker, and the extension to games with larger state spaces: Stratego ($10^{535}$ states) and seven-player Diplomacy with natural language communication. We conclude with implications for economic analysis, where private information is ubiquitous in auctions, bargaining, and signaling games.
+
+\subsection{Extensive-Form Games and Information Sets}
+
+\begin{definition}[Extensive-Form Game]
+An extensive-form game $\Gamma$ is a tuple $(\mathcal{N}, H, Z, \mathcal{A}, \rho, \sigma_c, \{u_i\}_{i \in \mathcal{N}}, \{\mathcal{I}_i\}_{i \in \mathcal{N}})$ where:
+\begin{enumerate}
+    \item $\mathcal{N} = \{1, \ldots, n\}$ is the set of players, with $c \notin \mathcal{N}$ denoting chance (nature).
+    \item $H$ is the set of histories (sequences of actions), with $\emptyset \in H$ the root. A history $h$ is a prefix of $h'$, written $h \sqsubseteq h'$, if $h'$ extends $h$.
+    \item $Z \subseteq H$ is the set of terminal histories, with $h \in Z$ if no proper extension of $h$ is in $H$.
+    \item $\mathcal{A}(h) = \{a : ha \in H\}$ is the set of actions available at non-terminal history $h$.
+    \item $\rho: H \setminus Z \to \mathcal{N} \cup \{c\}$ assigns a player to each non-terminal history.
+    \item $\sigma_c(h, a)$ gives the probability that chance plays action $a$ at history $h$ when $\rho(h) = c$.
+    \item $u_i: Z \to \mathbb{R}$ is player $i$'s utility function over terminal histories.
+    \item $\mathcal{I}_i$ is a partition of $\{h \in H : \rho(h) = i\}$ into information sets, where $h, h' \in I$ implies $\mathcal{A}(h) = \mathcal{A}(h')$.
+\end{enumerate}
+\end{definition}
+
+The information set partition $\mathcal{I}_i$ captures player $i$'s observational limitations: at any decision point, she cannot distinguish between histories in the same information set. In poker, an information set groups all histories consistent with a player's private cards and the public betting sequence. The constraint $\mathcal{A}(h) = \mathcal{A}(h')$ for $h, h' \in I$ ensures that a player's strategy can depend only on observable information.
+
+\begin{definition}[Behavioral Strategy]
+A behavioral strategy $\sigma_i$ for player $i$ assigns a probability distribution over actions at each information set:
+\begin{equation}
+\sigma_i: \mathcal{I}_i \to \Delta(\mathcal{A}), \quad \text{where } \sum_{a \in \mathcal{A}(I)} \sigma_i(I, a) = 1 \text{ for all } I \in \mathcal{I}_i.
+\end{equation}
+A strategy profile $\sigma = (\sigma_1, \ldots, \sigma_n)$ specifies strategies for all players. We write $\sigma_{-i}$ for the strategies of all players except $i$.
+\end{definition}
+
+By Kuhn's theorem \citep{kuhn1953extensive}, any mixed strategy in an extensive-form game with perfect recall can be replicated by a behavioral strategy, so we restrict attention to behavioral strategies without loss of generality.\footnote{Perfect recall requires that a player never forgets her own previous actions or information. Formally, if $h \sqsubseteq h'$ and $\rho(h) = \rho(h') = i$, and $h, h''$ are in the same information set $I$, then there exists $h'''$ with $h'' \sqsubseteq h'''$ in the same information set as $h'$. All games considered in this chapter satisfy perfect recall.}
+
+\begin{definition}[Nash Equilibrium]
+A strategy profile $\sigma^*$ is a Nash equilibrium if no player can unilaterally improve her expected utility:
+\begin{equation}
+u_i(\sigma^*_i, \sigma^*_{-i}) \geq u_i(\sigma'_i, \sigma^*_{-i}) \quad \text{for all } \sigma'_i \text{ and all } i \in \mathcal{N}.
+\end{equation}
+A profile $\sigma$ is an $\varepsilon$-Nash equilibrium if the gain from deviation is at most $\varepsilon$:
+\begin{equation}
+u_i(\sigma_i, \sigma_{-i}) \geq u_i(\sigma'_i, \sigma_{-i}) - \varepsilon \quad \text{for all } \sigma'_i \text{ and all } i \in \mathcal{N}.
+\end{equation}
+\end{definition}
+
+In two-player zero-sum games ($u_1 = -u_2$), the minimax theorem guarantees that Nash equilibrium strategies minimize worst-case loss. A player following a Nash equilibrium strategy cannot be exploited by any opponent strategy; her expected value against a best-responding opponent equals her value against the equilibrium opponent strategy. This unexploitability property motivates the focus on equilibrium computation in competitive settings.
+
+\begin{definition}[Exploitability]
+The exploitability of a strategy $\sigma_i$ in a two-player zero-sum game is:
+\begin{equation}
+\text{expl}(\sigma_i) = \max_{\sigma'_{-i}} u_{-i}(\sigma_i, \sigma'_{-i}) - v^*
+\end{equation}
+where $v^* = \max_{\sigma_i} \min_{\sigma_{-i}} u_i(\sigma_i, \sigma_{-i})$ is the game value. A strategy is unexploitable if $\text{expl}(\sigma_i) = 0$.
+\end{definition}
+
+\subsection{Counterfactual Regret Minimization}
+
+Counterfactual regret minimization (CFR), introduced by \citet{zinkevich2008}, computes Nash equilibria via iterative regret minimization at each information set. The algorithm builds on the connection between regret minimization and equilibrium established in \citet{blackwell1956analog}: if both players minimize regret, their time-averaged strategies converge to Nash equilibrium.
+
+\begin{definition}[Reach Probability]
+The reach probability $\pi^\sigma(h)$ is the probability of reaching history $h$ under strategy profile $\sigma$:
+\begin{equation}
+\pi^\sigma(h) = \prod_{h' \sqsubset h} \sigma_{\rho(h')}(h', a_{h' \to h})
+\end{equation}
+where $a_{h' \to h}$ is the action at $h'$ leading toward $h$. We decompose $\pi^\sigma(h) = \pi^\sigma_i(h) \cdot \pi^\sigma_{-i}(h)$ where $\pi^\sigma_i(h)$ includes only player $i$'s action probabilities.
+\end{definition}
+
+\begin{definition}[Counterfactual Value]
+The counterfactual value of information set $I \in \mathcal{I}_i$ is the expected utility to player $i$, weighted by the probability that opponents and chance play to reach $I$, but excluding player $i$'s own contribution to reaching $I$:
+\begin{equation}
+v^\sigma_i(I) = \sum_{h \in I} \pi^\sigma_{-i}(h) \sum_{z \in Z, h \sqsubseteq z} \pi^\sigma(h, z) u_i(z)
+\end{equation}
+where $\pi^\sigma(h, z)$ is the probability of reaching terminal history $z$ from $h$ under $\sigma$. The counterfactual value of action $a$ at information set $I$ is:
+\begin{equation}
+v^\sigma_i(I, a) = \sum_{h \in I} \pi^\sigma_{-i}(h) \sum_{z \in Z, ha \sqsubseteq z} \pi^\sigma(ha, z) u_i(z).
+\end{equation}
+\end{definition}
+
+The counterfactual value conditions on reaching $I$ under a counterfactual scenario where player $i$ plays to reach $I$ with probability one. This definition ensures that regrets at different information sets are appropriately weighted by their relevance to the game outcome.\footnote{The counterfactual formulation avoids the problem of vanishing gradients that affects straightforward policy gradient methods in extensive-form games. By weighting by opponent reach probability rather than joint reach probability, CFR assigns non-zero updates even to information sets that are rarely visited under the current strategy.}
+
+\begin{definition}[Counterfactual Regret]
+The instantaneous counterfactual regret for not playing action $a$ at information set $I$ in round $t$ is:
+\begin{equation}
+r^t(I, a) = v^{\sigma^t}_i(I, a) - v^{\sigma^t}_i(I).
+\end{equation}
+The cumulative counterfactual regret through round $T$ is:
+\begin{equation}
+R^T(I, a) = \sum_{t=1}^{T} r^t(I, a).
+\end{equation}
+\end{definition}
+
+CFR updates strategies using regret matching \citep{hart2000simple}:
+\begin{equation}
+\sigma^{T+1}(I, a) = \frac{[R^T(I, a)]^+}{\sum_{a' \in \mathcal{A}(I)} [R^T(I, a')]^+}
+\end{equation}
+where $[x]^+ = \max(x, 0)$. If all cumulative regrets are non-positive, the strategy is uniform over actions. The time-averaged strategy is:
+\begin{equation}
+\bar{\sigma}^T(I, a) = \frac{\sum_{t=1}^{T} \pi^{\sigma^t}_i(I) \cdot \sigma^t(I, a)}{\sum_{t=1}^{T} \pi^{\sigma^t}_i(I)}.
+\end{equation}
+
+\begin{theorem}[CFR Convergence]\label{thm:cfr}
+In a two-player zero-sum extensive-form game with perfect recall, if both players update strategies according to regret matching, the average strategy profile $\bar{\sigma}^T$ converges to an $\varepsilon$-Nash equilibrium with:
+\begin{equation}
+\varepsilon = O\left(\frac{|\mathcal{I}| \cdot \sqrt{|\mathcal{A}|} \cdot \Delta}{\sqrt{T}}\right)
+\end{equation}
+where $|\mathcal{I}|$ is the total number of information sets, $|\mathcal{A}|$ is the maximum number of actions at any information set, and $\Delta$ is the range of utilities.
+\end{theorem}
+
+The proof follows from bounding the external regret of regret matching and applying the connection between no-regret learning and equilibrium \citep{zinkevich2008}. Tammelin's CFR+ \citep{tammelin2014solving} accelerates convergence by using linear rather than constant regret weighting and resetting negative regrets to zero, achieving faster empirical convergence in many games.\footnote{CFR+ modifies the cumulative regret update to $R^{T+1}(I, a) = [R^T(I, a) + r^{T+1}(I, a)]^+$ and weights iteration $t$ by $t$ rather than uniformly. These modifications do not change the asymptotic convergence rate but substantially improve practical performance.}
+
+Monte Carlo CFR (MCCFR) \citep{lanctot2009monte} reduces the per-iteration cost by sampling outcomes rather than traversing the full game tree. Outcome sampling visits a single terminal history per iteration, while external sampling samples only opponent and chance actions. MCCFR maintains convergence guarantees in expectation while enabling application to games too large for full tree traversal.
+
+\subsection{Deep Learning for Large Games}
+
+Tabular CFR requires storing regrets and average strategies at every information set. In games with more than $10^{14}$ information sets, such as heads-up no-limit Texas hold'em (HUNL), this becomes infeasible. Deep CFR \citep{Brown2019} and Neural Fictitious Self-Play (NFSP) \citep{heinrich2016deep} replace tabular storage with neural network function approximation.
+
+\subsubsection{Deep Counterfactual Regret Minimization}
+
+Deep CFR approximates the cumulative regret $R^T(I, a)$ with a neural network $V_\theta: \mathcal{I} \times \mathcal{A} \to \mathbb{R}$. Rather than storing regrets for all information sets, the algorithm maintains a buffer $\mathcal{M}_V$ of sampled (information set, action, instantaneous regret) tuples and trains the network to minimize:
+\begin{equation}
+L_V(\theta) = \mathbb{E}_{(I, a, r) \sim \mathcal{M}_V} \left[ (V_\theta(I, a) - r)^2 \right].
+\end{equation}
+
+A separate network $\Pi_\phi: \mathcal{I} \to \Delta(\mathcal{A})$ approximates the average strategy. The algorithm maintains a buffer $\mathcal{M}_\Pi$ of (information set, strategy) pairs and trains:
+\begin{equation}
+L_\Pi(\phi) = \mathbb{E}_{(I, \sigma) \sim \mathcal{M}_\Pi} \left[ D_{\text{KL}}(\sigma \| \Pi_\phi(I)) \right].
+\end{equation}
+
+At each CFR iteration, the algorithm samples information sets via MCCFR, computes instantaneous regrets using the current value network, adds samples to the buffers, and periodically retrains both networks. The current strategy is derived from the value network via regret matching:
+\begin{equation}
+\sigma(I, a) \propto [V_\theta(I, a)]^+.
+\end{equation}
+
+Deep CFR achieved an exploitability of 0.036 big blinds per hand in heads-up limit Texas hold'em, within the statistical noise of optimal play \citep{Brown2019}. The method was subsequently applied to heads-up no-limit hold'em, though direct exploitability measurement is intractable in games of this size.
+
+\subsubsection{Neural Fictitious Self-Play}
+
+NFSP \citep{heinrich2016deep} combines fictitious play with deep reinforcement learning. In classical fictitious play \citep{Brown1951}, each agent best-responds to the empirical average of opponent strategies; convergence to Nash equilibrium holds in two-player zero-sum games \citep{Robinson1951}.
+
+NFSP maintains two networks per player: a best-response network $\beta_\theta$ trained via deep Q-learning, and an average strategy network $\bar{\pi}_\phi$ trained via supervised learning. The best-response network minimizes:
+\begin{equation}
+L_{\text{RL}}(\theta) = \mathbb{E}_{(I, a, r, I') \sim \mathcal{M}_{\text{RL}}} \left[ \left( r + \gamma \max_{a'} Q_{\theta^-}(I', a') - Q_\theta(I, a) \right)^2 \right]
+\end{equation}
+where $\theta^-$ are target network parameters. The average strategy network minimizes:
+\begin{equation}
+L_{\text{SL}}(\phi) = \mathbb{E}_{(I, a) \sim \mathcal{M}_{\text{SL}}} \left[ -\log \bar{\pi}_\phi(a | I) \right]
+\end{equation}
+where $\mathcal{M}_{\text{SL}}$ is a reservoir buffer of best-response actions.
+
+During play, an agent follows the average strategy network with probability $1 - \eta$ and the best-response network with probability $\eta$, where $\eta$ controls the exploration-exploitation tradeoff. Actions taken while following the best-response network are added to $\mathcal{M}_{\text{SL}}$.
+
+NFSP demonstrated convergence to approximate Nash equilibria in Leduc poker and achieved competitive performance in limit Texas hold'em, though subsequent CFR-based methods have shown stronger results in larger poker variants \citep{moravcik2017}.
+
+\subsubsection{Recursive Belief-Based Learning}
+
+ReBeL \citep{brown2020combining} introduces a framework for converting imperfect-information games into perfect-information games over belief states. A public belief state (PBS) is a probability distribution over world states consistent with the public information, combined with the public history of actions.
+
+At each decision point, ReBeL performs depth-limited search in the space of public belief states. The algorithm learns a value function over PBSs and uses it to evaluate leaf nodes during search. Self-play proceeds by:
+\begin{enumerate}
+    \item Computing a policy at the current PBS via depth-limited search with learned value function.
+    \item Executing actions according to the computed policy.
+    \item Training the value network to match search values.
+\end{enumerate}
+
+The PBS formulation enables the use of perfect-information search techniques (minimax with alpha-beta pruning or Monte Carlo tree search) in imperfect-information games. ReBeL achieved performance comparable to Libratus in heads-up no-limit hold'em while using substantially less computation.\footnote{ReBeL requires approximately 1/10 the computation of Libratus for comparable performance, as the learned value function amortizes the cost of subgame solving.}
+
+\subsection{Landmark Results}
+
+\subsubsection{Poker: The Canonical Imperfect-Information Benchmark}
+
+Poker has served as the primary benchmark for imperfect-information game-playing algorithms due to its combination of hidden information (private cards), sequential decision-making (betting rounds), and strategic complexity (bluffing, value betting, pot odds). The game tree of heads-up no-limit Texas hold'em (HUNL) contains approximately $10^{161}$ game states and $10^{164}$ information sets, making direct equilibrium computation intractable.
+
+\citet{moravcik2017} developed DeepStack, the first system to defeat professional poker players in HUNL. DeepStack combines continual re-solving with neural network function approximation. Rather than pre-computing a complete strategy, DeepStack solves a depth-limited subgame at each decision point, using a neural network to evaluate leaf nodes. The re-solving procedure maintains a safe subgame solution: the opponent cannot gain by deviating from the assumed strategy. DeepStack defeated professional players with statistical significance ($p < 0.001$) over 44,852 hands.
+
+Libratus \citep{brown2017superhuman} defeated four top human professionals in a 120,000-hand match in January 2017. The system uses a three-part architecture:
+\begin{enumerate}
+    \item A blueprint strategy computed offline via MCCFR over an abstracted game.
+    \item Nested safe subgame solving during play, which computes a more detailed strategy for the current subgame while ensuring no loss relative to the blueprint.
+    \item A self-improvement module that identifies and fixes leaks in the blueprint overnight.
+\end{enumerate}
+
+The blueprint strategy uses card abstraction (grouping similar hands) and action abstraction (considering only a subset of bet sizes). During play, when the opponent makes an off-tree action (a bet size not in the abstraction), Libratus solves a new subgame that includes the actual action taken. The human players lost by a combined 1.77 million chips, a margin far exceeding statistical noise.
+
+Pluribus \citep{brown2019superhuman} extended these techniques to six-player no-limit hold'em, a substantially more complex game due to the multiplayer dynamics. The key innovations were:
+\begin{enumerate}
+    \item Depth-limited search with learned value function, avoiding the exponential blowup of full-depth search in multiplayer games.
+    \item Modified blueprint computation that handles multiplayer dynamics through a variant of linear CFR.
+    \item A search procedure that considers only the player to act and treats opponents as playing according to the blueprint with small perturbations.
+\end{enumerate}
+
+Pluribus defeated elite professionals in both five-player and six-player variants. Table \ref{tab:poker} summarizes the progression of results.
+
+\begin{table}[htbp]
+\centering
+\caption{Landmark Poker Results}
+\label{tab:poker}
+\begin{tabular}{lcccr}
+\toprule
+System & Year & Game & Human Opponents & Margin (bb/100) \\
+\midrule
+DeepStack & 2017 & HUNL & Professionals & $+49 \pm 25$ \\
+Libratus & 2017 & HUNL & Top 4 pros & $+14.7 \pm 4$ \\
+Pluribus & 2019 & 6-player NL & Top 15 pros & $+48 \pm 25$ \\
+\bottomrule
+\end{tabular}
+\begin{minipage}{0.9\textwidth}
+\footnotesize
+Notes: HUNL = heads-up no-limit Texas hold'em. NL = no-limit Texas hold'em. Margins are in big blinds per 100 hands with 95\% confidence intervals. Positive margins indicate the system won.
+\end{minipage}
+\end{table}
+
+\subsubsection{Stratego and Diplomacy}
+
+Recent work has extended game-playing algorithms to domains with larger state spaces and qualitatively different challenges.
+
+\citet{deepmind2022} developed DeepNash, which achieved expert-level play in Stratego, a game with approximately $10^{535}$ possible states.\footnote{The state space of Stratego exceeds that of poker and Go combined. Each player controls 40 pieces with hidden identities, leading to combinatorial explosion in the information state space.} Unlike poker systems that rely on search during play, DeepNash uses a model-free approach:
+\begin{enumerate}
+    \item The Regularized Nash Dynamics (R-NaD) algorithm, which adds entropy regularization to encourage exploration and improve convergence.
+    \item A neural network trained end-to-end to predict actions from game states, without search at test time.
+    \item Self-play training that converges to an approximate Nash equilibrium of the regularized game.
+\end{enumerate}
+
+R-NaD modifies the Nash dynamics by adding a regularization term:
+\begin{equation}
+\dot{\pi}_i = \nabla_{\pi_i} \left[ u_i(\pi_i, \pi_{-i}) + \tau H(\pi_i) \right]
+\end{equation}
+where $H(\pi_i) = -\sum_a \pi_i(a) \log \pi_i(a)$ is the entropy and $\tau > 0$ controls regularization strength. The regularized game has a unique Nash equilibrium that approximates the original game's equilibrium set as $\tau \to 0$.
+
+DeepNash achieved an Elo rating above the top human players on the Gravon online platform, winning over 97\% of games against the previous state-of-the-art bot and over 84\% against expert human players.
+
+Cicero \citep{bakhtin2022human} addressed an orthogonal challenge: combining strategic reasoning with natural language communication in the seven-player game Diplomacy. Players negotiate alliances and coordinate actions through free-form dialogue before simultaneously submitting orders. The game requires:
+\begin{enumerate}
+    \item Strategic reasoning about optimal play given current alliances.
+    \item Natural language generation for proposing and negotiating agreements.
+    \item Modeling of opponent intentions and reliability.
+\end{enumerate}
+
+Cicero combines a strategic reasoning module (trained via self-play) with a dialogue model (a fine-tuned large language model) through an iterative refinement process. The strategic module proposes candidate actions, the dialogue module generates messages to support those actions, and the system iteratively refines both until convergence.
+
+In anonymous online play on webDiplomacy.net, Cicero achieved an average score placing it in the top 10\% of human players, more than double the average human score. The system demonstrated that natural language communication, long considered a barrier to AI game-playing, can be integrated with strategic reasoning.
+
+\subsection{Implications for Economic Analysis}
+
+The methods surveyed in this chapter have direct applications to economic settings where private information creates strategic complexity. Three areas appear particularly promising.
+
+The first is empirical game-theoretic analysis \citep{wellman2006methods}. When the game's payoff structure is unknown, researchers can use data to construct an approximate game, then apply CFR or its variants to compute equilibria. The combination of structural estimation (to recover payoffs) and equilibrium computation (to predict behavior) extends the empirical toolkit beyond games with closed-form solutions.
+
+The second is mechanism design with computational constraints. Traditional mechanism design assumes that equilibrium analysis is tractable; when computing best responses is itself costly, the mechanism designer must account for computational constraints. The poker results demonstrate that approximate equilibria can be computed in games far larger than those admitting analytical solutions, expanding the set of mechanisms that can be analyzed.
+
+The third concerns signaling and information transmission. In games with private information, equilibrium strategies often involve randomization and partial information revelation. The counterfactual value framework provides a natural way to analyze information value: the difference $v_i(I, a) - v_i(I)$ measures how much player $i$ gains from taking action $a$ relative to her equilibrium mixture. Analyzing these values across information sets reveals which private signals are most valuable and how information is transmitted through strategic interaction.
+
+Open problems remain substantial. First, convergence guarantees for CFR and NFSP apply only to two-player zero-sum games; extending to general-sum and multiplayer settings requires new techniques. Second, continuous action spaces (as in auctions with continuous bids) pose challenges for function approximation. Third, the computational cost of equilibrium computation, even with neural network approximation, remains high for games with many players or long horizons. Addressing these limitations is an active area of research at the intersection of computer science and economics.

@@ -1,0 +1,556 @@
+% Chapter 3: Real World Applications of RL
+% Nine benchmark environments testing RL algorithms against classical methods,
+% each grounded in a deployed application domain.
+
+This chapter constructs nine economic benchmarks that span major application domains where reinforcement learning has been deployed in production or studied extensively. For each benchmark, we review the deployment literature, define a formal MDP, present the Bellman equation, and compare RL against practitioner heuristics. The benchmarks are organized by domain: pedagogical foundations, durable goods replacement, transportation, pricing and marketing, revenue management, auctions, finance, supply chain, and energy.
+
+
+\subsection{Example 1: Gridworld Navigation (Pedagogical)}
+\label{sec:benchmark_gridworld}
+
+We begin with two pedagogical examples that validate the benchmark methodology before applying it to economically meaningful domains. The gridworld is the canonical example in reinforcement learning, appearing in virtually every textbook since \citet{sutton2018}. While lacking direct economic application, it provides a clean testbed for algorithm validation: the MDP is small enough for exact dynamic programming yet rich enough to require multi-step planning.
+
+We use a deterministic $N \times N$ gridworld where an agent navigates from the origin to a terminal goal state. The agent receives a small negative reward at each step, creating pressure to reach the goal quickly. This simple structure admits closed-form solutions while still requiring multi-step planning.
+
+\begin{definition}[Gridworld Navigation MDP]
+\label{def:gridworld_mdp}
+The gridworld MDP $\mathcal{M}_{\mathrm{grid}}(N)$ is defined as follows.
+\begin{enumerate}
+    \item State space. $\mathcal{S} = \{0, \ldots, N-1\}^2$, representing grid positions. A state $s = (r, c)$ is a row-column coordinate. The state space size is $|\mathcal{S}| = N^2$.
+    \item Action space. $\mathcal{A} = \{\text{Left}, \text{Right}, \text{Up}, \text{Down}, \text{Stay}\}$, with $|\mathcal{A}| = 5$.
+    \item Terminal state. $s^* = (N-1, N-1)$ is the absorbing goal state.
+    \item Transition function. Deterministic: action $a$ moves the agent in the corresponding direction, clipped to stay within grid boundaries. Formally, for action $a$ with direction vector $\delta_a \in \{-1, 0, 1\}^2$:
+    \begin{equation}
+    \label{eq:gridworld_transition}
+    T(s, a) = \mathrm{clip}(s + \delta_a, [0, N-1]^2).
+    \end{equation}
+    \item Reward function.
+    \begin{equation}
+    \label{eq:gridworld_reward}
+    r(s, a) = \begin{cases}
+    R_{\mathrm{goal}} & \text{if } T(s,a) = s^*, \\
+    -c_{\mathrm{step}} & \text{otherwise},
+    \end{cases}
+    \end{equation}
+    where $R_{\mathrm{goal}} = 10$ is the terminal reward and $c_{\mathrm{step}} = 0.1$ is the step penalty.
+    \item Discount factor. $\gamma = 0.95$.
+\end{enumerate}
+\end{definition}
+
+The Bellman optimality equation is
+\begin{equation}
+\label{eq:gridworld_bellman}
+V^*(s) = \max_{a \in \mathcal{A}} \left[ r(s, a) + \gamma \, V^*(T(s, a)) \right].
+\end{equation}
+The optimal policy follows the shortest path to the goal. With $N = 10$, the state space has 100 states, and Value Iteration converges in under 0.1 seconds.
+
+The heuristic baseline is greedy Manhattan navigation: at each step, move in the direction that minimizes Manhattan distance to the goal.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../ch03_rl_control_problems/sims/gridworld_scaling.png}
+\caption{Gridworld benchmark ($N = 10$). Left: wall-clock time comparison. Right: learning curve showing DQN convergence to the DP optimal value.}
+\label{fig:gridworld_scaling}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Gridworld benchmark results ($N = 10$, 100 states).}
+\label{tab:gridworld_results}
+\input{../ch03_rl_control_problems/sims/gridworld_results.tex}
+\end{table}
+
+The gridworld validates the benchmark methodology: DQN converges to the DP optimal policy, confirming correct implementation before applying the same evaluation to economically meaningful domains.
+
+
+\subsection{Example 2: Bus Engine Replacement (Economics)}
+\label{sec:benchmark_bus_engine}
+
+The bus engine replacement problem is the canonical example in economics, introduced by \citet{Rust1987} to estimate dynamic discrete choice models. A fleet manager decides each period whether to replace a bus engine based on its accumulated mileage. Replacement incurs a fixed cost but resets mileage to zero; continued operation incurs maintenance costs that increase with mileage.
+
+We extend the single-engine problem to a fleet of $N$ engines with a capacity constraint limiting how many can be replaced per period. This extension preserves the essential economic tradeoff while creating state space complexity that scales exponentially in $N$.
+
+\begin{definition}[Multi-Engine Bus Replacement MDP]
+\label{def:bus_mdp}
+The multi-engine bus replacement MDP $\mathcal{M}_{\mathrm{bus}}(N)$ is defined as follows.
+\begin{enumerate}
+    \item State space. $\mathcal{S} = \{0, \ldots, M-1\}^N$, where $M$ is the number of mileage bins and $N$ is the number of engines. A state $s = (m_1, \ldots, m_N)$ records discretized mileage for each engine. The state space size is $|\mathcal{S}| = M^N$.
+    \item Action space. $\mathcal{A}$ is the set of subsets of $\{1, \ldots, N\}$ with cardinality at most $C$ (the capacity constraint). With $C = 3$, the action space includes replacing any combination of 0, 1, 2, or 3 engines.
+    \item Transition function. Deterministic mileage evolution: replaced engines reset to $m = 0$; non-replaced engines increment by one bin (capped at $M-1$).
+    \item Cost function. Per-period cost is
+    \begin{equation}
+    \label{eq:bus_cost}
+    c(s, a) = \alpha \cdot \sum_{i=1}^{N} \mathbbm{1}\{m_i > 0\} + \beta \cdot |a|,
+    \end{equation}
+    where $\alpha$ is the per-engine operating cost for engines with positive mileage, $\beta$ is the replacement cost per engine, and $|a|$ is the number of engines replaced.
+    \item Reward function. $r(s, a) = -c(s, a)$.
+    \item Discount factor. $\gamma = 0.95$.
+\end{enumerate}
+\end{definition}
+
+The Bellman optimality equation is
+\begin{equation}
+\label{eq:bus_bellman}
+V^*(s) = \max_{a \in \mathcal{A}} \left[ -c(s, a) + \gamma \, V^*(s') \right],
+\end{equation}
+where $s'$ is the deterministic next state. With $M = 6$ mileage bins, the state space grows as $6^N$: 1,296 states at $N = 4$, rising to 7,776 at $N = 5$ and 46,656 at $N = 6$. Value Iteration is feasible for $N \leq 5$.
+
+The heuristic set contains two policies. The threshold policy replaces all engines with mileage $\geq 3$ (up to capacity). The never-replace policy never replaces any engine.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../ch03_rl_control_problems/sims/bus_engine_scaling.png}
+\caption{Bus engine replacement benchmark ($N = 4$). Left: wall-clock time comparison. Right: learning curve showing DQN convergence to DP optimal.}
+\label{fig:bus_engine_scaling}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Bus engine replacement benchmark results across fleet sizes $N$.}
+\label{tab:bus_engine_results}
+\resizebox{\textwidth}{!}{\input{../ch03_rl_control_problems/sims/bus_engine_results.tex}}
+\end{table}
+
+The bus engine benchmark connects RL to economics. The optimal policy balances immediate replacement costs against the long-run maintenance burden of high-mileage engines, a tradeoff that threshold heuristics approximate but do not optimize.
+
+
+\subsection{Benchmark 3: Transportation and Logistics}
+\label{sec:benchmark_dispatch}
+
+Ride-hailing platforms face a real-time matching problem: assign drivers to passengers to maximize platform efficiency. The problem is sequential because each assignment changes the spatial distribution of available drivers, affecting future match quality.
+
+\citet{Qin2021dispatch} formalized DiDi's ride-hailing dispatch as a large-scale multi-agent RL problem. The state space encodes driver locations, passenger request queues, and time-of-day features across a city partitioned into hexagonal zones. Actions are driver-to-request assignments. The reward combines driver income, passenger wait time, and order completion rates. Their deployed system achieved $0.5$--$2\%$ improvements in key metrics including driver income and order completion rates compared to previous production baselines, and the peer-reviewed evaluation confirmed that the RL dispatcher consistently outperformed combinatorial optimization baselines across multiple Chinese cities.\footnote{An earlier technical report \citep{DiDi2019} described the system at a high level; \citet{Qin2021dispatch} provides the formal treatment and controlled experiments.} At DiDi's scale of tens of millions of daily rides, these percentage gains translate to substantial aggregate efficiency improvements.
+
+Scaling RL dispatch to city-wide operations introduces a coordination challenge: thousands of drivers must be assigned simultaneously, and each driver's optimal action depends on what other drivers do. \citet{Li2019ridesharing} addressed this by applying mean-field multi-agent RL, where each driver conditions on the aggregate distribution of other drivers rather than their individual states. This approximation makes the multi-agent problem tractable while preserving the essential spatial interaction structure: a driver's expected pickup time depends on how many other drivers are nearby, which the mean-field distribution captures. Experiments on real DiDi data showed improved fleet utilization compared to single-agent RL baselines.
+
+\citet{Han2022lyft} reported on RL deployment at Lyft, providing a complementary perspective from a different platform and market. Their system optimizes driver dispatching and positioning jointly, using a value decomposition architecture that assigns credit to individual driver-level decisions within the global objective. The production deployment demonstrated improvements in both rider wait times and driver utilization, confirming that the RL dispatch paradigm generalizes across platforms and regulatory environments.
+
+We formalize the dispatch problem as a zone-based MDP that captures the essential spatial allocation structure of these deployments.
+
+\begin{definition}[Zone-Based Dispatch MDP]
+\label{def:dispatch_mdp}
+The zone-based dispatch MDP $\mathcal{M}_{\mathrm{disp}}(K)$ is defined as follows.
+\begin{enumerate}
+    \item State space. $\mathcal{S} = \{0, \ldots, D_{\max}\}^K \times \{0, \ldots, Q_{\max}\}^K$, where $D_{\max}$ is the maximum idle drivers per zone, $Q_{\max}$ is the maximum demand queue per zone, and $K$ is the number of zones. A state $s = (d_1, \ldots, d_K, q_1, \ldots, q_K)$ records idle drivers and queued demand per zone. The state space size is $|\mathcal{S}| = (D_{\max}+1)^K \cdot (Q_{\max}+1)^K$.
+    \item Action space. $\mathcal{A} = \{0, 1, \ldots, K\}$, with $|\mathcal{A}| = K + 1$. Action $0$ is no rebalancing; action $k \in \{1, \ldots, K\}$ rebalances one driver from zone $k$ to the zone with the highest demand queue.
+    \item Transition function. Each period: (i) new demand arrives at zone $k$ as a Poisson random variable with rate $\lambda_k$, added to the queue; (ii) matches occur as $\min(d_k, q_k)$ per zone; (iii) matched drivers return to the idle pool next period; (iv) any rebalancing action transfers one driver between zones.
+    \item Reward function.
+    \begin{equation}
+    \label{eq:dispatch_reward}
+    r(s, a) = f \cdot \sum_{k=1}^{K} \min(d_k, q_k) - c_r \cdot \mathbbm{1}\{a > 0\},
+    \end{equation}
+    where $f$ is the fare per match and $c_r$ is the rebalancing cost.
+    \item Discount factor. $\gamma = 0.95$.
+\end{enumerate}
+\end{definition}
+
+The Bellman optimality equation is
+\begin{equation}
+\label{eq:dispatch_bellman}
+V^*(s) = \max_{a \in \mathcal{A}} \left[ \mathbb{E}[r(s,a)] + \gamma \sum_{s'} P(s' | s, a) \, V^*(s') \right].
+\end{equation}
+The complexity grows as $(D_{\max}+1)^K \cdot (Q_{\max}+1)^K$, which is exponential in $K$. With $D_{\max} = Q_{\max} = 5$, the state space reaches $6^{2K}$: 1,296 states at $K = 2$, rising to over 60 million at $K = 5$. Value Iteration is feasible for $K \leq 3$ and infeasible beyond.
+
+The heuristic set $\mathcal{H}$ contains three policies. The no-rebalance policy never moves drivers between zones, relying entirely on organic arrivals to clear demand queues. The nearest-match heuristic rebalances one driver from the zone with the most idle drivers to the zone with the highest demand queue, a greedy spatial matching rule. The proportional heuristic rebalances toward zones where the demand-to-driver ratio is highest, approximating a fluid model solution.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../ch03_rl_control_problems/sims/dispatch_scaling.png}
+\caption{Dispatch benchmark. Left: wall-clock time (log scale) vs.\ number of zones $K$. Right: mean episode reward for all methods. DQN learns effective rebalancing policies that outperform greedy heuristics at all tested scales.}
+\label{fig:dispatch_scaling}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Dispatch benchmark results.}
+\label{tab:dispatch_results}
+\input{../ch03_rl_control_problems/sims/dispatch_results.tex}
+\end{table}
+
+The dispatch benchmark isolates the matching and allocation archetype common across ride-hailing, organ donation, and labor markets. The key insight is that myopic matching ignores the spatial externality of driver positioning; RL policies learn to sacrifice short-run matches for better long-run supply distribution across zones.
+
+
+\subsection{Benchmark 4: Pricing and Marketing}
+\label{sec:benchmark_discount}
+
+Dynamic discount targeting is a core problem in digital marketing: given a customer's interaction history, choose a discount level to maximize long-run revenue. The challenge is that discounts increase immediate conversion probability but may habituate customers to expect discounts, reducing future willingness to pay at full price.
+
+Uber and Lyft use personalized promotions to manage rider retention and acquisition. \citet{Misra2019} demonstrated the value of incorporating microeconomic choice theory into scalable dynamic price experimentation. Their approach combines structural demand estimation with RL-based policy optimization, showing that embedding economic theory into the reward and transition structure improves both sample efficiency and interpretability relative to purely model-free approaches.
+
+We formalize a discount targeting MDP inspired by ride-sharing coupon optimization.
+
+\begin{definition}[Dynamic Discount Targeting MDP]
+\label{def:discount_mdp}
+The discount targeting MDP $\mathcal{M}_{\mathrm{disc}}(n)$ is defined as follows, where $n$ controls state complexity.
+\begin{enumerate}
+    \item State components. Depending on $n$:
+    \begin{itemize}
+        \item $n \geq 1$: recency $\in \{0, \ldots, R-1\}$ (days since last ride),
+        \item $n \geq 2$: frequency $\in \{0, \ldots, F-1\}$ (lifetime rides),
+        \item $n \geq 3$: last discount $\in \{0, \ldots, D-1\}$ (discount tier last given),
+        \item $n \geq 4$: habituation $\in \{0, \ldots, H\}$ (consecutive-discount counter),
+        \item $n \geq 5$: second-to-last discount $\in \{0, \ldots, D-1\}$.
+    \end{itemize}
+    With $R = 30$, $F = 20$, $D = 4$, $H = 5$, the state space at $n = 3$ is $30 \times 20 \times 4 = 2{,}400$ states.
+    \item Action space. $\mathcal{A} = \{0\%, 10\%, 20\%, 30\%\}$, with $|\mathcal{A}| = 4$ discount tiers.
+    \item Conversion probability. Given state features, conversion probability follows a logistic model:
+    \begin{equation}
+    \label{eq:discount_conversion}
+    p(\text{convert} | s, a) = \sigma\left( \beta_0 - \beta_h \cdot h + \beta_d \cdot d_a + \beta_r \cdot r \right),
+    \end{equation}
+    where $\sigma(\cdot)$ is the sigmoid, $h$ is habituation, $d_a$ is the discount percentage, and $r$ is recency.
+    \item Reward function. Revenue conditional on conversion:
+    \begin{equation}
+    \label{eq:discount_reward}
+    r(s, a) = \begin{cases}
+    R_{\mathrm{base}} \cdot (1 - d_a) & \text{if converted}, \\
+    0 & \text{otherwise}.
+    \end{cases}
+    \end{equation}
+    \item Transitions. Conversion resets recency to 0 and increments frequency; non-conversion increments recency. Giving a discount increments habituation; not giving one decrements it.
+    \item Discount factor. $\gamma = 0.95$.
+\end{enumerate}
+\end{definition}
+
+The Bellman optimality equation incorporates the stochastic conversion:
+\begin{equation}
+\label{eq:discount_bellman}
+V^*(s) = \max_{a \in \mathcal{A}} \left[ \mathbb{E}\left[ r(s, a) + \gamma \, V^*(s') \right] \right].
+\end{equation}
+
+The heuristic set contains three policies. The static ITE policy always offers 10\% (a fixed personalization baseline). The threshold policy offers 30\% if recency exceeds 20 days, else 0\% (a recency-triggered rule). The no-discount policy never offers discounts.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../ch03_rl_control_problems/sims/discount_targeting_results.png}
+\caption{Discount targeting benchmark ($n = 3$). Learning curve showing DQN convergence to DP optimal, with heuristic baselines for comparison.}
+\label{fig:discount_scaling}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Discount targeting benchmark results ($n = 3$).}
+\label{tab:discount_results}
+\input{../ch03_rl_control_problems/sims/discount_targeting_results.tex}
+\end{table}
+
+The discount targeting benchmark tests the pricing and personalization archetype. The key economic tension is between short-run conversion gains from discounting and long-run habituation costs. RL policies learn state-dependent discount schedules that account for the customer's discount history.
+
+
+\subsection{Benchmark 5: Revenue Management}
+\label{sec:benchmark_hotel}
+
+Dynamic pricing requires setting prices that respond to demand conditions, inventory levels, and competitor behaviour. The sequential structure arises because today's price affects both current sales and the inventory available for future periods.
+
+The classical foundation for dynamic pricing is the intensity control framework of \citet{Gallego1994pricing}, who showed that for perishable inventory with Poisson demand, the optimal price trajectory can be characterized analytically under specific demand models. Their results establish the theoretical benchmark: any RL-based pricing system should match or exceed the Gallego-van Ryzin solution in settings where its assumptions hold, and demonstrate value in the richer settings where those assumptions break down.
+
+Alibaba deployed RL for dynamic pricing on its AliExpress platform. \citet{Alibaba2019} described a learning-based approach to real-time price adjustment, where the state space included current inventory levels, historical sales velocity, and competitor pricing signals, and actions were discrete price adjustments. The system was evaluated on real transaction data from AliExpress and demonstrated improvements in revenue relative to fixed-price and rule-based baselines.
+
+\citet{Chen2023hotelrl} applied RL to hotel revenue management, a domain where the classical approach relies on booking limit controls derived from dynamic programming under parametric demand models. Their formulation treats each hotel property as a finite-horizon MDP: the state encodes current occupancy by room type and remaining days until check-in, actions are accept/reject decisions for incoming reservation requests at posted prices, and the reward is cumulative revenue. The RL agent, trained on historical booking data, learned pricing policies that adapted to demand fluctuations more responsively than static booking-limit heuristics.
+
+We formalize a hotel revenue management MDP that captures the essential pricing-under-scarcity structure of these deployments.
+
+\begin{definition}[Hotel Revenue Management MDP]
+\label{def:hotel_mdp}
+The hotel revenue management MDP $\mathcal{M}_{\mathrm{hotel}}(C)$ is defined as follows.
+\begin{enumerate}
+    \item State space. $\mathcal{S} = \{0, \ldots, T-1\} \times \{0, \ldots, C\} \times \{0, \ldots, D-1\}$, where $T$ is the booking horizon, $C$ is the hotel capacity, and $D$ is the number of demand intensity bins. A state $(t, I, d)$ records days until check-in, remaining rooms, and recent demand intensity. The state space size is $|\mathcal{S}| = T \cdot (C + 1) \cdot D$.
+    \item Action space. $\mathcal{A} = \{p_1, \ldots, p_M\}$, a set of $M = 5$ discrete price tiers.
+    \item Demand model. Each period, the number of potential arrivals follows $\mathrm{Poisson}(\lambda(d))$, where $\lambda(d)$ depends on the demand intensity bin. Each arrival books with probability
+    \begin{equation}
+    \label{eq:hotel_booking_prob}
+    q(p) = \frac{1}{1 + \exp(\alpha \cdot (p - p_{\mathrm{ref}}))},
+    \end{equation}
+    where $\alpha > 0$ is the price sensitivity and $p_{\mathrm{ref}}$ is the reference price.
+    \item Reward function. $r(s, a) = p_a \cdot \text{bookings}$, where bookings $= \min(\text{arrivals who book},\, I)$.
+    \item Transitions. Inventory decrements by bookings. The demand intensity bin transitions stochastically based on realized demand. At $t = 0$ (check-in), the episode ends; unsold rooms yield zero revenue.
+    \item Discount factor. $\gamma = 1.0$ (finite horizon, no discounting).
+\end{enumerate}
+\end{definition}
+
+The Bellman equation for this finite-horizon problem is
+\begin{equation}
+\label{eq:hotel_bellman}
+V^*_t(I, d) = \max_{p \in \mathcal{A}} \left[ \mathbb{E}\left[ p \cdot B + V^*_{t-1}(I - B, d') \right] \right], \quad V^*_0(I, d) = 0,
+\end{equation}
+where $B$ is the random number of bookings and $d'$ is the next demand intensity bin. The state space is $T(C+1)D$, which grows linearly in $C$. With $T = 30$ and $D = 3$, the state space is $90(C + 1)$: approximately 990 states at $C = 10$ and 7,290 at $C = 80$. Although the growth is linear, exact DP requires computing the booking probability distribution for each state-action pair, making it slow for large $C$.
+
+The heuristic set $\mathcal{H}$ contains three policies. The fixed price policy always charges the reference price $p_{\mathrm{ref}}$, ignoring both inventory and time. The EMSR-b policy (Expected Marginal Seat Revenue) is a standard airline and hotel heuristic that raises prices when inventory is scarce relative to remaining time.\footnote{Our EMSR-b implementation uses a simplified rule: if $I / (C \cdot t/T) > 1.2$, price low; if $< 0.5$, price high; otherwise price at reference.} The myopic policy selects the price maximizing immediate expected revenue $p \cdot \lambda(d) \cdot q(p)$, ignoring future scarcity.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../ch03_rl_control_problems/sims/hotel_rm_scaling.png}
+\caption{Hotel revenue management benchmark. Left: wall-clock time vs.\ capacity $C$. Right: mean episode revenue. DQN learns inventory-dependent pricing that outperforms the fixed-price and myopic baselines, approaching the EMSR-b heuristic and exceeding it at larger capacities.}
+\label{fig:hotel_scaling}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Hotel revenue management benchmark results.}
+\label{tab:hotel_results}
+\input{../ch03_rl_control_problems/sims/hotel_rm_results.tex}
+\end{table}
+
+The hotel benchmark tests the pricing archetype: choosing prices over a finite horizon with perishable inventory. The key economic tension is between selling early at low prices (guaranteed revenue) and waiting for higher-value customers (risky but potentially more profitable). RL policies learn state-dependent pricing schedules that simple heuristics cannot express.
+
+
+\subsection{Benchmark 6: Auctions and Advertising}
+\label{sec:benchmark_rtb}
+
+Real-time bidding (RTB) is the dominant mechanism for online display advertising. When a user visits a webpage, an auction occurs in milliseconds: advertisers submit bids, the highest bidder wins the impression, and pays the second-highest bid (or a reserve price). An advertiser running a campaign must decide how aggressively to bid in each auction, subject to a total budget constraint over the campaign duration.
+
+The budget pacing problem is to allocate a fixed budget across a sequence of auctions to maximize total conversions (or other objective). Bidding too aggressively early exhausts the budget before high-value impressions arrive later; bidding too conservatively leaves budget unspent. The optimal strategy depends on the distribution of auction clearing prices, the value of different impressions, and the remaining budget and time.
+
+\citet{Wu2018rtb} formalized RTB budget pacing as an MDP and demonstrated that RL-based bidding agents outperform rule-based pacing algorithms in simulated auctions calibrated to real RTB data. Their state representation included remaining budget, time elapsed, and recent win rates; actions were bid multipliers applied to a base bid. The RL agent learned to adapt bidding intensity to market conditions, increasing bids when competition was low and conserving budget when prices spiked.
+
+We formalize an RTB budget pacing MDP.
+
+\begin{definition}[RTB Budget Pacing MDP]
+\label{def:rtb_mdp}
+The RTB budget pacing MDP $\mathcal{M}_{\mathrm{rtb}}(T)$ is defined as follows.
+\begin{enumerate}
+    \item State space. $\mathcal{S} = \{0, \ldots, T-1\} \times \{0, \ldots, B_{\mathrm{bins}}-1\} \times \{0, \ldots, W_{\mathrm{bins}}-1\}$, encoding time period, discretized remaining budget, and discretized recent win rate. With $T = 24$ periods, $B_{\mathrm{bins}} = 10$ budget bins, and $W_{\mathrm{bins}} = 3$ win-rate bins, the state space has $|\mathcal{S}| = 720$ states.
+    \item Action space. $\mathcal{A} = \{0, 0.5, 1.0, 1.5, 2.0\}$, bid multipliers applied to a base bid. $|\mathcal{A}| = 5$.
+    \item Auction model. Each period, the agent participates in $n = 20$ second-price auctions. Clearing prices follow a log-normal distribution. The agent wins auctions where its bid exceeds the clearing price and pays the clearing price for each win.
+    \item Reward function. Conversions occur with probability $p_{\mathrm{conv}}$ per won impression:
+    \begin{equation}
+    \label{eq:rtb_reward}
+    r(s, a) = \sum_{i=1}^{n} \mathbbm{1}\{\text{win}_i\} \cdot \mathbbm{1}\{\text{convert}_i\}.
+    \end{equation}
+    \item Transitions. Budget decrements by total spend. Win rate updates as an exponential moving average of period win rate. Campaign ends when $t = T$ or budget is exhausted.
+    \item Discount factor. $\gamma = 1.0$ (finite horizon, maximize total conversions).
+\end{enumerate}
+\end{definition}
+
+The Bellman equation is
+\begin{equation}
+\label{eq:rtb_bellman}
+V^*(t, b, w) = \max_{a \in \mathcal{A}} \left[ \mathbb{E}\left[ r(s, a) + V^*(t+1, b', w') \right] \right], \quad V^*(T, \cdot, \cdot) = 0.
+\end{equation}
+
+The heuristic set contains three policies. The uniform pacing policy targets spending budget/remaining-periods per period. The greedy policy bids maximum until budget is exhausted. The PID controller adjusts bid multipliers based on the error between target and actual spend rate.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../ch03_rl_control_problems/sims/rtb_bidding_scaling.png}
+\caption{RTB bidding benchmark ($T = 24$). Learning curve showing DQN convergence. The greedy heuristic exhausts budget early; uniform pacing is conservative; RL learns adaptive bid adjustment.}
+\label{fig:rtb_scaling}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{RTB bidding benchmark results ($T = 24$).}
+\label{tab:rtb_results}
+\input{../ch03_rl_control_problems/sims/rtb_bidding_results.tex}
+\end{table}
+
+The RTB benchmark tests the budget allocation archetype under uncertainty. The key insight is that optimal pacing requires anticipating future auction conditions: if prices are currently high but expected to fall, the agent should conserve budget. RL policies learn this temporal arbitrage that rule-based pacers cannot.
+
+
+\subsection{Benchmark 7: Finance and Order Execution}
+\label{sec:benchmark_execution}
+
+Optimal execution of large equity orders is a central problem in algorithmic trading. A trader must liquidate a position of $Q$ shares over $T$ periods, balancing the tradeoff between trading quickly (to reduce exposure to price volatility) and trading slowly (to minimize market impact costs from moving the price against oneself).
+
+The theoretical foundation is the Almgren-Chriss framework \citep{Almgren2001execution}, which models execution as optimizing a mean-variance objective over trading trajectories. Under their assumptions of linear temporary and permanent impact, the optimal strategy is a deterministic schedule that can be computed analytically. However, real markets exhibit state-dependent liquidity: impact costs vary with trading volume, volatility regimes, and time of day.
+
+\citet{Nevmyvaka2006execution} applied RL to optimal execution on real limit order book data, demonstrating that RL agents learned execution strategies that outperformed the Almgren-Chriss baseline by adapting to intraday liquidity patterns. JPMorgan's LOXM system reportedly uses RL for execution, learning when to trade aggressively versus passively based on market microstructure signals.
+
+We formalize an order execution MDP.
+
+\begin{definition}[Order Execution MDP]
+\label{def:execution_mdp}
+The order execution MDP $\mathcal{M}_{\mathrm{exec}}(T)$ is defined as follows.
+\begin{enumerate}
+    \item State space. $\mathcal{S} = \{0, \ldots, T-1\} \times \{0, \ldots, Q\} \times \{0, \ldots, V-1\} \times \{0, \ldots, \Sigma-1\}$, encoding time remaining, shares remaining, volume bin (current market volume), and volatility bin. With $T = 20$, $Q = 10$, $V = 3$, $\Sigma = 3$, the state space has $|\mathcal{S}| = 1{,}980$ states.
+    \item Action space. $\mathcal{A} = \{0, 0.2, 0.4, 0.6, 0.8, 1.0\}$, the fraction of remaining shares to trade this period. $|\mathcal{A}| = 6$.
+    \item Market impact model. Trading $q$ shares incurs temporary impact (proportional to $q^2$) and permanent impact (proportional to $q$), scaled by current volume and volatility:
+    \begin{equation}
+    \label{eq:execution_cost}
+    c(q, v, \sigma) = \kappa_{\mathrm{temp}} \cdot q^2 \cdot f(v) + \kappa_{\mathrm{perm}} \cdot q \cdot f(v) + \kappa_{\mathrm{risk}} \cdot q \cdot g(\sigma),
+    \end{equation}
+    where $f(v)$ is a volume scaling factor (lower volume $\Rightarrow$ higher impact) and $g(\sigma)$ is a volatility scaling factor.
+    \item Reward function. $r(s, a) = -c(q, v, \sigma)$, the negative execution cost.
+    \item Transitions. Shares remaining decrements by $q$. Volume and volatility bins evolve as Markov chains. At $t = 0$, any unexecuted shares incur a large penalty (deadline miss).
+    \item Discount factor. $\gamma = 1.0$ (finite horizon, minimize total cost).
+\end{enumerate}
+\end{definition}
+
+The Bellman equation is
+\begin{equation}
+\label{eq:execution_bellman}
+V^*(t, q, v, \sigma) = \max_{a \in \mathcal{A}} \left[ r(s, a) + \mathbb{E}_{v', \sigma'}\left[ V^*(t-1, q - \lfloor a \cdot q \rfloor, v', \sigma') \right] \right].
+\end{equation}
+
+The heuristic set contains three policies. The TWAP (Time-Weighted Average Price) policy trades $q / t$ shares per period. The VWAP (Volume-Weighted Average Price) policy trades more in high-volume periods. The greedy policy executes all shares immediately.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../ch03_rl_control_problems/sims/execution_scaling.png}
+\caption{Order execution benchmark ($T = 20$). Learning curve showing DQN convergence. TWAP and VWAP are strong baselines; RL learns to deviate from uniform execution based on volatility and volume conditions.}
+\label{fig:execution_scaling}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Order execution benchmark results ($T = 20$).}
+\label{tab:execution_results}
+\input{../ch03_rl_control_problems/sims/execution_results.tex}
+\end{table}
+
+The order execution benchmark tests the optimal timing archetype in finance. The key insight is that market conditions are informative: high volatility suggests trading faster to reduce risk; high volume suggests trading now because impact is low. RL policies learn these conditional strategies.
+
+
+\subsection{Benchmark 8: Supply Chain and Inventory}
+\label{sec:benchmark_inventory}
+
+Inventory management is among the oldest sequential decision problems in operations research. A firm must choose how much to order at each period, balancing the cost of holding excess stock against the cost of unmet demand, while facing uncertain future demand. In multi-echelon supply chains, this problem compounds: each stage's order becomes the next stage's demand, creating coupled dynamics across the network.
+
+The classical theory begins with \citet{ClarkScarf1960inventory}, who established the optimal structure for two-echelon systems under specific cost and demand assumptions. Their echelon base-stock policy, where each stage orders up to a target level defined in terms of total downstream inventory, remains the analytical benchmark. Extensions to general networks, nonstationary demand, and capacity constraints have proven analytically intractable in most cases, motivating computational approaches.
+
+\citet{Gijsbrechts2022inventory} conducted a systematic evaluation of deep RL for inventory management across a range of supply chain configurations. Their study compared DQN and PPO agents against classical base-stock policies and found mixed results: RL matched or slightly exceeded classical methods in simple settings but struggled with multi-echelon problems where the state space grows combinatorially with the number of stages.
+
+We formalize a serial multi-echelon inventory system as our benchmark MDP.
+
+\begin{definition}[Multi-Echelon Inventory MDP]
+\label{def:inventory_mdp}
+The serial multi-echelon inventory MDP $\mathcal{M}_{\mathrm{inv}}(K)$ is defined as follows.
+\begin{enumerate}
+    \item State space. $\mathcal{S} = \{0, \ldots, I_{\max}\}^K$, where $I_{\max}$ is the maximum inventory per echelon and $K$ is the number of echelons. A state $s = (I_1, \ldots, I_K)$ records on-hand inventory at each echelon. The state space size is $|\mathcal{S}| = (I_{\max} + 1)^K$.
+    \item Action space. $\mathcal{A} = \{0, 1, \ldots, Q_{\max}\}$, the order quantity for echelon 1 (the most downstream echelon facing customer demand). $|\mathcal{A}| = Q_{\max} + 1$.
+    \item Demand. Customer demand arrives at echelon 1 as $D \sim \mathrm{Poisson}(\lambda)$.
+    \item Dynamics. Each period: (i) demand $D$ is realized; (ii) echelon 1 fulfills $\min(I_1, D)$ units; (iii) unfilled demand is backlogged; (iv) each upstream echelon $k > 1$ ships $\min(I_k, \text{deficit}_{k-1})$ downstream; (v) the order of $q$ units arrives at echelon $K$ from an external supplier with infinite capacity (lead time $L = 1$).
+    \item Cost function. The per-period cost is
+    \begin{equation}
+    \label{eq:inventory_cost}
+    c(s, a, D) = h \sum_{k=1}^{K} \max(I_k', 0) + b \cdot \max(0, D - I_1) + c_o \cdot q,
+    \end{equation}
+    where $h$ is the per-unit holding cost, $b$ is the per-unit backorder cost, $c_o$ is the per-unit ordering cost, and $I_k'$ is the post-shipment inventory.
+    \item Reward. $r(s, a) = -\mathbb{E}_D[c(s, a, D)]$ (negative expected cost).
+    \item Discount factor. $\gamma = 0.95$.
+\end{enumerate}
+\end{definition}
+
+The Bellman optimality equation is
+\begin{equation}
+\label{eq:inventory_bellman}
+V^*(s) = \max_{q \in \mathcal{A}} \left[ \mathbb{E}_D\left[ -c(s, q, D) + \gamma \, V^*(s') \right] \right],
+\end{equation}
+where $s'$ is the post-shipment, post-demand inventory vector. The state space $(I_{\max} + 1)^K$ grows exponentially in $K$: with $I_{\max} = 15$, it is $256$ at $K = 2$, $4{,}096$ at $K = 3$, $65{,}536$ at $K = 4$, and over $10^6$ at $K = 5$. Value Iteration is feasible for $K \leq 3$ and becomes impractical beyond.
+
+The heuristic set $\mathcal{H}$ contains three policies. The base-stock policy orders up to a target level $S^* = F_D^{-1}(b / (b + h))$ whenever inventory at echelon 1 falls below $S^*$, where $F_D$ is the demand CDF. This is the newsvendor solution applied independently to echelon 1, ignoring upstream coupling. The $(s, S)$ policy places an order of $S - I_1$ units whenever $I_1 < s$, with $s$ and $S$ set by rule of thumb. The fixed order policy orders $\lceil \lambda \rceil$ units every period regardless of state, a naive replenishment rule.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../ch03_rl_control_problems/sims/inventory_scaling.png}
+\caption{Multi-echelon inventory benchmark. Left: wall-clock time vs.\ number of echelons $K$. Right: mean episode reward (negative cost). The base-stock heuristic, optimal for a single echelon, degrades as the supply chain lengthens; RL learns coordinated ordering that accounts for upstream inventory.}
+\label{fig:inventory_scaling}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Multi-echelon inventory benchmark results.}
+\label{tab:inventory_results}
+\input{../ch03_rl_control_problems/sims/inventory_results.tex}
+\end{table}
+
+The inventory benchmark tests the quantity choice archetype. The multi-echelon structure introduces coupling between echelons that single-echelon heuristics ignore. The base-stock policy is provably optimal for the single-echelon newsvendor problem, but extending it independently to each echelon in a serial system is suboptimal: it fails to account for how upstream inventory affects downstream replenishment lead times. RL policies learn coordinated ordering strategies that exploit the full state vector.
+
+
+\subsection{Benchmark 9: Energy and Operations}
+\label{sec:benchmark_datacenter}
+
+Operational control problems, where a system must be continuously adjusted to maintain performance under changing conditions, are natural MDPs. The state is the current system configuration and environmental conditions; actions are control adjustments; rewards reflect operational cost or efficiency.
+
+Google applied machine learning to data center cooling, autonomously controlling fans, chillers, and other equipment to maintain safe temperatures while minimizing energy usage. \citet{Gao2014} reported that the initial system, based on neural network predictions of Power Usage Effectiveness (PUE), reduced cooling energy consumption by up to $40\%$, yielding a $15\%$ reduction in overall PUE. \citet{Lazic2018} subsequently formalized the problem as a model-predictive control task and deployed a safe RL approach that further improved cooling efficiency while providing formal safety guarantees against temperature constraint violations. The state space included over 100 sensor readings (temperatures, pressures, flow rates); actions were setpoints for cooling equipment. The system operated continuously in production, adapting to seasonal and load-driven variations without manual intervention.
+
+We formalize a multi-zone data center cooling problem as our benchmark MDP.
+
+\begin{definition}[Data Center Cooling MDP]
+\label{def:datacenter_mdp}
+The data center cooling MDP $\mathcal{M}_{\mathrm{dc}}(N)$ is defined as follows.
+\begin{enumerate}
+    \item State space. $\mathcal{S} = \{0, \ldots, T_{\mathrm{bins}}-1\}^N \times \{0, \ldots, L_{\mathrm{bins}}-1\}^N \times \{0, \ldots, E_{\mathrm{bins}}-1\}$, where $T_{\mathrm{bins}}$ is the number of temperature bins per zone, $L_{\mathrm{bins}}$ is the number of server load bins per zone, $E_{\mathrm{bins}}$ is the number of external temperature bins, and $N$ is the number of zones. The state space size is $|\mathcal{S}| = T_{\mathrm{bins}}^N \cdot L_{\mathrm{bins}}^N \cdot E_{\mathrm{bins}}$.
+    \item Action space. $\mathcal{A} = \{c_1, \ldots, c_M\}^N$, where each $c_j$ is a discrete cooling intensity level. The joint action space size is $M^N$, exponential in the number of zones.
+    \item Thermal dynamics. For each zone $k$, the next-period temperature evolves as
+    \begin{equation}
+    \label{eq:datacenter_dynamics}
+    T_{k,t+1} = T_{k,t} + \alpha \cdot L_{k,t} - \beta \cdot c_{k,t} + \delta \cdot E_t + \varepsilon_{k,t},
+    \end{equation}
+    where $\alpha$ is the heat gain from server load, $\beta$ is the cooling effectiveness, $\delta$ is the external temperature influence, and $\varepsilon_{k,t}$ is i.i.d.\ noise.
+    \item Cost function. The per-period cost is
+    \begin{equation}
+    \label{eq:datacenter_cost}
+    c(s, a) = \sum_{k=1}^{N} \left[ \kappa_1 c_k + \kappa_2 c_k^2 + \Gamma \cdot \mathbbm{1}\{T_k \geq \bar{T}\} \cdot (T_k - \bar{T} + 1) + \xi |T_k - T^*| \right],
+    \end{equation}
+    where $\kappa_1, \kappa_2$ are energy cost coefficients (linear and quadratic), $\Gamma$ is the overheat penalty, $\bar{T}$ is the overheat threshold, $T^*$ is the target temperature, and $\xi$ is the comfort penalty coefficient.
+    \item Reward function. $r(s, a) = -c(s, a)$.
+    \item Transitions. Temperature evolves per \eqref{eq:datacenter_dynamics} and is discretized. Server load and external temperature follow independent Markov chains.
+    \item Discount factor. $\gamma = 0.95$.
+\end{enumerate}
+\end{definition}
+
+The Bellman optimality equation is
+\begin{equation}
+\label{eq:datacenter_bellman}
+V^*(s) = \max_{a \in \mathcal{A}} \left[ r(s, a) + \gamma \sum_{s'} P(s' | s, a) \, V^*(s') \right].
+\end{equation}
+The state space grows as $T_{\mathrm{bins}}^N \cdot L_{\mathrm{bins}}^N \cdot E_{\mathrm{bins}}$, which is exponential in $N$. With $T_{\mathrm{bins}} = 6$, $L_{\mathrm{bins}} = 4$, and $E_{\mathrm{bins}} = 3$, a single zone has $6 \cdot 4 \cdot 3 = 72$ states; two zones have $6^2 \cdot 4^2 \cdot 3 = 1{,}728$ states; four zones exceed $5 \times 10^6$ states. The action space also grows exponentially: with 4 cooling levels per zone, the joint action space is $4^N$, reaching 256 at $N = 4$. Value Iteration is feasible for $N = 1$ and infeasible beyond.
+
+The heuristic set $\mathcal{H}$ contains three policies. The fixed setpoint policy applies medium cooling intensity ($c = 0.5$) to all zones regardless of conditions. The load-proportional policy sets cooling intensity proportional to server load at each zone: high load triggers high cooling, idle servers receive minimal cooling. The PID controller adjusts cooling based on the temperature error from target, with proportional and integral terms that smooth the response over time.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../ch03_rl_control_problems/sims/datacenter_scaling.png}
+\caption{Data center cooling benchmark. Left: wall-clock time vs.\ number of zones $N$. Right: mean episode reward (negative operating cost). The fixed setpoint wastes energy on idle zones. Load-proportional cooling improves efficiency but ignores thermal dynamics. RL learns zone-aware cooling schedules that balance energy cost against overheating risk.}
+\label{fig:datacenter_scaling}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Data center cooling benchmark results.}
+\label{tab:datacenter_results}
+\input{../ch03_rl_control_problems/sims/datacenter_results.tex}
+\end{table}
+
+The datacenter benchmark tests the continuous control archetype. The multi-zone structure creates coupling between zones (through external temperature and shared cooling infrastructure) that single-zone heuristics ignore. The PID controller adapts to temperature deviations but does not anticipate load changes; RL policies learn predictive cooling strategies that pre-emptively adjust cooling before temperatures reach critical thresholds.
+
+
+\subsection{Summary of Benchmark Suite}
+\label{sec:benchmark_summary}
+
+Table~\ref{tab:benchmark_summary} summarizes the nine benchmarks, their economic archetypes, complexity dials, state space ranges, and the principal lesson each teaches about the relationship between RL and classical methods.
+
+\begin{table}[htbp]
+\centering
+\caption{Summary of the nine economic benchmarks.}
+\label{tab:benchmark_summary}
+\begin{tabular}{clllll}
+\toprule
+\# & Benchmark & Archetype & Dial & $|\mathcal{S}|$ Range & Lesson \\
+\midrule
+\multicolumn{6}{l}{\emph{Pedagogical Examples}} \\
+1 & Gridworld & Navigation & $N$ (grid size) & $100$--$400$ & Algorithm validation \\
+2 & Bus Engine & Replacement & $N$ (engines) & $1{,}296$--$46{,}656$ & Structural estimation \\
+\midrule
+\multicolumn{6}{l}{\emph{Production Applications}} \\
+3 & Dispatch & Matching & $K$ (zones) & $1{,}296$--$60 \times 10^6$ & Spatial externalities \\
+4 & Discount & Personalization & $n$ (features) & $2{,}400$--$72{,}000$ & Habituation dynamics \\
+5 & Hotel RM & Pricing & $C$ (capacity) & $990$--$7{,}290$ & Perishable inventory \\
+6 & RTB & Budget pacing & $T$ (periods) & $720$--$2{,}160$ & Temporal arbitrage \\
+7 & Execution & Optimal timing & $T$ (periods) & $1{,}980$--$5{,}940$ & Market microstructure \\
+8 & Inventory & Quantity choice & $K$ (echelons) & $256$--$10^6$ & Supply chain coupling \\
+9 & Datacenter & Control & $N$ (zones) & $72$--$5 \times 10^6$ & Multi-zone coupling \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Taken together, the nine benchmarks cover major economic decision archetypes: navigation and validation (gridworld), durable goods replacement (bus engine), spatial allocation (transport dispatch), dynamic personalization (discount targeting), pricing with perishable inventory (hotel), budget allocation in auctions (RTB), optimal execution timing (finance), multi-echelon quantity choice (inventory), and operational control (data center cooling). Each benchmark confirms the two-tier evaluation structure: RL matches DP where DP is feasible (Tier~1 credibility) and outperforms practitioner heuristics where DP is not (Tier~2 value).
+
+
+\subsection{Common Patterns and Open Challenges}
+\label{sec:benchmark_patterns}
+
+Several patterns emerge across the nine benchmarks and the deployed systems they represent. The most successful applications share a common structure: high-frequency decisions, abundant logged data for offline pre-training, and a well-defined scalar reward. Nearly all production systems add safety mechanisms such as action clipping, fallback to rule-based policies, or conservative offline training before online deployment. The resulting gains are often modest in percentage terms ($0.5$--$2\%$ for dispatch, $15\%$ for trade execution) but economically large due to the scale of operations.
+
+Significant challenges remain. Reward misalignment can produce policies that optimize a metric while degrading the economic outcome. Multi-objective settings require reward engineering that current practice handles through ad hoc weighted sums. Sample efficiency is a bottleneck where experimentation is costly or risky. Interpretability of RL policies lags behind traditional approaches, limiting adoption in regulated industries.

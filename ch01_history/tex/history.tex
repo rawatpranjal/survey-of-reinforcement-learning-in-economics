@@ -1,31 +1,212 @@
-\subsection{A Brief History of Reinforcement Learning}
+% Chapter 1: A Brief History of Reinforcement Learning
+% Three sections: Roots (pre-Sutton), Classical Synthesis (Barto-Baird), Modern Era (Mnih onwards)
+% Ends at AlphaGo Zero (no RLHF)
 
-The reinforcement learning (RL) journey began with early computational work on game engines. \citet{Shannon1950} created chess evaluation functions, anticipating programs that could ``learn from mistakes." \citet{Minsky1954}'s thesis connected neural networks to Skinnerian conditioning, introducing a "second memory" for outcome prediction—foreshadowing value functions. \citet{Samuel1959}'s groundbreaking checkers program implemented rote learning and parameter adjustment based on evaluation differences, presaging temporal difference learning. Concurrently, \citet{Bellman1957} and \citet{Howard1960} developed dynamic programming for sequential decision-making, establishing the mathematical foundation of optimality through backward induction in fully-specified environments. These early contributions identified the core challenges that would drive RL research: credit assignment (determining which actions lead to rewards), exploration (trying new actions while exploiting successful ones), and function approximation (generalizing across state spaces).
+This chapter offers a selective survey of key papers that inform the central debates and issues in reinforcement learning. Rather than exhaustive coverage, we focus on foundational contributions that shaped how the field thinks about learning, planning, and approximation. The narrative traces three intellectual threads that converged into modern RL. It then follows the classical synthesis from temporal difference learning through the identification of the deadly triad. Finally, it concludes with the deep learning era that revived and extended these ideas.
 
-Reinforcement learning crystallized as a coherent field through Sutton and Barto's unifying work, which addressed the critical problem of learning without complete environmental models. Their temporal difference (TD) learning method \citep{Sutton1988} solved the credit assignment problem by bootstrapping—updating value estimates based on subsequent predictions rather than waiting for final outcomes—a middle ground between Monte Carlo approaches and dynamic programming. This innovation enabled agents to learn incrementally from partial experiences, a fundamental capability for online learning. Building on this foundation, they synthesized diverse approaches (Q-learning, SARSA, actor-critic methods) under the framework of generalized policy iteration (GPI), where policy evaluation and improvement operate symbiotically \citep{SuttonBarto1998}. 
+\subsection*{Notation}
 
-A significant early framework was the actor-critic architecture, introduced by \citet{BartoSuttonAnderson1983}, which combined a policy representation (actor) with a separate value function (critic). This approach allowed agents to handle both discrete and continuous action spaces while providing a natural implementation of policy gradient methods. \citet{watkins1992_paper}'s Q-learning, with its convergence guarantees, allowed an agent to learn optimal policies despite following a different behavioral policy. This "off-policy" learning allowed the agent to re-use past experiences. Meanwhile, policy gradient methods like REINFORCE \citep{Williams1992} directly optimized policy parameters, being particularly valuable for continuous or high-dimensional action spaces where value-based methods struggled.
+This chapter adopts a unified notation for concepts that developed independently across fields. States are denoted $s \in \mathcal{S}$, actions $a \in \mathcal{A}$, rewards $r$, and the discount factor $\gamma \in [0,1)$. The state-value function is $V(s)$, the action-value function $Q(s,a)$, and a policy $\pi(a|s)$. The temporal difference error is $\delta_t = r_{t+1} + \gamma V(s_{t+1}) - V(s_t)$. Learned weights are denoted $\mathbf{w}$ for linear models and $\theta$ for general parameterizations, with learning rate $\alpha$. When presenting historical formalisms, we map them to this modern notation.
 
-The multi-armed bandit problem, a simplified setting where agents make one-shot decisions under uncertainty, provided a formal framework for analyzing the exploration-exploitation trade-off. Lai \& Robbins (1985) established regret lower bounds which was integrated into robust algorithms like Upper Confidence Bound (UCB) by \citet{Auer2002} which had finite-time regret guarantees. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Roots}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Function approximation represented the next frontier, as traditional tabular methods couldn't scale to problems with large state spaces. \citet{Tesauro1994}'s TD-Gammon marked a breakthrough: a backgammon-playing program that achieved near-human-expert performance through self-play, using TD learning with neural networks as function approximators. This success demonstrated that RL could scale to domains with proper generalization mechanisms. However, function approximation introduced new stability challenges—the ``deadly triad" of bootstrapping, off-policy learning, and function approximation could cause divergence and instability in learning.
+Modern reinforcement learning emerged from three distinct intellectual traditions: optimal control theory, game-playing programs, and animal learning psychology. Each contributed essential ideas that, taken together, define the field. We trace these threads from their origins through their eventual synthesis.
 
-Before the deep learning era, the RL toolkit expanded in different directions. \citet{Sutton1990}'s Dyna architecture unified learning and planning by integrating a learned model with direct reinforcement learning, establishing the model-based RL paradigm that would later influence systems like AlphaGo. Hierarchical frameworks tackled the complexity of long-horizon problems: \citet{Sutton1999Options}'s Options framework formalized temporal abstraction, allowing agents to reason at multiple time scales. \citet{brafman2002rmax}'s R-MAX algorithm provided theoretical guarantees for efficient exploration through the principle of "optimism in the face of uncertainty," automatically balancing exploration and exploitation. Policy optimization advanced through \citet{Kakade2001}'s Natural Policy Gradient, which improved learning efficiency by accounting for the concavity of the loss landscape through Fisher information. \citet{NgRussell2000} formalized Inverse Reinforcement Learning for inferring reward functions from demonstrations, enabling preference learning from expert behavior—a subfield with exactly the same goals as structural econometrics. \citet{BertsekasTsitsiklis1996} bridged RL with control theory through their "Neuro-Dynamic Programming" framework, providing rigorous theoretical analysis and applications to operations research problems.
+\subsubsection{The Optimal Control Thread}
 
-The deep RL revolution overcame the problem of function approximation and the "deadly triad" that had limited previous scaling efforts. \citet{Mnih2015}'s Deep Q-Networks (DQN) achieved human-level performance on Atari games by combining Q-learning with convolutional neural networks, learning directly from raw pixels without hand-crafted features. Critical innovations that stabilized this integration included experience replay (breaking correlations between consecutive samples) and target networks (reducing update instability). These techniques addressed key problems in applying RL to high-dimensional sensory inputs, enabling end-to-end learning from raw observations to actions. The breakthrough opened a floodgate of innovations, with \citet{Schulman2015}'s Trust Region Policy Optimization and \citet{Schulman2017}'s Proximal Policy Optimization providing similarly stable and reliable policy learning methods.
+\paragraph{Bellman (1957)}
 
-Game-playing achievements demonstrated how combining deep RL with planning could solve problems of unprecedented complexity. \citet{Silver2016}'s AlphaGo defeated world champion Lee Sedol by integrating supervised learning from human games with reinforcement learning from self-play, marking a milestone that many experts believed was decades away. More remarkably, AlphaGo Zero \citep{Silver2017} achieved superhuman performance without human data, learning entirely through self-play. \citet{Igami2020} noted the economic parallels, interpreting AlphaGo's architecture as combining a supervised learning policy network (similar to Hotz-Miller's conditional choice probability estimator) with a reinforcement learning value network (analogous to conditional choice simulation methods). 
+Multi-stage decision problems require choosing today while accounting for how that choice constrains tomorrow. A warehouse manager deciding order quantities faces this structure: today's stock depends on yesterday's order, and tomorrow's depends on today's. \citet{Bellman1957} recognized that all such problems share a recursive form.
 
-The application of reinforcement learning to language models represents one of its most significant recent developments. Reinforcement Learning from Human Feedback (RLHF) emerged as the dominant paradigm for aligning large language models with human preferences, addressing the challenge of optimizing for implicit human values rather than easily-specified reward functions. Key implementations include OpenAI's InstructGPT \citep{Ouyang2022}, which showed a significantly smaller RLHF-tuned model outperforming much larger base models on human preference metrics, and Anthropic's Constitutional AI \citep{Bai2022}, which developed RL from AI Feedback to reduce the need for human evaluations. These applications demonstrate how an RL framework enables AI systems to better align with human intentions.
+A decision process consists of states $\mathcal{S}$, actions $\mathcal{A}$, transition kernel $P(s'|s,a)$, reward function $r(s,a)$, and discount factor $\gamma$. The optimal value function satisfies:
+\begin{equation}
+V^*(s) = \max_{a \in \mathcal{A}} \left[ r(s,a) + \gamma \sum_{s'} P(s'|s,a) \, V^*(s') \right]
+\label{eq:bellman}
+\end{equation}
+The principle of optimality states that an optimal policy has the property that, whatever the initial state and initial decision, the remaining decisions must constitute an optimal policy with respect to the state resulting from the first decision. Value iteration computes $V^*$ by repeated application of the Bellman operator, converging at rate $\gamma$ per iteration.\footnote{The Bellman operator $T$ maps value functions to value functions via $(TV)(s) = \max_a [r(s,a) + \gamma \sum_{s'} P(s'|s,a)V(s')]$. Convergence at rate $\gamma$ means $\|V_k - V^*\|_\infty \leq \gamma^k \|V_0 - V^*\|_\infty$.} Bellman also identified the curse of dimensionality:\footnote{The curse of dimensionality refers to exponential growth of state space with dimension. For $d$ continuous variables discretized into $m$ bins each, $|\mathcal{S}| = m^d$, making exact methods infeasible in high dimensions.} if the state $s = (x_1, \ldots, x_d)$ with each component $x_i$ taking $m$ values, then $|\mathcal{S}| = m^d$, and both storage and computation grow exponentially in the number of state variables.
 
-\subsection{A Brief History of Structural Econometrics}
+\paragraph{Howard (1960)}
 
-Structural econometrics emerged from the Cowles Commission's groundbreaking work in the 1940s, which established the foundation for relating economic theory to statistical analysis. \citet{Haavelmo1944} introduced the probabilistic framework that distinguished between structural and reduced-form parameters, formalizing the identification problem in simultaneous equations. Koopmans developed order and rank conditions determining which parameters are identifiable given model specifications, while Marschak emphasized the importance of "autonomy" in structural equations—relationships that remain invariant under policy interventions. \citet{HoodKoopmans1953} consolidated these advances into a coherent set of tools, introducing estimation techniques like limited and full-information maximum likelihood. This methodological fusion of economic theory with statistical inference became the defining characteristic of structural econometrics.
+Value iteration updates every state on every iteration and converges geometrically at rate $\gamma$ per iteration. \citet{howard1960} contributed policy iteration, which alternates between two steps and converges in finitely many iterations. The evaluation step computes $V^\pi$ for the current policy $\pi$ by solving the linear system
+\begin{equation}
+V^\pi(s) = r(s, \pi(s)) + \gamma \sum_{s'} P(s'|s, \pi(s)) \, V^\pi(s') \quad \text{for all } s \in \mathcal{S}
+\end{equation}
+and the improvement step updates the policy via
+\begin{equation}
+\pi'(s) = \argmax_{a \in \mathcal{A}} \left[ r(s,a) + \gamma \sum_{s'} P(s'|s,a) \, V^\pi(s') \right]
+\end{equation}
+Howard proved that policy iteration converges to the optimal policy in a finite number of steps.
 
-The field advanced significantly through \citet{McFadden1974}'s discrete choice framework, which formalized the connection between utility maximization theory and probabilistic choice behavior. \citet{Heckman1979}'s sample selection model addressed estimation bias from non-random sample selection, treating participation decisions as part of the economic model. These static frameworks laid groundwork for structural estimation in labor economics, industrial organization, and public finance. By the early 1980s, researchers began transitioning from static to dynamic sequential decision problems. \citet{Wolpin1984} modeled fertility decisions over time, and \citet{Miller1984} developed dynamic job matching models.
+The Bellman equation and Howard's policy iteration together constitute the planning framework for sequential decisions under uncertainty. This framework assumes complete knowledge of $P$ and $r$. The challenge of learning optimal behavior without such knowledge is the central problem of reinforcement learning. Chapter~\ref{section:planning_learning} develops the relationship between planning and learning in detail.
 
-A milestone was \citet{Rust1987}'s nested fixed-point (NFXP) algorithm, which formulated and estimated a fully specified Markov decision process for engine replacement decisions. For each trial parameter vector, Rust solved the Bellman equation via fixed-point iteration, then maximized the likelihood of observed choices. This methodological breakthrough showed that full-solution estimation of dynamic discrete choice models was computationally feasible, inspiring subsequent innovations to address the "curse of dimensionality." \citet{BerryLevinsohnPakes1995} revolutionized demand estimation with their random coefficients logit model for differentiated products, inverting market share data to recover underlying consumer utilities while allowing flexible substitution patterns with endogenous prices. This "BLP" approach became the workhorse for static demand estimation in industrial organization, later enhanced through techniques integrating micro-data \citep{Petrin2002} and methodological refinements addressing numerical performance \citep{DubeFoxSu2012}.
+\subsubsection{The Game Engines Thread}
 
-The computational burden of repeatedly solving dynamic games spurred methodological innovations in the 2000s. \citet{HotzMiller1993} introduced the conditional choice probability (CCP) method, showing that observed choice probabilities could be inverted to recover value function differences without repeatedly solving the dynamic programming problem. \citet{BajariBenkardLevin2007} adapted this insight to dynamic games through a two-step approach—first estimating policy functions from data, then finding structural parameters that rationalize observed behavior. \citet{AguirregabiriaMira2007} proposed nested pseudo-likelihood estimation, iteratively refining two-step estimates to reduce bias. \citet{PesendorferSchmidtDengler2008} developed value function difference methods using equilibrium conditions directly.
+\paragraph{Shannon (1950)}
 
-Recent advances have further expanded structural econometrics' capabilities. \citet{WeintraubBenkardVanRoy2008} introduced oblivious equilibrium concepts to handle high-dimensional state spaces with many agents. \citet{CilibertoTamer2009} developed moment inequality methods addressing equilibrium multiplicity through partial identification. Advances in production function estimation \citep{AckerbergCavesFrazer2015} refined proxy methods for handling endogeneity. The 2010s witnessed integration with machine learning techniques, using neural networks as function approximators for value and policy functions. \citet{FernandezVillaverdeNunoPerla2024} demonstrated how deep learning can mitigate the curse of dimensionality in solving high-dimensional economic models. \citet{MaliarMaliarWinant2021} used neural networks trained via stochastic gradient descent for solving dynamic programming problems, while \citet{AtashbarShi2023} applied deep reinforcement learning to macroeconomic models.
+Chess provides a well-defined domain for studying machine intelligence: precise rules, a clear objective, and a need for planning, evaluation, and strategic reasoning. \citet{Shannon1950} posed the fundamental question: can we program a general-purpose computer to play chess, and if so, what principles should guide the design?
+
+The challenge is computational. A chess game averages 40 moves per player with roughly 30 legal moves available at each position. Exhaustive search through all possible games would require examining approximately $30^{80} \approx 10^{120}$ positions. Brute-force enumeration fails at the scale of the game tree. Human masters examine only a few dozen positions when choosing a move, guided by pattern recognition. But encoding this expertise into explicit rules proved difficult.
+
+Shannon distinguished two approaches. Type A strategies search all continuations to a fixed depth; Type B strategies search selectively, examining only important variations. Either approach requires an evaluation function $f(P)$ and a move selection rule. The minimax principle governs adversarial search: assume the opponent plays optimally. Shannon proposed evaluating positions as weighted sums of features:
+\begin{equation}
+f(P) = \sum_i w_i \phi_i(P)
+\end{equation}
+Features included material, mobility, pawn structure, and king safety.\footnote{The minimax principle states that the value of a position in a zero-sum game is $V(s) = \max_a \min_{a'} U(s,a,a')$ where the maximizing player moves first and the minimizing opponent responds optimally.} Shannon did not implement a chess program; the paper is theoretical, outlining the architecture and key design choices.
+
+This framework shaped all subsequent game-playing AI. Deep Blue (1997) used primarily Type A search with hardware parallelism; modern engines like Stockfish combine deep Type A search with alpha-beta pruning; AlphaZero (2017) revived Type B ideas through neural network move prioritization. The question of how to learn or optimize evaluation weights, which Shannon did not address, became the central problem for Samuel, Tesauro, and the deep reinforcement learning era.
+
+\paragraph{Samuel (1959)}
+
+\citet{Samuel1959} built a checkers program for the IBM 704 that could improve through experience rather than manual tuning. The program learned through self-play using two complementary mechanisms.
+
+Rote learning stored every board position encountered along with its backed-up value, creating an expanding lookup table. Generalization learning evaluated positions with a linear function
+\begin{equation}
+V(s) = \sum_{i} w_i \phi_i(s)
+\end{equation}
+where $\phi_i(s)$ were hand-crafted features: piece advantage, piece advancement, center control, mobility, and king-row threat. After each move, the weights were updated according to
+\begin{equation}
+\mathbf{w} \leftarrow \mathbf{w} + \alpha \left[ V(s_{t+1}) - V(s_t) \right] \nabla_{\mathbf{w}} V(s_t)
+\end{equation}
+This update adjusts the current position's value toward the value of the successor position. The program reached expert-level play by 1962 and defeated Robert Nealey, a self-proclaimed expert, in a publicized match. Samuel's update is TD(0) with linear function approximation, a connection formalized by \citet{sutton1988} twenty-nine years later.\footnote{Alpha-beta pruning, implemented following McCarthy's suggestion, reduces the minimax search complexity from $O(b^d)$ to $O(b^{d/2})$ under optimal move ordering. For checkers ($b \approx 8$, $d = 10$), this reduces the search space from $8^{10} \approx 10^9$ to $8^5 \approx 33{,}000$ positions.}
+
+Checkers was well-suited to Samuel's approach because domain experts had already identified meaningful board features, reducing the function approximation problem to learning a linear combination of informative inputs. The moderate branching factor ($b \approx 8$) kept the search tree manageable, and self-play generated unlimited training data at no cost.
+
+
+\subsubsection{The Animal Psychology Thread}
+
+\paragraph{Thorndike (1898)}
+
+Comparative psychology in the 1890s sought to measure animal intelligence through controlled experiment rather than anecdote. \citet{Thorndike1898} placed hungry cats inside latched wooden boxes with food visible outside and recorded escape latency across repeated trials. Trial 1 required 160 seconds of undirected clawing, biting, and squeezing through slats. By trial 24 the cat pressed the latch directly in 7 seconds. The learning curve was smooth rather than stepwise, ruling out sudden insight and suggesting incremental strengthening of stimulus-response associations.\footnote{Thorndike's escape-time data followed an approximate power law $T(n) \propto n^{-\beta}$ rather than an exponential decay, a pattern later termed the power law of practice.} Thorndike codified this pattern as the Law of Effect: of several responses made to the same situation, those which are accompanied or closely followed by satisfaction to the animal will, other things being equal, be more firmly connected with the situation, so that, when it recurs, they will be more likely to recur. In modern terms, the box configuration is the state $s$, the motor action is $a$, and escape followed by food is the reward $r$. The stamping in of successful responses increases the probability of selecting that action given the state, a directional update rule that Q-learning would formalize nine decades later.
+
+\paragraph{Rescorla-Wagner (1972)}
+
+Classical conditioning theory through the mid-twentieth century held that temporal pairing of stimuli was sufficient for associative learning. The blocking experiment overturned this view by demonstrating that prediction error, not co-occurrence, drives associative change. The protocol proceeds in two phases. In Phase I, a rat learns that a tone predicts shock and develops a conditioned fear response to the tone alone. In Phase II, the compound stimulus of tone plus light is paired with the same shock. When the light is subsequently presented alone, no fear response occurs. The light is blocked because the tone already predicts the shock perfectly, leaving no prediction error to drive learning about the light.
+
+\citet{RescorlaWagner1972} formalized this observation:
+\begin{equation}
+\Delta V_i = \alpha_i \beta_j (\lambda_j - V_{\text{tot}})
+\end{equation}
+where $V_i$ is the associative strength of stimulus $i$, $\alpha_i$ is the salience of stimulus $i$, $\beta_j$ is the learning rate associated with unconditioned stimulus $j$, $\lambda_j$ is the maximum conditioning that stimulus $j$ supports, and $V_{\text{tot}} = \sum_k V_k$ is the total prediction from all stimuli present on the trial.\footnote{The Rescorla-Wagner update is mathematically identical to the Widrow-Hoff (1960) least mean squares rule used in adaptive signal processing. Both minimize mean squared prediction error by stochastic gradient descent.}
+
+Learning halts when $V_{\text{tot}} = \lambda_j$. In blocking, the tone already predicts the shock perfectly ($V_A = \lambda$), so the prediction error is zero and the added light acquires no associative strength.
+
+The Rescorla-Wagner model maps directly to the temporal difference framework. With a discount factor $\gamma=0$ in a single-step episode, the prediction error $(\lambda_j - V_{\text{tot}})$ is equivalent to the TD error $\delta = r - V(s)$. The model is a special case of TD learning for single-step, terminal-reward tasks.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The Classical Synthesis}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Sutton (1988)}
+
+The gap between dynamic programming, which requires a complete model of the environment, and Monte Carlo estimation, which requires waiting for complete episodes, motivated a method that could learn incrementally from partial experience. \citet{sutton1988} formalized temporal difference learning and demonstrated its properties on a five-state random walk. States A through E are arranged in a line with absorbing terminal states at each end. At each step the agent moves left or right with equal probability. The right terminal yields reward 1 and the left terminal yields reward 0. The true state values are $\frac{1}{6}, \frac{2}{6}, \frac{3}{6}, \frac{4}{6}, \frac{5}{6}$. Sutton compared TD(0), which updates after every transition, with Monte Carlo estimation, which updates only at the end of each episode. TD(0) converged faster and with less data.
+
+The general TD($\lambda$) update combines both approaches through an eligibility trace:
+\begin{equation}
+V(s_t) \leftarrow V(s_t) + \alpha \, \delta_t \, e_t(s)
+\end{equation}
+where $\delta_t = r_{t+1} + \gamma V(s_{t+1}) - V(s_t)$ is the TD error and $e_t(s) = \gamma \lambda \, e_{t-1}(s) + \mathbbm{1}\{s = s_t\}$ is the eligibility trace for state $s$. Setting $\lambda = 0$ yields pure bootstrapping; setting $\lambda = 1$ recovers Monte Carlo returns. Intermediate values interpolate, balancing the low variance of TD(0) against the low bias of Monte Carlo.
+
+\subsubsection{Watkins (1989)}
+
+Temporal difference methods as developed by Sutton solve the prediction problem: estimating the value of a given policy. The control problem requires finding the optimal policy without access to the transition dynamics $P(s'|s,a)$. Dynamic programming computes optimal policies via the Bellman optimality equation, but this requires a complete model of the MDP. The question is whether the same optimality can be achieved from sampled transitions alone.
+
+TD(0) learns value functions $V(s)$, but converting these to actions still requires knowing transition probabilities: given $V(s')$ for all successor states, the agent needs to know which action leads to which successor. Model-based approaches learn $P(s'|s,a)$ from experience and then apply dynamic programming, but this introduces approximation errors at both stages.
+
+\citet{WatkinsDayan1992}, formalizing Watkins's 1989 PhD thesis, provided the solution: learn $Q(s,a)$ directly, the expected return from taking action $a$ in state $s$ and then behaving optimally. The optimal policy is then $\pi^*(s) = \argmax_a Q^*(s,a)$, requiring no model to act. The Bellman optimality equation provides the fixed-point condition:
+\begin{equation}
+Q^*(s,a) = \mathbb{E}\left[r + \gamma \max_{a'} Q^*(s',a') \mid s, a\right]
+\end{equation}
+Q-learning achieves this via incremental updates:
+\begin{equation}
+Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_{t+1} + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \right]
+\end{equation}
+The Bellman operator $\mathcal{T}$ is a contraction with modulus $\gamma$, ensuring a unique fixed point $Q^* = \mathcal{T}Q^*$. Convergence requires finite state and action spaces, bounded rewards, and Robbins-Monro learning rates. The maximization over $a'$ makes Q-learning off-policy:\footnote{Off-policy learning means the agent learns about a policy different from the one generating data. Q-learning learns about the greedy policy $\pi^*(s) = \argmax_a Q(s,a)$ while collecting data with an exploratory policy.} the update target uses the greedy action at the next state regardless of the action actually taken. The agent can follow an $\varepsilon$-greedy exploration strategy while learning about the optimal policy directly. Chapter~\ref{section:planning_learning} develops the contraction property and convergence theory in detail.
+
+\subsubsection{Williams (1992)}
+
+Value-based methods learn an action-value function and derive a policy from it. \citet{williams1992} derived an alternative: policy gradients that optimize the policy directly by gradient ascent on expected return:
+\begin{equation}
+\nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta} \left[ \sum_{t=0}^{T} \nabla_\theta \log \pi_\theta(a_t|s_t) \, G_t \right]
+\end{equation}
+where $G_t = \sum_{k=0}^{T-t} \gamma^k r_{t+k+1}$ is the discounted return from time $t$. The log-derivative trick allows the gradient to be estimated from sampled trajectories without differentiating through the environment dynamics.
+
+Consider a robot arm that must apply a continuous torque $a \in \mathbb{R}$ to reach a target angle. Q-learning requires computing $\max_a Q(s,a)$ at every update, which becomes a nested optimization problem when the action space is continuous. A policy gradient method sidesteps the issue: parameterize the policy as a Gaussian $\pi_\theta(a|s) = \mathcal{N}(\mu_\theta(s),\, \sigma_\theta^2(s))$,\footnote{The Gaussian distribution $\mathcal{N}(\mu, \sigma^2)$ has density $(2\pi\sigma^2)^{-1/2}\exp(-(a-\mu)^2/2\sigma^2)$. Here $\mu_\theta(s)$ and $\sigma_\theta(s)$ are neural network outputs parameterizing the policy mean and standard deviation.} sample an action, observe the return, and update $\theta$ by REINFORCE. No maximization over actions is required.\footnote{This is why virtually all continuous-control results in reinforcement learning descend from the policy gradient framework rather than from Q-learning.} The practical difficulty is variance. Because $G_t$ is a sum of stochastic rewards, gradient estimates can be noisy. Variance reduction techniques, including baselines $b(s_t)$ subtracted from $G_t$, are essential.\footnote{The variance-minimizing baseline is approximately $V^\pi(s_t)$, leading to the advantage actor-critic architecture where $G_t - b(s_t) \approx A^\pi(s_t, a_t)$.}
+
+\subsubsection{Tesauro (1994)}
+
+\citet{tesauro1994}'s TD-Gammon demonstrated that temporal difference learning with neural network function approximation could produce expert-level play. Backgammon has approximately $10^{20}$ legal positions, far beyond tabular methods.
+
+TD-Gammon trained a feedforward neural network to estimate the probability of winning from any board position. A hidden layer of 80 sigmoid units fed a single sigmoid output:
+\begin{equation}
+\hat{V}(s) = \sigma\!\bigl(\mathbf{w}^\top \sigma(W\mathbf{x}(s) + \mathbf{b}) + c\bigr)
+\end{equation}
+where $\sigma$ is the logistic sigmoid, $W$ is the input-to-hidden weight matrix, and $\mathbf{w}$ is the hidden-to-output weight vector.
+
+The network was trained by self-play using TD($\lambda$) with $\lambda = 0.7$. After each move from position $s_t$ to $s_{t+1}$, the weights $\boldsymbol{\theta}$\footnote{We use $\boldsymbol{\theta}$ to denote the full vector of network weights and biases, generalizing the scalar $\theta$ used for policy parameters in earlier sections.} were updated by
+\begin{equation}
+\boldsymbol{\theta} \leftarrow \boldsymbol{\theta} + \alpha \bigl[\hat{V}(s_{t+1}) - \hat{V}(s_t)\bigr] \, \mathbf{e}_t
+\end{equation}
+where the eligibility trace $\mathbf{e}_t = \sum_{k=1}^{t} \lambda^{t-k} \nabla_{\boldsymbol{\theta}} \hat{V}(s_k)$ accumulates exponentially decayed gradients of past predictions.\footnote{In the neural network case, the eligibility trace $\mathbf{e}_t \in \mathbb{R}^{|\boldsymbol{\theta}|}$ is a vector accumulating exponentially-weighted gradients, extending the scalar state-based trace to parameter space.} At game's end, $\hat{V}(s_{t+1})$ is replaced by the outcome $z \in \{0, 1\}$.
+
+TD-Gammon 1.0, trained on 300{,}000 self-play games, played at a strong intermediate level. Version 2.1 achieved near-parity with Bill Robertie, a former world champion. The program discovered novel positional strategies subsequently adopted by the human backgammon community. Backgammon was uniquely favorable: stochastic dice ensured exploration, the value function varied smoothly with board position, and self-play generated unlimited on-policy training data, avoiding the off-policy component of the deadly triad.
+
+\subsubsection{Baird (1995)}
+
+\citet{Baird1995} constructed a seven-state star MDP demonstrating divergence of Q-learning with linear function approximation. The MDP has six outer states that all transition to a single inner state under the target policy. The off-policy behavior samples states uniformly. With linear function approximation, the weights grow without bound under repeated Q-learning updates.
+
+The source of instability is the interaction of three components: bootstrapping (updating from estimated values rather than observed returns), off-policy learning (training on data from a different policy than the target), and function approximation (representing the value function with a parameterized model). \citet{sutton2018} later named this the deadly triad. Any two components can be combined safely; all three together permit divergence.\footnote{The divergence arises because the TD fixed point minimizes projected Bellman error $\|V_\theta - \Pi T V_\theta\|$. When the projection and Bellman operator interact adversarially under off-policy sampling, the fixed point may not exist or may be unstable.}
+
+This explains the asymmetry between Tesauro's success and Baird's failure. TD-Gammon used bootstrapping and function approximation but was on-policy: training data came from the same self-play policy whose value was being estimated. Baird's counterexample used all three components and diverged. Baird also proposed a constructive solution: residual gradient algorithms that perform gradient descent on the mean-squared Bellman residual, guaranteeing convergence at the cost of a different fixed point.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The Modern Era}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Deep Q-Networks (2015)}
+
+The two decades after TD-Gammon saw limited success in applying neural networks to reinforcement learning. Attempts to replicate Tesauro's approach in chess and Go did not achieve comparable results, though progress continued in robotics and other domains. \citet{mnih2015} changed this by training a single convolutional neural network to play 49 Atari 2600 games directly from pixel inputs ($210 \times 160 \times 3$) and a scalar score, using no game-specific features.
+
+The architecture processed four consecutive frames through three convolutional layers and a fully connected layer. The network $Q(s, a; \theta)$ was trained to minimize the squared temporal difference error:
+\begin{equation}
+L(\theta) = \mathbb{E}_{(s,a,r,s') \sim \mathcal{D}} \left[ \left( r + \gamma \max_{a'} Q(s', a'; \theta^-) - Q(s, a; \theta) \right)^2 \right]
+\end{equation}
+
+Two innovations stabilized learning. Experience replay stored transitions $(s, a, r, s')$ in a buffer $\mathcal{D}$ holding $10^6$ transitions and sampled uniformly for training. This breaks the temporal correlation between consecutive updates that would otherwise cause the network to overfit to recent experience. A target network used a frozen copy of parameters $\theta^-$,\footnote{The notation $\theta^-$ denotes target network parameters, a lagged copy of $\theta$ updated periodically. This stabilizes learning by keeping the regression target fixed during gradient steps.} updated to match $\theta$ only every $C = 10{,}000$ steps, so the regression target does not shift with each gradient step.
+
+These techniques address the deadly triad identified by Baird. Experience replay creates a more stationary data distribution, partially mitigating off-policy issues. The target network holds the bootstrap target fixed between updates, making the regression problem approximately stationary. Neither technique provides theoretical guarantees, but the empirical success demonstrated that the deadly triad can be managed in practice.
+
+DQN exceeded human-level performance on 29 of 49 games using a single architecture and hyperparameters. The same network that learned Breakout (where the agent must track a ball and position a paddle) also learned Space Invaders (where the agent must track multiple enemies and time shots). Games requiring long-horizon planning or sparse rewards, such as Montezuma's Revenge (where the agent must navigate rooms and collect keys before receiving any reward), remained difficult.
+
+\subsubsection{TRPO and PPO (2015, 2017)}
+
+Policy gradient methods suffer from a practical instability: a single large gradient step can move the policy into a region of parameter space where performance collapses, and recovery may be slow or impossible. The objective $J(\theta)$ is not well approximated by its linear Taylor expansion when the step size is large relative to the curvature of the policy space.
+
+\citet{Schulman2015} addressed this with Trust Region Policy Optimization (TRPO). TRPO solves the constrained optimization problem
+\begin{equation}
+\max_\theta \; L_{\theta_{\text{old}}}(\theta) \quad \text{subject to} \quad \bar{D}_{\mathrm{KL}}(\theta_{\text{old}}, \theta) \leq \delta
+\end{equation}
+where $L$ is a surrogate objective based on the advantage function $A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)$.\footnote{The Kullback-Leibler divergence $D_{\mathrm{KL}}(p \| q) = \sum_x p(x) \log(p(x)/q(x))$ measures statistical distance between distributions. The bar denotes expectation over states: $\bar{D}_{\mathrm{KL}} = \mathbb{E}_{s}[D_{\mathrm{KL}}(\pi_{\theta_{\text{old}}}(\cdot|s) \| \pi_\theta(\cdot|s))]$.} The KL constraint prevents the policy from moving so far in one update that performance collapses and recovery becomes impossible.
+
+\citet{Schulman2017} proposed Proximal Policy Optimization (PPO) as a simpler alternative. PPO replaces the KL constraint with a clipped surrogate objective:
+\begin{equation}
+L^{\text{CLIP}}(\theta) = \mathbb{E}_t \left[ \min\!\left( r_t(\theta) \hat{A}_t, \; \text{clip}(r_t(\theta), 1-\varepsilon, 1+\varepsilon) \hat{A}_t \right) \right]
+\end{equation}
+where $r_t(\theta) = \pi_\theta(a_t|s_t) / \pi_{\theta_{\text{old}}}(a_t|s_t)$ is the probability ratio. The clipping removes the incentive for $r_t(\theta)$ to move outside the interval $[1-\varepsilon, 1+\varepsilon]$, penalizing large policy updates without explicitly computing a divergence measure.
+
+PPO outperformed A2C, TRPO, and the cross-entropy method on continuous control benchmarks and achieved the highest average reward on 30 of 49 Atari games among the methods tested. PPO became the default policy optimization algorithm for large-scale RL applications. The lesson from both TRPO and PPO: constraining the magnitude of policy updates is essential for stable optimization.
+
+\subsubsection{AlphaGo and AlphaGo Zero (2016, 2017)}
+
+The game of Go, with approximately $10^{170}$ legal positions and a branching factor of roughly 250, had resisted both brute-force search and hand-crafted evaluation functions. \citet{Silver2016} combined learning and planning by integrating multiple components: a policy network trained by supervised learning on 30 million positions from human expert games, a second policy network improved by self-play reinforcement learning, a value network trained to predict game outcomes from positions, and Monte Carlo tree search (MCTS) guided by these networks. AlphaGo defeated Lee Sedol, one of the strongest Go players in history, four games to one in March 2016. Go was well-suited to this architecture because its fixed $19 \times 19$ board is naturally suited to convolutional networks, its perfect information and deterministic transitions make MCTS's tree structure exact, and the game outcome provides a clean binary training signal. \citet{Silver2017} removed human data entirely. AlphaGo Zero uses a single neural network $f_\theta(s) = (\mathbf{p}, v)$ that takes a board position $s$ as input and outputs a policy vector $\mathbf{p}$ over legal moves and a scalar value $v$ estimating the probability of winning. The training loop is self-contained: the program plays games against itself using MCTS guided by $f_\theta$, collects the MCTS-improved move probabilities $\boldsymbol{\pi}$ and the game outcome $z \in \{-1, +1\}$, then updates $f_\theta$ to minimize
+\begin{equation}
+\ell(\theta) = (z - v)^2 - \boldsymbol{\pi}^\top \log \mathbf{p} + c \|\theta\|^2
+\end{equation}
+where the first term is a value prediction loss, the second is a policy cross-entropy loss, and the third is $L_2$ regularization. After 72 hours of self-play on 4 TPUs, AlphaGo Zero surpassed all previous versions of AlphaGo, including the version that defeated Lee Sedol. \citet{Igami2020} interprets the AlphaGo architecture in econometric terms: the policy network is a conditional choice probability (CCP) estimator, the value network is a conditional value function (CVF) estimator, and the system performs CCP estimation and forward simulation jointly, connecting to the Hotz-Miller tradition in economics.
+
+\subsubsection{Toward a Unified Framework}
+
+The common object underlying all these developments is the Bellman operator. Value iteration, policy iteration, Q-learning, and policy gradients all seek fixed points of operators derived from the Bellman equation. The difference between planning and learning is whether that operator is applied with known transitions or sampled ones. Model-based methods learn the transition dynamics explicitly; model-free methods estimate value functions directly from experience. Both approaches converge to the same optimal policy under appropriate conditions, but they differ in sample complexity, computational requirements, and sensitivity to model misspecification. Chapter~\ref{section:planning_learning} develops this unified framework in detail.

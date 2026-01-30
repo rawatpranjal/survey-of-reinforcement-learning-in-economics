@@ -9,36 +9,15 @@
 \subsection{Introduction}
 \label{sec:ch2_intro}
 
-Economists solve dynamic programs. The Bellman equation appears in consumption-savings problems, job search, investment timing, and structural estimation of discrete choice models. Standard treatments in \citet{StokeyLucas1989} and \citet{Rust1987} assume the transition probabilities and reward functions are known; the computational task is to find the fixed point of the Bellman operator. Reinforcement learning solves the same fixed-point problem but under two additional constraints: the transition model may be unknown (requiring learning from sampled transitions), and the state space may be too large for exact computation (requiring function approximation). This chapter develops the theoretical foundations that govern when and why RL algorithms converge.
+The Bellman equation appears throughout dynamic economics: consumption-savings problems, job search, investment timing, and structural estimation of discrete choice models. Standard treatments in \citet{StokeyLucas1989} and \citet{Rust1987} assume the transition probabilities and reward functions are known; the computational task is to find the fixed point of the Bellman operator. Reinforcement learning solves the same fixed-point problem but under two additional constraints: the transition model may be unknown (requiring learning from sampled transitions), and the state space may be too large for exact computation (requiring function approximation). This chapter develops the theoretical foundations that govern when and why RL algorithms converge.
 
 The central insight is that RL algorithms are not mysterious: they are asymptotic approximations to classical dynamic programming operators. Value iteration becomes Q-learning when expectations are replaced by single samples. Policy iteration becomes the natural policy gradient when the greedy improvement step is approximated by gradient ascent. The stochastic approximation framework of \citet{Robbins1952} provides the mathematical foundation: under appropriate step-size conditions, noisy iterates converge to the same fixed points as their deterministic counterparts.
-
-Table~\ref{tab:ch2_roadmap} summarizes the six sections of this chapter, each motivated by a question that arises when moving from textbook dynamic programming to data-driven learning.
-
-\begin{table}[h!]
-\centering
-\caption{Chapter roadmap: from dynamic programming to reinforcement learning}
-\label{tab:ch2_roadmap}
-\small
-\begin{tabular}{c|l|l|l}
-\hline
-\S & Title & Economist's Question & Key Resolution \\
-\hline
-2.2 & The Newton Connection & Why does PI converge faster than VI? & PI = Newton's method \\
-2.3 & Stochastic Approximation & Can we replace $\mathbb{E}$ with one sample? & Robbins-Monro; Q-learning \\
-2.4 & The Deadly Triad & Why does regression inside Bellman diverge? & Projection geometry \\
-2.5 & Policy Gradient & Can we optimize $\pi$ directly without $V$? & Policy gradient theorem \\
-2.6 & Actor-Critic & How to reduce variance of policy gradient? & Two-timescale learning \\
-2.7 & Bridging Results & What are the error bounds? & Singh-Yee; sparse sampling \\
-\hline
-\end{tabular}
-\end{table}
 
 
 \subsection{The Newton Connection}
 \label{sec:newton_connection}
 
-Economists learn value iteration (VI) and policy iteration (PI) from \citet{StokeyLucas1989}: VI applies the Bellman operator repeatedly until convergence; PI alternates between policy evaluation (solving a linear system) and policy improvement (taking the greedy action). The standard observation is that PI converges faster. But why? The answer reveals a deep connection between dynamic programming and numerical optimization: policy iteration is Newton's method applied to the Bellman equation.
+Value iteration (VI) and policy iteration (PI) are the workhorses of dynamic programming \citep{StokeyLucas1989}. VI applies the Bellman operator repeatedly until convergence; PI alternates between policy evaluation (solving a linear system) and policy improvement (taking the greedy action). PI converges faster. Why? The answer reveals a connection between dynamic programming and numerical optimization: policy iteration is Newton's method applied to the Bellman equation.
 
 Consider the Bellman optimality operator $T$ acting on value functions:
 \begin{equation}
@@ -52,12 +31,7 @@ Policy iteration takes a different approach. At the current value estimate $\til
 (T^{\tilde{\pi}} V)(s) = r(s, \tilde{\pi}(s)) + \gamma \sum_{s'} P(s'|s,\tilde{\pi}(s)) V(s').
 \end{equation}
 
-The key insight, formalized by \citet{puterman1979}, is geometric: the linear operator $T^{\tilde{\pi}}$ is a supporting hyperplane to the nonlinear operator $T$ at the current iterate. Specifically:
-\begin{enumerate}
-\item Tangency: $T^{\tilde{\pi}} \tilde{V} = T\tilde{V}$ (the operators agree at the current point).
-\item Support: $T^{\tilde{\pi}} V \leq TV$ for all $V$ (the linear operator lies below the nonlinear one everywhere).
-\end{enumerate}
-Policy evaluation solves for the fixed point of this linearization exactly. This is precisely the structure of Newton's method: linearize the nonlinear equation at the current point, solve the linearized system, and iterate.\footnote{The Newton interpretation of policy iteration has precursors in \citet{kleinman1968} for Riccati equations in linear-quadratic control and \citet{pollatschek1969} for stochastic games.}
+The key insight, formalized by \citet{puterman1979}, is geometric: the linear operator $T^{\tilde{\pi}}$ is a supporting hyperplane to the nonlinear operator $T$ at the current iterate. Specifically, the operators satisfy tangency ($T^{\tilde{\pi}} \tilde{V} = T\tilde{V}$, agreeing at the current point) and support ($T^{\tilde{\pi}} V \leq TV$ for all $V$, with the linear operator lying below the nonlinear one everywhere). Policy evaluation solves for the fixed point of this linearization exactly. This is precisely the structure of Newton's method: linearize the nonlinear equation at the current point, solve the linearized system, and iterate.\footnote{The Newton interpretation of policy iteration has precursors in \citet{kleinman1968} for Riccati equations in linear-quadratic control and \citet{pollatschek1969} for stochastic games.}
 
 The consequence is quadratic convergence near the optimum. While VI requires $k = \log(100) / \log(1/\gamma)$ iterations to reduce error by a factor of 100, PI typically converges in 5--10 iterations regardless of $\gamma$. Table~\ref{tab:vi_pi_comparison} illustrates the difference.
 
@@ -77,7 +51,7 @@ $\gamma$ & Value Iteration & Policy Iteration \\
 \end{tabular}
 \end{table}
 
-\citet{bertsekas2022newton} extends this interpretation to a broad class of dynamic programming problems. The Newton structure applies whenever the Bellman operator can be written as a pointwise maximum over linear operators: $T = \max_\pi T^\pi$. This includes not only discounted MDPs but also stochastic shortest path problems, average-cost MDPs, and model predictive control formulations. The practical implication is that algorithms with policy-improvement structure (evaluate a policy exactly or approximately, then improve) inherit Newton-like convergence behavior, while pure value-iteration methods (apply $T$ directly) are limited to linear convergence.
+\citet{bertsekas2022newton} extends this interpretation to a broad class of dynamic programming problems. The Newton structure applies whenever the Bellman operator can be written as a pointwise maximum over linear operators: $T = \max_\pi T^\pi$. This includes not only discounted MDPs but also stochastic shortest path problems, average-cost MDPs, and model predictive control formulations. The practical implication is that algorithms with policy-improvement structure (evaluate a policy exactly or approximately, then improve) inherit Newton-like convergence behavior, while pure value-iteration methods (apply $T$ directly) are limited to linear convergence.\footnote{For discounted MDPs with finite state and action spaces, there exists a stationary deterministic policy that is optimal for all initial states simultaneously \citep{blackwell1962}. This Blackwell optimality guarantees that PI and VI converge to the same policy regardless of initialization.}
 
 
 \subsection{Stochastic Approximation}
@@ -90,12 +64,7 @@ The answer is yes, and the mathematical foundation is stochastic approximation, 
 x_{t+1} = x_t - \alpha_t [g(x_t) + \epsilon_t],
 \label{eq:robbins_monro}
 \end{equation}
-where $\epsilon_t$ is zero-mean noise. Under two conditions on the step sizes, this converges to $x^*$ with probability one:
-\begin{enumerate}
-\item $\sum_{t=0}^\infty \alpha_t = \infty$ (sufficient exploration: we never stop learning),
-\item $\sum_{t=0}^\infty \alpha_t^2 < \infty$ (diminishing noise: the variance of cumulative updates is finite).
-\end{enumerate}
-The canonical choice $\alpha_t = 1/(t+1)$ satisfies both conditions.
+where $\epsilon_t$ is zero-mean noise. Under two conditions on the step sizes, this converges to $x^*$ with probability one: $\sum_{t=0}^\infty \alpha_t = \infty$ (sufficient exploration, ensuring we never stop learning) and $\sum_{t=0}^\infty \alpha_t^2 < \infty$ (diminishing noise, ensuring the variance of cumulative updates is finite). The canonical choice $\alpha_t = 1/(t+1)$ satisfies both conditions.
 
 Q-learning \citep{WatkinsDayan1992} is Robbins-Monro applied to the Bellman equation for action-value functions. Define the Q-factor Bellman operator:
 \begin{equation}
@@ -113,7 +82,7 @@ The term in brackets is a noisy sample of $(FQ)(s_t, a_t) - Q(s_t, a_t)$, the Be
 Under the conditions: (i) every state-action pair $(s,a)$ is visited infinitely often, (ii) step sizes satisfy the Robbins-Monro conditions $\sum_t \alpha_t(s,a) = \infty$ and $\sum_t \alpha_t(s,a)^2 < \infty$ for each $(s,a)$, Q-learning converges to $Q^*$ with probability one.
 \end{theorem}
 
-This result, established by \citet{WatkinsDayan1992} and \citet{jaakkola1994}, shows that model-free learning is possible: we can find the optimal value function without ever estimating the transition probabilities.
+This result, established by \citet{WatkinsDayan1992} and \citet{jaakkola1994}, shows that model-free learning is possible: we can find the optimal value function without ever estimating the transition probabilities.\footnote{Model-free methods are essential when: (a) the environment is a physical system where a simulator exists but the underlying dynamics are too complex to write down (robotics, physics engines), or (b) the agent learns directly from interaction without access to a model (online learning, real-world deployment).}
 
 SARSA provides an on-policy variant. Instead of taking the maximum over next actions, SARSA uses the action actually taken:
 \begin{equation}
@@ -123,11 +92,11 @@ This solves for the value function of the behavior policy $\pi$ rather than the 
 
 Q-learning is noisy value iteration on Q-factors; SARSA is noisy policy evaluation. The Robbins-Monro conditions ensure that the noise averages out faster than the signal decays, allowing asymptotic convergence despite using only single-sample estimates.
 
-Rollout methods extend this framework by performing one step of policy improvement from a base policy. Given a base policy $\mu$ with value function $V^\mu$, the rollout policy selects:
+Rollout methods extend this framework by performing one step of policy improvement from a base policy. AlphaZero \citep{Silver2018} implements this principle at scale: neural networks provide a base value estimate $V^\mu$, and Monte Carlo Tree Search extends the effective lookahead. Given base policy $\mu$, the rollout policy selects:
 \begin{equation}
 \tilde{\pi}(s) = \argmax_a \left\{ r(s,a) + \gamma \sum_{s'} P(s'|s,a) V^\mu(s') \right\}.
 \end{equation}
-\citet{bertsekas2021lessons} proves the cost improvement property: $V^{\tilde{\pi}}(s) \leq V^\mu(s)$ for all $s$, with strict inequality unless $\mu$ is already optimal. AlphaZero implements this principle at scale: neural networks provide $V^\mu$, and Monte Carlo Tree Search extends the effective lookahead. Each MCTS iteration is a sampled rollout, and the aggregation across many samples approximates the expectation in the Bellman operator.\footnote{The error bound for $H$-step lookahead with terminal approximation $V^\mu$ is $\|V^{\tilde{\pi}} - V^*\|_\infty \leq \frac{2\gamma^H}{1-\gamma} \|V^\mu - V^*\|_\infty$. At $H=50$ and $\gamma=0.99$, this multiplier is approximately 1.2; longer lookahead compensates for worse value approximations.}
+\citet{bertsekas2021lessons} proves the cost improvement property: $V^{\tilde{\pi}}(s) \leq V^\mu(s)$ for all $s$, with strict inequality unless $\mu$ is already optimal. Each MCTS iteration is a sampled rollout, and the aggregation across many samples approximates the expectation in the Bellman operator.\footnote{The error bound for $H$-step lookahead with terminal approximation $V^\mu$ is $\|V^{\tilde{\pi}} - V^*\|_\infty \leq \frac{2\gamma^H}{1-\gamma} \|V^\mu - V^*\|_\infty$. At $H=50$ and $\gamma=0.99$, this multiplier is approximately 1.2; longer lookahead compensates for worse value approximations.}
 
 
 \subsection{The Deadly Triad}
@@ -139,14 +108,9 @@ Temporal difference (TD) learning with function approximation does not minimize 
 
 \citet{tsitsiklis1997} establish the convergence conditions. Define the $d^\pi$-weighted norm $\|V\|_{d^\pi}^2 = \sum_s d^\pi(s) V(s)^2$, where $d^\pi$ is the stationary distribution of the Markov chain induced by policy $\pi$. When samples are drawn from $d^\pi$ (on-policy sampling), the projection $\Pi$ is non-expansive in this norm: $\|\Pi V_1 - \Pi V_2\|_{d^\pi} \leq \|V_1 - V_2\|_{d^\pi}$. Since $T^\pi$ is a $\gamma$-contraction in any weighted $\ell_\infty$ norm, the composition $\Pi T^\pi$ remains a contraction, and TD converges to the unique fixed point.
 
-Off-policy sampling breaks this argument. \citet{Baird1995} constructs a counterexample: a six-state MDP with two-dimensional linear function approximation, where samples are drawn uniformly rather than from $d^\pi$. The TD updates cause the weight vector to diverge to infinity. The geometric intuition is that uniform sampling induces a different norm under which $\Pi$ is no longer non-expansive; the composition $\Pi T^\pi$ ceases to be a contraction and can amplify errors.
+Off-policy sampling breaks this argument; \citet{tsitsiklis1997} prove that the projected Bellman operator $\Pi T^\pi$ is a contraction only when $\Pi$ is computed under the stationary distribution $d^\pi$. \citet{Baird1995} constructs a counterexample: a six-state MDP with two-dimensional linear function approximation, where samples are drawn uniformly rather than from $d^\pi$. The TD updates cause the weight vector to diverge to infinity. The geometric intuition is that uniform sampling induces a different norm under which $\Pi$ is no longer non-expansive; the composition $\Pi T^\pi$ ceases to be a contraction and can amplify errors.
 
-This phenomenon is called the deadly triad: the combination of function approximation, bootstrapping (TD targets that depend on current estimates), and off-policy learning. Removing any one element restores convergence:
-\begin{enumerate}
-\item Without function approximation (tabular), the projection $\Pi$ is the identity and convergence follows from Section~\ref{sec:stochastic_approx}.
-\item Without bootstrapping (Monte Carlo returns), targets are independent of current estimates and regression is well-posed.
-\item Without off-policy learning (on-policy sampling), the Tsitsiklis-Van Roy conditions are satisfied.
-\end{enumerate}
+This phenomenon is called the deadly triad: the combination of function approximation, bootstrapping (TD targets that depend on current estimates), and off-policy learning. Removing any one element restores convergence. Without function approximation (tabular), the projection $\Pi$ is the identity and convergence follows from Section~\ref{sec:stochastic_approx}. Without bootstrapping (Monte Carlo returns), targets are independent of current estimates and regression is well-posed. Without off-policy learning (on-policy sampling), the Tsitsiklis-Van Roy conditions are satisfied.
 
 DQN \citep{mnih2015} addresses the deadly triad through two mechanisms. Experience replay stores transitions in a buffer and samples mini-batches uniformly, breaking temporal correlation and making the sampling distribution approximately stationary. Target networks hold the regression target fixed for many updates: instead of regressing toward $r + \gamma \max_{a'} Q(s', a'; \theta)$, DQN regresses toward $r + \gamma \max_{a'} Q(s', a'; \theta^-)$, where $\theta^-$ is updated slowly. This decouples the moving target problem from the parameter updates.\footnote{\citet{sutton2009gtd} reformulate TD as a saddle-point problem, yielding gradient TD methods that converge off-policy with linear function approximation. These methods are less commonly used in practice than target networks.}
 
@@ -161,7 +125,7 @@ The policy gradient theorem \citep{SuttonMcAllester2000} provides a tractable ex
 \nabla_\theta J(\theta) = \mathbb{E}_{s \sim d^{\pi_\theta}, a \sim \pi_\theta} \left[ \nabla_\theta \log \pi_\theta(a|s) \, Q^{\pi_\theta}(s,a) \right],
 \label{eq:policy_gradient}
 \end{equation}
-where $d^{\pi_\theta}(s) = (1-\gamma) \sum_{t=0}^\infty \gamma^t \mathbb{P}(s_t = s | \pi_\theta)$ is the discounted state visitation distribution. The gradient does not require $\nabla_\theta d^{\pi_\theta}$, the derivative of the state distribution with respect to policy parameters. This term is intractable in general, but it cancels in the derivation.
+where $d^{\pi_\theta}(s) = (1-\gamma) \sum_{t=0}^\infty \gamma^t \mathbb{P}(s_t = s | \pi_\theta)$ is the discounted state visitation distribution. The gradient does not require $\nabla_\theta d^{\pi_\theta}$, the derivative of the state distribution with respect to policy parameters. This term is intractable in general, but it cancels in the derivation. The gradient depends only on quantities computable from sampled trajectories: the policy $\pi_\theta$, its gradient $\nabla_\theta \log \pi_\theta$, and the action-value $Q^{\pi_\theta}$. The transition dynamics $P(s'|s,a)$ do not appear, making the gradient estimable without a model of the environment.
 
 REINFORCE \citep{williams1992} is the simplest policy gradient algorithm. Sample a trajectory $(s_0, a_0, r_0, s_1, \ldots)$, compute the return $G_t = \sum_{k=0}^\infty \gamma^k r_{t+k}$ from each time step, and update:
 \begin{equation}
@@ -215,7 +179,7 @@ Under this separation, the actor sees a quasi-stationary critic: from the actor'
 
 A2C (Advantage Actor-Critic) is the synchronous variant: collect a batch of transitions, compute TD errors, and update both networks. A3C \citep{mnih2016a3c} parallelizes this across multiple workers updating a shared parameter server asynchronously. SAC (Soft Actor-Critic) \citep{Haarnoja2018} adds entropy regularization, using the soft Bellman operator for the critic and entropy-augmented returns for the actor.
 
-The actor-critic structure separates identification from optimization. The critic solves a regression problem (estimate $V^\pi$ from data), while the actor solves an optimization problem (improve $\pi$ using the estimated values). This decomposition mirrors the structure of many econometric estimators: first estimate the model, then compute optimal decisions given the estimates.
+The actor-critic structure separates identification from optimization. The critic solves a regression problem (estimate $V^\pi$ from data), while the actor solves an optimization problem (improve $\pi$ using the estimated values).
 
 
 \subsection{Bridging Results}
@@ -230,35 +194,14 @@ The preceding sections establish that RL algorithms converge under appropriate c
 \end{equation}
 At $\gamma = 0.99$, the amplification factor is $2 \cdot 0.99 / 0.01 = 198$. A 1\% error in value function approximation yields at most 198\% error in policy value. This bound is pessimistic but finite: approximate value functions do not cause unbounded policy degradation.
 
-Classical dynamic programming complexity scales with the state space size $|\mathcal{S}|$. For problems like Go, where $|\mathcal{S}| \approx 10^{170}$, exact computation is impossible. \citet{kearns2002} prove that with access to a generative model (a simulator that samples transitions from any state-action pair), near-optimal planning requires samples polynomial in:
-\begin{enumerate}
-\item The effective horizon $H = O(\log(1/\epsilon) / \log(1/\gamma))$,
-\item The branching factor $|\mathcal{A}|$,
-\item The desired accuracy $1/\epsilon$.
-\end{enumerate}
-The sample complexity has no dependence on $|\mathcal{S}|$. The sparse sampling algorithm builds a random tree of depth $H$ from the current state, estimates values by averaging leaf rewards, and selects the action with highest estimated value. This result explains why Monte Carlo Tree Search succeeds in large state spaces: planning complexity depends on the horizon and action space, not the state space cardinality.
+Classical dynamic programming complexity scales with the state space size $|\mathcal{S}|$. For problems like Go, where $|\mathcal{S}| \approx 10^{170}$, exact computation is impossible. \citet{kearns2002} prove that with access to a generative model (a simulator that samples transitions from any state-action pair), near-optimal planning requires samples polynomial in the effective horizon $H = O(\log(1/\epsilon) / \log(1/\gamma))$, the branching factor $|\mathcal{A}|$, and the desired accuracy $1/\epsilon$, with no dependence on $|\mathcal{S}|$. The sparse sampling algorithm builds a random tree of depth $H$ from the current state, estimates values by averaging leaf rewards, and selects the action with highest estimated value. This result explains why Monte Carlo Tree Search succeeds in large state spaces: planning complexity depends on the horizon and action space, not the state space cardinality.
 
-The apparent dichotomy between model-based and model-free RL dissolves under closer examination. Model-based methods learn a transition model $\hat{P}$ and use it to generate synthetic experience; model-free methods use real experience directly. Dyna \citep{sutton1990} unifies both: after each real transition $(s, a, r, s')$, perform $k$ additional updates using transitions simulated from a learned model. In the limit of infinite simulated transitions, the model-based and model-free approaches converge to the same solution. The practical tradeoff is sample efficiency (model-based methods extract more information per real sample) versus model bias (errors in $\hat{P}$ can compound).
 
-Table~\ref{tab:convergence_summary} summarizes the quantitative results from this chapter.
+\subsection{Conclusion}
+\label{sec:ch2_conclusion}
 
-\begin{table}[h!]
-\centering
-\caption{Summary of convergence results}
-\label{tab:convergence_summary}
-\small
-\begin{tabular}{l|l|l}
-\hline
-Result & Rate/Bound & Implication \\
-\hline
-VI convergence & $\gamma^k$ & 460 iterations for 100$\times$ reduction at $\gamma=0.99$ \\
-PI convergence & Quadratic & 5--10 iterations for same \\
-Q-learning & $\tilde{O}(1/\sqrt{t})$ & $\sim 10^6$ samples for $\epsilon = 0.01$ \\
-Value error $\to$ policy & $\frac{2\gamma}{1-\gamma} \epsilon$ & Bounded degradation \\
-Sparse sampling & No $|\mathcal{S}|$ dependence & Curse of dimensionality broken for planning \\
-NPG & $O(1/k)$ & No $|\mathcal{S}|$, $|\mathcal{A}|$ dependence \\
-\hline
-\end{tabular}
-\end{table}
+Reinforcement learning is not a departure from dynamic programming but an extension of it. The algorithms in this chapter are asymptotic approximations to the Bellman fixed-point operator, justified by the mathematics of contractions, stochastic approximation, and gradient domination. Policy iteration is Newton's method; Q-learning is noisy value iteration; natural policy gradient recovers policy iteration in the tabular case. The theoretical framework provides guarantees: convergence rates, error bounds, and conditions under which approximation is safe.
+
+The central challenge in reinforcement learning is overcoming the deadly triad. Methods that address it directly---through on-policy sampling (PPO), target networks (DQN), or entropy regularization (SAC)---have achieved the most significant empirical successes.
 
 

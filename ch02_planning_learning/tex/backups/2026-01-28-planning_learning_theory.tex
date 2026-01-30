@@ -1,0 +1,265 @@
+% Chapter 2: The Operator Foundation
+% Theory-only treatment of the planning-learning continuum.
+% No examples or simulations; those move to Chapter 3 (Benchmarks).
+
+\subsection{The Bellman Operator and Its Approximations}
+
+We develop the planning-learning continuum in three layers. The first layer establishes exact operators that define optimal behavior when the model is known. The second layer shows how stochastic approximation recovers the same fixed points from sampled data. The third layer identifies the dimensions along which practical algorithms interpolate between these endpoints.
+
+\subsubsection{Layer 1: Exact Operators}
+
+A Markov Decision Process is defined by the tuple $(\mathcal{S}, \mathcal{A}, P, r, \gamma)$, where $\mathcal{S}$ is the state space, $\mathcal{A}$ the action space, $P(s'|s,a)$ the transition kernel, $r(s,a)$ the reward function, and $\gamma \in [0,1)$ the discount factor. A policy $\pi: \mathcal{S} \to \Delta(\mathcal{A})$ maps states to distributions over actions. The value function $V^\pi(s) = \mathbb{E}_\pi\left[\sum_{t=0}^{\infty} \gamma^t r(s_t, a_t) \mid s_0 = s\right]$ measures expected discounted return under $\pi$, and the action-value function $Q^\pi(s,a) = r(s,a) + \gamma \sum_{s'} P(s'|s,a) V^\pi(s')$ conditions on the first action.
+
+The Bellman optimality operator $T$ acts on value functions:
+\begin{equation}
+(TV)(s) = \max_{a \in \mathcal{A}} \left\{ r(s,a) + \gamma \sum_{s'} P(s'|s,a) V(s') \right\}.
+\label{eq:bellman_optimality}
+\end{equation}
+The policy evaluation operator $T^\pi$ fixes a policy:
+\begin{equation}
+(T^\pi V)(s) = r(s,\pi(s)) + \gamma \sum_{s'} P(s'|s,\pi(s)) V(s').
+\label{eq:bellman_evaluation}
+\end{equation}
+Both $T$ and $T^\pi$ are $\gamma$-contractions in the supremum norm: $\|TV_1 - TV_2\|_\infty \leq \gamma \|V_1 - V_2\|_\infty$. By the Banach fixed point theorem, each has a unique fixed point. For $T$, the fixed point is $V^*$, the optimal value function. For $T^\pi$, it is $V^\pi$ \citep{bertsekas1996}.
+
+The supremum norm is adequate for discounted bounded-cost problems, but a richer framework accommodates the full range of economic models. The weighted supremum norm generalizes contraction analysis to settings where value functions may grow without bound across the state space.
+
+\begin{definition}[Weighted Supremum Norm and Contraction]
+\label{def:weighted_contraction}
+Let $v: \mathcal{S} \to [1, \infty)$ be a weight function. The weighted supremum norm is $\|J\|_v = \sup_{s \in \mathcal{S}} |J(s)| / v(s)$. An operator $T$ is a contraction of modulus $\alpha \in [0,1)$ with respect to $\|\cdot\|_v$ if $\|TJ_1 - TJ_2\|_v \leq \alpha \|J_1 - J_2\|_v$ for all $J_1, J_2$ in the space of functions with finite $\|\cdot\|_v$ norm.
+\end{definition}
+
+\begin{theorem}[Geometric Convergence of Bellman Operators]
+\label{thm:geometric_convergence}
+If $T$ is a contraction of modulus $\alpha$ in $\|\cdot\|_v$, then: (i) $T$ has a unique fixed point $J^*$ in the space of functions with finite $\|\cdot\|_v$ norm; (ii) for any initial $J_0$, the iterates $J_{k+1} = TJ_k$ satisfy $\|J_k - J^*\|_v \leq \alpha^k \|J_0 - J^*\|_v$. The same holds for $T^\pi$ with fixed point $J^\pi$.\footnote{This is a direct application of the Banach fixed point theorem in the complete metric space $(\{J : \|J\|_v < \infty\}, \|\cdot\|_v)$. For the standard discounted case with bounded rewards, $v(s) = 1$ and $\alpha = \gamma$ recover the classical result. See \citet{bertsekas2022}, Appendix B, and \citet{denardo1967} for the original formulation in the DP context.}
+\end{theorem}
+
+The weighted norm framework is essential because the standard sup-norm is too restrictive for many economic applications. \citet{bertsekas2022} organizes the theory into a hierarchy of three cases. In the contractive case ($\alpha < 1$), which covers discounted lifecycle and asset pricing models, convergence is geometric and the theory is cleanest. In the semicontractive case, which arises in stochastic shortest path problems such as job search and optimal stopping, contraction holds only along trajectories that eventually terminate; convergence requires additional conditions on proper policies. In the noncontractive case, which includes undiscounted growth models and average-cost formulations, the Bellman operator is not a contraction in any weighted norm, and the analysis requires entirely different tools (relative value iteration, span seminorms). The remainder of this chapter focuses on the contractive case, which covers the majority of structural estimation applications.
+
+Value Iteration applies $T$ repeatedly: $V_{k+1} = TV_k$, converging geometrically with ratio $\gamma$. Policy Iteration alternates between computing the fixed point of $T^\pi$ (policy evaluation) and updating the policy greedily with respect to the resulting value function (policy improvement). Both converge to $V^*$ for any finite MDP with $\gamma < 1$ \citep{sutton2018}. They represent the exact planning endpoint of the continuum: given full knowledge of $P$ and $r$, we solve for the optimal policy through deterministic operator iteration.
+
+\subsubsection{Layer 2: Stochastic Approximation}
+
+When $P$ and $r$ are unknown, the agent has access only to sampled transitions $(s, a, r, s')$ drawn from interaction with the environment. Reinforcement learning replaces exact operator application with stochastic estimates.
+
+Q-learning \citep{watkins1992_paper} performs stochastic approximation of $T$. At each step, the agent observes $(s, a, r, s')$ and updates:
+\begin{equation}
+Q(s,a) \leftarrow Q(s,a) + \alpha_t \left[ r + \gamma \max_{a'} Q(s',a') - Q(s,a) \right].
+\label{eq:q_learning}
+\end{equation}
+The bracketed term is a single-sample estimate of the Bellman error $(TQ)(s,a) - Q(s,a)$. Under standard conditions on the learning rate schedule ($\sum_t \alpha_t = \infty$, $\sum_t \alpha_t^2 < \infty$) and infinite exploration of all state-action pairs, Q-learning converges to $Q^*$ with probability 1 \citep{watkins1992_paper}.
+
+Where Q-learning approximates the optimality operator, temporal-difference (TD) learning \citep{sutton1988} approximates the evaluation operator $T^\pi$. The TD(0) update replaces the full expectation in $T^\pi$ with a single observed transition:
+\begin{equation}
+V(s) \leftarrow V(s) + \alpha_t \left[ r + \gamma V(s') - V(s) \right].
+\end{equation}
+SARSA extends this to action-values by updating with the action actually taken: $Q(s,a) \leftarrow Q(s,a) + \alpha_t [r + \gamma Q(s',a') - Q(s,a)]$, where $a' \sim \pi(\cdot|s')$. As an on-policy method, SARSA evaluates the behavior policy rather than the optimal policy, converging to $Q^\pi$ for the policy being followed \citep{singh2000}.
+
+Monte Carlo methods replace bootstrapped estimates with complete episode returns:
+\begin{equation}
+Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha_t \left[ G_t - Q(s_t,a_t) \right],
+\end{equation}
+where $G_t = \sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1}$ is the observed return from time $t$. These updates are unbiased but high-variance. The depth extends to the full episode rather than a single step.
+
+REINFORCE \citep{williams1992_reinforce} takes a different route: rather than approximating the Bellman operator, it directly optimizes the policy parameters $\theta$ by gradient ascent on expected return:
+\begin{equation}
+\theta \leftarrow \theta + \alpha \nabla_\theta \log \pi_\theta(a_t|s_t) G_t.
+\end{equation}
+This is a stochastic estimate of the policy gradient $\nabla_\theta J(\theta) = \mathbb{E}_\pi [\nabla_\theta \log \pi_\theta(a|s) Q^\pi(s,a)]$ \citep{SuttonMcAllester2000}. In tabular settings, REINFORCE converges to a globally optimal policy at a geometric rate \citep{agarwal2021theory}.
+
+A unifying analysis framework comes from the ODE method of stochastic approximation \citep{borkar2000}. All stochastic approximation algorithms of the form $x_{k+1} = x_k + \alpha_k [h(x_k) + M_{k+1}]$ track the continuous-time dynamics $\dot{x} = h(x)$. For Q-learning, $h$ is the Bellman operator minus identity; for TD, it is the projected Bellman operator; for policy gradient, it is the gradient field of the expected return. The fixed points of the continuous-time system are the fixed points of the corresponding operators. This perspective makes precise the sense in which learning algorithms approximate planning computations. Borkar and Meyn show that stability of the iterates is implied by asymptotic stability of the origin for the limiting ODE, and the analysis applies uniformly to Q-learning, adaptive critic methods, and asynchronous stochastic approximation for both discounted and average-cost MDPs.
+
+\subsubsection{Layer 3: The Continuum}
+
+The space between pure planning and pure learning has identifiable structure. \citet{moerland2022unifying} identify key dimensions along which algorithms interpolate between these endpoints.
+
+\emph{Model knowledge} ranges from complete (Value Iteration, Policy Iteration) through learned ($\hat{P}$, $\hat{r}$ in Dyna and model-based RL) to absent (Q-learning, SARSA, Monte Carlo). Model-based RL methods like Dyna \citep{sutton2018} learn a model and apply approximate operators; Model-Based Policy Optimization \citep{janner2019model} decides adaptively when to trust model-generated data. \citet{janner2019model} prove that value prediction error under $k$-step branched rollouts decomposes into model error and policy divergence terms that trade off with rollout length, justifying the surprising effectiveness of short rollout horizons.\footnote{\citet{janner2019model} bound: $|\eta[\pi] - \hat{\eta}[\pi]| \leq k(1-\gamma)\varepsilon_m' + \gamma^k \varepsilon_\pi / (1-\gamma)$, where $\varepsilon_m'$ is empirical model error and $\varepsilon_\pi$ is policy divergence.}
+
+\emph{Update breadth} ranges from full sweeps over all states (VI, PI) to single-sample updates (Q-learning, TD). \emph{Update depth} ranges from one-step bootstrapping (VI, Q-learning, TD) to full-episode returns (Monte Carlo). These two dimensions define a space where intermediate algorithms (TD($\lambda$), $n$-step returns) blend the bias-variance tradeoff.
+
+\emph{Policy representation} ranges from tabular (a value for each state or state-action pair) to parametric. Deep Q-Networks \citep{mnih2015} approximate $Q^*(s,a; \theta)$ with neural networks. The DQN objective minimizes temporal-difference error:
+\begin{equation}
+L(\theta) = \mathbb{E}_{(s,a,r,s')} \left[ \left( r + \gamma \max_{a'} Q(s', a'; \theta^-) - Q(s, a; \theta) \right)^2 \right],
+\end{equation}
+where $\theta^-$ are parameters of a periodically updated target network. Experience replay decorrelates updates; the target network stabilizes the moving target. Under suitable conditions on the function class and exploration, DQN converges to an approximate Bellman fixed point \citep{fan2020dqn}.
+
+\emph{On-policy vs. off-policy} control determines whether the policy generating data matches the policy being improved. Off-policy methods (Q-learning, DQN) can learn from any data source; on-policy methods (SARSA, PPO) evaluate and improve the current behavior.
+
+Generalized Policy Iteration (GPI) unifies all of these. GPI interleaves two processes: policy evaluation (estimating $V^\pi$ or $Q^\pi$) and policy improvement (making the policy greedier with respect to the current value estimate). When both processes stabilize, the result is optimal. Every algorithm discussed, from VI to REINFORCE, fits the GPI template with different choices along the dimensions above.
+
+An alternative unification views Policy Iteration through the lens of Newton's method on the Bellman equation. The key observation is geometric: at the current value estimate $\tilde{J}$, the policy operator $T^{\tilde{\pi}}$ for the greedy policy $\tilde{\pi}$ acts as a supporting hyperplane to the nonlinear operator $T$, satisfying $T^{\tilde{\pi}} \tilde{J} = T\tilde{J}$ and $T^{\tilde{\pi}} J \leq TJ$ for all $J$.\footnote{This linearization interpretation originates in \citet{kleinman1968} for Riccati equations in linear-quadratic control and \citet{pollatschek1969} for stochastic games. \citet{bertsekas2022}, Section 1.3.3, develops the general nonlinear programming interpretation.} Policy evaluation then solves the linearized fixed-point equation $J = T^{\tilde{\pi}} J$ exactly, just as Newton's method solves the linearized system at each iterate. This is why PI converges faster than VI: VI applies the nonlinear operator directly (a fixed-point iteration), whereas PI linearizes and solves (a Newton step).
+
+\begin{theorem}[Convergence of Policy Iteration]
+\label{thm:pi_convergence}
+For a finite discounted MDP with $|\mathcal{S}|$ states, $|\mathcal{A}|$ actions, and discount factor $\gamma < 1$, the Policy Iteration sequence $\{\pi_k\}$ satisfies:
+\begin{enumerate}
+\item[(a)] Monotone improvement: $J^{\pi_{k+1}}(s) \leq J^{\pi_k}(s)$ for all $s \in \mathcal{S}$, with strict inequality at some state unless $\pi_k$ is already optimal.
+\item[(b)] Contraction: $\|J^{\pi_{k+1}} - J^*\|_v \leq \gamma \|J^{\pi_k} - J^*\|_v$, where $\|\cdot\|_v$ is the weighted supremum norm from Definition~\ref{def:weighted_contraction}.
+\item[(c)] Finite termination: PI terminates in at most $|\mathcal{A}|^{|\mathcal{S}|}$ iterations, since the number of deterministic policies is finite and no policy is visited twice.
+\end{enumerate}
+\footnote{Part (a) follows from the policy improvement lemma: if $\pi_{k+1}$ is greedy with respect to $J^{\pi_k}$, then $T^{\pi_{k+1}} J^{\pi_k} \leq T^{\pi_k} J^{\pi_k} = J^{\pi_k}$, and iterating the monotone operator $T^{\pi_{k+1}}$ preserves the inequality. Part (b) follows from the supporting-hyperplane property: $J^{\pi_{k+1}} = T^{\pi_{k+1}} J^{\pi_{k+1}} \leq T J^{\pi_{k+1}}$, so $J^{\pi_{k+1}} - J^* \leq TJ^{\pi_{k+1}} - TJ^* \leq \gamma \|J^{\pi_{k+1}} - J^*\|_v \cdot v$, and repeating for the greedy step gives the contraction. See \citet{bertsekas2022}, Propositions 1.3.1 and 1.3.7.}
+\end{theorem}
+
+The Newton interpretation extends naturally to truncated and approximate variants. \citet{bertsekas2024} shows that Model Predictive Control with lookahead length $\ell$ and terminal cost approximation $\tilde{J}$ is a truncated Newton step: the agent solves a $\ell$-step subproblem exactly and appends $\tilde{J}$ as terminal cost. The region of convergence, the set of $\tilde{J}$ for which the resulting policy improves, expands with $\ell$. This framework yields a precise hierarchy. One-step lookahead ($\ell = 1$) is the standard greedy policy improvement step. Full lookahead ($\ell = \infty$) recovers exact Policy Iteration. Rollout ($\ell = 1$ with $\tilde{J} = J^\mu$ for a base policy $\mu$) is a single Newton step from the base policy's value function. AlphaZero and TD-Gammon implement this paradigm in large state spaces: off-line training produces a terminal cost approximation $\tilde{J}$ (via neural networks), and on-line play executes Newton steps (via tree search or rollout) from $\tilde{J}$. The off-line phase builds an approximate value function; the on-line phase refines it through Newton-type policy improvement. The practical success of these systems is explained by the Newton interpretation: even a single Newton step from a reasonable starting point can produce a near-optimal policy.
+
+\begin{table}[h!]
+\centering
+\caption{Key dimensions for analyzing MDP algorithms \citep{moerland2022unifying}}
+\label{tab:dimensions}
+\begin{tabular}{p{2.5cm}|p{8.5cm}}
+\hline
+\textit{Dimension} & \textit{Description} \\
+\hline
+Model knowledge & Complete (DP), learned (model-based RL), none (model-free RL) \\
+\hline
+Update breadth & Full state sweep (VI/PI) vs.\ single-sample forward pass (Q-learning, TD) \\
+\hline
+Update depth & One-step bootstrap (TD, VI) vs.\ full episode (MC) vs.\ intermediate ($n$-step, TD($\lambda$)) \\
+\hline
+Policy type & On-policy (SARSA, PPO) vs.\ off-policy (Q-learning, DQN) \\
+\hline
+Representation & Tabular vs.\ linear vs.\ nonlinear (neural network) \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\caption{Algorithm placement along the planning-learning continuum}
+\label{tab:algorithm-comparison}
+\begin{tabular}{p{2.0cm}|p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}}
+\hline
+\textit{Dimension} & VI & PI & Q-learning & SARSA & MC & DQN \\
+\hline
+Model & Full & Full & None & None & None & None \\
+\hline
+Breadth & All states & All states & 1 sample & 1 sample & 1 sample & Batch \\
+\hline
+Depth & 1 step & Converge & 1 step & 1 step & Episode & 1 step \\
+\hline
+Policy & Off & On/Off & Off & On & On & Off \\
+\hline
+Repr. & Tabular & Tabular & Tabular & Tabular & Tabular & Neural \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\subsection{What Theory Reveals for Economists}
+
+Economists solving dynamic models face four computational and statistical barriers. Exact dynamic programming requires $O(|\mathcal{S}|^3)$ operations per policy iteration step; with five continuous state variables discretized to ten grid points each, $|\mathcal{S}| = 10^5$ and the computation is infeasible. Transition dynamics are routinely simplified, but without formal conditions under which simplification preserves counterfactual validity. Many problems of economic interest have unknown transition kernels that must be estimated from data. And even when individual approximations are accurate, errors compound through iterated operator application. These barriers are not new observations; they are the central themes of \citet{Rust1987} and the structural estimation literature broadly. The RL theory reviewed below addresses each one.
+
+\subsubsection{Breaking the Curse of Dimensionality}
+
+Lifecycle models with continuous wealth, health, and human capital generate state spaces that grow exponentially in the number of state variables. Exact dynamic programming requires enumerating every state. This is the central computational barrier in structural estimation \citep{Rust1987}. The question is whether function approximation, replacing tabular enumeration with parameterized representations, can solve the agent's dynamic program with formal guarantees.
+
+The projected Bellman operator $\Pi T$ replaces $T$, where $\Pi$ projects onto the function class. \citet{tsitsiklis1997} identify the precise conditions under which this works: $\Pi T^\pi$ remains a contraction in a weighted norm when the function class is linear, though the fixed point $V_{\Pi T^\pi}$ generally differs from $V^\pi$. The approximation error is bounded by a constant factor of the distance between the best linear approximation and the true value function.\footnote{The exact factor is $(1+\lambda\gamma)/(1-\gamma)$, where $\lambda$ is the eligibility trace parameter \citep{tsitsiklis1997}.} Linear function approximation connects directly to the sieve estimation methods familiar in econometrics: polynomial, spline, or wavelet bases used in nonparametric estimation are exactly the features over which TD learning with linear weights converges.
+
+Once convergence is established, the next question is how fast it occurs. \citet{bhandari2021finite} and \citet{mitra2024} establish finite-time convergence of TD learning with linear function approximation under both i.i.d.\ and Markovian sampling.\footnote{\citet{bhandari2021finite} show mean-square error decays as $(1 - \alpha\omega)^t \cdot O(\alpha B)$, where $\omega$ is the smallest eigenvalue of the expected update matrix and $B$ is a problem-dependent constant. \citet{mitra2024} extend this with a simplified two-step inductive argument that treats Markovian noise as an $O(\alpha^2)$ perturbation, achieving rate $O((1-\alpha\omega)^{t-\tau})$ for $t \geq \tau$ where $\tau = O(\log(1/\alpha))$ is the mixing time.} The analysis generalizes to the full TD($\lambda$) family and arbitrary strongly monotone stochastic approximation. For structural models where the economist can specify informative basis functions, these results provide formal justification for replacing tabular DP with linear approximation architectures.
+
+Economists are not limited to linear or polynomial sieves. Scaling to nonlinear function approximation introduces new challenges but also new possibilities. \citet{fan2020dqn} provide the first rigorous analysis of DQN, establishing that neural Fitted Q-Iteration converges geometrically to $Q^*$ up to statistical error from ReLU approximation bias and finite samples. \citet{gaur2023fqi} establish order-optimal sample complexity $\tilde{O}(1/\varepsilon^2)$ for Fitted Q-Iteration with two-layer ReLU networks without requiring linear or low-rank MDP structure. Neural networks can represent value functions and policies for models where the state space is too complex for hand-crafted basis functions: image-based observations in experimental economics, text data in mechanism design, or high-dimensional portfolio problems.
+
+For linear MDPs, \citet{jin2020} prove that LSVI-UCB achieves regret depending only on the feature dimension $d$, not $|\mathcal{S}|$ or $|\mathcal{A}|$, making the algorithm practical for large or continuous state-action spaces.\footnote{LSVI-UCB achieves $\tilde{O}(\sqrt{d^3 H^3 T})$ regret in episodic settings, where $d$ is the feature dimension, $H$ the horizon, and $T$ the total steps \citep{jin2020}.} The eluder dimension framework of \citet{wang2020eluder} extends this to general nonlinear function classes, achieving regret that scales with the eluder dimension and log-covering numbers rather than state-action space size.\footnote{The regret is $\tilde{O}(\mathrm{poly}(dH)\sqrt{T})$ where $d$ depends on the eluder dimension and log-covering numbers of the function class \citep{wang2020eluder}.} Natural policy gradient methods achieve the strongest form of this result: convergence that depends on neither $|\mathcal{S}|$ nor $|\mathcal{A}|$. \citet{cen2022fast} prove that NPG with entropy regularization achieves fast linear convergence through contraction of the regularized Bellman operator.\footnote{The NPG convergence rate is $O(\log(1/\varepsilon) \cdot \log\log(1/\varepsilon))$ \citep{cen2022fast}.} \citet{muller2024npg} interpret NPG through Fisher-Rao geometry, showing that the natural gradient flow on the probability simplex follows geodesics of the Fisher-Rao metric. For lifecycle models with large or continuous state spaces, dimension-free convergence means the computational cost of solving the agent's problem no longer scales with the size of the state space.
+
+The primary obstacle to function approximation has been the deadly triad: the combination of function approximation, bootstrapping, and off-policy learning can cause divergence. The three ingredients are individually benign; together, they create a moving target. Three complementary strategies now address this directly. Target networks break the moving-target problem: \citet{zhang2021target} prove that Polyak-averaging updates with projections converge to regularized TD fixed points. Regularization stabilizes the optimization landscape: \citet{lim2024regularized} prove that Q-learning with $\ell_2$ regularization converges under linear function approximation via ODE analysis, with the regularization term stabilizing precisely the combination that causes divergence in Baird's counterexample \citep{Baird1995}.\footnote{The RegQ update is $\theta_{k+1} = \theta_k + \alpha_k [r_k + \gamma \max_a x(s_{k+1}, a)^\top \theta_k - x(s_k, a_k)^\top \theta_k] x(s_k, a_k) - \alpha_k \eta \theta_k$, and convergence follows from switching system stability of the associated ODE \citep{lim2024regularized}.} Conservative bootstrapping addresses statistical bias: \citet{carvalho2020convergence} prove convergence of modified Q-learning with linear function approximation under general assumptions, establishing bounds connecting the Q-learning fixed point to $Q^*$.
+
+\subsubsection{When Can We Simplify the Model?}
+
+Structural econometricians routinely simplify transition dynamics. A labor economist modeling occupational choice assumes a particular functional form for wage transitions; an IO economist studying firm entry assumes a parametric distribution for demand shocks. When is this justified? When does model misspecification invalidate counterfactual predictions?
+
+The value equivalence principle provides a formal answer. \citet{grimm2020value} define two models as value equivalent with respect to a set of policies $\Pi$ and value functions $\mathcal{V}$ if they yield identical Bellman operator updates for all $(\pi, V) \in \Pi \times \mathcal{V}$. The space of value-equivalent models $\mathcal{M}(\Pi, \mathcal{V})$ contracts monotonically as $\Pi$ and $\mathcal{V}$ expand, eventually collapsing to the true model when $\Pi$ spans all policies and $\mathcal{V}$ spans all functions. The parsimony result is striking: the VE class is determined by $|\mathcal{A}|$ deterministic policies. For economic applications with small action spaces (buy/sell/hold; enter/exit), value equivalence permits substantial model simplification.
+
+Proper value equivalence (PVE) pushes this further. \citet{grimm2021proper} define order-$k$ value equivalence $\mathcal{M}^k(\Pi, \mathcal{V})$ for $k$ applications of the Bellman operator. In the limit, PVE models $\mathcal{M}_\infty(\Pi)$ use only value functions and do not collapse to a singleton even with all deterministic policies. Crucially, all PVE models yield optimal policies. MuZero \citep{Schrittwieser2020} minimizes an upper bound of the PVE loss, and this is the first rigorous explanation for why MuZero's learned models, which bear little resemblance to the true dynamics, support optimal play: PVE models need not resemble the true dynamics yet support optimal planning. For structural estimation, PVE formalizes the conditions under which parsimonious DDC specifications are without loss for policy evaluation.
+
+The simulation lemma quantifies value-prediction error under model misspecification. \citet{lobel2024simulation} provide optimally tight bounds that are sub-linear in transition function misspecification $\varepsilon_T$, carefully tracking probability overlap rather than $L_1$ distance. The bound is provably tight, demonstrated by explicit MDP construction. Decision-aware learning offers a complementary perspective: \citet{ayoub2020value} introduce value-targeted regression, achieving regret that matches the bandit lower bound in dependence on dimension and episodes.\footnote{\citet{ayoub2020value} achieve regret $\tilde{O}(H\sqrt{dK})$, where $d$ is the dimension and $K$ the number of episodes.} Estimating only the parameters that affect policy evaluation, rather than the full data-generating process, can reduce estimation dimensionality without sacrificing counterfactual validity.
+
+A formal complexity separation reinforces this point. \citet{zhu2024representation} construct MDPs where transition and reward functions have compact representations but optimal Q-functions do not.\footnote{\citet{zhu2024representation} construct Majority MDPs where transition and reward functions have polynomial circuit complexity but optimal Q-functions require exponential circuit complexity in constant-depth circuits.} Model-based methods work not because they have more data, but because they estimate a simpler object. For the structural econometrician, this vindicates the standard practice of estimating primitives $(P, r)$ and solving for policy, rather than attempting to learn the policy or value function directly from data.
+
+\subsubsection{Solving Problems DP Cannot Solve}
+
+Standard dynamic programming assumes full knowledge of the transition kernel $P$ and reward function $r$. Many economic problems violate this assumption: the transition kernel may be unknown and must be estimated from data, the state space may be too large for tabular methods, or the modeler may prefer algorithms that work without committing to a parametric model. The question is whether the operator-theoretic foundation of Section 2.1 extends to these settings, and what the statistical cost of learning is relative to planning with a known model.
+
+The central finding of the sample complexity literature is a sharp gap between model-free and model-based methods. The following two theorems make this gap precise.
+
+\begin{theorem}[Sample Complexity of Q-Learning]
+\label{thm:q_learning_sample}
+Synchronous Q-learning with constant step size requires
+\[
+\tilde{\Theta}\!\left(\frac{|\mathcal{S}||\mathcal{A}|}{(1-\gamma)^4 \varepsilon^2}\right)
+\]
+samples to find an $\varepsilon$-optimal policy in the $\ell_\infty$ norm. For the special case of policy evaluation (TD learning, $|\mathcal{A}|=1$), the dependence improves to $(1-\gamma)^{-3}$, which is minimax optimal \citep{li2024minimax}.\footnote{The $\tilde{\Theta}$ notation hides logarithmic factors in $|\mathcal{S}|$, $|\mathcal{A}|$, $(1-\gamma)^{-1}$, and $\varepsilon^{-1}$. The minimax lower bound is $\Omega(|\mathcal{S}||\mathcal{A}|/((1-\gamma)^3\varepsilon^2))$, so Q-learning is suboptimal by a factor of $(1-\gamma)^{-1}$.}
+\end{theorem}
+
+\begin{theorem}[Sample Complexity of Model-Based Methods]
+\label{thm:model_based_sample}
+The plug-in estimator (estimate $\hat{P}$ and $\hat{r}$ from data, solve the estimated MDP exactly) with an absorbing MDP construction requires
+\[
+\tilde{\Theta}\!\left(\frac{|\mathcal{S}||\mathcal{A}|}{(1-\gamma)^3 \varepsilon^2}\right)
+\]
+samples to find an $\varepsilon$-optimal policy, which is minimax optimal \citep{li2024breaking}.\footnote{\citet{li2024breaking} break a long-standing $|\mathcal{S}|^2|\mathcal{A}|$ barrier by constructing an absorbing MDP that avoids the curse of dimensionality in the state space, proving minimax optimality without variance reduction. \citet{zhang2024settling} prove that model-based algorithms also attain minimax-optimal regret $\tilde{O}(\sqrt{|\mathcal{S}||\mathcal{A}|H^3K})$ for all $K \geq 1$ without burn-in cost.}
+\end{theorem}
+
+The mechanism behind the $(1-\gamma)^{-1}$ gap is overestimation bias. The max operator in Q-learning selects the largest among noisy Q-estimates at each state, introducing a systematic upward bias of order $O(\sqrt{|\mathcal{A}|/n})$ per iteration, where $n$ is the number of samples per state-action pair. This bias compounds across the $(1-\gamma)^{-1}$ effective horizon steps of bootstrapped iteration, producing the extra $(1-\gamma)^{-1}$ factor. Model-based methods estimate transition probabilities as a supervised learning problem, with no max operator and no bootstrapping, so the compounding does not arise.
+
+The Newton interpretation from Section~\ref{thm:pi_convergence} provides a function-space explanation for the same gap. Model-based Policy Iteration is a Newton method: it linearizes the Bellman equation at each iterate and solves the linear system exactly, achieving superlinear convergence near the optimum. Q-learning is a stochastic fixed-point iteration, analogous to gradient descent, with at best linear convergence rate. The $(1-\gamma)^{-1}$ gap in sample complexity is the statistical analogue of the classical gap between Newton's method and gradient descent in optimization. For the structural econometrician, this result says that estimating structural primitives $(P, r)$ and then solving the Bellman equation on the estimated model is not just conventional practice but the statistically optimal two-step procedure, and the advantage is quantitatively large: at $\gamma = 0.99$, model-based methods require 100 times fewer samples. In the online setting, \citet{he2021nearly} close the gap with nearly minimax-optimal regret via UCB-based Value Iteration.\footnote{\citet{he2021nearly} achieve regret $\tilde{O}(\sqrt{SAT}/(1-\gamma)^{1.5})$ with refined Bernstein-type bonuses, improving the prior best dependence from $(1-\gamma)^{-2.5}$. The matching lower bound is $\tilde{\Omega}(\sqrt{SAT}/(1-\gamma)^{1.5})$.}
+
+Correcting overestimation without introducing underestimation has proved surprisingly difficult. \citet{ren2021underestimation} show that Double Q-learning can converge to non-optimal approximate fixed points under function approximation, with every such fixed point corresponding to the value of some stochastic policy. Maxmin Q-learning \citep{lan2020maxmin} offers a tunable dial: maintaining $N$ independent Q-estimates and taking the minimum for target computation interpolates the expected estimation bias from overestimation (single estimator) to underestimation (large $N$).\footnote{Maxmin Q-learning maintains $N$ independent Q-estimates. The variance of the minimum estimator decreases monotonically in $N$; for $N \geq 8$, the variance falls below that of a single unbiased estimator.} The practitioner chooses $N$ to control the bias-variance tradeoff.
+
+Policy gradient methods offer an alternative path, bypassing the Bellman equation entirely. They optimize the expected return $J(\theta) = \mathbb{E}_{\pi_\theta}[\sum_{t=0}^\infty \gamma^t R_t]$ directly over policy parameters $\theta$. The policy gradient theorem \citep{SuttonMcAllester2000} establishes that $\nabla_\theta J(\theta) = \mathbb{E}_{s \sim d^{\pi_\theta}, a \sim \pi_\theta} [\nabla_\theta \log \pi_\theta(a|s) Q^{\pi_\theta}(s,a)]$, where $d^{\pi_\theta}$ is the discounted state visitation distribution. This enables unbiased gradient estimation from trajectory samples. Despite non-convexity, the policy optimization landscape exhibits convex-like structure. \citet{agarwal2021theory} establish that projected policy gradient converges globally for finite MDPs by proving a variational gradient dominance property: the suboptimality gap is bounded by the squared gradient norm, a structure familiar from strongly convex optimization.\footnote{The convergence rate of projected policy gradient is $O(1/\sqrt{k})$ \citep{agarwal2021theory}.}
+
+The connection between policy gradient and policy iteration is deeper than algorithmic analogy. \citet{xiao2022convergence} prove that policy mirror descent with geometrically increasing step sizes achieves linear convergence without regularization, and in the limit recovers classical Policy Iteration. A single algorithm family, parameterized by step-size aggressiveness, spans the range from cautious learning to bold planning: conservative step sizes yield gradient descent, aggressive step sizes recover PI. The economist can choose along this spectrum, with the GPI framework guaranteeing convergence throughout.
+
+In practice, both policy and value function must be learned simultaneously, creating a coupled estimation problem. Actor-critic methods interleave policy evaluation (critic) with policy improvement (actor), typically on different timescales. \citet{wu2020twotimescale} provide the first finite-time analysis under Markovian sampling without i.i.d.\ assumptions. \citet{tian2023} extend actor-critic convergence to arbitrary-depth neural networks under Markov sampling, without assuming that network parameters remain close to initialization.\footnote{Sample complexities: \citet{wu2020twotimescale} achieve $O(\varepsilon^{-2.5})$; \citet{tian2023} prove an $O(T^{-0.5})$ convergence rate with $O(m^{-0.5})$ approximation error where $m$ is network width.}
+
+Beyond discounted MDPs, the operator-theoretic framework accommodates alternative assumptions about time horizons and structural change. For average-reward settings, \citet{lee2025optimal} characterize optimal $O(1/k)$ convergence rates for Value Iteration, with span-based complexity matching lower bounds within a constant factor. In non-stationary environments, \citet{mao2021nonstationary} introduce RestartQ-UCB, establishing the first minimax bounds for non-stationary episodic MDPs.\footnote{\citet{mao2021nonstationary} achieve dynamic regret $\tilde{O}(S^{1/3}A^{1/3}\Delta^{1/3}HT^{2/3})$ for episodic MDPs with total variation budget $\Delta$, with a matching lower bound $\Omega(S^{1/3}A^{1/3}\Delta^{1/3}H^{2/3}T^{2/3})$.} Both results confirm that the framework accommodates the full range of economic modeling assumptions about time horizons and structural change.
+
+\subsubsection{Stabilizing Approximate Dynamic Programming}
+
+Even when individual approximations are good, errors compound through iteration. The following result quantifies the damage from a single approximation step.
+
+\begin{theorem}[One-Step Lookahead Error Bound]
+\label{thm:one_step_lookahead}
+Let $\tilde{J}$ be an approximate value function and let $\tilde{\pi}$ be the policy that is greedy with respect to $\tilde{J}$. Then
+\[
+\|J^{\tilde{\pi}} - J^*\|_v \leq \frac{2\gamma}{1-\gamma} \|\tilde{J} - J^*\|_v,
+\]
+where $\|\cdot\|_v$ is the weighted supremum norm from Definition~\ref{def:weighted_contraction}.\footnote{The proof proceeds by triangle inequality. Write $J^{\tilde{\pi}} - J^* = (J^{\tilde{\pi}} - T^{\tilde{\pi}}\tilde{J}) + (T^{\tilde{\pi}}\tilde{J} - J^*)$. The first term equals $T^{\tilde{\pi}}J^{\tilde{\pi}} - T^{\tilde{\pi}}\tilde{J}$, which is bounded by $\gamma\|J^{\tilde{\pi}} - \tilde{J}\|_v$ by contraction of $T^{\tilde{\pi}}$. The second term uses $T^{\tilde{\pi}}\tilde{J} = T\tilde{J}$ (greedy policy) and $\|T\tilde{J} - TJ^*\|_v \leq \gamma\|\tilde{J} - J^*\|_v$. Rearranging and applying triangle inequality to $\|J^{\tilde{\pi}} - \tilde{J}\|_v$ yields the result. See \citet{bertsekas2022}, Proposition 2.2.1.}
+\end{theorem}
+
+The amplification factor $2\gamma/(1-\gamma)$ has concrete numerical consequences. At $\gamma = 0.95$, a 1\% approximation error in $\tilde{J}$ produces at most 38\% policy cost error. At $\gamma = 0.99$, the same 1\% error amplifies to 198\%. The bound is tight: a two-state MDP with deterministic transitions achieves exactly $2\gamma/(1-\gamma)$ amplification. For structural econometricians computing counterfactuals, these numbers determine how accurately the value function must be solved to produce reliable policy predictions.
+
+When the approximation is iterated rather than applied once, errors compound further. Approximate policy iteration and approximate value iteration accumulate approximation errors quadratically in the effective horizon.
+
+\begin{theorem}[Error Propagation in Approximate Value Iteration]
+\label{thm:avi_error}
+Let $\{J_k\}$ be a sequence generated by approximate value iteration with per-step error $\|J_{k+1} - TJ_k\|_v \leq \delta$ and approximation architecture error $\inf_{\tilde{J} \in \mathcal{F}} \|J^* - \tilde{J}\|_v \leq \varepsilon$. Let $\pi_k$ be greedy with respect to $J_k$. Then
+\[
+\limsup_{k \to \infty} \|J^{\pi_k} - J^*\|_v \leq \frac{2\gamma\delta}{(1-\gamma)^2} + \frac{\varepsilon}{1-\gamma}.
+\]
+The quadratic horizon dependence $(1-\gamma)^{-2}$ in the first term is tight \citep{scherrer2015}.\footnote{The proof follows from unrolling the recursion $\|J_{k+1} - J^*\|_v \leq \gamma \|J_k - J^*\|_v + \delta$, which gives $\|J_k - J^*\|_v \leq \gamma^k \|J_0 - J^*\|_v + \delta/(1-\gamma)$, and then applying Theorem~\ref{thm:one_step_lookahead}. The $(1-\gamma)^{-2}$ arises from the product of $(1-\gamma)^{-1}$ from error accumulation and $(1-\gamma)^{-1}$ from the one-step amplification. \citet{scherrer2015} constructs Tetris-like MDPs demonstrating tightness. See also \citet{farahmand2010} for a comprehensive treatment.}
+\end{theorem}
+
+\citet{munos2003} refines this with distribution-dependent bounds showing which states matter for approximation accuracy.\footnote{The exact bound is $\|V^* - V^{\pi_k}\|_\mu \leq \frac{2\gamma}{1-\gamma}\|V_k - V^{\pi_k}\|_{\mu_k} + \frac{2\gamma}{1-\gamma}\|V_k - T^{\pi_k}V_k\|_{\mu_k'}$, where $\mu_k$ and $\mu_k'$ are distributions over states that weight errors by their relevance to the evaluation measure $\mu$ \citep{munos2003}.} \citet{scherrer2015} extends this analysis to approximate modified policy iteration, deriving performance bounds that interpolate between API and AVI guarantees. \citet{farahmand2010} provides a comprehensive error propagation analysis for both approximate policy iteration and approximate value iteration.
+
+The $O(1/(1-\gamma)^2)$ dependence in Theorem~\ref{thm:avi_error} raises a natural question: can any modification reduce the horizon dependence to linear? The answer is yes, and the mechanism is unique.
+
+Regularization changes the fundamental character of this error propagation. \citet{geist2019regularized} establish the theoretical foundations: define the regularized Bellman operator
+\begin{equation}
+(T_\Omega V)(s) = \max_{\pi \in \Delta(\mathcal{A})} \left\{ \sum_a \pi(a) \left[ r(s,a) + \gamma \sum_{s'} P(s'|s,a) V(s') \right] - \Omega(\pi) \right\},
+\end{equation}
+where $\Omega$ is a strongly convex regularizer. When $\Omega$ is the negative entropy $\Omega(\pi) = \tau \sum_a \pi(a) \log \pi(a)$, the operator yields soft value iteration. The operator $T_\Omega$ is a $\gamma$-contraction, preserving the fixed-point convergence guarantees of the standard operator while producing smoother, stochastic optimal policies. The connection to structural econometrics is immediate: entropy regularization produces the soft Bellman equation, which is precisely the logit choice probability formula from \citet{Rust1987}. The regularized operator framework provides the theoretical foundation for why DDC models with logistic errors are computationally well-behaved.
+
+The deeper insight belongs to \citet{vieillard2020}, who analyze KL-regularized policy improvement with penalty $\Omega(\pi) = \tau D_{\text{KL}}(\pi \| \bar{\pi})$ anchoring updates to a reference policy $\bar{\pi}$. Through a mirror descent interpretation, they show that KL regularization implicitly averages past Q-estimates, yielding a qualitatively different error propagation guarantee.
+
+\begin{theorem}[Linear Error Propagation under KL Regularization]
+\label{thm:kl_error}
+Under KL-regularized policy improvement with per-step approximation errors $\{\delta_k\}$, the performance of the $k$-th policy satisfies
+\[
+\|J^{\pi_k} - J^*_\Omega\|_v \leq \frac{C}{1-\gamma} \cdot \frac{1}{k} \sum_{j=1}^{k} \delta_j,
+\]
+where $J^*_\Omega$ is the regularized optimal value and $C$ is a problem-dependent constant. The horizon dependence is $(1-\gamma)^{-1}$, linear rather than quadratic, and the error is the norm of the average of past errors rather than their sum.\footnote{The averaging property is the key: the mirror descent interpretation shows that the KL penalty makes the iterates track a running average of past Q-functions. By the law of large numbers, if the per-step errors $\delta_k$ are zero-mean (as in stochastic approximation), the averaged error converges to zero at rate $O(1/\sqrt{k})$, on top of the $(1-\gamma)^{-1}$ amplification. No other regularizer is known to achieve this reduction. See \citet{vieillard2020}, Theorem 1.}
+\end{theorem}
+
+This is the only known mechanism for reducing the horizon dependence in approximate dynamic programming from quadratic to linear. KL penalties anchor solutions to prior beliefs about agent behavior, paralleling penalized likelihood in econometrics. The connection to trust region methods is direct: constraining $D_{\text{KL}}(\pi_{k+1} \| \pi_k)$ as in TRPO and PPO is equivalent to choosing regularization strength adaptively, making trust region optimization a special case of the regularized operator framework.
+
+The regularized operator framework also reveals the nature of tree search. \citet{grill2020planning} prove that AlphaZero's MCTS action selection approximates the solution to a KL-regularized policy optimization problem: the empirical visit distribution $\hat{\pi}$ tracks the exact regularized solution $\bar{\pi}$ with error $O(1/N)$ where $N$ is the number of simulations. Tree search is not an alternative to policy optimization; it is a particular instance of it. The tree provides function approximation; the simulation count controls regularization. This result suggests that the most effective computational methods for solving dynamic structural models already incorporate implicit regularization, whether or not the practitioner recognizes it.

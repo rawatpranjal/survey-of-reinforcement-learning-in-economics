@@ -1,0 +1,240 @@
+% Chapter 2: Planning and Learning as Fixed-Point Iteration
+% Core insight: All RL algorithms iterate toward the Bellman fixed point.
+% VI/Q-learning take small steps (gradient descent), PI/rollout take big steps (Newton).
+% Primary reference: Bertsekas (2024), "MPC and RL: A Unified Framework Based on DP"
+
+This chapter develops a unified view of dynamic programming and reinforcement learning as methods for finding the fixed point of the Bellman operator. Planning algorithms like value iteration and policy iteration assume known transition probabilities; learning algorithms like Q-learning and TD methods estimate the same fixed point from sampled transitions. The distinction is computational, not conceptual. We present the core theory, characterize convergence rates, and identify the conditions under which function approximation can destabilize learning.
+
+\subsection{The Two Operations}
+\label{sec:two_operations}
+
+Chapter~\ref{ch:history} established the Bellman equation and its fixed-point characterization: the optimal value function $V^*$ satisfies $(TV)(s) = \max_{a} \{ r(s,a) + \gamma \sum_{s'} P(s'|s,a) V(s') \}$, and the policy evaluation operator $T^\pi$ yields the value $V^\pi$ of any fixed policy. \citet{sutton2018} observe that all dynamic programming and reinforcement learning algorithms reduce to two primitive operations: policy evaluation, which computes $V^\pi$ for a given policy $\pi$, and policy improvement, which extracts a greedy policy $\pi'(s) = \argmax_a \{ r(s,a) + \gamma \sum_{s'} P(s'|s,a) V(s') \}$ from a given value function. The distinction between algorithms lies entirely in how they interleave these operations.
+
+
+\subsection{Little Steps and Big Jumps}
+\label{sec:vi_pi}
+
+Policy Iteration is Newton's method on the Bellman equation.\footnote{The geometric interpretation is due to \citet{bertsekas2024}. The nonlinear operator $T$ is the pointwise maximum over linear operators $\{T^\pi\}$. At value function $\tilde{V}$, the operator $T^{\pi}$ for the greedy policy $\pi$ is tangent to $T$: it touches $T$ at $\tilde{V}$ and lies below elsewhere. Policy evaluation solves this linearized equation exactly, just as Newton's method solves the linearized system at each iterate.} Value Iteration is gradient descent. This analogy, developed in \citet{bertsekas2024}, explains why PI converges in few iterations while VI requires many when $\gamma$ is close to 1. VI applies the Bellman operator once per iteration: $V_{k+1} = TV_k$. Each step shrinks the error by factor $\gamma$, yielding linear convergence. At $\gamma = 0.99$, reaching 1\% of initial error requires $\log(0.01)/\log(0.99) \approx 459$ iterations. PI instead solves the linearized problem exactly at each step: it computes $V^{\pi_k}$ by solving the linear system $(I - \gamma P^{\pi_k})V = r^{\pi_k}$, then improves to the greedy policy $\pi_{k+1}$. This achieves superlinear convergence, typically 5--10 iterations regardless of $\gamma$.
+
+The policy improvement theorem guarantees that the greedy policy $\pi'$ with respect to $V^\pi$ satisfies $V^{\pi'}(s) \geq V^\pi(s)$ for all states, with equality only when $\pi$ is already optimal.\footnote{The proof proceeds by induction on the Bellman backup: $V^\pi(s) \leq Q^\pi(s, \pi'(s)) = r(s,\pi'(s)) + \gamma \mathbb{E}[V^\pi(s')]$. Iterating this inequality and using the definition of $V^{\pi'}$ yields $V^\pi(s) \leq V^{\pi'}(s)$.} Generalized Policy Iteration encompasses any interleaving of evaluation and improvement: running $T^\pi$ for $k$ iterations before improving interpolates between VI ($k=1$) and PI ($k=\infty$).
+
+
+\subsection{Rollout and Lookahead}
+\label{sec:rollout}
+
+Rollout performs a single policy improvement step from a base policy $\mu$: given $V^\mu$, the rollout policy selects $\tilde{\pi}(s) = \argmax_a \{ r(s,a) + \gamma \sum_{s'} P(s'|s,a) V^\mu(s') \}$. Because this is one iteration of Policy Iteration, the policy improvement theorem guarantees $V^{\tilde{\pi}} \geq V^\mu$. \citet{bertsekas2024} emphasizes that ``the size of the improvement over the base policy is often impressive, evidently owing to the fast convergence rate of Newton's method that underlies rollout.'' The base policy need not be good; even crude heuristics combined with one-step lookahead often perform well.
+
+Multi-step lookahead ($\ell > 1$) optimizes exactly over $\ell$ steps before consulting the terminal approximation $\tilde{V}$. \citet{bertsekas2024} proves that the region of convergence expands as $\ell$ increases: longer lookahead compensates for worse value function approximations by exact optimization over immediate decisions. This principle underlies both AlphaZero and TD-Gammon. AlphaZero trains neural networks off-line to approximate position values, then executes Monte Carlo Tree Search on-line to extend the effective lookahead. TD-Gammon similarly combines a neural network position evaluator with rollout. In both cases, off-line training produces a starting approximation; on-line policy improvement refines it. The dramatic performance gains arise from applying Newton-like steps (policy improvement) to a reasonable starting point.
+
+
+\subsection{RL Algorithms as Fixed-Point Methods}
+\label{sec:rl_algorithms}
+
+The model-free algorithms of reinforcement learning fit the same framework. When the transition probabilities and rewards are unknown, the agent replaces exact operator applications with stochastic estimates from sampled transitions. Each algorithm can be characterized by what operator it approximates and whether it takes small steps (VI-like) or big steps (PI-like).
+
+\subsubsection{Q-Learning as Stochastic Value Iteration}
+
+Value iteration applies the Bellman operator
+\begin{equation}
+(FQ)(s,a) = \sum_{s'} P(s'|s,a) \left[ r(s,a) + \gamma \max_{a'} Q(s',a') \right],
+\end{equation}
+which is a $\gamma$-contraction in the sup-norm: $\|FQ - FQ'\|_\infty \leq \gamma\|Q - Q'\|_\infty$. By Banach's fixed-point theorem, the iteration $Q_{k+1} = FQ_k$ converges geometrically to the unique fixed point $Q^*$ \citep{bertsekas2019}.
+
+Q-learning \citep{WatkinsDayan1992} replaces exact operator applications with noisy, one-component-at-a-time updates. At each time step $t$, the agent observes a transition $(s_t, a_t, r_t, s_{t+1})$ and updates a single entry of the Q-table:
+\begin{equation}
+Q_{t+1}(s_t, a_t) = (1 - \alpha_t) Q_t(s_t, a_t) + \alpha_t \underbrace{\left[ r_t + \gamma \max_{a'} Q_t(s_{t+1}, a') \right]}_{\text{sample target}}.
+\label{eq:q_learning}
+\end{equation}
+All other entries remain unchanged: $Q_{t+1}(s,a) = Q_t(s,a)$ for every $(s,a) \neq (s_t, a_t)$. The sample target is a single-sample estimate of the Bellman backup $(FQ_t)(s_t,a_t)$; the successor $s_{t+1}$ is drawn from $P(\cdot|s_t,a_t)$, so the sample target is unbiased: $\mathbb{E}[\text{sample target} \mid s_t, a_t, Q_t] = (FQ_t)(s_t,a_t)$.\footnote{The distribution of $s_{t+1}$ depends only on $(s_t, a_t)$, not on how $a_t$ was selected. Q-learning is therefore off-policy: any behavior policy that visits all state-action pairs suffices.}
+
+\begin{theorem}[Q-Learning Convergence \citep{tsitsiklis1994}]
+\label{thm:q_learning_convergence}
+Suppose (i) every state-action pair $(s,a)$ is visited infinitely often, (ii) the successor $s_{t+1}$ is sampled from $P(\cdot|s_t,a_t)$, and (iii) the step sizes satisfy $\sum_t \alpha_t(s,a) = \infty$ and $\sum_t \alpha_t(s,a)^2 < \infty$ for each $(s,a)$. Then $Q_t \to Q^*$ with probability one.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Consider the error $\Delta_t = Q_t - Q^*$. When we update component $(s_t, a_t)$, the expected new value moves toward $(FQ_t)(s_t, a_t)$. The contraction property bounds how far this target can be from $Q^*(s_t, a_t)$:
+\[
+|(FQ_t)(s_t, a_t) - Q^*(s_t, a_t)| = |(FQ_t)(s_t, a_t) - (FQ^*)(s_t, a_t)| \leq \gamma \|\Delta_t\|_\infty.
+\]
+This bound is on the sup-norm $\|\Delta_t\|_\infty$, not the component-wise error $|\Delta_t(s_t,a_t)|$. A single update may increase the error at $(s_t,a_t)$ if that component currently has small error while other components have large error. However, the bound ensures that targets are always within $\gamma \|\Delta_t\|_\infty$ of $Q^*$. As the algorithm updates all components and the worst-case error $\|\Delta_t\|_\infty$ shrinks, all targets become more accurate.
+
+This shrinkage happens one component at a time. If every state-action pair $(s,a)$ is visited infinitely often (condition i), then every component eventually shrinks. The step sizes $\alpha_t$ control how aggressively the update moves toward the sample target. Condition (iii) imposes two requirements: the cumulative step sizes $\sum_t \alpha_t(s,a) = \infty$ must be large enough that the iterates can reach any value, escaping bad initializations; and $\sum_t \alpha_t(s,a)^2 < \infty$ ensures the step sizes eventually vanish, so the noise in individual samples averages out. A common choice $\alpha_t = c/(c + n_t(s,a))$, where $n_t(s,a)$ counts visits, satisfies both conditions.
+
+Noise does not automatically average out. Consider the update written as
+\[
+Q_{t+1}(s_t, a_t) = Q_t(s_t, a_t) + \alpha_t \bigl[ \underbrace{(FQ_t)(s_t, a_t) - Q_t(s_t, a_t)}_{\text{systematic term}} + \underbrace{w_t}_{\text{noise}} \bigr],
+\]
+where $w_t = (\text{sample target}) - (FQ_t)(s_t, a_t)$ is the sampling error. The noise $w_t$ has mean zero but nonzero variance. If the step sizes $\alpha_t$ remain constant, $Q_t$ oscillates around $Q^*$ with fluctuations that never vanish \citep{bertsekas2019}. Only when $\alpha_t \to 0$ does the noise contribution shrink faster than the systematic shrinkage accumulates.
+
+The proof proceeds via the ODE method:\footnote{See \citet{borkar2000} for the general theory of stochastic approximation via the ODE method.} the stochastic iterates track the solution of $\dot{Q} = FQ - Q$. Because $F$ is a $\gamma$-contraction, this ODE has $Q^*$ as its unique globally asymptotically stable equilibrium. The Robbins-Monro conditions ensure that the weighted noise $\sum_t \alpha_t w_t$ converges almost surely. Condition (i) guarantees every component receives infinitely many contractive updates. Combining these facts, $\|\Delta_t\|_\infty \to 0$ almost surely.
+\end{proof}
+
+With function approximation, the situation is worse. The composition of $F$ with projection onto a restricted function class need not be a contraction. \citet{Baird1995} constructed a seven-state MDP where linear TD diverges: shared parameters create feedback loops in which updates to one state destabilize neighbors, and errors amplify rather than shrink. Convergence of tabular Q-learning relies fundamentally on the contraction property of $F$ acting independently on each component.
+
+\subsubsection{Stochastic Policy Evaluation: TD and SARSA}
+
+TD learning and SARSA are stochastic analogs of iterative policy evaluation. Both estimate the value of a fixed policy $\pi$ from sampled transitions, differing only in whether they learn state values $V^\pi$ or action values $Q^\pi$. Neither algorithm is a control algorithm: they do not improve the policy. However, the choice of what to learn determines how easily the estimates can be used for control.
+
+TD(0) estimates the state-value function of a fixed policy from sampled transitions.\footnote{TD(0) is the stochastic analog of iterative policy evaluation within Generalized Policy Iteration.} Introduced by \citet{sutton1988}, the TD(0) update rule is
+\begin{equation}
+V(s) \leftarrow V(s) + \alpha_t \left[ r + \gamma V(s') - V(s) \right],
+\end{equation}
+where $(s,r,s')$ is a sampled transition under the policy being evaluated. The term $\delta_t = r + \gamma V(s') - V(s)$ is the temporal difference error, measuring the discrepancy between the current estimate and the bootstrapped target. TD(0) learns state values, which tell us how good each state is under policy $\pi$. To improve the policy, we need to compare actions: $\pi'(s) = \argmax_a \sum_{s'} P(s'|s,a)[r(s,a) + \gamma V^\pi(s')]$. This requires the transition model $P$. Without a model, state values alone cannot guide policy improvement.\footnote{This is why model-free control algorithms like Q-learning and SARSA learn action values directly.}
+
+SARSA learns action values $Q^\pi(s,a)$ instead of state values. The SARSA update rule \citep{rummery1994} is
+\begin{equation}
+Q_{t+1}(s_t, a_t) = (1 - \alpha_t) Q_t(s_t, a_t) + \alpha_t \underbrace{\left[ r_t + \gamma Q_t(s_{t+1}, a_{t+1}) \right]}_{\text{sample target}},
+\label{eq:sarsa}
+\end{equation}
+where $a_{t+1}$ is the action actually taken at state $s_{t+1}$ under the current policy $\pi_t$. The key distinction from Q-learning is that SARSA uses $a_{t+1}$ (the actual next action) rather than $\max_{a'} Q_t(s_{t+1}, a')$. SARSA performs stochastic approximation to the policy evaluation operator $T^\pi Q = \mathbb{E}_{a' \sim \pi}[r + \gamma Q(s', a')]$, which is a $\gamma$-contraction with fixed point $Q^\pi$. Unlike Q-learning, which targets $Q^*$ regardless of the current policy, SARSA estimates $Q^\pi$ for the policy being followed. Because action values directly compare actions without requiring a model, $Q^\pi$ enables model-free policy improvement: $\pi'(s) = \argmax_a Q^\pi(s,a)$.
+
+\citet{tsitsiklis1997} proved asymptotic convergence for TD with linear function approximation $V(s) = \phi(s)^\top \theta$. Under on-policy sampling from an ergodic Markov chain and learning rates satisfying $\sum_t \alpha_t = \infty$ and $\sum_t \alpha_t^2 < \infty$, the parameter vector $\theta_t \to \theta^*$ with probability one, where $\theta^*$ is the unique fixed point of the projected Bellman equation $\Pi_D T^\pi \Phi\theta^* = \Phi\theta^*$. The projection $\Pi_D$ maps onto the span of the feature basis under the stationary distribution weighting. The approximation error satisfies $\|V_{\theta^*} - V^\pi\|_D \leq (1-\gamma)^{-1/2} \|\Pi_D V^\pi - V^\pi\|_D$, showing that TD converges to the best linear approximation, amplified by a factor depending on the discount. Convergence requires both on-policy sampling and linear parameterization; \citet{tsitsiklis1997} provide counter-examples showing divergence when either condition is violated. The finite-time convergence of TD was established by \citet{bhandari2021finite}. With linear function approximation under Markovian sampling, TD(0) achieves mean-squared error $O(\tau/t)$ where $\tau$ is the mixing time of the underlying Markov chain. With iterate averaging, convergence is $O(1/T)$ independent of the conditioning of the feature covariance matrix.
+
+\begin{theorem}[SARSA Convergence \citep{singh2000}]
+\label{thm:sarsa_convergence}
+Suppose (i) every state-action pair $(s,a)$ is visited infinitely often, (ii) the step sizes satisfy $\sum_t \alpha_t(s,a) = \infty$ and $\sum_t \alpha_t(s,a)^2 < \infty$ for each $(s,a)$, and (iii) the policy sequence $\{\pi_t\}$ satisfies GLIE (greedy in the limit with infinite exploration): $\pi_t(a|s) > 0$ for all $t$, and $\pi_t \to \pi^*$ as $t \to \infty$ where $\pi^*$ is the greedy policy with respect to $Q^*$. Then $Q_t \to Q^*$ with probability one.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The analysis decomposes the SARSA update into a Q-learning term plus a ``greedy gap'' $C_t = \gamma[Q_t(s_{t+1}, a_{t+1}) - \max_{a'} Q_t(s_{t+1}, a')]$ measuring the suboptimality of the chosen action. Since the greedy action maximizes, $C_t \leq 0$. Under GLIE, the policy becomes greedy in the limit, so $C_t \to 0$ asymptotically. \citet{singh2000} extend the standard stochastic approximation framework to handle this vanishing bias. The key insight is that asymptotic contraction suffices: even though the operator $T^{\pi_t}$ changes at each step, the GLIE condition ensures that $T^{\pi_t} \to T$ (the Bellman optimality operator) as $t \to \infty$. Without GLIE, SARSA converges to $Q^\pi$ for the limiting behavior policy $\pi$, not to $Q^*$. If exploration persists indefinitely (e.g., fixed $\varepsilon$-greedy), the algorithm evaluates the exploratory policy rather than the optimal policy.
+\end{proof}
+
+The on-policy nature of SARSA yields qualitatively different learned policies than Q-learning, as demonstrated by the cliff-walking environment \citep{sutton2018}. Consider a gridworld with the agent starting at the bottom-left and goal at the bottom-right. The bottom row between start and goal is a cliff: stepping into it incurs a large negative reward ($-100$) and returns the agent to start. Q-learning learns the optimal path along the cliff edge because it evaluates $\max_{a'} Q(s', a')$, which assumes greedy execution. SARSA with $\varepsilon$-greedy exploration learns the safer path around the top. Because SARSA evaluates $Q(s', a')$ for the action $a'$ actually taken, its value estimates incorporate the probability of exploratory actions. Near the cliff edge, $\varepsilon$-greedy occasionally steps into the cliff, and SARSA's Q-values reflect this cost. SARSA learns policies that are robust to the agent's own exploration behavior; Q-learning learns policies that are optimal under the assumption of perfect execution.
+
+\subsubsection{Policy Gradient (REINFORCE)}
+
+Policy gradient methods optimize the expected return directly with respect to policy parameters $\theta$.\footnote{Policy gradient bypasses value estimation, optimizing return directly.} The REINFORCE algorithm computes $\nabla_\theta J(\theta) = \mathbb{E}_\pi[\sum_t \nabla_\theta \log \pi_\theta(a_t|s_t) G_t]$, where $G_t$ is the return from time $t$. This gradient ascent approach does not require explicit value function estimation, though variance reduction techniques typically use a baseline $V(s)$.
+
+\subsubsection{Rollout and MPC}
+
+Rollout performs a single policy improvement step from a base policy. \citet{bertsekas2024} shows that rollout always improves the base policy because one policy improvement step from a reasonable starting point produces substantial improvement. The base policy need not be close to optimal; it need only provide a reasonable estimate of continuation values.
+
+Model Predictive Control (MPC) with $\ell$-step lookahead is a truncated policy improvement step. \citet{bertsekas2024} proves that longer lookahead expands the region of convergence, so MPC with larger $\ell$ compensates for worse value function approximations. This is why MPC can work with crude terminal value approximations if the lookahead horizon is long enough.
+
+\subsubsection{Summary}
+
+Table~\ref{tab:operator_correspondence} summarizes the correspondence.
+
+\begin{table}[h!]
+\centering
+\caption{RL algorithms as fixed-point methods \citep{bertsekas2024}}
+\label{tab:operator_correspondence}
+\begin{tabular}{lll}
+\hline
+Algorithm & Operator & Convergence \\
+\hline
+Value Iteration & $T$ (exact) & Linear (rate $\gamma$) \\
+Policy Iteration & $T^\pi$ (exact solve) & Superlinear \\
+Q-learning & $T$ (stochastic) & Linear (stochastic) \\
+TD learning & $T^\pi$ (stochastic) & Linear (stochastic) \\
+SARSA & $T^\pi$ (on-policy stochastic) & Linear (stochastic) \\
+REINFORCE & Direct gradient & First-order \\
+Rollout ($\ell=1$) & One improvement step & Single PI step \\
+MPC ($\ell > 1$) & $\ell$-step lookahead & Truncated PI \\
+\hline
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:frap} classifies algorithms along the FRAP dimensions \citep{moerland2022unifying}.
+
+\begin{table}[h!]
+\centering
+\caption{Algorithm classification following FRAP \citep{moerland2022unifying}}
+\label{tab:frap}
+\label{tab:algorithm-classification}
+\small
+\begin{tabular}{l|cc|cc|cc|c}
+\hline
+Algorithm & Model & Access & Solution & Target & Depth & Breadth & Back-up \\
+\hline
+Value Iteration & Full & Descriptive & Global $V$ & $V^*$ & 1 & All & Expected \\
+Policy Iteration & Full & Descriptive & Global $V$ & $V^*$ & $\infty$ & All & Expected \\
+Q-learning & None & Generative & Global $Q$ & $Q^*$ & 1 & Sample & Sample (off) \\
+TD($\lambda$) & None & Generative & Global $V$ & $V^\pi$ & $1..n$ & Sample & Sample (on) \\
+SARSA & None & Generative & Global $Q$ & $Q^\pi$ & 1 & Sample & Sample (on) \\
+Monte Carlo & None & Generative & Global $Q$ & $Q^\pi$ & $\infty$ & Sample & Sample (on) \\
+REINFORCE & None & Generative & Global $\pi$ & $\pi$ & $\infty$ & Sample & Gradient \\
+Rollout & Full & Generative & Local $V$ & $\pi_{\text{base}}^+$ & $\ell$ & Subset & Sample \\
+MPC & Full & Generative & Local $V$ & Truncated & $\ell$ & Subset & Sample \\
+DQN & None & Generative & Global $Q_\theta$ & $Q^*$ & 1 & Batch & Sample (off) \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Key Results from the Operator Framework}
+\label{sec:why_matters}
+
+The operator interpretation yields four key results, all established in \citet{bertsekas2024}.\footnote{The four model types in this framework map to standard problem classes. \emph{Contractive models} ($\gamma < 1$, discounted) include lifecycle models, DDC estimation, and infinite-horizon discounted MDPs. \emph{Semicontractive models} (undiscounted with termination) include job search, optimal stopping, firm entry/exit, and stochastic shortest path problems. \emph{Noncontractive models} (average reward, no discounting) include growth models without discounting and inventory management with long-run average reward. \emph{Minimax models} include robust control, mechanism design under adversarial uncertainty, and zero-sum games. The choice of model type affects convergence guarantees: contractive models have unique fixed points, semicontractive models require proper policy assumptions, noncontractive models may have multiple solutions, and minimax models require saddle-point analysis.}
+
+First, Policy Iteration converges faster than Value Iteration. The linearization view shows that PI achieves superlinear (quadratic) convergence near the solution; fixed-point iteration achieves only linear convergence at rate $\gamma$. In practice, PI often converges in 5-10 iterations while VI may require hundreds when $\gamma$ is close to 1.
+
+Second, model-free methods require more samples than model-based methods. Q-learning is stochastic fixed-point iteration, inheriting the linear convergence rate of VI plus the additional variance from sampling. \citet{bertsekas2024} notes that model-based methods need $O((1-\gamma)^{-3})$ samples while model-free methods need $O((1-\gamma)^{-4})$ samples; at $\gamma = 0.99$, model-based methods require roughly 100 times fewer samples.
+
+Third, rollout always improves the base policy. A single policy improvement step from a reasonable starting point yields substantial improvement. The base policy need not be close to optimal; it need only provide a reasonable estimate of continuation values. This is why crude heuristics combined with one-step lookahead often perform well.
+
+Fourth, longer lookahead expands the region of convergence. \citet{bertsekas2024} proves that the region of convergence expands as the lookahead length $\ell$ increases. MPC with larger $\ell$ can tolerate worse terminal value approximations because exact optimization over $\ell$ steps corrects the trajectory before the approximation is consulted.
+
+Fifth, the framework yields quantitative bounds on approximation error. \citet{bertsekas2022} (Proposition 2.2.1) proves that if $\tilde{\pi}$ is the one-step lookahead policy based on approximation $\tilde{V}$, then
+\[
+\|V^{\tilde{\pi}} - V^*\|_v \leq \frac{2\gamma}{1-\gamma} \|\tilde{V} - V^*\|_v,
+\]
+where $\|\cdot\|_v$ denotes the weighted maximum norm $\|f\|_v = \max_s |f(s)|/v(s)$ for a positive weighting function $v$. The amplification factor $2\gamma/(1-\gamma)$ has concrete numerical consequences. At $\gamma = 0.95$, a 1\% approximation error produces at most 38\% policy value error. At $\gamma = 0.99$, the same 1\% error amplifies to 198\%. This bound quantifies the ``region of convergence'' concept: the approximation $\tilde{V}$ must be accurate enough that the amplified error remains acceptable.
+
+For finite tabular MDPs, the sample complexity gap between model-based and model-free methods has been precisely characterized.\footnote{These bounds apply specifically to finite tabular MDPs and may not extend to function approximation settings.} \citet{li2024minimax} show that Q-learning requires $\tilde{O}(|\mathcal{S}||\mathcal{A}|/(1-\gamma)^4\varepsilon^2)$ samples to achieve $\varepsilon$-optimal policy, while model-based methods require $\tilde{O}(|\mathcal{S}||\mathcal{A}|/(1-\gamma)^3\varepsilon^2)$ samples. The $(1-\gamma)^{-1}$ gap reflects the difference between superlinear and linear convergence in the statistical setting.
+
+
+\subsection{Function Approximation}
+\label{sec:function_approx}
+
+When the state space is large or continuous, exact value functions cannot be stored. Function approximation replaces $V(s)$ with a parameterized approximation $\tilde{V}(s; w)$, typically linear in features: $\tilde{V}(s; w) = w^\top \phi(s)$.
+
+\citet{bertsekas2024} emphasizes a critical insight: if the approximation architecture is not powerful enough to bring $\tilde{V}$ within the region of convergence, approximation in value space with one-step lookahead will likely fail, no matter how much data is collected or how effective the training method is. This explains why the choice of function class matters so much in practice.
+
+Two remedies exist. First, use a more powerful approximation architecture (larger neural networks, better feature engineering) to reduce the approximation error $\|\tilde{V} - V^*\|$. Second, extend the lookahead horizon $\ell$ to bring the effective value of $\tilde{V}$ within the region of convergence. The second approach is why MPC and tree search methods (MCTS, AlphaZero) can succeed even with imperfect value function approximations.
+
+
+\subsection{Simulation Study: SSP Gridworld Validation}
+\label{sec:simulation}
+
+The theoretical results above make specific quantitative predictions: Policy Iteration converges faster than Value Iteration, rollout improves any base policy, and model-free methods require more samples than model-based methods. We validate these predictions through three experiments on a stochastic shortest path gridworld, chosen because it admits exact DP computation while still requiring non-trivial multi-step planning.
+
+\subsubsection{Environment}
+
+The environment is an $N \times N$ gridworld with terminal state at $(N-1, N-1)$. The agent starts at $(0,0)$ and seeks to reach the terminal at maximum expected return. Actions are $\{L, R, U, D\}$. Transitions are stochastic: with probability 0.8, the intended action succeeds; with probability 0.2, a uniformly random action is taken. Each step incurs reward $-1$. The discount factor is $\gamma = 0.99$.
+
+\subsubsection{Experiment 1: PI vs VI Convergence}
+
+We compare Value Iteration and Policy Iteration on a $15 \times 15$ grid. Value Iteration applies $T$ exactly until $\|V_{k+1} - V_k\|_\infty < 10^{-6}$. Policy Iteration alternates exact policy evaluation and improvement until the policy stabilizes. Policy Iteration converges in 6 iterations. Value Iteration requires 66 iterations. The ratio of approximately 11:1 reflects the difference between superlinear convergence and linear convergence at rate $\gamma = 0.99$.
+
+\subsubsection{Experiment 2: Multi-Step Lookahead}
+
+We test whether longer lookahead improves performance, as predicted by \citet{bertsekas2024}. Starting from a Manhattan-distance heuristic as the base policy, we evaluate rollout with lookahead $\ell = 1, 2, 3$ steps. Each additional lookahead step improves the policy. One-step rollout achieves a substantial improvement over the base heuristic. Two-step and three-step lookahead provide further gains, approaching optimal performance.
+
+\subsubsection{Experiment 3: Sample Complexity}
+
+We compare Q-learning episodes needed to match VI quality. Q-learning uses learning rate $\alpha = 0.1$ and $\varepsilon$-greedy exploration ($\varepsilon = 0.1$). Q-learning requires approximately 50,000 episodes to achieve comparable accuracy to VI's 66 iterations.
+
+\subsubsection{Results}
+
+Table~\ref{tab:ch2_results} consolidates the results.
+
+\begin{table}[h!]
+\centering
+\caption{SSP gridworld validation ($15 \times 15$ grid, $\gamma = 0.99$)}
+\label{tab:ch2_results}
+\begin{tabular}{lcccc}
+\toprule
+Method & Iterations/Episodes & Expected Return & Time (s) & Convergence \\
+\midrule
+Value Iteration & 66 & $V^*$ & 0.02 & Linear ($\gamma$) \\
+Policy Iteration & 6 & $V^*$ & 0.01 & Superlinear \\
+Rollout ($\ell=1$) & 1 & Near-optimal & 0.001 & Single step \\
+Rollout ($\ell=2$) & 1 & Closer to optimal & 0.002 & Single step \\
+Q-learning & 50,000 & Near-optimal & 12.5 & Stochastic \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Rollout with $\ell = 1$ achieves near-optimal performance starting from a crude Manhattan-distance heuristic, demonstrating the power of a single policy improvement step.
+

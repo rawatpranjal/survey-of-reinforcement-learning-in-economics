@@ -1,0 +1,277 @@
+In this section, we connect Dynamic Programming (DP), with Reinforcement Learning (RL) methods through a concrete example. DP provides exact solutions to Markov Decision Processes (MDPs) when complete knowledge of transition probabilities and rewards is available. An MDP is defined as a tuple $(S, A, P, R, \gamma)$, where $S$ denotes the state space, $A$ the action or choice space, $P(s'|s,a)$ the transition probability function, $R(s,a,s')$ the reward or utility function, and $\gamma \in [0,1]$ the discount factor. RL in contrast attempts to offer solutions when $P$ and $R$ are unknown, and there is only access to a simulator. RL agents can interact with the simulator to draw transitions and rewards.  
+
+\subsection{Example 1: Grid Navigation}
+
+We consider an N\(\times\)N grid with states \((r,c)\), where \(0 \le r,c < N\), and actions \(\{\text{L,R,U,D}\}\). The terminal state is \((N-1,N-1)\) and yields \(+10\) when first entered. Moving out of bounds leaves the agent in place. A small tie-break penalty of \(-0.01\) is added when moving right from \((0,0)\). We treat this as an infinite-horizon discounted MDP with \(\gamma = 0.9\). The goal of the agent is to maximize infinite discounted rewards. 
+
+The optimal policy and value function, is given in \ref{ex1_opt_pol_val}. 
+
+\subsubsection{Generalized Policy Iteration Framework}
+
+Generalized Policy Iteration (GPI) unifies reinforcement learning algorithms through two interacting processes: policy evaluation and policy improvement. Policy evaluation estimates the value function:
+
+\begin{equation}
+    V^{\pi}(s) = \mathbb{E}_{\pi}\left[\sum_{t=0}^{\infty}\gamma^t R_t \mid S_0 = s\right]
+\end{equation}
+
+While policy improvement makes the policy more greedy:
+
+\begin{equation}
+    \pi'(s) = \argmax_a \sum_{s'} P(s'|s,a)[R(s,a,s') + \gamma V^{\pi}(s')]
+\end{equation}
+
+GPI's key insight is that these processes can interact asynchronously while still guaranteeing convergence when both stabilize.
+
+\paragraph{Q-learning (Off-policy TD Control)}.
+
+Q-learning implements GPI by targeting the optimal action-value function irrespective of behavior policy:
+
+\begin{equation}
+    Q(s,a) \leftarrow Q(s,a) + \alpha [R + \gamma \max_{a'} Q(s',a') - Q(s,a)]
+\end{equation}
+
+\paragraph{SARSA (On-policy TD Control)}
+
+SARSA implements GPI by evaluating and improving the current policy simultaneously:
+
+\begin{equation}
+    Q(s,a) \leftarrow Q(s,a) + \alpha [R + \gamma Q(s',a') - Q(s,a)]
+\end{equation}
+
+\paragraph{Monte Carlo Control}
+
+Monte Carlo control implements GPI using complete episodes:
+
+\begin{equation}
+    Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha[G_t - Q(s_t,a_t)]
+\end{equation}
+
+where $G_t = \sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1}$ is the return from time $t$.
+
+\paragraph{Dynamic Programming as GPI}
+
+DP methods follow the GPI framework with complete information. Policy Iteration performs full policy evaluation before improvement, while Value Iteration combines both in a single update. The fundamental difference between DP and RL is information requirements: DP requires complete model knowledge while RL estimates expectations through samples.
+
+\subsection{Empirical Validation}
+
+All algorithms were implemented in a grid-world navigation task. Results show RL methods converge to solutions equivalent to DP, with negligible MSE and nearly perfect policy match ratios across various grid sizes. This confirms RL methods following the GPI pattern asymptotically approach optimal policies identified by DP methods, even without model knowledge.
+
+\begin{table}[h]
+\centering
+\caption{Convergence of RL methods to DP solution across grid sizes}
+\label{tab:results}
+\begin{tabular}{c|cc|cc|cc}
+\hline
+\multirow{2}{*}{N} & \multicolumn{2}{c|}{Q-learning} & \multicolumn{2}{c|}{SARSA} & \multicolumn{2}{c}{Monte Carlo} \\
+ & MSE & PolMatch & MSE & PolMatch & MSE & PolMatch \\
+\hline
+2 & 0.000 & 1.00 & 0.000 & 1.00 & 0.000 & 1.00 \\
+3 & 0.000 & 1.00 & 0.000 & 1.00 & 0.000 & 0.89 \\
+4 & 0.000 & 1.00 & 0.000 & 1.00 & 0.000 & 1.00 \\
+5 & 0.000 & 1.00 & 0.000 & 1.00 & 0.000 & 1.00 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Example 2: Multi Bus Engine Replacement Problem}
+
+We study a maintenance optimization problem with $N$ parallel engines formulated as a Markov Decision Process. Each engine $i$ has mileage state $m_i \in \{0,1,2,3\}$, with system state $s = (m_1,...,m_N)$. The action space $A(s)$ consists of all subsets of engines to replace, constrained by capacity $C=2$. The cost function is:
+\begin{equation}
+c(s,a) = \alpha \sum_{i=1}^{N} \mathbf{1}_{m_i > 0} + \beta |a|
+\end{equation}
+where $\alpha=1.0$ is the cost of aged engines, $\beta=5.0$ is the replacement cost, and $|a|$ is the number of replaced engines. State transition is deterministic:
+\begin{equation}
+m_i' = 
+\begin{cases} 
+0 & \text{if } i \in a \\ 
+\min(3, m_i+1) & \text{otherwise}
+\end{cases}
+\end{equation}
+
+The objective is to find policy $\pi^*$ minimizing expected discounted cost with $\gamma=0.95$:
+\begin{equation}
+V^*(s) = \min_{\pi} \mathbb{E}_{\pi} \left[ \sum_{t=0}^{\infty} \gamma^t c(s_t, \pi(s_t)) \right]
+\end{equation}
+
+Dynamic Programming (DP) solves this exactly via value iteration, but faces exponential state growth $\mathcal{O}(4^N)$. Deep Q-Networks (DQN) approximate the value function using neural networks (256-128-128) with experience replay and early stopping when learning rate $\leq 10^{-5}$ and TD error $\leq 0.05$.
+
+\begin{table}[h]
+\caption{Comparison of DP and DQN Approaches}
+\centering
+\begin{tabular}{c|rrrrrr}
+\hline
+$N$ & States & DP Time (s) & DQN Time (s) & Policy Match & Reward Diff & DQN Episodes \\
+\hline
+1 & 4 & 0.79 & 44.79 & 100\% & 0.34\% & 2,395 \\
+2 & 16 & 0.82 & 55.74 & 100\% & 0.12\% & 2,902 \\
+3 & 64 & 1.15 & 83.32 & 100\% & -0.04\% & 4,052 \\
+4 & 256 & 1.61 & 90.07 & 100\% & 0.03\% & 4,352 \\
+5 & 1,024 & 7.16 & 110.73 & 100\% & -0.01\% & 5,103 \\
+6 & 4,096 & 39.03 & 164.83 & 100\% & -0.09\% & 7,089 \\
+7 & 16,384 & 220.31 & 289.66 & 100\% & 0.05\% & 11,318 \\
+\hline
+\end{tabular}
+\end{table}
+
+Results show perfect policy alignment between DP and DQN across all problem sizes. DQN achieves 100\% policy match with minimal reward differences (all below 0.35\%). For N=7, DQN achieves a value function RMSE of 0.71 with just 0.38\% normalized difference. DP exhibits exponential scaling with computation time increasing approximately 5.6× from N=6 to N=7. DQN scales more favorably, approaching similar time requirements at N=7 but with significantly better prospects for larger problems. As state spaces grow beyond 16,384 states, DP becomes prohibitively expensive while DQN remains viable. The consistent policy match and decreasing value function error demonstrate that DQN effectively approximates optimal solutions while offering superior computational scaling for large-scale applications.
+
+In this section, we connect Dynamic Programming (DP), with Reinforcement Learning (RL) methods through a concrete example. DP provides exact solutions to Markov Decision Processes (MDPs) when complete knowledge of transition probabilities and rewards is available. An MDP is defined as a tuple $(S, A, P, R, \gamma)$, where $S$ denotes the state space, $A$ the action or choice space, $P(s'|s,a)$ the transition probability function, $R(s,a,s')$ the reward or utility function, and $\gamma \in [0,1]$ the discount factor. RL in contrast attempts to offer solutions when $P$ and $R$ are unknown, and there is only access to a simulator. RL agents can interact with the simulator to draw transitions and rewards.  
+
+
+\subsection{Example: Grid World Navigation}
+
+To illustrate the connection between DP and RL methods, we consider a 5$\times$5 grid world navigation problem. This forms a finite MDP where:
+
+\begin{itemize}
+\item \textbf{States} $S$: Coordinates $(r,c)$ where $0 \leq r,c < 5$
+\item \textbf{Actions} $A$: \{L, R, U, D, S\}\footnote{L=Left, R=Right, U=Up, D=Down, S=Stay}
+\item \textbf{Transitions} $P$: Deterministic movement in the chosen direction; attempting to move out of bounds leaves the agent in place
+\item \textbf{Rewards} $R$: Terminal state at $(4,4)$ yields $+10$; smaller rewards are distributed throughout the grid as shown in Figure~\ref{fig:gridworld}; each movement incurs a penalty of $-0.1$
+\item \textbf{Discount factor} $\gamma = 0.95$
+\end{itemize}
+
+
+Figure~\ref{fig:gridworld} (right) illustrates the optimal value function and policy computed by Value Iteration. A key observation is that VI determines optimal actions for \textit{all} states, not just those along optimal paths. Multiple optimal paths exist because some states have equally valuable actions.
+
+\subsubsection{Algorithm Formulations}
+
+We implement both DP and RL methods through the Generalized Policy Iteration (GPI) framework:
+
+\paragraph{Value Iteration (VI):} Directly computes the optimal value function through the Bellman optimality equation:
+\begin{equation}
+V(s) \leftarrow \max_a \sum_{s'} P(s'|s,a)[R(s,a,s') + \gamma V(s')]
+\end{equation}
+
+\paragraph{Policy Iteration (PI):} Alternates between policy evaluation and improvement:
+\begin{align}
+V^{\pi}(s) &= \sum_{s'} P(s'|s,\pi(s))[R(s,\pi(s),s') + \gamma V^{\pi}(s')] \\
+\pi'(s) &= \argmax_a \sum_{s'} P(s'|s,a)[R(s,a,s') + \gamma V^{\pi}(s')]
+\end{align}
+
+\paragraph{Q-learning:} Updates action-values based on maximum future value (off-policy):
+\begin{equation}
+Q(s,a) \leftarrow Q(s,a) + \alpha [R + \gamma \max_{a'} Q(s',a') - Q(s,a)]
+\end{equation}
+
+\paragraph{SARSA:} Updates action-values using the policy's next action (on-policy):
+\begin{equation}
+Q(s,a) \leftarrow Q(s,a) + \alpha [R + \gamma Q(s',a') - Q(s,a)]
+\end{equation}
+
+\paragraph{Monte Carlo:} Updates action-values using complete episode returns:
+\begin{equation}
+Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha[G_t - Q(s_t,a_t)]
+\end{equation}
+where $G_t = \sum_{k=0}^{T-t-1} \gamma^k R_{t+k+1}$ is the return from time $t$.
+
+\paragraph{REINFORCE:} A policy gradient method that directly parameterizes the policy using a neural network:
+\begin{equation}
+\theta \leftarrow \theta + \alpha \nabla_\theta \log \pi_\theta(a|s) G
+\end{equation}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{path_comparison.png}
+\caption{Paths found by different algorithms. VI, PI, and Q-learning find all optimal paths, while SARSA and Monte Carlo converge to a single path. REINFORCE shows less consistent performance.}
+\label{fig:paths}
+\end{figure}
+
+\subsubsection{Results and Analysis}
+
+Table~\ref{tab:results} presents a quantitative comparison of all methods.
+
+\begin{table}[h]
+\centering
+\caption{Performance comparison of DP and RL methods on the grid world problem}
+\label{tab:results}
+\begin{tabular}{lcccccc}
+\hline
+\textbf{Method} & \textbf{MSE Value}\footnotemark[1] & \textbf{Policy Match}\footnotemark[2] & \textbf{Time (s)} & \textbf{Iterations} & \textbf{Avg Steps}\footnotemark[3] & \textbf{Total Reward}\footnotemark[4] \\
+\hline
+VI & 0.000000 & 1.0000 & 0.00 & 9 & 8.00 & 10.40 \\
+PI & 0.000000 & 1.0000 & 0.01 & 7 & 8.00 & 10.40 \\
+Q-Learning & 0.000000 & 1.0000 & 0.04 & 1211 & 8.00 & 10.40 \\
+SARSA & 1.568510 & 0.9167 & 0.08 & 5000 & 8.00 & 10.40 \\
+Monte Carlo & 0.121111 & 0.8750 & 0.09 & 5000 & 8.00 & 10.40 \\
+REINFORCE & 72.935100 & 0.7500 & 12.97 & 5008 & 8.00 & 9.40 \\
+\hline
+\end{tabular}
+\end{table}
+
+\footnotetext[1]{Mean Squared Error between the learned value function and the optimal value function from VI.}
+\footnotetext[2]{Proportion of states where the learned policy matches the optimal policy from VI.}
+\footnotetext[3]{Average number of steps required to reach the goal state from the start state.}
+\footnotetext[4]{Average total reward accumulated during an episode.}
+\footnotetext[5]{Whether the algorithm converged within the specified iteration limit.}
+
+The results demonstrate significant performance differences across methods. VI and PI converge exactly and rapidly to optimal solutions with perfect policy matches. This is expected as these DP methods have complete knowledge of the MDP. Q-learning also achieves perfect policy matching despite lacking prior model knowledge, though requiring more iterations to converge.
+
+SARSA and Monte Carlo successfully find valid paths to the goal but do not identify all optimal actions, instead converging to a single path with reasonable value approximation. As shown in Figure~\ref{fig:paths}, these RL methods favor consistent exploitation once a workable solution is found.
+
+REINFORCE shows the most variable performance, achieving only 75\% policy matching and suboptimal rewards. This highlights the sensitivity of policy gradient methods to hyperparameter tuning and neural network initialization.
+
+Our example illustrates that while model-free RL methods can solve tasks without prior knowledge of transition and reward functions, they typically require more samples and may not identify all optimal actions that DP methods discover. This trade-off between knowledge requirements and sample efficiency is fundamental to the relationship between DP and RL.
+
+\subsection{Comparing Algorithms}
+
+Moerland et al.~\cite{moerland2022unifying} identify seven key dimensions that characterize MDP planning and learning algorithms:
+
+\begin{table}[h!]
+\centering
+\caption{Key dimensions for analyzing reinforcement learning algorithms}
+\label{tab:dimensions}
+\begin{tabular}{p{2.5cm}|p{8.5cm}}
+\hline
+\textit{Dimension} & \textit{Description} \\
+\hline
+Solution Representation & How algorithms represent their solutions (global/local, value/policy, tabular/approximate) \\
+\hline
+Root Selection\footnotemark[1] & States selected for update in each iteration (ordered sweeps, forward sampling) \\
+\hline
+Budget per Root & Width (number of trials) and depth of backup from each root state \\
+\hline
+Selection & Action selection and exploration strategies at a given state (ordered, greedy, random perturbation) \\
+\hline
+Bootstrap & Value estimation at leaf nodes (learned/heuristic values) \\
+\hline
+Back-up\footnotemark[2] & Policy type (on-policy/off-policy) and expectation over dynamics\footnotemark[3] (sample/expected) \\
+\hline
+Update & How algorithms incorporate new information into their solution representation \\
+\hline
+\end{tabular}
+\end{table}
+
+\footnotetext[1]{Ordered sweeps systematically iterate through all states in a predefined order, while forward sampling selects states encountered during actual environment interaction.}
+\footnotetext[2]{On-policy algorithms update values based on actions selected by the current policy, while off-policy algorithms update values based on actions that may differ from those selected during exploration.}
+\footnotetext[3]{Expected dynamics compute the full expectation over all possible next states weighted by their transition probabilities, while sample dynamics use individual sampled transitions.}
+
+\begin{table}[h!]
+\centering
+\caption{Comparison of RL algorithms along framework dimensions}
+\label{tab:algorithm-comparison}
+\begin{tabular}{p{2.2cm}|p{1.8cm}p{1.8cm}p{1.8cm}p{1.8cm}p{1.8cm}}
+\hline
+\textit{Dimension} & VI & PI & Q-learning & SARSA & MC \\
+\hline
+Solution Representation & Global V(s), tabular & Global V(s), π(s), tabular & Global Q(s,a), tabular & Global Q(s,a), tabular & Global Q(s,a), tabular \\
+\hline
+Root Selection & Ordered sweeps & Ordered sweeps & Forward sampling & Forward sampling & Forward sampling \\
+\hline
+Budget per Root & High width, depth=1 & Till convergence, depth=1 & Width=1, depth=1 & Width=1, depth=1 & Width=1, depth=∞ \\
+\hline
+Selection & Ordered actions & Policy (eval), Greedy (improve) & ε-greedy & ε-greedy & ε-greedy \\
+\hline
+Bootstrap & Learned values & Learned values & Learned Q-values & Learned Q-values & None\footnotemark[4] \\
+\hline
+Back-up & Off-policy, expected dynamics & On-policy (eval), off-policy (improve) & Off-policy, sample & On-policy, sample & On-policy, sample \\
+\hline
+Update & Replace (η=1.0) & Replace (η=1.0) & Fixed step size & Fixed step size & Averaging \\
+\hline
+\end{tabular}
+\end{table}
+
+\footnotetext[4]{Monte Carlo methods don't bootstrap but instead wait until the end of an episode to observe the actual return.}
+
+This comparative analysis reveals the fundamental algorithmic differences between classic planning methods (VI/PI) and learning algorithms (Q-learning, SARSA, MC). Planning methods use model-based approaches with expected dynamics and systematic state sweeps, while learning methods operate with empirical samples and forward exploration. 
+
+Q-learning's off-policy nature allows it to learn about the optimal policy while following an exploratory behavior policy—a key distinction from on-policy methods like SARSA and MC. The depth dimension highlights another fundamental split: Dynamic Programming methods use one-step backups, whereas Monte Carlo uses complete trajectories without any bootstrapping, representing opposite ends of the bias-variance spectrum. Policy Iteration uniquely separates its evaluation and improvement phases, while Value Iteration and Q-learning combine them.

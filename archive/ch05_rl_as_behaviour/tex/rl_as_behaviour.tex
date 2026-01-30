@@ -1,0 +1,146 @@
+This chapter examines reinforcement learning not as a computational tool for solving economic models, but as a descriptive model of how economic agents learn and behave. The distinction is fundamental. Chapters 2 through 4 treated RL algorithms as methods an economist might deploy to solve MDPs or estimate structural parameters. Here we ask a different question: what if economic agents themselves learn by reinforcement?
+
+The idea has deep roots. Thorndike's Law of Effect (1898), which held that actions followed by satisfaction are more likely to recur, predates both modern economics and computer science. When \citet{Cross1973} formalized a ``stochastic learning model of economic behavior,'' he was not proposing an algorithm for economists to use; he was proposing that economic agents adjust their behavior in response to experienced payoffs, precisely the mechanism that RL formalizes. This chapter traces that idea from its origins through modern applications, including evolutionary game theory, experimental economics, neuroscience, and the emerging literature on algorithmic agents in markets.
+
+\subsection{From Animal Learning to Economic Agents}
+
+The intellectual lineage connecting animal learning to economic behaviour runs through three traditions that developed largely independently before converging in the 1990s.
+
+The first tradition is experimental psychology. Thorndike's puzzle-box experiments with cats established the Law of Effect: responses that produce a satisfying effect in a particular situation become more likely to occur in that situation, while responses that produce a discomforting effect become less likely.\footnote{Thorndike's original formulation also included a ``Law of Exercise'' (frequency strengthens associations), which he later abandoned. The Law of Effect alone suffices for the connection to RL.} \citet{RescorlaWagner1972} formalized a quantitative learning rule in which the change in associative strength is proportional to the prediction error, the difference between experienced and expected outcomes. This rule is mathematically identical to the temporal-difference update that \citet{sutton1988} would later introduce to RL.
+
+The second tradition is mathematical economics. \citet{Cross1973} proposed that economic agents update action probabilities in proportion to received rewards, formalizing what he called ``a stochastic learning model of economic behavior.'' An agent playing action $j$ and receiving reward $r \in [0,1]$ updates its action probabilities according to:
+\begin{equation}
+\pi(i) \leftarrow \pi(i) +
+\begin{cases}
+r(1 - \pi(i)) & \text{if } i = j \\
+-r\pi(i) & \text{if } i \neq j
+\end{cases}
+\label{eq:cross_learning}
+\end{equation}
+Actions that yield high rewards grow in probability; actions not chosen shrink. No optimization is required. The agent need not know the payoff function, form beliefs about the environment, or compute an equilibrium. It simply reinforces what worked.
+
+The third tradition is evolutionary biology. The replicator dynamics, introduced by \citet{TaylorJonker1978} to model biological evolution, describe how the frequency of a strategy in a population evolves:
+\begin{equation}
+\dot{x}_i = x_i(f_i(x) - \bar{f}(x))
+\label{eq:replicator}
+\end{equation}
+where $x_i$ is the population share using strategy $i$, $f_i(x)$ is the fitness of strategy $i$, and $\bar{f}(x) = \sum_j x_j f_j(x)$ is average population fitness. In RL terminology, the population share $x_i$ corresponds to the mixed strategy probability $\pi(a_i)$, and fitness $f_i(x)$ corresponds to the expected reward $\mathbb{E}[r(a_i)]$ under the current population mix. Strategies with above-average fitness grow; below-average strategies decline.
+
+\citet{borgers1997learning} established the connection between these traditions by proving that Cross learning converges to the replicator dynamics in the continuous-time limit. As the learning rate becomes infinitesimal, the expected change in action probabilities under Cross's rule (\ref{eq:cross_learning}) satisfies:
+\begin{equation}
+\dot{\pi}(i) = \pi(i)\left[\mathbb{E}[r(i)] - \sum_j \pi(j)\mathbb{E}[r(j)]\right]
+\end{equation}
+which is precisely the replicator equation (\ref{eq:replicator}) with fitness replaced by expected reward. Individual learning through reinforcement produces dynamics identical to biological evolution. This result connects all three traditions: an economic agent following Thorndike's Law of Effect, formalized by Cross, behaves as if it were a population evolving under natural selection.
+
+\subsection{Reinforcement Learning and Replicator Dynamics}
+
+The connection between Cross learning and replicator dynamics extends to other RL algorithms, each generating a characteristic dynamical system. We examine three cases that illustrate how algorithmic details map to specific evolutionary dynamics.
+
+\subsubsection{Q-learning with Boltzmann Exploration}
+
+The standard Q-learning update in a stateless (normal-form) game reduces to:
+\begin{equation}
+Q(a) \leftarrow Q(a) + \alpha\left[r - Q(a)\right]
+\end{equation}
+When action selection follows a Boltzmann (softmax) distribution:
+\begin{equation}
+\pi(a) = \frac{e^{Q(a)/\tau}}{\sum_j e^{Q(j)/\tau}}
+\end{equation}
+where $\tau$ is the temperature parameter controlling exploration, \citet{Tuyls2003} demonstrated that the resulting dynamics in a two-player game can be approximated by:
+\begin{equation}
+\dot{x}_i = \alpha x_i\left[\frac{(Ay)_i - x^{\top}Ay}{\tau} - \log x_i + \sum_j x_j\log x_j\right]
+\end{equation}
+where $A$ is the payoff matrix and $y$ is the opponent's strategy. This equation decomposes into two components: an exploitation term resembling replicator dynamics, scaled by $1/\tau$, and an exploration term derived from the entropy gradient. As $\tau \rightarrow 0$ (pure exploitation), the dynamics converge to standard replicator dynamics. As $\tau \rightarrow \infty$ (pure exploration), the system moves toward uniform randomization. The temperature parameter thus interpolates between evolutionary selection pressure and random drift, a feature with no analogue in classical game theory but natural in bounded rationality models.
+
+\subsubsection{Policy Gradient Methods}
+
+Policy gradient methods directly optimize expected rewards through gradient ascent on policy parameters:
+\begin{equation}
+\pi \leftarrow \pi + \alpha\nabla_{\pi}\mathbb{E}[R]
+\end{equation}
+For two-action games, with $x \in [0,1]$ representing the probability of the first action, the expected reward is:
+\begin{equation}
+V(x) = x(Ay)_1 + (1-x)(Ay)_2
+\end{equation}
+The Infinitesimal Gradient Ascent (IGA) dynamics become:
+\begin{equation}
+\dot{x} = \alpha\frac{dV}{dx} = \alpha((Ay)_1 - (Ay)_2)
+\end{equation}
+Unlike Cross learning and Q-learning with Boltzmann exploration, policy gradient methods yield linear dynamics rather than replicator-like equations. The update does not depend on $x(1-x)$, lacking the characteristic sigmoidal shape of replicator dynamics. IGA can converge to interior Nash equilibria in zero-sum games \citep{singh2000} but may exhibit cycles in general-sum games. Extensions like Win-or-Learn-Fast (WoLF) policy hill-climbing \citep{BowlingVeloso2002} introduce adaptive learning rates to overcome cycling, with higher learning rates when ``losing'' and lower rates when ``winning.''
+
+\subsubsection{Summary}
+
+The three algorithms, Cross learning, Q-learning with Boltzmann exploration, and policy gradient, generate three distinct dynamical systems: replicator dynamics, entropy-regularized replicator dynamics, and linear dynamics. Each produces different equilibrium selection properties and convergence behavior. The mapping between RL algorithms and evolutionary dynamics provides a formal language for analyzing how learning rules shape market outcomes, a theme we return to in the subsections on experimental data and algorithmic markets.
+
+\subsection{Models of Human Learning in Games}
+
+The theoretical connections between RL and evolutionary dynamics motivated a substantial experimental literature testing whether human subjects actually learn by reinforcement. Three models dominate this literature.
+
+The models in this section predate the MDP formalism and describe repeated play in stateless games. An agent chooses action $a \in \{1, \ldots, K\}$ at each round and receives reward $r(a)$. We denote by $\pi_t(a)$ the probability of choosing action $a$ at round $t$, following each model's original notation where it differs from the canonical MDP conventions used elsewhere in this survey.
+
+\subsubsection{Roth-Erev Reinforcement Learning}
+
+\citet{RothErev1995} proposed that experimental subjects learn by a process closely related to Cross's model. Each action $i$ has a ``propensity'' $q_i(t)$ that is updated after playing action $j$ and receiving payoff $r$:
+\begin{equation}
+q_i(t+1) = \begin{cases}
+q_i(t) + r & \text{if } i = j \\
+q_i(t) & \text{if } i \neq j
+\end{cases}
+\end{equation}
+Action probabilities are proportional to propensities: $\pi_i(t) = q_i(t) / \sum_k q_k(t)$. \citet{ErevRoth1998} tested this model and extensions across a battery of experimental games with unique mixed-strategy Nash equilibria. They found that reinforcement learning predicted initial (pre-convergence) play better than Nash equilibrium across all games tested, and that a ``cutoff'' variant incorporating aspiration levels and diminishing sensitivity to payoffs provided the best fit to experimental data.
+
+The Roth-Erev model differs from Cross learning in a critical respect: propensities are cumulative (additive), while Cross's rule is multiplicative in probabilities. The cumulative formulation means that early experience has diminishing influence as total propensity grows, producing a natural forgetting effect. This distinction matters for the speed of adaptation and the model's ability to track non-stationary environments.
+
+\subsubsection{Experience-Weighted Attraction Learning}
+
+\citet{CamererHo1999} proposed Experience-Weighted Attraction (EWA) as a unified framework nesting both reinforcement learning and belief-based learning as special cases. Each action $i$ has an ``attraction'' $A_i(t)$ updated by:
+\begin{equation}
+A_i(t) = \frac{\phi \cdot N(t-1) \cdot A_i(t-1) + [\delta + (1-\delta) \cdot \mathbbm{1}\{i = a(t)\}] \cdot r_i(t)}{N(t)}
+\end{equation}
+where $\phi$ is a decay parameter, $N(t)$ tracks experience weight, $\delta$ controls the weight on forgone payoffs (payoffs from actions not taken), and $r_i(t)$ is the payoff action $i$ would have yielded against the opponent's actual choice.
+
+When $\delta = 0$, only chosen actions are reinforced, recovering a reinforcement learning model. When $\delta = 1$, all actions are updated using forgone payoffs, recovering a belief-based model (equivalent to fictitious play with decaying weights). Intermediate values of $\delta$ blend the two. \citet{CamererHo1999} estimated $\delta$ across multiple experimental datasets and found values significantly between 0 and 1, suggesting that subjects use a mixture of reinforcement and belief-based learning that neither pure model captures alone.
+
+\subsubsection{Belief Learning and Fictitious Play}
+
+\citet{FudenbergLevine1998} provided the theoretical foundations for learning in games, distinguishing between reinforcement learning (agents update based only on received payoffs) and belief learning (agents form and update beliefs about opponent strategies, then best-respond). Fictitious play \citep{Brown1951}, in which agents maintain empirical frequency counts of opponent actions and best-respond to these frequencies, is the canonical belief-based model.
+
+The distinction matters for identification. Reinforcement learners cannot distinguish between actions they did not take; they update only based on experienced outcomes. Belief learners can learn from forgone payoffs because they update beliefs about the opponent regardless of their own action. \citet{FudenbergLevine1998} showed that the two models generate different predictions in games where the information structure allows observation of the opponent's action (and hence computation of forgone payoffs). This creates a testable distinction: in games with full feedback, belief learning and reinforcement learning diverge.
+
+\subsection{Neuroscience Foundations}
+
+The connection between RL and economic behaviour received striking biological confirmation when \citet{SchultzDayanMontague1997} demonstrated that dopamine neurons in the primate midbrain encode a signal corresponding to the temporal-difference prediction error. Specifically, these neurons fire above baseline when an outcome is better than expected, below baseline when worse than expected, and at baseline when outcomes match predictions. This is precisely the TD error signal:
+\begin{equation}
+\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)
+\end{equation}
+that drives learning in TD algorithms. The finding that biological reward systems implement a computation mathematically identical to an RL algorithm suggests that reinforcement learning is not merely a useful metaphor for economic behaviour; it is the mechanism by which the brain evaluates and updates action preferences. This has implications for economic models of decision-making: if the neural substrate of valuation literally computes TD errors, then models assuming agents perform Bayesian updating or static optimization may be misspecified at the computational level, even when they provide adequate reduced-form fits.
+
+\subsection{Algorithmic Behaviour and No-Regret Learning}
+
+A growing literature studies settings where economic agents are not humans learning from experience but algorithms deployed in markets. This shifts the question from ``do humans learn by RL?'' to ``what happens when RL agents interact in economic environments?''
+
+\subsubsection{Algorithmic Collusion}
+
+\citet{Calvano2020} studied the behaviour of independent Q-learning agents in a repeated Bertrand pricing game. Each firm is an autonomous Q-learning agent that observes the current price vector and chooses its own price. The agents have no communication channel, no knowledge of the game structure, and no explicit instruction to collude. Nevertheless, the agents consistently learn supra-competitive prices, achieving profit levels between the Nash equilibrium and the monopoly outcome. The learned strategies exhibit characteristics of tacit collusion: prices converge to levels above Nash, and deviations trigger punishment phases followed by gradual return to cooperative pricing.
+
+This finding has direct implications for competition policy. If algorithms deployed by competing firms can learn to collude without explicit communication or intent, existing antitrust frameworks based on detecting explicit agreements may be insufficient. The result also illustrates that the learning rule itself, not just the equilibrium concept, shapes market outcomes. Q-learning with $\epsilon$-greedy exploration produces different collusive dynamics than other algorithms would, raising the question of whether the choice of algorithm should be a regulatory concern.
+
+\subsubsection{Structural Estimation under No-Regret Learning}
+
+\citet{LomysMagnolfi2024} developed a structural estimation framework that replaces the Nash equilibrium assumption with the assumption that agents use no-regret learning algorithms. Rather than assuming that observed data are generated by agents playing a Nash equilibrium, their approach assumes agents follow learning rules that satisfy the no-regret property: the average payoff of the algorithm converges to at least the payoff of any fixed action in hindsight.
+
+The key theoretical insight is that no-regret learning in games converges to the set of Bayes coarse correlated equilibria (BCCE), a solution concept strictly weaker than Nash equilibrium. The BCCE set is larger than the Nash equilibrium set, which means the model's predictions are less sharp but its assumptions are more credible. The approach is particularly relevant for markets with algorithmic participants, where the no-regret property can be verified as a design specification rather than assumed as a behavioral hypothesis.
+
+\subsubsection{No-Regret as a Behavioural Foundation}
+
+The no-regret framework provides a minimal rationality requirement for economic agents. An agent satisfying no-regret need not know the game structure, form correct beliefs about opponents, or compute best responses. It need only learn at a rate sufficient to avoid persistent exploitation. This is a weaker requirement than Nash equilibrium (which requires correct beliefs and mutual best response) but stronger than arbitrary behaviour.
+
+From an econometric perspective, the advantage is that no-regret is both empirically testable and algorithmically achievable. Any agent using standard online learning algorithms (multiplicative weights, follow-the-regularized-leader, Exp3) satisfies the no-regret property by construction. This makes the behavioral assumption verifiable in settings where the agent's algorithm is observable, as in algorithmic trading or automated pricing systems.
+
+\subsection{Bounded Rationality and Satisficing}
+
+Herbert Simon's concept of bounded rationality \citep{Simon1957} anticipated many of the themes in this chapter. Simon argued that human decision-makers lack the computational resources to optimize; instead, they ``satisfice,'' adopting strategies that are good enough rather than optimal. RL agents provide a formal model of this process: they improve through experience but are not guaranteed to converge to optimal behaviour, especially in complex environments with large state spaces or non-stationary dynamics.
+
+The connection to RL is precise. An RL agent with limited memory (finite Q-table or small neural network), limited experience (finite training episodes), and approximate updates (stochastic gradient descent rather than exact Bellman backup) will generally not find the optimal policy. It will find a policy that is locally improving given its experience, which is a formal version of satisficing. The computational constraints of the RL algorithm, learning rate, exploration schedule, function approximation architecture, become the ``bounds'' on rationality.
+
+This perspective suggests a research programme: rather than assuming agents are optimal and using IRL to recover their reward functions, one could assume agents are boundedly rational RL learners and jointly estimate the reward function and the computational constraints. The reward function captures what the agent wants; the RL algorithm and its parameters capture how the agent learns. Existing work on ``inverse rational control'' \citep{Chan2019} takes steps in this direction, recovering discount factors and risk preferences alongside reward parameters. The general problem of identifying both preferences and learning algorithms from observed behaviour remains largely open.

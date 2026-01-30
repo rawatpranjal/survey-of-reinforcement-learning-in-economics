@@ -1,0 +1,185 @@
+This chapter reviews papers that use reinforcement learning algorithms to solve or estimate structural economic models. The common thread is the use of a genuine RL training loop: Q-learning, temporal-difference learning, policy gradient, or actor-critic methods applied to economic environments where dynamic programming is either infeasible or impractical. We exclude papers that use neural network function approximation without an RL training mechanism. Inverse reinforcement learning is treated in the sister survey \citep{RustRawat2026}.
+
+Throughout this chapter we adopt a unified notation. An MDP is a tuple $(\mathcal{S}, \mathcal{A}, P, r, \gamma)$ where $\mathcal{S}$ is the state space, $\mathcal{A}$ is the action space, $P(s' | s, a)$ is the transition kernel, $r(s,a)$ is the per-period reward, and $\gamma \in [0,1)$ is the discount factor.\footnote{Several of the papers reviewed here use $\beta$ for the discount factor, following economics convention. We translate all results to $\gamma$ for consistency with the RL literature and the rest of this survey.} A policy $\pi: \mathcal{S} \to \Delta(\mathcal{A})$ maps states to distributions over actions. The value function under $\pi$ is $V^\pi(s) = \mathbb{E}_\pi\left[\sum_{t=0}^\infty \gamma^t r(s_t, a_t) \mid s_0 = s\right]$, and the action-value function is $Q^\pi(s,a) = r(s,a) + \gamma \mathbb{E}_{s' \sim P(\cdot|s,a)}[V^\pi(s')]$. The optimal value function satisfies $V^*(s) = \max_{a \in \mathcal{A}} Q^*(s,a)$.
+
+
+\subsection{Dynamic Discrete Choice Estimation}
+
+Dynamic discrete choice (DDC) models are the workhorse of structural empirical economics. An agent in state $s \in \mathcal{S}$ chooses action $a \in \mathcal{A}$ (where $|\mathcal{A}|$ is finite) to maximize
+\begin{equation}
+\mathbb{E}\left[\sum_{t=0}^\infty \gamma^t \left(u(s_t, a_t; \theta) + \varepsilon_t(a_t)\right)\right],
+\end{equation}
+where $u(s,a;\theta) = z(s,a)^\top \theta$ is the deterministic component of per-period utility, $\theta \in \mathbb{R}^d$ collects the structural parameters, and $\varepsilon_t(a)$ is an idiosyncratic shock, typically drawn i.i.d.\ from a Type I extreme value distribution.\footnote{The Type I extreme value (Gumbel) distribution has CDF $F(\varepsilon) = \exp(-\exp(-\varepsilon))$. It yields the logit choice probability $P(a|s) = \exp(V(s,a))/\sum_{a'}\exp(V(s,a'))$, making the model tractable.} The econometrician observes panel data $\{(s_{it}, a_{it})\}_{i=1,\ldots,n}^{t=1,\ldots,T}$ and seeks to recover $\theta$.
+
+The classical approach of \citet{Rust1987} requires repeated solution of a fixed-point problem (nested fixed-point, or NFXP),\footnote{NFXP solves the likelihood maximization by nesting a Bellman fixed-point computation inside each evaluation of the likelihood function. Each likelihood evaluation requires solving the entire dynamic programming problem, making NFXP computationally expensive.} while the conditional choice probability (CCP) method of \citet{HotzMiller1993} avoids this by exploiting an invertibility result linking choice probabilities to value function differences. Both methods face severe computational challenges when the state space is continuous or high-dimensional: NFXP requires discretization and repeated Bellman iteration, while CCP requires nonparametric estimation of transition densities.
+
+These computational bottlenecks motivate bringing RL algorithms directly into the DDC estimation pipeline. Two recent papers pursue this approach.
+
+
+\subsubsection{Adusumilli and Eckardt (2022): TD Learning for CCP Estimation}
+
+\citet{AdusumilliEckardt2022} adapt temporal-difference (TD) learning to estimate the recursive terms that arise in CCP-based estimation, entirely avoiding specification or estimation of transition densities.
+
+The CCP approach requires computing two functions $h: \mathcal{A} \times \mathcal{S} \to \mathbb{R}^d$ and $g: \mathcal{A} \times \mathcal{S} \to \mathbb{R}$ that solve the recursive equations
+\begin{align}
+h(a,s) &= z(s,a) + \gamma \, \mathbb{E}[h(a', s') \mid a, s], \label{eq:ae_h}\\
+g(a,s) &= e(a,s) + \gamma \, \mathbb{E}[g(a', s') \mid a, s], \label{eq:ae_g}
+\end{align}
+where $e(a,s) = \gamma_{\text{E}} - \ln P(a|s)$ under logit errors ($\gamma_{\text{E}}$ denoting the Euler constant), and the expectation is over the next-period state-action pair $(s', a')$ given the transition kernel $P(s'|s,a)$ and the observed policy $P(a|s)$. Both $h$ and $g$ have a value-function structure: they satisfy a Bellman-like recursion under the observed (data-generating) policy, not the optimal policy.
+
+This observation is the key insight. Standard TD learning estimates value functions under a fixed policy from trajectory data, which is exactly what is needed here. \citet{AdusumilliEckardt2022} propose two methods.
+
+The core idea is to approximate $h$ and $g$ with linear combinations of basis functions, then use regression on observed state-action sequences to estimate the weights. This reduces the infinite-dimensional fixed-point problem to a finite-dimensional linear system.
+
+The first is the linear semi-gradient method.\footnote{The method is called ``semi-gradient'' because it computes the gradient of only the prediction $\phi(a,s)^\top w$ with respect to $w$, not the full TD error including the bootstrap target $\phi(a',s')^\top w$. This avoids differentiating through the target but sacrifices guaranteed convergence in some settings.} Approximate $h(a,s) \approx \phi(a,s)^\top w$ where $\phi: \mathcal{A} \times \mathcal{S} \to \mathbb{R}^p$ is a vector of basis functions (e.g., polynomials in state variables) and $w \in \mathbb{R}^p$ are the weights to be estimated. The TD(0) fixed-point equation is
+\begin{equation}
+\mathbb{E}\left[\phi(a,s)\left(\phi(a,s) - \gamma \phi(a', s')\right)^\top\right] w = \mathbb{E}\left[\phi(a,s) \, z(s,a)\right]. \label{eq:ae_semigradient}
+\end{equation}
+The sample analog replaces population expectations with averages over the observed panel:
+\begin{equation}
+\hat{w} = \left(\frac{1}{n(T-1)} \sum_{i=1}^n \sum_{t=1}^{T-1} \phi_{it}\left(\phi_{it} - \gamma \phi_{i,t+1}\right)^\top\right)^{-1} \left(\frac{1}{n(T-1)} \sum_{i=1}^n \sum_{t=1}^{T-1} \phi_{it} \, z_{it}\right),
+\end{equation}
+where $\phi_{it} = \phi(a_{it}, s_{it})$ and $z_{it} = z(s_{it}, a_{it})$. This requires inverting a $p \times p$ matrix, where $p$ is the number of basis functions, making computation trivial in most settings. No transition density estimation is needed: the method uses only observed sequences of current and next-period state-action pairs.
+
+The second method is approximate value iteration (AVI). Rather than fixing a linear basis, AVI constructs a sequence of approximations $\hat{h}^{(k)}$ by iterating the Bellman-like operator and solving a nonparametric regression at each step. At iteration $k$, given the current approximation $\hat{h}^{(k-1)}$, one constructs pseudo-outcomes
+\begin{equation}
+Y_{it}^{(k)} = z_{it} + \gamma \, \hat{h}^{(k-1)}(a_{i,t+1}, s_{i,t+1})
+\end{equation}
+and then fits $\hat{h}^{(k)}$ by regressing $Y_{it}^{(k)}$ on $(a_{it}, s_{it})$ using any machine learning method: LASSO, random forests, or neural networks. This is the first DDC estimator compatible with arbitrary ML prediction methods, enabling application to very high-dimensional state spaces.
+
+With $\hat{h}$ and $\hat{g}$ in hand, structural parameters are recovered by pseudo-maximum likelihood estimation (PMLE). For continuous state spaces, \citet{AdusumilliEckardt2022} derive a locally robust correction to the PMLE criterion that accounts for the nonparametric first-stage estimation of value terms, restoring $\sqrt{n}$-convergence of $\hat{\theta}$.\footnote{An estimator has $\sqrt{n}$-convergence if its error shrinks at rate $n^{-1/2}$ where $n$ is the sample size. This is the standard parametric rate; slower rates (e.g., $n^{-1/4}$) indicate efficiency loss from nonparametric first stages.}
+
+\begin{theorem}[\citet{AdusumilliEckardt2022}, Theorem 1]
+Under regularity conditions, the linear semi-gradient estimator $\hat{h}$ satisfies $\|\hat{h} - h\|_2 = O_P(n^{-1/2}(T-1)^{-1/2})$, where $\|\cdot\|_2$ denotes the $L^2(P)$ norm.\footnote{The $L^2(P)$ norm is $\|f\|_2 = (\int f(x)^2 \, dP(x))^{1/2}$, measuring average squared deviation under the probability measure $P$. This is the natural norm for mean-squared-error analysis.}
+\end{theorem}
+
+\begin{theorem}[\citet{AdusumilliEckardt2022}, Theorem 3]
+Under regularity conditions on the ML method used in AVI, the locally robust PMLE estimator $\hat{\theta}_{LR}$ satisfies $\sqrt{n}(\hat{\theta}_{LR} - \theta^*) \xrightarrow{d} \mathcal{N}(0, \Sigma)$ for an explicit variance $\Sigma$, even when the state space is continuous.
+\end{theorem}
+
+Monte Carlo experiments on a dynamic firm entry model with seven structural parameters and five continuous state variables show that the TD-based estimators achieve a 4- to 11-fold reduction in mean squared error compared to CCP estimators using state-space discretization.
+
+For dynamic discrete games, the method extends naturally. Standard CCP-based estimation of games requires integrating out other players' actions, which becomes intractable with many players or continuous states. TD learning avoids this entirely, since it works directly with the joint empirical distribution of states and their successors. The ``integrating out'' is done implicitly within sample expectations.
+
+The limitation is the linear semi-gradient's dependence on the choice of basis functions, though cross-validation can guide this selection. AVI with flexible ML methods relaxes this constraint at the cost of slightly higher small-sample bias, which the locally robust correction addresses.
+
+
+\subsubsection{Hu and Yang (2025): Policy Gradient for DDC Estimation}
+
+\citet{HuYang2025} take a different approach: rather than using TD learning within the CCP framework, they use policy gradient methods to solve the inner-loop dynamic programming problem that arises in simulation-based estimation.
+
+The estimation framework is indirect inference.\footnote{Indirect inference \citep{GourierouxMonfort1993} estimates structural parameters by matching moments from simulated data to moments from observed data, avoiding direct evaluation of the likelihood function.} Define a vector of data moments $\mathbf{M}_d$ computed from the observed panel. For candidate parameter $\theta$, simulate the model under $\theta$ to produce simulated moments $\mathbf{M}_s(\theta)$. The estimator minimizes the quadratic distance:
+\begin{equation}
+\hat{\theta} = \arg\min_{\theta} \left(\mathbf{M}_d - \mathbf{M}_s(\theta)\right)^\top \mathbf{W} \left(\mathbf{M}_d - \mathbf{M}_s(\theta)\right), \label{eq:hy_outer}
+\end{equation}
+where $\mathbf{W}$ is a positive definite weight matrix. Computing $\mathbf{M}_s(\theta)$ requires solving for the optimal policy under $\theta$, which is the inner-loop problem.
+
+The inner loop parameterizes the policy directly as a neural network $\pi_\phi(a | s, \varepsilon)$, where $\phi$ denotes the network weights and $\varepsilon$ captures unobserved state components. The policy takes the softmax form
+\begin{equation}
+\pi_\phi(a | s, \varepsilon) = \frac{\exp\left(f_\phi(s, \varepsilon, a)\right)}{\sum_{a' \in \mathcal{A}} \exp\left(f_\phi(s, \varepsilon, a')\right)}, \label{eq:hy_policy}
+\end{equation}
+where $f_\phi: \mathcal{S} \times \mathbb{R}^k \times \mathcal{A} \to \mathbb{R}$ is a feedforward neural network. The policy is optimized by REINFORCE-style gradient ascent:
+\begin{equation}
+\nabla_\phi J(\phi) = \mathbb{E}_{\tau \sim \pi_\phi}\left[\sum_{t=0}^T \nabla_\phi \log \pi_\phi(a_t | s_t) \, Q^{\pi_\phi}(s_t, a_t)\right], \label{eq:hy_pg}
+\end{equation}
+where $\tau = (s_0, a_0, s_1, a_1, \ldots)$ is a trajectory sampled under $\pi_\phi$ and $Q^{\pi_\phi}$ is the action-value function under the current policy. In practice, $Q^{\pi_\phi}(s_t, a_t)$ is replaced by the empirical return $\sum_{k=0}^{T-t} \gamma^k r_{t+k}$ or a learned baseline.
+
+The key advantage is that policy gradient methods handle continuous state transitions naturally. The NFXP approach requires either discretizing $\mathcal{S}$ or numerically integrating over $P(s'|s,a)$ at every Bellman iteration. Policy gradient sidesteps both: gradients flow through sampled trajectories, and the transition kernel is used only implicitly through simulation. This makes the method applicable to models with continuous state variables, high-dimensional unobserved heterogeneity, and complex transition dynamics.
+
+The estimation proceeds as a nested loop. For each candidate $\theta$ in the outer minimization (\ref{eq:hy_outer}), the inner loop runs policy gradient until convergence, producing an approximately optimal policy $\pi_{\phi^*(\theta)}$. This policy is then used to simulate data and compute $\mathbf{M}_s(\theta)$. The outer loop updates $\theta$ toward the minimizer of the moment distance.
+
+The main limitation is computational cost: each outer-loop evaluation requires a full policy gradient optimization in the inner loop. The authors report that careful warm-starting (initializing $\phi$ at the previous inner-loop solution when $\theta$ changes incrementally) substantially reduces this burden.
+
+
+\subsection{Dynamic Oligopoly and Strategic Interaction}
+
+Dynamic oligopoly models combine elements of game theory and dynamic programming: firms choose actions (prices, quantities, investment levels) strategically, anticipating both their own future states and the strategies of competitors. The state space grows combinatorially in the number of firms, and the requirement to compute best responses against other firms' strategies adds further computational burden.
+
+
+\subsubsection{Asker, Fershtman, Jeon, and Pakes (2020): Q-Learning in Dynamic Procurement Auctions}
+
+\citet{AskerEtAl2020} develop a computational framework for analyzing dynamic procurement auctions with serially correlated asymmetric information. Their approach builds on the Experience-Based Equilibrium (EBE) concept of \citet{FershtmanPakes2012}, which computes equilibria by simulating industry trajectories and updating strategies toward best responses. EBE evaluates values only on recurrently visited states rather than the full state space, making it feasible for large state spaces. While \citet{FershtmanPakes2012} use iterative value estimation without a standard RL algorithm, \citet{AskerEtAl2020} add explicit Q-learning updates.
+
+The model is a repeated first-price sealed-bid auction with two firms. Each firm $i$ maintains a private inventory state $\omega_{i,t}$ (stock of unharvested timber, in their application). The state evolves endogenously: winning an auction increases inventory, while harvesting depletes it. Each firm's private state is not observed by its competitor except at periodic revelation events.
+
+The key computational innovation is the use of Q-learning to compute equilibrium strategies. Each firm $i$ maintains a Q-function $Q_i: \mathcal{S}_i \times \mathcal{A}_i \to \mathbb{R}$, where $\mathcal{S}_i$ encodes firm $i$'s information set (its own inventory, beliefs about the competitor's inventory, public history) and $\mathcal{A}_i$ is its action set (participation decision and bid level). The Q-function satisfies
+\begin{equation}
+Q_i(s, a) = \mathbb{E}\left[r_i(s, a, a_{-i}) + \gamma \max_{a' \in \mathcal{A}_i} Q_i(s', a') \;\middle|\; s, a\right], \label{eq:asker_bellman}
+\end{equation}
+where $r_i(s, a, a_{-i})$ is firm $i$'s per-period profit given the state, its own action $a$, and the competitor's action $a_{-i}$, and the expectation is taken over the competitor's strategy and the stochastic transitions.
+
+Firms update Q-values using tabular Q-learning:
+\begin{equation}
+Q_i(s, a) \leftarrow Q_i(s, a) + \alpha\left[r_i + \gamma \max_{a' \in \mathcal{A}_i} Q_i(s', a') - Q_i(s, a)\right], \label{eq:asker_qupdate}
+\end{equation}
+where $\alpha > 0$ is the learning rate. The equilibrium computation iterates: firms simultaneously update their Q-functions based on simulated play against each other's current strategies. Strategies are derived from Q-values using an $\varepsilon$-greedy rule or Boltzmann exploration.\footnote{$\varepsilon$-greedy selects the greedy action $\argmax_a Q(s,a)$ with probability $1-\varepsilon$ and a uniformly random action otherwise. Boltzmann exploration selects action $a$ with probability $\propto \exp(Q(s,a)/\tau)$ where $\tau > 0$ is a temperature parameter.}
+
+\citet{AskerEtAl2020} add a boundary consistency condition to the EBE concept that restricts behavior at the boundary of the recurrent state class, reducing the multiplicity of equilibria. Their numerical analysis reveals that information sharing between firms can, through increased precision of beliefs about competitor states, induce firms to spend more time in states where competition is less intense. The dynamic RL-computed equilibrium yields qualitatively different predictions from both static analysis and myopic ($\gamma = 0$) benchmarks: with dynamics, information sharing decreases average bids and increases average profits, while the myopic benchmark shows negligible effects.
+
+The limitation of this approach is the tabular representation: the Q-function is stored as a lookup table over discretized states and actions, restricting applicability to models with moderate state-space dimension.
+
+
+\subsubsection{Hollenbeck (2019): TD Learning for Merger Analysis with Innovation}
+
+\citet{Hollenbeck2019} uses RL to solve a dynamic oligopoly model with endogenous mergers, entry, exit, and quality investment. The model extends the Ericson-Pakes framework to study how horizontal mergers affect innovation incentives.
+
+The industry state is $\Omega = (\omega_1, \ldots, \omega_n)$ where $\omega_i \in \{1, \ldots, \omega_{\max}\}$ is firm $i$'s product quality. Firms produce differentiated goods and compete in prices (Bertrand competition with logit demand). In each period, firms simultaneously choose investment levels, entry/exit decisions, and potentially initiate merger negotiations.
+
+Each firm $i$ computes its continuation value $V_i(\Omega)$ from the industry state. Because the state space is the product of all firms' quality levels plus industry structure (number of active firms, recent mergers), exact dynamic programming is infeasible for industries with more than two or three firms. \citet{Hollenbeck2019} instead uses temporal-difference learning to estimate values from simulated industry trajectories.
+
+The TD(0) update for firm $i$'s value function is
+\begin{equation}
+V_i(\Omega) \leftarrow V_i(\Omega) + \alpha\left[\Pi_i(\Omega, \mathbf{a}) + \gamma V_i(\Omega') - V_i(\Omega)\right], \label{eq:hollenbeck_td}
+\end{equation}
+where $\Pi_i(\Omega, \mathbf{a})$ denotes firm $i$'s per-period profit given industry state $\Omega$ and the joint action profile $\mathbf{a}$ (investment, entry/exit, merger decisions),\footnote{We use $\Pi_i$ for firm $i$'s per-period profit to avoid confusion with policy $\pi$.} $\gamma$ is the discount factor, and $\Omega'$ is the realized next-period state. The algorithm uses $\varepsilon$-greedy exploration to prevent convergence to locally suboptimal equilibria.
+
+The equilibrium computation follows the Pakes-McGuire iterative scheme:\footnote{The Pakes-McGuire algorithm \citep{PakesMcGuire1994} computes Markov perfect equilibria by iterating: (1) given current value functions, compute best-response strategies; (2) given strategies, update value functions via simulation. Convergence is not guaranteed but works well in practice.} simulate long industry histories, update each firm's value function via (\ref{eq:hollenbeck_td}), re-derive best-response strategies from updated values, and repeat. The RL component replaces the exact Bellman iteration step that would be infeasible over the full state space, focusing computational effort on recurrently visited states.
+
+The central finding is that horizontal mergers, while reducing static consumer surplus in the short run, create a powerful incentive for entry and investment. Firms enter with negative static profits because the prospect of a lucrative buyout justifies the initial investment. The result is substantially higher long-run innovation and consumer welfare with mergers than without. This finding reverses the standard static antitrust prediction and can only emerge in a dynamic model where firms are forward-looking.
+
+Two related papers merit brief mention. \citet{LomysMagnolfi2024} develop structural estimation methods for strategic settings where agents use reinforcement learning rather than playing a fixed equilibrium. They impose an ``asymptotic no-regret'' condition as a minimal rationality requirement and derive identification results for payoff parameters. Their contribution is conceptual: they bridge the gap between RL-based behavioral models (where agents learn) and the econometric problem (where the researcher estimates structural parameters from data generated by learning agents). Their estimation method itself is standard econometrics rather than RL. \citet{Covarrubias2022} uses deep RL to study oligopolistic pricing in a New Keynesian framework, representing firms' pricing policies as neural networks $\pi_\phi(a|s)$. The method uncovers multiple equilibria ranging from competitive to collusive pricing.
+
+
+\subsection{Auction Equilibria and Mechanism Design}
+
+Computing equilibrium bidding strategies in auctions is a long-standing challenge. Closed-form solutions exist only for narrow families of valuation distributions and auction formats, while numerical methods scale poorly with the number of bidders and items. Recent work has applied deep RL to learn equilibrium strategies and optimal mechanisms.
+
+
+\subsubsection{Brero, Eden, Gerstgrasser, Parkes, and Rheingans-Yoo (2021): RL for Sequential Price Mechanisms}
+
+\citet{BreroEtAl2021} use RL to design optimal sequential price mechanisms (SPMs), a class of indirect auction mechanisms where agents are approached in sequence and offered menus of items at posted prices. SPMs generalize both serial dictatorship and posted-price mechanisms and essentially characterize all strongly obviously strategyproof (SOSP) mechanisms \citep{PyciaAndTroyan2019}.\footnote{A mechanism is strategyproof if truthful reporting is a dominant strategy. It is obviously strategyproof if this dominance is apparent even to boundedly rational agents; strongly obviously strategyproof (SOSP) adds that dominance holds at every information set \citep{PyciaAndTroyan2019}.}
+
+The mechanism design problem is formulated as a partially observable Markov decision process (POMDP). The state at round $t$ includes the set of remaining items $\rho_t^{\text{items}} \subseteq [m]$, remaining agents $\rho_t^{\text{agents}} \subseteq [n]$, the partial allocation $\mathbf{x}_t$, and the agents' (unobserved) valuation functions. The action is the choice of which agent to visit next and what prices to offer: $a_t = (i_t, \{p_j^t\}_{j \in \rho_{t-1}^{\text{items}}})$. The observation is the agent's purchase decision, from which the mechanism can update beliefs about valuations. The reward is the objective function evaluated at the final allocation:
+\begin{equation}
+r = g(\mathbf{x}_T, \boldsymbol{\tau}_T; \mathbf{v}), \label{eq:brero_reward}
+\end{equation}
+where $g$ can be social welfare $\sum_{i} v_i(x_i)$, revenue $\sum_i \tau_i$, or max-min fairness $\min_i v_i(x_i)$.
+
+A key theoretical result establishes when adaptive mechanisms outperform static ones.
+
+\begin{theorem}[\citet{BreroEtAl2021}, Theorem 1, informal]
+For settings with at least two items and correlated agent valuations, there exist valuation distributions such that the optimal SPM with adaptive prices and ordering strictly dominates the optimal mechanism with static (non-adaptive) prices or ordering.
+\end{theorem}
+
+The policy maps from a sufficient statistic of the observation history to actions. \citet{BreroEtAl2021} show that this statistic can be represented compactly in the number of items and agents: it is the set of remaining items and, for each remaining agent, whether agents in each ``type class'' have purchased or not. They train the mechanism policy using Proximal Policy Optimization (PPO), which handles the discrete action space (agent selection) and continuous action space (price setting) of the POMDP.
+
+Experimental results show that the learned SPMs achieve near-optimal welfare across settings with up to 10 agents and 10 items, significantly outperforming static pricing benchmarks. The improvement is largest when agent valuations are correlated, since adaptive prices allow the mechanism to infer information about remaining agents from earlier purchases.
+
+The limitation is that the POMDP formulation requires knowledge of the prior distribution over valuations, which in practice must be estimated from data. The method also does not scale easily to very large numbers of items due to the combinatorial action space.
+
+
+\subsubsection{Ravindranath, Feng, Wang, Zaheer, Mehta, and Parkes (2024): Differentiable RL for Combinatorial Auctions}
+
+\citet{RavindranathEtAl2024} address revenue-maximizing mechanism design for sequential combinatorial auctions with multiple items and strategic bidders. Their innovation is integrating differentiable auction structure into the RL training loop, enabling gradient-based learning where standard RL methods struggle.
+
+The sequential auction proceeds over $T$ rounds. In each round, a subset of items is auctioned. Bidder valuations evolve over rounds (e.g., complementarities between items won in earlier rounds affect valuations for later items). The mechanism's policy determines reserve prices, allocation rules, and payment rules for each round, conditioned on the history of bids and outcomes.
+
+The state at round $t$ is $s_t = (h_t, \mathbf{v}_t)$ where $h_t$ is the public history of past allocations and payments, and $\mathbf{v}_t$ collects bidders' current valuations (partially observed by the mechanism through bids). The mechanism's action is the auction rule for round $t$: reserve prices, allocation, and payments. The reward is total revenue across all rounds.
+
+The key technical contribution is making the auction clearing and payment rules differentiable. In a standard auction, the allocation is an argmax over bids (non-differentiable), and payments depend discontinuously on the allocation. \citet{RavindranathEtAl2024} replace hard allocations with soft allocations using a softmax relaxation\footnote{The softmax relaxation replaces the hard allocation $\argmax_i b_i$ with a soft allocation $\exp(b_i/\tau)/\sum_j \exp(b_j/\tau)$, which is differentiable and approaches the hard allocation as $\tau \to 0$.} and smooth payment rules, enabling end-to-end gradient computation through the auction. The policy gradient then combines standard RL gradients (for the stochastic components) with first-order gradients through the differentiable auction structure:
+\begin{equation}
+\nabla_\phi J = \underbrace{\mathbb{E}\left[\sum_t \nabla_\phi \log \pi_\phi(a_t | h_t) \, R_t\right]}_{\text{REINFORCE}} + \underbrace{\mathbb{E}\left[\sum_t \nabla_\phi r_t^{\text{diff}}\right]}_{\text{pathwise gradient}}\footnote{The pathwise (or reparameterization) gradient computes $\nabla_\phi \mathbb{E}[f(x)]$ by writing $x = g(\phi, \epsilon)$ for noise $\epsilon$ independent of $\phi$, then differentiating $f(g(\phi,\epsilon))$ directly. This has lower variance than REINFORCE when applicable.}, \label{eq:rav_gradient}
+\end{equation}
+where $r_t^{\text{diff}}$ is the differentiable revenue from round $t$ and $R_t$ is the return-to-go. This hybrid gradient estimator has lower variance than pure REINFORCE and enables faster convergence.
+
+Experiments demonstrate scaling to environments with up to 50 bidders and 50 items, where the learned mechanisms achieve 15--30\% higher revenue than analytical benchmarks (e.g., Myerson optimal auctions applied item-by-item) and conventional deep RL algorithms (PPO, DQN) that do not exploit the differentiable structure. The approach effectively bridges auction theory's optimal mechanisms and practical implementable policies for complex multi-item settings.

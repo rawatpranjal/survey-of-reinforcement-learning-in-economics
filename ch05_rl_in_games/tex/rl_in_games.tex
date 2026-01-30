@@ -1,0 +1,97 @@
+% Chapter 5: RL in Games
+
+Computing Nash equilibria in extensive-form games with imperfect information is computationally hard. \citet{Daskalakis2009} showed the problem is PPAD-complete, meaning no polynomial-time algorithm is known and none is likely to exist.\footnote{PPAD (Polynomial Parity Arguments on Directed graphs) is a complexity class for problems where existence is guaranteed by a parity argument. PPAD-completeness means the problem is as hard as any problem in this class. For comparison, checking whether a strategy profile is a Nash equilibrium is easy (polynomial time); finding one is PPAD-complete.} Despite this worst-case hardness, practical algorithms can exploit game structure. Counterfactual regret minimization (CFR) achieves $O(1/\sqrt{T})$ convergence to $\varepsilon$-Nash equilibrium in two-player zero-sum games \citep{zinkevich2008}. After $T$ iterations, exploitability decreases as $1/\sqrt{T}$: reaching exploitability 0.01 requires approximately 10,000 iterations.\footnote{An $\varepsilon$-Nash equilibrium is a strategy profile where no player can improve her expected payoff by more than $\varepsilon$ through unilateral deviation. As $\varepsilon \to 0$, this converges to an exact Nash equilibrium.} This section applies CFR to the durable goods monopoly problem, benchmarking against the theoretical results of \citet{gul1986foundations} and \citet{ausubel1989reputation}.
+
+\subsection{Counterfactual Regret Minimization}
+
+An extensive-form game consists of a game tree with information sets $\mathcal{I}_i$ partitioning player $i$'s decision nodes. An information set groups nodes where the player cannot distinguish between them due to hidden opponent actions or private information. A behavioral strategy $\sigma_i: \mathcal{I}_i \to \Delta(\mathcal{A})$ assigns action probabilities at each information set.
+
+The key concept in CFR is the counterfactual value: how much better would player $i$ have done by taking action $a$ at information set $I$, assuming she played to reach $I$ but her opponent played according to $\sigma$? Formally:
+\begin{equation}
+v^\sigma_i(I, a) = \sum_{h \in I} \pi^\sigma_{-i}(h) \sum_{z \sqsupseteq ha} \pi^\sigma(ha, z) u_i(z)
+\end{equation}
+where $\pi^\sigma_{-i}(h)$ is the probability opponents reach $h$, and $\pi^\sigma(ha, z)$ is the probability of reaching terminal $z$ from $ha$. The counterfactual formulation weights by opponent reach $\pi^\sigma_{-i}(h)$ rather than joint reach $\pi^\sigma(h)$. This ensures non-zero updates even at rarely-visited information sets, avoiding the vanishing gradient problem that affects direct policy gradient methods in extensive-form games. Cumulative regret for action $a$ is $R^T(I,a) = \sum_{t=1}^T [v^{\sigma^t}(I,a) - v^{\sigma^t}(I)]$. CFR updates via regret matching:\footnote{Regret matching is an action selection rule where the probability of choosing action $a$ is proportional to the cumulative regret for not having chosen $a$ in the past (truncated at zero). Actions with high regret receive higher probability; actions with negative regret (having performed worse than average) receive zero probability.}
+\begin{equation}
+\sigma^{T+1}(I, a) = \frac{[R^T(I, a)]^+}{\sum_{a'} [R^T(I, a')]^+}, \quad [x]^+ = \max(x,0).
+\end{equation}
+The average strategy $\bar{\sigma}^T$ converges to $\varepsilon$-Nash with $\varepsilon = O(|\mathcal{I}|\sqrt{|\mathcal{A}|}\Delta / \sqrt{T})$ \citep{zinkevich2008}.\footnote{CFR+ \citep{tammelin2014solving} modifies the update to $R^{T+1}(I, a) = [R^T(I, a) + r^{T+1}(I, a)]^+$ and weights iteration $t$ by $t$. These modifications improve practical convergence without changing the asymptotic rate.}
+
+\subsection{Neural Extensions}
+
+Tabular CFR stores regrets at every information set, infeasible when $|\mathcal{I}| > 10^{14}$. Two neural approaches scale to large games.
+
+\subsubsection{Deep CFR}
+
+\citet{Brown2019} approximate cumulative regrets with a neural network $V_\theta: \mathcal{I} \times \mathcal{A} \to \mathbb{R}$ trained on sampled (information set, action, regret) tuples:
+\begin{equation}
+L_V(\theta) = \mathbb{E}_{(I, a, r) \sim \mathcal{M}} \left[ (V_\theta(I, a) - r)^2 \right].
+\end{equation}
+A separate network $\Pi_\phi$ approximates the average strategy via KL-divergence minimization. The current strategy derives from regret matching: $\sigma(I, a) \propto [V_\theta(I, a)]^+$.
+
+\subsubsection{Neural Fictitious Self-Play}
+
+NFSP \citep{heinrich2016deep} combines fictitious play\footnote{Fictitious play \citep{Brown1951} is a classical learning rule where each player best-responds to the empirical distribution of opponents' past actions. Under certain conditions (e.g., two-player zero-sum games), the time-average strategies converge to Nash equilibrium.} \citep{Brown1951} with deep Q-learning.\footnote{Deep Q-Network (DQN) \citep{mnih2015} approximates the Q-function with a neural network, using experience replay and a target network to stabilize training. The target network $\theta^-$ in the loss function is a delayed copy of the main network, updated periodically.} Each player maintains two networks: a best-response network $Q_\theta$ trained via DQN, and an average strategy network $\bar{\pi}_\phi$ trained via supervised learning on the best-response actions:
+\begin{equation}
+L_{\text{RL}}(\theta) = \mathbb{E}\left[ \left( r + \gamma \max_{a'} Q_{\theta^-}(I', a') - Q_\theta(I, a) \right)^2 \right], \quad
+L_{\text{SL}}(\phi) = \mathbb{E}\left[ -\log \bar{\pi}_\phi(a | I) \right].
+\end{equation}
+During play, agents follow $\bar{\pi}_\phi$ with probability $1-\eta$ and $Q_\theta$ with probability $\eta$.
+
+\subsubsection{Poker Results}
+
+These methods achieved superhuman performance in poker. Deep CFR attained exploitability of 0.036 big blinds per hand\footnote{Exploitability measures how far a strategy is from Nash equilibrium: it is the maximum expected gain an adversary could achieve by best-responding. Zero exploitability means the strategy is unexploitable (Nash). In poker, exploitability is measured in milli-big-blinds per hand (mbb/h).} in heads-up limit hold'em \citep{Brown2019}. Libratus defeated top human professionals in heads-up no-limit hold'em using nested subgame solving with CFR \citep{brown2017superhuman}. Pluribus extended to six-player no-limit hold'em \citep{brown2019superhuman}. The game tree of heads-up no-limit hold'em contains $\sim 10^{161}$ states; these results demonstrate that CFR-based methods scale to economically relevant game sizes.
+
+\subsection{The Coase Conjecture}
+
+The durable goods monopoly problem has two distinct cases that yield qualitatively different equilibria. In the ``gap case,'' the seller's cost is strictly below all buyer valuations, so trade is guaranteed. In the ``no-gap case,'' cost equals or exceeds the lowest buyer valuation, so some buyers may never trade. The gap case admits a unique stationary equilibrium; the no-gap case admits multiple equilibria with more complex dynamics. We study the gap case, which has a clean theoretical benchmark.
+
+\citet{coase1972durability} conjectured that a durable goods monopolist\footnote{A durable good provides utility over multiple periods (e.g., a car, appliance, or software license) rather than being consumed immediately. Unlike non-durable goods, durable goods create intertemporal competition: the seller at time $t$ competes with her own future self at $t+1$.} loses market power when buyers are patient: unable to commit to future prices, the seller competes with her future self, eroding rents. \citet{stokey1981rational} showed that a monopolist facing rational consumers cannot price discriminate intertemporally; \citet{bulow1982durable} proved that in the no-gap case, the monopolist prefers renting to selling. \citet{gul1986foundations} provided the definitive formalization: with a continuum of buyer types and continuous time, as the inter-offer interval $\Delta t \to 0$, price converges to marginal cost instantaneously and all trade occurs at $t = 0$.
+
+\subsubsection{Model}
+
+A seller with zero cost faces a buyer with private valuation $v \in \{v_L, v_H\}$, where $\Pr(v = v_H) = \pi$. In each period $t = 1, 2, \ldots$, the seller posts price $p_t$; the buyer accepts or rejects. Payoffs upon acceptance at $t$: seller receives $\delta^{t-1} p_t$, buyer receives $\delta^{t-1}(v - p_t)$, where $\delta \in (0,1)$ is the common discount factor. The game ends upon acceptance or after $T$ periods.
+
+This is the gap case: seller cost (0) is strictly below the lowest buyer valuation ($v_L$), guaranteeing trade in equilibrium.
+
+\subsubsection{Theoretical Benchmark}
+
+The screening price $P^*(\delta)$ makes the high-type buyer indifferent between accepting now and waiting:
+\begin{equation}
+v_H - P^* = \delta(v_H - v_L) \implies P^*(\delta) = v_H - \delta(v_H - v_L).
+\end{equation}
+The seller's optimal strategy depends on $\pi$. Let $\Pi_{\text{screen}} = \pi P^* + (1-\pi)\delta v_L$ and $\Pi_{\text{pool}} = v_L$. The seller screens if $\Pi_{\text{screen}} > \Pi_{\text{pool}}$, yielding threshold
+\begin{equation}
+\pi^* = \frac{v_L(1-\delta)}{P^* - \delta v_L} = \frac{1}{2} \quad \text{when } v_H = 2v_L.
+\end{equation}
+For $\pi < \pi^*$: pooling equilibrium (offer $v_L$ immediately). For $\pi > \pi^*$: screening equilibrium (offer $P^*$, then $v_L$ if rejected).\footnote{In a screening equilibrium, the seller uses price to separate buyer types: high-value buyers accept immediately at a high price, while low-value buyers reject and receive a lower offer later. In a pooling equilibrium, the seller offers a single price that all types accept, sacrificing price discrimination for immediate sale.}
+
+The Coase conjecture manifests as $\delta \to 1$: the screening price $P^*(\delta) \to v_L$, so the seller cannot extract surplus from high types.
+
+\subsubsection{Computational Results}
+
+We model the bargaining game as an extensive-form game and apply CFR. Parameters: $v_L = 100$, $v_H = 200$, $T = 2$ periods. The seller's information set is the rejection history; the buyer's information set includes her private type.
+
+\begin{table}[htbp]
+\centering
+\caption{CFR Equilibrium vs. Theory: $\pi$-sweep at $\delta = 0.5$}
+\label{tab:coase}
+\input{../ch05_rl_in_games/sims/durable_goods_results}
+\begin{minipage}{0.9\textwidth}
+\footnotesize
+Notes: P(Screen) is the probability the seller offers $P^* = 150$ in period 1. Theory column gives the predicted probability (0 for pooling, 1 for screening). NashConv is the sum of exploitabilities. 5,000 CFR iterations per configuration.
+\end{minipage}
+\end{table}
+
+Table \ref{tab:coase} reports results from varying $\pi$ at fixed $\delta = 0.5$. The algorithm recovers the phase transition at $\pi^* = 0.5$: for $\pi < 0.5$, the seller pools with probability approaching 1; for $\pi > 0.5$, the seller screens with probability approaching 1. The transition is sharp.
+
+A $\delta$-sweep at $\pi = 0.7$ confirms the screening price formula: $P^*(\delta) = 200 - 100\delta$ with zero error across $\delta \in [0.1, 0.9]$. As $\delta$ increases, screening becomes unprofitable (Coase conjecture): at $\delta = 0.75$, the seller switches to pooling.
+
+\subsubsection{Validation}
+
+Four stress tests verify the results.\footnote{(1) Awkward primes $(v_L, v_H) = (37, 83)$: converged to $P^* = 55$ (theory: 55.4). (2) Information leak: single seller information set at root. (3) Grid shift with 150 removed: used 145 (99.4\%). (4) 3-period game: found $P_1 = 120$ vs.\ theory 136.} The 3-period result merits explanation. At $P_1 = 136$, the high buyer is exactly indifferent: surplus $= v_H - 136 = 64 = \delta(v_H - 120)$. If the buyer randomizes, the seller prefers $P_1 = 120$ (revenue 108 vs.\ 86.4 if buyer rejects 136). CFR found the equilibrium robust to tie-breaking.
+
+\subsection{Discussion}
+
+CFR computed equilibria matching the theoretical predictions of \citet{gul1986foundations} without encoding economic structure. The algorithm discovered that: (1) the seller screens when $\pi$ is high, pools when $\pi$ is low, with threshold at $\pi^* = 0.5$; (2) the screening price satisfies the high-buyer indifference condition; (3) as $\delta \to 1$, screening collapses (Coase conjecture). These properties emerged from regret minimization alone.
+
+The poker-bargaining correspondence is exact: buyer valuation maps to hole cards, price acceptance to calling a bet, rejection to folding. Both involve signaling private information through sequential actions. The success of poker algorithms on this benchmark suggests applicability to other bargaining and mechanism design problems with analytically intractable equilibria.

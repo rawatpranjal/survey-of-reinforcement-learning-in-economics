@@ -1,106 +1,100 @@
+Multi-armed bandits represent the simplest form of reinforcement learning: sequential decision-making without state. The agent repeatedly chooses among $K$ actions, observes a stochastic reward, and updates its beliefs. This stateless structure makes bandits uniquely suited for real-world deployment where the cost of suboptimal decisions is immediate and irreversible. The central challenge is the exploration-exploitation tradeoff: the agent must balance gathering information about uncertain arms against exploiting arms that appear best. Two algorithmic paradigms dominate. The Gittins index, derived from dynamic programming under discounting, provides the Bayes-optimal solution for independent arms but requires solving a stopping problem for each arm at each period.\footnote{\citet{Gittins1979} showed that the optimal policy for the discounted infinite-horizon bandit has an index form: compute a scalar index for each arm based on its posterior, then pull the arm with highest index. The index equals the fair subsidy that makes the agent indifferent between pulling the arm and receiving a guaranteed payment.} Upper Confidence Bound (UCB) algorithms offer a frequentist alternative with finite-time regret guarantees and minimal computational overhead. This chapter explores how economic structure improves upon generic bandit algorithms. When the reward function satisfies monotonicity, unimodality, or revealed preference constraints from consumer theory, algorithms can eliminate suboptimal arms faster and achieve logarithmic rather than square-root regret scaling.
 
-Multi-armed bandit (MAB) problems represent a class of state-less reinforcement learning tasks where an agent repeatedly selects among different actions (arms) to maximize cumulative reward. Unlike regular reinforcement learning which are run in simulation, bandits are typically deployed in real-time which implies that sample efficiency and optimal exploration is critical. Integrating economic structure can improve bandit performance. 
-
-The central concept to evaluate bandits is \textit{regret}, which measures the difference between the expected reward under an optimal strategy and the expected reward of the algorithm:
-
-\begin{equation}
-R(T) = T \cdot \max_i \mu_i - \mathbb{E}\left[\sum_{t=1}^T r_t\right]
-\end{equation}
-
-where $\mu_i$ is the expected reward of arm $i$, and $r_t$ is the observed reward at time $t$. Lower regret indicates better performance, with $O(\sqrt{T})$ representing a standard baseline for general bandit problems, and improvements to $O(\log T)$ indicating exponentially faster learning.
+A $K$-armed bandit is an MDP with a single state. The action set is $\mathcal{A} = \{1, \ldots, K\}$, and pulling arm $a$ yields reward $r_t \sim \nu_{a}$ with mean $\mu_{a}$.\footnote{Formally, $|\mathcal{S}| = 1$, so there is no state transition or discounting. Unlike full RL which runs in simulation, bandits deploy in real-time where sample efficiency is critical.} The standard metric is regret:
+\[
+R(T) = T \cdot \max_i \mu_i - \mathbb{E}\left[\sum_{t=1}^T r_t\right].
+\]
+Regret measures the profit lost due to not knowing the optimal arm. Standard algorithms achieve $O(\sqrt{KT})$ regret. Economic structure can improve this to $O(\log T)$.
 
 \subsection{Dynamic Pricing with Demand Learning}
 
-Consider a seller facing sequential customers with unknown demand. Let $\mathcal{P} = \{p_1, \ldots, p_K\}$ be a discrete price set. At time $t$, setting price $p$ yields a sale with probability $\theta(p)$ and revenue $R_t = p \cdot \mathbb{1}\{\text{sale}\}$. Standard bandits would treat each price as independent, requiring $\Omega(K)$ exploration rounds. Microeconomic theory contributes the structural assumption that $\theta(p)$ decreases monotonically with $p$ (consumers buy when valuation exceeds price). Under regularity conditions (monotone hazard rate), expected revenue $p\theta(p)$ is unimodal in $p$. \citet{Misra2019} exploit this structure with an upper-confidence bound algorithm computing an index for each price:
+A seller faces sequential customers with unknown demand. Setting price $p \in \mathcal{P} = \{p_1, \ldots, p_K\}$ yields sale probability $\theta(p)$ and revenue $R_t = p \cdot \mathbb{1}\{\text{sale}\}$. Microeconomic theory provides structure: $\theta(p)$ decreases monotonically in $p$.\footnote{Consumers purchase when valuation exceeds price. If valuations follow distribution $F$, then $\theta(p) = 1 - F(p)$.} Under the monotone hazard rate condition,\footnote{The hazard rate of distribution $F$ is $h(v) = f(v)/(1-F(v))$. The monotone hazard rate (MHR) condition requires $h(v)$ to be non-decreasing. Many common distributions (uniform, exponential, normal) satisfy MHR. Under MHR, revenue $p(1-F(p))$ is strictly quasi-concave, ensuring a unique optimal price.} expected revenue $\mu(p) = p \cdot \theta(p)$ is unimodal.
 
+\citet{Misra2019} exploit unimodality with a modified UCB algorithm\footnote{Upper Confidence Bound (UCB) algorithms balance exploration and exploitation by selecting the arm with highest upper confidence bound $\hat{\mu}_a + c\sqrt{\ln t / N_a}$, where $\hat{\mu}_a$ is the empirical mean, $N_a$ the number of pulls, and $c$ controls the exploration bonus. Arms with high uncertainty or high estimated reward receive priority.} that maintains a leader arm and explores only the leader and its neighbors:
 \begin{equation}
 I_p(t) = \hat{\mu}_p(t) + \sqrt{\frac{2\ln t}{N_p(t)}}
 \end{equation}
+where $\hat{\mu}_p(t)$ is average revenue and $N_p(t)$ the number of trials at price $p$. When a neighbor's index exceeds the leader's, the algorithm shifts focus. This achieves $O(\log T)$ profit loss versus $O(\sqrt{KT})$ for standard UCB.\footnote{Field experiments at an online retailer showed 43\% higher profits versus static pricing.} We implement this algorithm in Section~\ref{sec:bandit_sim}.
 
-where $\hat{\mu}_p(t)$ is the average revenue for price $p$ and $N_p(t)$ the number of times $p$ was tried. This achieves polylogarithmic regret compared to $\Omega(\sqrt{T})$ for standard bandits, representing an exponential improvement in learning efficiency. Their field experiments show 43\% higher profits compared to static pricing during a month-long deployment.
-
-For multi-product settings, \citet{Mueller2019} consider demand:
-
-\begin{equation}
-\mathbf{q}_t = \mathbf{c}_t - \mathbf{B}_t\mathbf{p}_t + \boldsymbol{\varepsilon}_t
-\end{equation}
-
-where $\mathbf{q}_t \in \mathbb{R}^N$ is demand, $\mathbf{B}_t \in \mathbb{R}^{N \times N}$ is the price-sensitivity matrix, and $\mathbf{c}_t$ represents baseline demand. The key economic insight is imposing low-rank structure on $\mathbf{B}_t$, reflecting that cross-price elasticities are driven by a small number of latent factors. Their OPOL algorithm projects high-dimensional price vectors into a learned latent subspace, achieving regret of $O(T^{3/4}\sqrt{d})$ that scales with latent dimension $d \ll N$ rather than product count $N$. This enables efficient learning even with thousands of products. \citet{Xu2021} demonstrate that economic structure enables logarithmic regret even in adversarial settings. For contextual pricing where valuation $v_t = \boldsymbol{\theta}^\top \mathbf{x}_t$ follows a linear model with feature vector $\mathbf{x}_t$, they achieve optimal $O(d \log T)$ regret—an exponential improvement over standard $\Omega(\sqrt{T})$ bounds for adversarial contexts.
-
-\citet{Goyal2022} address multi-product pricing under the multinomial logit (MNL) choice model, where a consumer's utility for product $i$ is:
-
-\begin{equation}
-U_i(\mathbf{p}) = \alpha_i - \beta_i p_i + \epsilon_i
-\end{equation}
-
-and purchase probabilities follow:
-
-\begin{equation}
-\Pr(i|\mathbf{p}) = \frac{e^{U_i(\mathbf{p})}}{\sum_j e^{U_j(\mathbf{p})}}
-\end{equation}
-
-By incorporating this MNL structure into an Online Newton Step method with random price perturbations, they achieve $O(d\sqrt{T}\log T)$ regret despite adversarial context arrivals.
+For multi-product settings, \citet{Mueller2019} impose low-rank structure on the price-sensitivity matrix $\mathbf{B}$ in the demand system $\mathbf{q}_t = \mathbf{c}_t - \mathbf{B}\mathbf{p}_t + \boldsymbol{\varepsilon}_t$, achieving profit loss $O(T^{3/4}\sqrt{d})$ scaling with latent dimension $d \ll N$.\footnote{\citet{Xu2021} achieve $O(d \log T)$ for contextual pricing with linear valuations $v_t = \boldsymbol{\theta}^\top \mathbf{x}_t$. \citet{Goyal2022} handle MNL choice models (multinomial logit extends the binary logit to $K > 2$ alternatives; in pricing, MNL models consumer choice among differentiated products where utility depends on product attributes and price), achieving $O(d\sqrt{T}\log T)$ under adversarial contexts.}
 
 \subsection{Bid Optimization in Auctions}
 
-In a second-price auction with reserve $r$, given bid profile $\mathbf{b} = (b_{(1)}, b_{(2)}, \ldots)$ (ordered decreasingly), revenue is:
-
-\begin{equation}
-\text{Revenue}(r,\mathbf{b}) = b_{(2)}\mathbb{1}\{b_{(2)} > r\} + r\mathbb{1}\{b_{(1)} \geq r > b_{(2)}\}
-\end{equation}
-
-Myerson's auction theory establishes that under regularity conditions, expected revenue $R(r)$ is unimodal in $r$. \citet{CesaBianchi2015} leverage this in a unimodal bandit algorithm maintaining two UCB indices bracketing the current best reserve, achieving $O(\log T)$ regret in favorable cases—a significant improvement over the $O(\sqrt{T})$ regret of standard bandits. \citet{Akcay2022} address the partial feedback challenge where losing bids are unobserved. Their algorithm incorporates auction rules into inference: if a sale occurs at price $r$, exactly one bid exceeded $r$, informing future exploration. These auction-specific inference rules convert censored observations into side information, accelerating learning in both stationary and non-stationary environments.
-
-\subsection{Budget Constraints}
-
-Many economic decisions involve resource constraints. Consider an advertiser bidding in repeated auctions with budget $B$. Let $X_t(a)$ and $C_t(a)$ denote the reward (e.g., clicks) and cost when taking action $a$ at time $t$. The objective is to maximize $\sum_{t=1}^T X_t(a_t)$ subject to $\sum_{t=1}^T C_t(a_t) \leq B$. \citet{Badanidiyuru2013} frame this as Bandits with Knapsacks (BwK) and introduce a primal-dual approach with dual price $\lambda_t$ for the budget constraint. Given estimates of arm reward $\hat{\mu}_i$ and cost $\hat{c}_i$, the algorithm selects the arm maximizing $\hat{\mu}_i - \lambda_t\hat{c}_i$, capturing the economic principle of marginal value versus marginal cost. This achieves near-optimal $\tilde{O}(\sqrt{T})$ regret while respecting budget constraints.\footnote{The notation $\tilde{O}$ suppresses logarithmic factors, i.e., $\tilde{O}(f(T)) = O(f(T) \cdot \text{polylog}(T))$.}
-
-\citet{Flajolet2017} extend this to contextual bidding for online advertising where click-through and cost distributions depend on observable features $\mathbf{x}_t$. Their UCB-based algorithm combines linear payoff estimation with stochastic binary search, achieving regret $\tilde{O}(d\sqrt{T})$ when the budget scales linearly with $T$. For combinatorial settings with multiple simultaneous auctions, \citet{Sankararaman2018} exploit economic structure by decoupling auctions but coupling their budgets through a shared Lagrange multiplier. This yields regret that grows polynomially rather than exponentially in the number of auctions, making previously intractable problems computationally feasible. \citet{Nuara2018} apply similar principles to joint bid and budget optimization across multiple advertising channels. Using Gaussian Process regression to model each subcampaign's click-through function and dynamic programming to enforce budget constraints, they achieved the same conversion volume as human experts with half the cost per acquisition in a two-month field experiment.
+In a second-price auction\footnote{In a second-price (Vickrey) auction, bidders submit sealed bids and the highest bidder wins, paying the second-highest bid. This mechanism is incentive-compatible: bidding one's true valuation is a weakly dominant strategy regardless of others' behavior.} with reserve $r$, revenue is $b_{(2)}\mathbb{1}\{b_{(2)} > r\} + r\mathbb{1}\{b_{(1)} \geq r > b_{(2)}\}$. Myerson's theory establishes that expected revenue is unimodal in $r$ under regularity conditions.\footnote{\citet{myerson1981} shows the optimal reserve price satisfies $r^* = \psi^{-1}(0)$ where $\psi(v) = v - (1-F(v))/f(v)$ is the virtual valuation. Regularity requires $\psi(v)$ to be strictly increasing, which holds under the MHR condition.} \citet{CesaBianchi2015} leverage this with a unimodal bandit algorithm, achieving $O(\log T)$ profit loss by eliminating provably suboptimal regions.\footnote{\citet{Akcay2022} address censored feedback where losing bids are unobserved, using auction rules to convert partial observations into side information.}
 
 \subsection{Strategic Interactions}
 
-Economic theory enhances multi-agent reinforcement learning in competitive markets. \citet{Guo2023} study dynamic pricing between firms where consumers follow a logit model with reference price effects:
-
+\citet{Guo2023} study multi-firm pricing where consumers follow a logit model\footnote{The logit (multinomial logit) model specifies choice probabilities as $\Pr(\text{choose } i) = e^{U_i}/\sum_j e^{U_j}$, where $U_i$ is the utility of option $i$. It derives from assuming i.i.d.\ Type-I extreme value (Gumbel) errors $\epsilon_{i,t}$. The model implies the independence of irrelevant alternatives (IIA) property.} with reference price effects:\footnote{Reference price effects capture the behavioral finding that consumers evaluate prices relative to an anchor. The reference price $\rho_t$ represents the expected price level; a current price below $\rho_t$ feels like a gain, boosting purchase probability beyond what absolute price alone would predict.}
 \begin{equation}
-U_t(i) = \alpha_i - \beta p_{i,t} + \gamma(r_t - p_{i,t}) + \epsilon_{i,t}
+U_t(i) = \alpha_i - \beta p_{i,t} + \gamma(\rho_t - p_{i,t}) + \epsilon_{i,t}, \quad \rho_{t+1} = (1-\delta)\rho_t + \frac{\delta}{n}\sum_i p_{i,t}
 \end{equation}
+Online projected gradient ascent achieves $O(1/t)$ convergence to Nash equilibrium, faster than model-free approaches.
 
-where $r_t$ is the reference price evolving according to:
+\subsection{Simulation Study: Dynamic Pricing with Partial Identification}
+\label{sec:bandit_sim}
 
-\begin{equation}
-r_{t+1} = (1-\delta)r_t + \delta\frac{1}{n}\sum_i p_{i,t}
-\end{equation}
+We replicate the simulation of \citet{Misra2019} to evaluate UCB-PI against standard bandit algorithms. The environment has $K = 100$ prices on a grid from \$0.01 to \$1.00, $S = 1{,}000$ consumer segments with equal weights, and within-segment heterogeneity $\delta = 0.1$. Each segment $s$ has midpoint valuation $v_s \sim \mathrm{Uniform}(0.1, 0.9)$, and consumer $i$ in segment $s$ has valuation $v_i \sim \mathrm{Uniform}(v_s - \delta, v_s + \delta)$. A consumer purchases if and only if $v_i \geq p$ (WARP). The optimal price is $p^* = 0.45$ with expected profit $\mu^* = 0.248$ per customer. We run $T = 200{,}000$ rounds across 10 seeds.
 
-By incorporating this behavioral economic insight into online projected gradient ascent, they prove $O(1/t)$ convergence to Nash equilibrium, substantially faster than model-free approaches that lack economic structure.
+We compare five algorithms spanning the model-free to model-based spectrum. Table~\ref{tab:algorithm_class} summarizes their theoretical properties. UCB1 is the standard upper confidence bound algorithm with no structural assumptions. Thompson Sampling maintains Beta posteriors over arm means and samples to select actions. Learn-Then-Exploit (LTE) uses a pure exploration phase followed by greedy exploitation. UCB-PI incorporates the partial identification mechanism of \citet{Misra2019}, eliminating dominated prices using WARP bounds. UCB-PI-tuned uses a more conservative dominance threshold ($2\delta$ vs.\ $\delta$) to reduce false eliminations.
 
-\subsection{Causal Inference}
+\begin{table}[!htbp]
+\centering
+\caption{Algorithm classification by structure exploitation. Regret rates are theoretical under standard assumptions; $K$ is the number of arms, $T$ the horizon.}
+\label{tab:algorithm_class}
+\begin{tabular}{lccc}
+\toprule
+Algorithm & Uses WARP & Uses Unimodality & Regret Rate \\
+\midrule
+UCB1 & No & No & $O(\sqrt{KT})$ \\
+Thompson & No & No & $O(\sqrt{KT})$ \\
+LTE (5\%) & No & No & $O(T^{2/3})$ \\
+UCB-PI & Yes & Implicit & $O(\log T)$ \\
+UCB-PI-tuned & Yes & Implicit & $O(\log T)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-Economic data often contains unobserved confounders that affect both actions and outcomes. Several recent works incorporate econometric identification strategies into reinforcement learning to address these challenges.
+Table~\ref{tab:bandit_results} reports cumulative profits and ex-post profit ratios. UCB-PI-tuned achieves the highest mean profit ratio at 99.4\%, followed by Thompson Sampling at 97.9\%. The partial identification mechanism eliminates dominated prices: by $T = 200{,}000$, UCB-PI has eliminated 37 of 100 prices on average, while UCB-PI-tuned eliminates 15.
 
-\citet{liao2024} address confounding in offline RL by importing the econometric idea of instrumental variables (IV). They consider a setting where an agent learns from observational data in a Markov decision process with unobserved confounders affecting both actions and rewards. The paper defines valid IVs in the RL context as variables that influence state transitions only through their effect on the action. Using IVs, the authors derive conditional moment restrictions that identify the true transition dynamics despite unobserved confounders. Their IV-aided value iteration (IVVI) algorithm solves a primal-dual optimization problem:
+\begin{table}[!htbp]
+\centering
+\caption{Dynamic pricing with partial identification ($K = 100$ prices, $S = 1{,}000$ segments, $T = 200{,}000$ customers, 10 seeds). Frac.\ Opt is the fraction of rounds at $p^*$. Dominated is mean number of prices eliminated by partial identification.}
+\label{tab:bandit_results}
+\input{../ch06_bandits/sims/structural_pricing_misra_results.tex}
+\end{table}
 
-\begin{equation}
-\hat{\boldsymbol{\theta}} = \arg\min_{\boldsymbol{\theta}} \max_{\boldsymbol{\lambda}} \mathbb{E}_{(s,a,s',z)}\left[\boldsymbol{\lambda}(s,z)^{\top}(s' - f_{\boldsymbol{\theta}}(s,a))\right]
-\end{equation}
+Figure~\ref{fig:bandit_profit} shows cumulative profit trajectories. All learning algorithms converge toward oracle performance, with UCB-PI-tuned tracking the oracle most closely throughout.
 
-This represents the first offline RL algorithm to leverage instruments for consistent value learning, combining causal inference tools with reinforcement learning.
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{../ch06_bandits/sims/structural_pricing_misra_profit.png}
+\caption{Cumulative profit for dynamic pricing with partial identification. Oracle (dashed black) knows demand perfectly. Shaded regions show $\pm 2$ standard errors across 10 seeds.}
+\label{fig:bandit_profit}
+\end{figure}
 
-\citet{BennettKallus2023} propose a ``proximal reinforcement learning'' (PRL) framework that adapts proximal causal inference to RL. They focus on off-policy evaluation in partially observed MDPs, where hidden state variables confound the reward dynamics. The key insight is to assume the existence of certain bridge functions that link observed data to the target policy value. Under appropriate conditions, these functions allow identification of the true policy value from confounded data:
+Figure~\ref{fig:regret_scaling} validates the theoretical regret rates. When regret is divided by $\log(t)$, algorithms with $O(\log T)$ regret should stabilize while $O(\sqrt{T})$ algorithms diverge. UCB-PI-tuned stabilizes near 26, consistent with logarithmic regret. UCB1 and Thompson grow without bound, consistent with $O(\sqrt{T})$. UCB-PI shows intermediate behavior: the dominance mechanism reduces regret but overly aggressive elimination (37 prices dominated vs.\ 15 for tuned) causes some suboptimality.
 
-\begin{equation}
-V(\pi) = \mathbb{E}\left[h(X, W, A) \mid Z=z\right]
-\end{equation}
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{../ch06_bandits/sims/structural_pricing_misra_regret_scaling.png}
+\caption{Regret scaling validation. Profit loss divided by $\log(t)$ should stabilize for $O(\log T)$ algorithms and grow for $O(\sqrt{T})$ algorithms.}
+\label{fig:regret_scaling}
+\end{figure}
 
-where $h$ is the bridge function, $X$ represents observed states, $W$ unobserved confounders, $A$ the action, and $Z$ a proxy variable. The authors construct estimators using these bridge functions and prove they attain semiparametric efficiency, demonstrating how incorporating structural assumptions leads to more accurate policy evaluation.
+Figure~\ref{fig:price_histogram} shows the distribution of price selections across the horizon. UCB-PI-tuned concentrates selections around the optimal price $p^* = 0.45$, with the distribution tightening as more prices are eliminated. UCB1 spreads selections more broadly, reflecting continued exploration across all arms.
 
-\citet{WangQiShi2023} introduce ``Super RL,'' a paradigm for offline reinforcement learning that incorporates expert actions as an additional input to overcome unmeasured confounding. In many economic settings (e.g., medical treatment, policy interventions), historical data come from human experts whose decisions may contain information about unobserved factors. The super policy maps both the observed state and the expert action to a new action:
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{../ch06_bandits/sims/structural_pricing_misra_price_histogram.png}
+\caption{Price selection distribution by algorithm. Vertical dashed line marks optimal price $p^* = 0.45$.}
+\label{fig:price_histogram}
+\end{figure}
 
-\begin{equation}
-\pi_{\text{super}}(s, a_{\text{expert}}) \rightarrow a
-\end{equation}
+Figure~\ref{fig:convergence} shows the convergence trajectory using a moving average of the selected price. UCB-PI-tuned converges to near $p^*$ within the first 50{,}000 rounds and remains stable. The standard UCB-PI converges more slowly due to aggressive dominance that occasionally eliminates near-optimal prices early.
 
-The authors establish identification conditions under which the super policy is guaranteed to strictly dominate both standard RL policies and expert policies in terms of performance. Their method effectively embeds the rationality of human experts and their private information into the RL training process, greatly improving sample efficiency and policy quality.
-
-\subsection{Discussion of Algorithmic Improvements}
-
-The integration of economic structure into reinforcement learning produces significant theoretical improvements across multiple domains. When demand curves satisfy regularity conditions, regret bounds improve from $O(\sqrt{T})$ to $O(\log T)$ or $O(\text{poly}(\log T))$. For multi-product settings, low-rank structure reduces dependence from product count $N$ to intrinsic dimension $d$. These theoretical gains translate to practical performance improvements. Structure-aware algorithms learn optimal policies with orders of magnitude fewer samples than model-free reinforcement learning. By leveraging domain knowledge about utility maximization, budget constraints, revealed prefernece, market equilibria, rational expectations or behavioural biases (e.g. representativeness or conservatism) we can improve the performance of reinforcement learning. 
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{../ch06_bandits/sims/structural_pricing_misra_convergence.png}
+\caption{Convergence trajectory (moving average of selected price, window = 1000). Horizontal dashed line marks optimal price $p^* = 0.45$.}
+\label{fig:convergence}
+\end{figure}

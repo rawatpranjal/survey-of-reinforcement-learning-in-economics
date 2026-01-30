@@ -1,0 +1,30 @@
+\begin{table}[htbp]
+\centering
+\caption{NFXP vs RLHF: Preference Recovery Comparison}
+\label{tab:nfxp_rlhf}
+\begin{tabular}{lcc}
+\toprule
+& NFXP & RLHF \\
+\midrule
+\multicolumn{3}{l}{\emph{Data requirements}} \\
+Data type & Choices $(s_t, a_t)$ & Preferences $\tau^w \succ \tau^l$ \\
+Sample size & 1000 choices & 500 comparisons \\
+\midrule
+\multicolumn{3}{l}{\emph{Recovery accuracy}} \\
+Parameter error & 1.9757 & -- \\
+Cost correlation & -- & 0.9996 \\
+Policy distance & 0.0869 & 0.0163 \\
+Threshold (true: 50) & 56.6 $\pm$ 12.0 & 48.5 $\pm$ 1.0 \\
+\midrule
+\multicolumn{3}{l}{\emph{Assumptions}} \\
+Requires optimal agent & Yes & No \\
+Parametric reward & Yes & Yes \\
+Known anchor cost & No & Yes \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item RLHF uses Bradley-Terry model which identifies rewards up to affine transformation.
+Policy derivation requires anchoring on a known cost (replacement cost $RC$) to fix the scale.
+\end{tablenotes}
+\end{table}
