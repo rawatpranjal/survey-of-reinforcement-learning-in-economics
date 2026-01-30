@@ -35,3 +35,48 @@ Table~\ref{tab:ch2_roadmap} summarizes the six sections of this chapter, each mo
 \end{table}
 
 
+\subsection{The Newton Connection}
+\label{sec:newton_connection}
+
+Economists learn value iteration (VI) and policy iteration (PI) from \citet{StokeyLucas1989}: VI applies the Bellman operator repeatedly until convergence; PI alternates between policy evaluation (solving a linear system) and policy improvement (taking the greedy action). The standard observation is that PI converges faster. But why? The answer reveals a deep connection between dynamic programming and numerical optimization: policy iteration is Newton's method applied to the Bellman equation.
+
+Consider the Bellman optimality operator $T$ acting on value functions:
+\begin{equation}
+(TV)(s) = \max_{a \in \mathcal{A}} \left\{ r(s,a) + \gamma \sum_{s' \in \mathcal{S}} P(s'|s,a) V(s') \right\}.
+\label{eq:bellman_operator}
+\end{equation}
+This operator is nonlinear due to the $\max$. Value iteration applies $T$ repeatedly: $V_{k+1} = TV_k$. Since $T$ is a $\gamma$-contraction in the supremum norm, Banach's fixed-point theorem guarantees $\|V_k - V^*\|_\infty \leq \gamma^k \|V_0 - V^*\|_\infty$. This is Picard iteration, with linear convergence at rate $\gamma$.
+
+Policy iteration takes a different approach. At the current value estimate $\tilde{V}$, define the greedy policy $\tilde{\pi}(s) = \argmax_a \{ r(s,a) + \gamma \sum_{s'} P(s'|s,a) \tilde{V}(s') \}$. The policy evaluation step solves the linear fixed-point equation $V = T^{\tilde{\pi}} V$ exactly, where $T^{\tilde{\pi}}$ is the policy-specific Bellman operator:
+\begin{equation}
+(T^{\tilde{\pi}} V)(s) = r(s, \tilde{\pi}(s)) + \gamma \sum_{s'} P(s'|s,\tilde{\pi}(s)) V(s').
+\end{equation}
+
+The key insight, formalized by \citet{puterman1979}, is geometric: the linear operator $T^{\tilde{\pi}}$ is a supporting hyperplane to the nonlinear operator $T$ at the current iterate. Specifically:
+\begin{enumerate}
+\item Tangency: $T^{\tilde{\pi}} \tilde{V} = T\tilde{V}$ (the operators agree at the current point).
+\item Support: $T^{\tilde{\pi}} V \leq TV$ for all $V$ (the linear operator lies below the nonlinear one everywhere).
+\end{enumerate}
+Policy evaluation solves for the fixed point of this linearization exactly. This is precisely the structure of Newton's method: linearize the nonlinear equation at the current point, solve the linearized system, and iterate.\footnote{The Newton interpretation of policy iteration has precursors in \citet{kleinman1968} for Riccati equations in linear-quadratic control and \citet{pollatschek1969} for stochastic games.}
+
+The consequence is quadratic convergence near the optimum. While VI requires $k = \log(100) / \log(1/\gamma)$ iterations to reduce error by a factor of 100, PI typically converges in 5--10 iterations regardless of $\gamma$. Table~\ref{tab:vi_pi_comparison} illustrates the difference.
+
+\begin{table}[h!]
+\centering
+\caption{Iterations for 100$\times$ error reduction: VI vs. PI}
+\label{tab:vi_pi_comparison}
+\small
+\begin{tabular}{c|cc}
+\hline
+$\gamma$ & Value Iteration & Policy Iteration \\
+\hline
+0.90 & 44 & 5--8 \\
+0.95 & 90 & 5--8 \\
+0.99 & 459 & 5--10 \\
+\hline
+\end{tabular}
+\end{table}
+
+\citet{bertsekas2022newton} extends this interpretation to a broad class of dynamic programming problems. The Newton structure applies whenever the Bellman operator can be written as a pointwise maximum over linear operators: $T = \max_\pi T^\pi$. This includes not only discounted MDPs but also stochastic shortest path problems, average-cost MDPs, and model predictive control formulations. The practical implication is that algorithms with policy-improvement structure (evaluate a policy exactly or approximately, then improve) inherit Newton-like convergence behavior, while pure value-iteration methods (apply $T$ directly) are limited to linear convergence.
+
+
