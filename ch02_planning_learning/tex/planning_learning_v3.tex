@@ -195,3 +195,26 @@ J_\tau(\theta) = \mathbb{E}_{\pi_\theta} \left[ \sum_{t=0}^\infty \gamma^t \left
 where $\mathcal{H}(\pi) = -\sum_a \pi(a) \log \pi(a)$ is the entropy and $\tau > 0$ is the temperature. \citet{cen2022fast} prove that NPG with entropy regularization achieves linear convergence: $J_\tau(\pi^*) - J_\tau(\pi_k) \leq (1 - c\tau)^k \cdot [J_\tau(\pi^*) - J_\tau(\pi_0)]$ for some constant $c > 0$. The optimal policy under entropy regularization is softmax: $\pi^*(a|s) \propto \exp(Q^*(s,a)/\tau)$, which matches the logit choice probability from discrete choice econometrics.
 
 
+\subsection{Actor-Critic}
+\label{sec:actor_critic}
+
+REINFORCE uses the sample return $G_t$ to estimate the policy gradient. This estimator is unbiased but has high variance: a single trajectory provides a noisy signal. TD methods use bootstrapped estimates $r + \gamma V(s')$ as targets. These have lower variance (the value function aggregates information across trajectories) but are biased when $V$ is approximate. Actor-critic methods combine both: the critic estimates the value function, the actor updates the policy using the critic's estimates.
+
+The theoretical foundation is two-timescale stochastic approximation \citep{konda2000}. Run two concurrent learning processes:
+\begin{align}
+\text{Critic (fast):} \quad & \theta_{t+1} = \theta_t + \alpha_t^{(c)} \delta_t \nabla_\theta \hat{V}(s_t; \theta_t), \\
+\text{Actor (slow):} \quad & \omega_{t+1} = \omega_t + \alpha_t^{(a)} \delta_t \nabla_\omega \log \pi_\omega(a_t|s_t),
+\end{align}
+where $\delta_t = r_t + \gamma \hat{V}(s_{t+1}; \theta_t) - \hat{V}(s_t; \theta_t)$ is the TD error. The critic updates the value function parameters $\theta$; the actor updates the policy parameters $\omega$.
+
+Convergence requires the critic to learn faster than the actor:
+\begin{equation}
+\lim_{t \to \infty} \frac{\alpha_t^{(a)}}{\alpha_t^{(c)}} = 0, \quad \text{with both satisfying Robbins-Monro conditions.}
+\end{equation}
+Under this separation, the actor sees a quasi-stationary critic: from the actor's perspective, the critic provides approximately correct value estimates at each step. The actor's updates are then approximately unbiased policy gradient steps. \citet{konda2000} prove convergence to a local optimum of $J(\omega)$.
+
+A2C (Advantage Actor-Critic) is the synchronous variant: collect a batch of transitions, compute TD errors, and update both networks. A3C \citep{mnih2016a3c} parallelizes this across multiple workers updating a shared parameter server asynchronously. SAC (Soft Actor-Critic) \citep{Haarnoja2018} adds entropy regularization, using the soft Bellman operator for the critic and entropy-augmented returns for the actor.
+
+The actor-critic structure separates identification from optimization. The critic solves a regression problem (estimate $V^\pi$ from data), while the actor solves an optimization problem (improve $\pi$ using the estimated values). This decomposition mirrors the structure of many econometric estimators: first estimate the model, then compute optimal decisions given the estimates.
+
+
