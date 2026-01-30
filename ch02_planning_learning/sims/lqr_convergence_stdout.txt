@@ -1,0 +1,697 @@
+
+
++==============================================================================+
+|                    LQR CONVERGENCE RATE COMPARISON                           |
+|               Value Iteration vs Policy Iteration vs Q-Learning              |
++==============================================================================+
+
+PROBLEM FORMULATION
+-------------------
+  Linear system:     x_{k+1} = a * x_k + b * u_k
+  Stage cost:        c(x, u) = q * x^2 + r * u^2
+  Objective:         min sum_{k=0}^{inf} gamma^k * c(x_k, u_k)
+
+  Optimal value function:  V*(x) = K* * x^2
+  Optimal policy:          u*(x) = L* * x
+
+  Riccati equation:  K = F(K) = q + (gamma * a^2 * r * K) / (r + gamma * b^2 * K)
+
+--------------------------------------------------------------------------------
+PARAMETER TABLE
+--------------------------------------------------------------------------------
+
+  Parameter                 Symbol               Value
+  --------------------------------------------------
+  System dynamics           a                   2.0000
+  Control coefficient       b                   1.0000
+  State cost                q                   1.0000
+  Control cost              r                   1.0000
+  Discount (VI/PI)          gamma_DP            0.9900
+  Discount (Q-learning)     gamma_QL            0.9500
+  Initial K                 K0                  5.0000
+
+--------------------------------------------------------------------------------
+ANALYTICAL SOLUTIONS
+--------------------------------------------------------------------------------
+
+  Method                    gamma              K*              L*       |K0 - K*|
+  -----------------------------------------------------------------
+  VI / PI                  0.9900        4.228763       -1.614382        0.771237
+  Q-Learning               0.9500        4.198108       -1.599054        0.801892
+
+NOTE: Q-learning uses gamma=0.95 (vs 0.99 for VI/PI) because:
+  - Lower discount makes TD targets less sensitive to bootstrapping error
+  - Tabular discretization introduces approximation error
+  - This demonstrates a key model-free vs model-based tradeoff
+
+
+
++==============================================================================+
+|               BERTSEKAS Q-LEARNING THEORY VERIFICATION                      |
++==============================================================================+
+
+--------------------------------------------------------------------------------
+TEST 1: CONTRACTION PROPERTY (Proposition 4.3.5, p. 18-21, 54)
+--------------------------------------------------------------------------------
+
+  Bertsekas (p. 54):
+    "It is straightforward to show that F is a contraction with modulus α,
+     similar to the DP operator T. Thus the algorithm Q_{k+1} = FQ_k converges
+     to Q* from every starting point Q_0."
+
+  Theory: F is a contraction with modulus rho = gamma * a^2 * r^2 / (r + gamma*b^2*K*)^2
+
+  For VI iterations: ||K_{k+1} - K*|| / ||K_k - K*|| should equal rho
+
+  Parameters: gamma=0.99, K*=4.228763
+
+  Metric                             Theoretical       Empirical     Match?
+  ----------------------------------------------------------------------
+  Contraction modulus rho               0.147214        0.145649        YES
+
+  Iteration-by-iteration error ratios:
+  Iter        |K_k - K*|           Ratio
+  ------------------------------------
+  0         7.712366e-01        0.128323
+  1         9.896771e-02        0.144485
+  2         1.429935e-02        0.146814
+  3         2.099341e-03        0.147155
+  4         3.089295e-04        0.147206
+  5         4.547621e-05        0.147213
+  6         6.694698e-06        0.147214
+  7         9.855552e-07        0.147214
+  8         1.450879e-07        0.147214
+  9         2.135904e-08        0.147214
+  10        3.144360e-09        0.147215
+  11        4.628955e-10        0.147216
+  12        6.814549e-11        0.147214
+  13        1.003198e-11        0.147233
+  14        1.477041e-12        0.147324
+
+--------------------------------------------------------------------------------
+TEST 2: LINEAR CONVERGENCE RATE
+--------------------------------------------------------------------------------
+
+  Theory: log10(error_k) decreases linearly with slope = log10(rho)
+
+  Slope determines iterations per decade of error reduction: -1/slope
+
+  Metric                                  Theoretical       Empirical     Match?
+  ---------------------------------------------------------------------------
+  Slope of log(error) vs iter               -0.832050       -0.832100        YES
+  Implied contraction rho                    0.147214        0.147198
+  Iterations per decade                          1.20            1.20
+
+--------------------------------------------------------------------------------
+TEST 3: STEPSIZE REQUIREMENTS (Section 4.8, p. 56)
+--------------------------------------------------------------------------------
+
+  Bertsekas (p. 56):
+    "Furthermore, the stepsize γ_k should satisfy
+        γ_k > 0, Σγ_k = ∞, Σγ_k² < ∞
+     which are typical of stochastic approximation methods."
+
+  Predictions:
+  - Constant stepsize: oscillation around K*, no asymptotic convergence
+  - Diminishing stepsize: asymptotic convergence to K*
+
+  Running Q-learning with constant vs diminishing stepsize...
+
+  K* = 4.198108
+
+  Schedule          Final Mean    Final Std        Error   Converged?
+  ---------------------------------------------------------------
+  constant              4.7074       0.0000       0.5093          YES
+  diminishing           4.7093       0.0000       0.5112          YES
+
+  Prediction confirmed: NO
+  (Constant stepsize oscillation > diminishing stepsize oscillation)
+
+--------------------------------------------------------------------------------
+TEST 4: EXPLORATION REQUIREMENT (Section 4.8, p. 56)
+--------------------------------------------------------------------------------
+
+  Bertsekas (p. 56):
+    "Chief among these are that all state-control pairs (i,u) must be
+     generated infinitely often within the infinitely long sequence
+     {(i_k, u_k)}, and that the successor states j must be independently
+     sampled at each occurrence of a given state-control pair."
+
+  Checking visit count distribution across state-action space.
+
+  Running exploration coverage analysis...
+
+  Metric                                        Value
+  --------------------------------------------------
+  Total state-action pairs                        961
+  Pairs visited at least once                     961
+  Pairs never visited                               0
+  Coverage percentage                          100.0%
+  Min visits per pair                               3
+  Max visits per pair                          397346
+  Mean visits per pair                         1040.6
+  Coefficient of variation                      12.87
+  Full coverage achieved?                         YES
+
+--------------------------------------------------------------------------------
+GENERATING THEORY VERIFICATION FIGURE
+--------------------------------------------------------------------------------
+  Saved: /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_qlearning_theory_test.png
+
+--------------------------------------------------------------------------------
+THEORY VERIFICATION SUMMARY
+--------------------------------------------------------------------------------
+
+  Test                                              Status
+  -------------------------------------------------------
+  1. Contraction property (rho matches theory)        PASS
+  2. Linear convergence rate (slope matches theory)       PASS
+  3. Stepsize requirements (Robbins-Monro)            FAIL
+  4. Exploration coverage (>90%)                      PASS
+  -------------------------------------------------------
+  TOTAL                                         3/4 passed
+
++==============================================================================+
+
+
++==============================================================================+
+|            EXTENDED BERTSEKAS THEORY VERIFICATION TESTS                     |
++==============================================================================+
+
+--------------------------------------------------------------------------------
+TEST 5: PI MONOTONIC IMPROVEMENT (Proposition 4.5.1, p. 27)
+--------------------------------------------------------------------------------
+
+  Bertsekas (p. 27):
+    "The exact PI algorithm generates an improving sequence of policies,
+     i.e., J_{μ_{k+1}} ≤ J_{μ_k}, and terminates with an optimal policy."
+
+  For LQR: K_{k+1} ≤ K_k (value function coefficient decreases monotonically)
+
+  K* = 4.228763
+
+  Iter              K_k        K_{k-1}    Improvement          Error
+  --------------------------------------------------------------
+  0          4.24306273     5.00000000       7.57e-01       1.43e-02
+  1          4.22877008     4.24306273       1.43e-02       6.69e-06
+  2          4.22876339     4.22877008       6.69e-06       1.48e-12
+  3          4.22876339     4.22876339       1.48e-12       0.00e+00
+  4          4.22876339     4.22876339      -8.88e-16       8.88e-16
+
+  Monotonic improvement: YES
+  Strict until convergence: YES
+  Iterations to converge: 5
+
+--------------------------------------------------------------------------------
+TEST 6: PI QUADRATIC CONVERGENCE (Newton-like)
+--------------------------------------------------------------------------------
+
+  Theory: PI exhibits quadratic convergence: |e_{k+1}| ≈ C * |e_k|^2
+
+  Evidence: The ratio |e_{k+1}| / |e_k|^2 should be approximately constant.
+
+  K* = 4.228763
+
+  Iter            |e_k|    |e_{k+1}|/|e_k|  |e_{k+1}|/|e_k|^2
+  ----------------------------------------------------------
+  0            7.71e-01           0.018541           0.024040
+  1            1.43e-02           0.000468           0.032741
+  2            6.69e-06           0.000000           0.032956
+  3            1.48e-12           0.000000                nan
+
+  Newton constant (mean of |e_{k+1}|/|e_k|^2): 0.0299
+  Quadratic convergence verified: YES
+
+--------------------------------------------------------------------------------
+TEST 7: OPTIMISTIC PI CONVERGENCE (Proposition 4.5.2, p. 29)
+--------------------------------------------------------------------------------
+
+  Bertsekas (p. 29):
+    "For J_0 satisfying T_{μ_0} J_0 ≤ J_0, we have J* ≤ J_{k+1} ≤ J_k."
+    (monotonic decrease, bounded below by J*)
+
+  Optimistic PI uses m VI steps for policy evaluation:
+  - m=1: equivalent to VI (slow, linear convergence)
+  - m=∞: equivalent to exact PI (fast, quadratic convergence)
+
+  K* = 4.228763
+
+       m        Final K          Error    Iters   Monotonic?      ≥ K*?
+  ------------------------------------------------------------------
+       1       4.228763       2.18e-13       15          YES        YES
+       2       4.228763       5.51e-14        8          YES        YES
+       5       4.228763       3.73e-14        4          YES        YES
+      10       4.228763       0.00e+00        4          YES        YES
+      50       4.228763       0.00e+00        4          YES        YES
+
+  Observation: m=1 (VI) takes ~15 iters, m=50 takes ~4 iters
+
+--------------------------------------------------------------------------------
+TEST 8: APPROXIMATE VI ERROR BOUNDS (Section 4.4, p. 23)
+--------------------------------------------------------------------------------
+
+  Bertsekas (p. 23):
+    If |J̃_{k+1}(i) - (TJ̃_k)(i)| ≤ δ for all i,k, then asymptotically:
+      - Cost error: ||J* - J̃||_∞ ≤ δ/(1-α)
+      - Policy error: ||J* - J_μ̃||_∞ ≤ 2δ/(1-α)²
+
+  γ = 0.99, K* = 4.228763
+
+         δ      δ/(1-γ)    Max Error      Ratio    Bound OK?
+  --------------------------------------------------------
+     0.001       0.1000       0.0011      0.011          YES
+     0.010       1.0000       0.0106      0.011          YES
+     0.050       5.0000       0.0532      0.011          YES
+     0.100      10.0000       0.1064      0.011          YES
+
+--------------------------------------------------------------------------------
+TEST 9: WEIGHTED NORM CONTRACTION (Props 4.2.5/4.3.5, pp. 13, 18)
+--------------------------------------------------------------------------------
+
+  Bertsekas (p. 18):
+    T is a contraction with modulus ρ in a weighted max norm.
+    For discounted problems with discount α:
+      ||TJ - TJ'||_∞ ≤ α ||J - J'||_∞
+
+  Verifying contraction from multiple starting points.
+
+  Theoretical ρ = 0.147214
+
+       Start      Start K    Max Ratio   Mean Ratio    Verified?
+  ------------------------------------------------------------
+          K0       5.0000     0.162162     0.147026           NO
+        2*K0      10.0000     0.151079     0.142275          YES
+        K0/2       2.5000     0.219719     0.151153           NO
+        K*+1       5.2288     0.155556     0.146128          YES
+
+--------------------------------------------------------------------------------
+GENERATING EXTENDED THEORY VERIFICATION FIGURE
+--------------------------------------------------------------------------------
+  Saved: /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_bertsekas_theory_full.png
+
+--------------------------------------------------------------------------------
+EXTENDED THEORY VERIFICATION SUMMARY
+--------------------------------------------------------------------------------
+
+  Test                                              Status
+  -------------------------------------------------------
+  5. PI Monotonic Improvement                         PASS
+  6. PI Quadratic Convergence                         PASS
+  7. Optimistic PI (all m converge)                   PASS
+  8. Approximate VI Bounds                            PASS
+  9. Weighted Norm Contraction                        FAIL
+  -------------------------------------------------------
+  TOTAL                                         4/5 passed
+
++==============================================================================+
+
+======================================================================
+LQR Convergence Rate Comparison
+======================================================================
+
+----------------------------------------------------------------------
+Running Value Iteration (gamma=0.99)...
+----------------------------------------------------------------------
+    VI iter 1: K=4.327731, error=9.896771e-02
+    VI iter 2: K=4.243063, error=1.429935e-02
+    VI iter 3: K=4.230863, error=2.099341e-03
+    VI iter 4: K=4.229072, error=3.089295e-04
+    VI iter 5: K=4.228809, error=4.547621e-05
+    VI iter 6: K=4.228770, error=6.694698e-06
+    VI iter 7: K=4.228764, error=9.855552e-07
+    VI iter 8: K=4.228764, error=1.450879e-07
+    VI iter 9: K=4.228763, error=2.135904e-08
+    VI iter 10: K=4.228763, error=3.144360e-09
+    VI iter 11: K=4.228763, error=4.628955e-10
+    VI iter 16: K=4.228763, error=3.286260e-14
+    VI iter 21: K=4.228763, error=8.881784e-16
+    VI iter 26: K=4.228763, error=8.881784e-16
+
+VI summary: 30 iterations
+  Initial error: 0.771237
+  Final error: 8.88e-16
+
+----------------------------------------------------------------------
+Running Policy Iteration (gamma=0.99)...
+----------------------------------------------------------------------
+    PI iter 0: K=5.000000, L=-1.663866, error=7.712366e-01
+    PI iter 1: K=4.243063, L=-1.615431, error=1.429935e-02
+    PI iter 2: K=4.228770, L=-1.614382, error=6.694698e-06
+    PI iter 3: K=4.228763, L=-1.614382, error=1.477041e-12
+    PI iter 4: K=4.228763, L=-1.614382, error=0.000000e+00
+    PI iter 5: K=4.228763, L=-1.614382, error=8.881784e-16
+    PI iter 6: K=4.228763, L=-1.614382, error=8.881784e-16
+    PI iter 7: K=4.228763, L=-1.614382, error=8.881784e-16
+    PI iter 8: K=4.228763, L=-1.614382, error=8.881784e-16
+    PI iter 9: K=4.228763, L=-1.614382, error=8.881784e-16
+    PI iter 10: K=4.228763, L=-1.614382, error=8.881784e-16
+
+PI summary: 10 iterations
+  Initial error: 0.771237
+  Final error: 8.88e-16
+
+----------------------------------------------------------------------
+Running Q-Learning (500000 episodes, gamma=0.95)...
+----------------------------------------------------------------------
+    Grid size: 101 states x 101 actions
+    Target K*=4.198108 (gamma=0.95), starting K0=5.000000
+
+    Tracking 9 (state, action) pairs for debug logging:
+      x=1.0,u=opt: x=1.00, u=-1.60
+      x=1.0,u=sub: x=1.00, u=0.40
+      x=1.0,u=rand: x=1.00, u=-6.40
+    Episode      0: K_avg=4.9995, K_single=5.0000, alpha=0.3000
+    Episode  50000: K_avg=4.3160, K_single=4.3200, alpha=0.2727
+    Episode 100000: K_avg=4.2874, K_single=4.3200, alpha=0.2500
+    Episode 150000: K_avg=4.2627, K_single=4.3200, alpha=0.2308
+    Episode 200000: K_avg=4.2608, K_single=4.3200, alpha=0.2143
+    Episode 250000: K_avg=4.2608, K_single=4.3200, alpha=0.2000
+    Episode 300000: K_avg=4.2587, K_single=4.3200, alpha=0.1875
+    Episode 350000: K_avg=4.2548, K_single=4.3200, alpha=0.1765
+    Episode 400000: K_avg=4.2547, K_single=4.3200, alpha=0.1667
+    Episode 450000: K_avg=4.2547, K_single=4.3200, alpha=0.1579
+
+    Debug log written to: /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_qlearning_debug.log
+
+Q-learning summary: 50000 checkpoints
+  Target K* (gamma=0.95): 4.1981
+  Initial K estimate (avg): 4.9995
+  Final K estimate (avg): 4.2531
+  Initial K (single state): 5.0000
+  Final K (single state): 4.3200
+  Final error: 5.4987e-02
+
+
++==============================================================================+
+|                         Q-LEARNING DEBUG SUMMARY                             |
++==============================================================================+
+
+--------------------------------------------------------------------------------
+SECTION 1: TD UPDATE STATISTICS
+--------------------------------------------------------------------------------
+
+Total TD updates performed: 10,000,000
+
+  Category                                   Count   Percentage
+  -----------------------------------------------------------
+  Positive delta (Q increased)             318,417        3.18%
+  Negative delta (Q decreased)             227,403        2.27%
+  Zero delta (no change)                 9,454,180       94.54%
+  -----------------------------------------------------------
+  V(s) = min_u Q(s,u) changed               20,759        0.21%
+  Greedy action argmin_u Q changed           2,561        0.03%
+
+  Delta Statistics:
+    Mean(delta):         0.271184
+    Std(delta):          4.737341
+    Mean/Std ratio:      0.057244
+
+--------------------------------------------------------------------------------
+SECTION 2: WHY K ONLY DECREASES (THE KEY INSIGHT)
+--------------------------------------------------------------------------------
+
+  The K estimate is derived from V(s) = min_u Q(s,u), not from Q(s,a) directly.
+
+  Filtering effect of the min operator:
+    - Q(s,a) changes:       5.46% of updates modify some Q value
+    - V(s) changes:         0.21% of updates modify min_u Q
+    - Filtering ratio:      26.3x  (Q changes 26.3x more often than V)
+
+  Mechanism:
+    1. Most updates are for SUBOPTIMAL actions (u != argmin Q)
+    2. These updates change Q(s,u_subopt) but NOT V(s) = min_u Q(s,u)
+    3. V(s) only changes when Q(s, u_greedy) is updated
+    4. For cost minimization, TD targets typically pull Q DOWN toward true value
+    5. Result: V(s) decreases monotonically; upward Q noise is filtered out
+
+--------------------------------------------------------------------------------
+SECTION 3: TRACKED Q(s,a) TRAJECTORIES
+--------------------------------------------------------------------------------
+
+  Tracking 9 state-action pairs across 3 states and 3 action types.
+  Optimal gain L* = -1.5991 (so u*(x) = L* * x)
+
+  Label                   Q_start      Q_end      Q_min      Q_max      Range   Converged?
+  ------------------------------------------------------------------------------------
+  x=1.0,u=opt                5.00       4.32       4.32       5.00       0.68          YES
+  x=1.0,u=sub                5.00      21.94       5.00      21.94      16.94 N/A (subopt)
+  x=1.0,u=rand               5.00     112.51       5.00     112.51     107.51 N/A (subopt)
+  x=0.5,u=opt                0.80       0.80       0.80       0.80       0.00          YES
+  x=0.5,u=sub                0.80      17.69       0.80      17.69      16.89 N/A (subopt)
+  x=0.5,u=rand               0.80     123.57       0.80     124.15     123.35 N/A (subopt)
+  x=-1.0,u=opt               5.00       4.32       4.32       5.00       0.68          YES
+  x=-1.0,u=sub               5.00      23.38       5.00      23.38      18.38 N/A (subopt)
+  x=-1.0,u=rand              5.00     129.12       5.00     129.12     124.12 N/A (subopt)
+
+--------------------------------------------------------------------------------
+SECTION 4: DIRECTION OF Q CHANGES (BIDIRECTIONAL NOISE EVIDENCE)
+--------------------------------------------------------------------------------
+
+  This table shows that individual Q(s,a) values go BOTH up and down.
+  (Sampled at check_interval=10 episodes)
+
+  Label                     #Up    #Down    #Zero      Net Direction   
+  ------------------------------------------------------------------------
+  x=1.0,u=opt                 0       63    49936      -63 DOWN        
+  x=1.0,u=sub                 8        0    49991       +8 UP          
+  x=1.0,u=rand               10        0    49989      +10 UP          
+  x=0.5,u=opt                 0        0    49999       +0 FLAT        
+  x=0.5,u=sub                70        0    49929      +70 UP          
+  x=0.5,u=rand               73       64    49862       +9 UP          
+  x=-1.0,u=opt                0       62    49937      -62 DOWN        
+  x=-1.0,u=sub               12        0    49987      +12 UP          
+  x=-1.0,u=rand              10        0    49989      +10 UP          
+  ------------------------------------------------------------------------
+  TOTAL                     183      189        -       -6
+
+  Conclusion: 183 upward moves, 189 downward moves across tracked pairs.
+              Bidirectional noise EXISTS in Q(s,a) values.
+
+--------------------------------------------------------------------------------
+SECTION 5: V(s) = min_u Q(s,u) TRAJECTORIES (MONOTONIC DECREASE)
+--------------------------------------------------------------------------------
+
+  V(s) should decrease monotonically because min filters out upward noise.
+
+  State           V_start      V_end      V_min      V_max    K=V/x^2         K*      Error
+  ------------------------------------------------------------------------------------
+  x=1.0           5.0000     4.3200     4.3200     5.0000     4.3200     4.1981     0.1219
+  x=0.5           0.8000     0.8000     0.8000     0.8000     3.2000     4.1981     0.9981
+  x=-1.0          5.0000     4.3200     4.3200     5.0000     4.3200     4.1981     0.1219
+
+  Monotonicity check (V should only decrease):
+    V(x=1.0): 63 decreases, 0 increases -> MONOTONIC
+    V(x=0.5): 0 decreases, 0 increases -> MONOTONIC
+    V(x=-1.0): 62 decreases, 0 increases -> MONOTONIC
+
+--------------------------------------------------------------------------------
+SECTION 6: POLICY STABILITY ANALYSIS
+--------------------------------------------------------------------------------
+
+  How often does the greedy action (policy) change at each tracked state?
+
+  State           u*_theory      u_start        u_end   #Changes Stable?   
+  ----------------------------------------------------------------------
+  x=1.0            -1.5991     -20.0000      -1.6000         37 NO        
+  x=0.5            -0.7995     -20.0000      -0.8000         29 NO        
+  x=-1.0            1.5991     -20.0000       1.6000         48 NO        
+
+--------------------------------------------------------------------------------
+SECTION 7: DISCRETIZATION ANALYSIS
+--------------------------------------------------------------------------------
+
+  State space:  x in [-10.0, 10.0], 101 bins, dx = 0.2000
+  Action space: u in [-20.0, 20.0], 101 bins, du = 0.4000
+  Q-table size: 101 x 101 = 10,201 entries
+
+  Optimal action representability:
+    x=1.0: u*=-1.5991, nearest grid u=-1.6000, error=0.0009
+    x=2.0: u*=-3.1981, nearest grid u=-3.2000, error=0.0019
+    x=5.0: u*=-7.9953, nearest grid u=-8.0000, error=0.0047
+
++==============================================================================+
+
+----------------------------------------------------------------------
+Generating plots...
+----------------------------------------------------------------------
+Saved: /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_convergence_rates.png
+Saved: /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_riccati_vi.png
+Saved: /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_riccati_pi.png
+
+======================================================================
+Q-Learning Rolling Average Analysis
+======================================================================
+Total episodes: 50000, K* = 4.198108
+Raw: start=4.9995, end=4.2531
+
+Rolling statistics at end of training:
+  Window     Mean         Std          Error       
+  ----------------------------------------------
+  10         4.253095     0.000000     0.054987    
+  100        4.253095     0.000000     0.054987    
+  1000       4.253095     0.000000     0.054987    
+  5000       4.253558     0.000694     0.055450    
+
+Episode-to-episode changes (dK = K_{k+1} - K_k):
+  Mean dK: -0.000015
+  Std dK:  0.000205
+  Min dK:  -0.013059
+  Max dK:  0.000000
+
+Saved: /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_riccati_ql.png
+Saved: /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_qlearning_debug.png
+
+
++==============================================================================+
+|                         CONVERGENCE RATE ANALYSIS                            |
++==============================================================================+
+
+--------------------------------------------------------------------------------
+VALUE ITERATION (gamma=0.99)
+--------------------------------------------------------------------------------
+
+  Convergence type: LINEAR (contraction mapping)
+  Contraction factor: gamma * a^2 / (1 + gamma * b^2 * K*)^2 approx 0.1472
+
+  Iter              K_k     |K_k - K*|          Ratio   Log10(error)
+  --------------------------------------------------------------
+  0          5.00000000       7.71e-01       0.000000          -0.11
+  1          4.32773109       9.90e-02       0.128323          -1.00
+  2          4.24306273       1.43e-02       0.144485          -1.84
+  3          4.23086273       2.10e-03       0.146814          -2.68
+  4          4.22907232       3.09e-04       0.147155          -3.51
+  5          4.22880886       4.55e-05       0.147206          -4.34
+  6          4.22877008       6.69e-06       0.147213          -5.17
+  7          4.22876437       9.86e-07       0.147214          -6.01
+  8          4.22876353       1.45e-07       0.147214          -6.84
+  9          4.22876341       2.14e-08       0.147214          -7.67
+  10         4.22876339       3.14e-09       0.147214          -8.50
+  11         4.22876339       4.63e-10       0.147215          -9.33
+  12         4.22876339       6.81e-11       0.147216         -10.17
+  13         4.22876339       1.00e-11       0.147214         -11.00
+  14         4.22876339       1.48e-12       0.147233         -11.83
+  15         4.22876339       2.18e-13       0.147324         -12.66
+  16         4.22876339       3.29e-14       0.151020         -13.48
+  17         4.22876339       5.33e-15       0.162162         -14.27
+  18         4.22876339       8.88e-16       0.166667         -15.05
+  19         4.22876339       8.88e-16       0.000000         -15.05
+  20         4.22876339       8.88e-16       0.000000         -15.05
+  21         4.22876339       8.88e-16       0.000000         -15.05
+  22         4.22876339       8.88e-16       0.000000         -15.05
+  23         4.22876339       8.88e-16       0.000000         -15.05
+  24         4.22876339       8.88e-16       0.000000         -15.05
+
+  Average contraction ratio (iters 5-15): 0.147227
+  Iterations to reduce error by 10x: 1.2
+
+--------------------------------------------------------------------------------
+POLICY ITERATION (gamma=0.99)
+--------------------------------------------------------------------------------
+
+  Convergence type: QUADRATIC (Newton's method)
+  Each iteration squares the error (approximately)
+
+  Iter              K_k            L_k     |K_k - K*|   Log10(error)
+  --------------------------------------------------------------
+  0          5.00000000    -1.66386555       7.71e-01          -0.11
+  1          4.24306273    -1.61543136       1.43e-02          -1.84
+  2          4.22877008    -1.61438219       6.69e-06          -5.17
+  3          4.22876339    -1.61438169       1.48e-12         -11.83
+  4          4.22876339    -1.61438169       0.00e+00         -16.00
+  5          4.22876339    -1.61438169       8.88e-16         -15.05
+  6          4.22876339    -1.61438169       8.88e-16         -15.05
+  7          4.22876339    -1.61438169       8.88e-16         -15.05
+  8          4.22876339    -1.61438169       8.88e-16         -15.05
+  9          4.22876339    -1.61438169       8.88e-16         -15.05
+  10         4.22876339    -1.61438169       8.88e-16         -15.05
+
+  Quadratic convergence evidence (error_k+1 / error_k^2):
+    k=1: |e_2| / |e_1|^2 = 0.03
+    k=2: |e_3| / |e_2|^2 = 0.03
+    k=3: |e_4| / |e_3|^2 = 0.00
+
+--------------------------------------------------------------------------------
+Q-LEARNING (gamma=0.95)
+--------------------------------------------------------------------------------
+
+  Convergence type: STOCHASTIC (noisy gradient descent)
+  Note: Different gamma, so different K* target (4.198108 vs 4.228763)
+
+  Episode        K_estimate       |K - K*|             dK   Log10(error)
+  ------------------------------------------------------------------
+  0                4.999550     8.0144e-01      +0.000000          -0.10
+  100              4.936096     7.3799e-01      -0.002352          -0.13
+  500              4.843692     6.4558e-01      -0.008326          -0.19
+  1000             4.743603     5.4550e-01      -0.001688          -0.26
+  2000             4.652358     4.5425e-01      -0.001036          -0.34
+  5000             4.528769     3.3066e-01      -0.003070          -0.48
+  10000            4.407125     2.0902e-01      -0.000000          -0.68
+  20000            4.366866     1.6876e-01      -0.000000          -0.77
+  50000            4.315968     1.1786e-01      -0.000000          -0.93
+  100000           4.287363     8.9255e-02      -0.000000          -1.05
+  200000           4.260781     6.2673e-02      +0.000000          -1.20
+  499990           4.253095     5.4987e-02      +0.000000          -1.26
+
+  Episode-to-episode K changes:
+    Mean(dK):     -0.00001493
+    Std(dK):       0.00020503
+    Min(dK):      -0.01305885
+    Max(dK):      +0.00000000
+    #(dK > 0):              0 (0.00%)
+    #(dK < 0):           6318 (12.64%)
+    #(dK = 0):          43681 (87.36%)
+
+--------------------------------------------------------------------------------
+FINAL COMPARISON TABLE
+--------------------------------------------------------------------------------
+
+  Method                  gamma           K*      Final K    Final Error Model?  
+  --------------------------------------------------------------------------
+  Value Iteration          0.99     4.228763     4.228763       8.88e-16 Yes     
+  Policy Iteration         0.99     4.228763     4.228763       8.88e-16 Yes     
+  Q-Learning               0.95     4.198108     4.253095       5.50e-02 No      
+
+  Iterations/Episodes to reach error threshold:
+  Method                    < 0.1     < 0.01     < 1e-4     < 1e-8    < 1e-12
+  ------------------------------------------------------------
+  Value Iteration               1          3          5         10         15
+  Policy Iteration              1          2          2          3          4
+  Q-Learning (eps)          72160     >50000        N/A        N/A        N/A
+
+--------------------------------------------------------------------------------
+KEY TAKEAWAYS
+--------------------------------------------------------------------------------
+
+  1. POLICY ITERATION is fastest: reaches machine precision in ~4 iterations
+     (quadratic convergence = error squared each step)
+
+  2. VALUE ITERATION is reliable: linear convergence with constant ratio ~0.15
+     (contraction mapping, guaranteed convergence)
+
+  3. Q-LEARNING is model-free but slow: 500K episodes to reach error ~0.05
+     - No model required (learns from samples)
+     - Discretization limits final accuracy
+     - K estimate derived from V(s) = min_u Q(s,u)
+
+  4. WHY K ONLY DECREASES IN Q-LEARNING:
+     - Individual Q(s,a) values go both UP and DOWN (bidirectional noise)
+     - But K is computed from V(s) = min_u Q(s,u)
+     - The min operator filters out upward movements
+     - Only ~0.2% of TD updates actually change V(s)
+     - Result: monotonic decrease despite noisy updates
+
++==============================================================================+
+|                              OUTPUT FILES                                    |
++==============================================================================+
+
+  Plots:
+    /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_convergence_rates.png
+    /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_riccati_vi.png
+    /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_riccati_pi.png
+    /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_riccati_ql.png
+    /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_qlearning_debug.png
+
+  Data:
+    /Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_qlearning_debug.log
+
+================================================================================

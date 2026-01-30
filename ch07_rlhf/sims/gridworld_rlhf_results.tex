@@ -1,0 +1,14 @@
+\begin{tabular}{lccccc}
+\toprule
+$M$ & MSE & Spearman $\rho$ & Policy Distance & Mean Return & Steps to Goal \\
+\midrule
+DP (oracle) & -- & -- & 0.0 & 7.99 & 14 \\
+\midrule
+RLHF ($M$=50) & 34.4621 & 0.850 & -- & -- & -- \\
+RLHF ($M$=100) & 34.8525 & 0.875 & -- & -- & -- \\
+RLHF ($M$=200) & 34.6720 & 0.800 & -- & -- & -- \\
+RLHF ($M$=500) & 35.2612 & 0.800 & 0.000 & 7.99 & 14.0 \\
+RLHF ($M$=1000) & 35.0433 & 0.700 & -- & -- & -- \\
+RLHF ($M$=2000) & 35.2403 & 0.700 & -- & -- & -- \\
+\bottomrule
+\end{tabular}

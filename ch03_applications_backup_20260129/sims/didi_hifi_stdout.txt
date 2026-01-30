@@ -1,0 +1,93 @@
+/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/keras/src/export/tf2onnx_lib.py:8: FutureWarning: In the future `np.object` will be defined as the corresponding NumPy scalar.
+  if not hasattr(np, "object"):
+============================================================
+DiDi Dispatch PPO Training (Stable Baselines3)
+============================================================
+Total timesteps: 500000
+Num envs: 8
+Steps per env: 2048
+Batch size: 64
+Learning rate: 0.0003
+Entropy coef: 0.01
+============================================================
+Using cpu device
+
+Policy architecture: {'net_arch': {'pi': [256, 256], 'vf': [256, 256]}}
+Observation space: Box(-inf, inf, (173,), float32)
+Action space: Discrete(5)
+
+Training started...
+------------------------------------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 288      |
+|    ep_rew_mean     | 1.13e+04 |
+| time/              |          |
+|    fps             | 772      |
+|    iterations      | 1        |
+|    time_elapsed    | 21       |
+|    total_timesteps | 16384    |
+---------------------------------
+-----------------------------------------
+| rollout/                |             |
+|    ep_len_mean          | 288         |
+|    ep_rew_mean          | 1.14e+04    |
+| time/                   |             |
+|    fps                  | 232         |
+|    iterations           | 2           |
+|    time_elapsed         | 140         |
+|    total_timesteps      | 32768       |
+| train/                  |             |
+|    approx_kl            | 0.010228729 |
+|    clip_fraction        | 0.0612      |
+|    clip_range           | 0.2         |
+|    entropy_loss         | -1.6        |
+|    explained_variance   | -0.000193   |
+|    learning_rate        | 0.0003      |
+|    loss                 | 9.83e+04    |
+|    n_updates            | 10          |
+|    policy_gradient_loss | -0.00469    |
+|    value_loss           | 2.82e+05    |
+-----------------------------------------
+------------------------------------------
+| rollout/                |              |
+|    ep_len_mean          | 288          |
+|    ep_rew_mean          | 1.15e+04     |
+| time/                   |              |
+|    fps                  | 132          |
+|    iterations           | 3            |
+|    time_elapsed         | 370          |
+|    total_timesteps      | 49152        |
+| train/                  |              |
+|    approx_kl            | 0.0075948834 |
+|    clip_fraction        | 0.0343       |
+|    clip_range           | 0.2          |
+|    entropy_loss         | -1.58        |
+|    explained_variance   | -2.5e-06     |
+|    learning_rate        | 0.0003       |
+|    loss                 | 9.09e+04     |
+|    n_updates            | 20           |
+|    policy_gradient_loss | -0.00393     |
+|    value_loss           | 2.6e+05      |
+------------------------------------------
+-----------------------------------------
+| rollout/                |             |
+|    ep_len_mean          | 288         |
+|    ep_rew_mean          | 1.16e+04    |
+| time/                   |             |
+|    fps                  | 116         |
+|    iterations           | 4           |
+|    time_elapsed         | 564         |
+|    total_timesteps      | 65536       |
+| train/                  |             |
+|    approx_kl            | 0.006519642 |
+|    clip_fraction        | 0.0277      |
+|    clip_range           | 0.2         |
+|    entropy_loss         | -1.55       |
+|    explained_variance   | -4.77e-07   |
+|    learning_rate        | 0.0003      |
+|    loss                 | 7.76e+04    |
+|    n_updates            | 30          |
+|    policy_gradient_loss | -0.00412    |
+|    value_loss           | 2.34e+05    |
+-----------------------------------------

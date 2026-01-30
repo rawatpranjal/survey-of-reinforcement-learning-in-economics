@@ -1,0 +1,171 @@
+% Chapter 2: Planning and Learning as Fixed-Point Iteration
+% Core insight: All RL algorithms iterate toward the Bellman fixed point.
+% VI/Q-learning take small steps (gradient descent), PI/rollout take big steps (Newton).
+% Primary reference: Bertsekas (2024), "MPC and RL: A Unified Framework Based on DP"
+
+\subsection{The Bellman Equation}
+\label{sec:bellman}
+
+A Markov Decision Process consists of states $s \in \mathcal{S}$, actions $a \in \mathcal{A}$, transition probabilities $P(s'|s,a)$, costs $g(s,a)$, and a discount factor $\gamma \in [0,1)$. A policy $\pi: \mathcal{S} \to \mathcal{A}$ maps states to actions. The cost function $J^\pi(s) = \mathbb{E}_\pi[\sum_{t=0}^{\infty} \gamma^t g(s_t, a_t) \mid s_0 = s]$ is the expected discounted cost starting from state $s$ under policy $\pi$.
+
+The Bellman optimality operator $T$ acts on cost functions by $(TJ)(s) = \min_{a \in \mathcal{A}} \{ g(s,a) + \gamma \sum_{s'} P(s'|s,a) J(s') \}$. The optimal cost function $J^*$ is the unique fixed point of $T$: it satisfies $TJ^* = J^*$. Finding $J^*$ is the goal of dynamic programming. The policy evaluation operator $T^\pi$ fixes a policy: $(T^\pi J)(s) = g(s,\pi(s)) + \gamma \sum_{s'} P(s'|s,\pi(s)) J(s')$. The cost function $J^\pi$ of policy $\pi$ is the fixed point of $T^\pi$.
+
+Both operators are contractions with modulus $\gamma$, meaning $\|TJ_1 - TJ_2\|_\infty \leq \gamma \|J_1 - J_2\|_\infty$ for any two cost functions. The contraction property guarantees that repeated application converges to the unique fixed point.
+
+
+\subsection{Value Iteration: Small Steps}
+\label{sec:vi}
+
+Value Iteration applies $T$ repeatedly starting from any initial guess $J_0$: $J_{k+1} = TJ_k$. By the contraction property, the iterates converge geometrically: $\|J_k - J^*\|_\infty \leq \gamma^k \|J_0 - J^*\|_\infty$.
+
+The convergence rate is $\gamma$. When $\gamma = 0.99$, each iteration reduces the error by only 1\%. Reaching 1\% of the initial error requires $\log(0.01)/\log(0.99) \approx 459$ iterations.
+
+Value Iteration is analogous to gradient descent. Each application of $T$ moves the current estimate toward the fixed point by a fraction determined by $\gamma$. The method is simple and guaranteed to converge, but the convergence rate depends only on the discount factor, not on how close the current estimate is to the solution.
+
+
+\subsection{Policy Iteration: Big Steps}
+\label{sec:pi}
+
+Policy Iteration alternates between two steps. Policy evaluation computes the cost function $J^{\pi_k}$ by solving the linear system $J = T^{\pi_k} J$. Policy improvement updates the policy to be greedy: $\pi_{k+1}(s) = \argmin_{a} \{ g(s,a) + \gamma \sum_{s'} P(s'|s,a) J^{\pi_k}(s') \}$.
+
+Policy Iteration converges in at most $|\mathcal{A}|^{|\mathcal{S}|}$ iterations, but in practice converges much faster, typically in 5-20 iterations regardless of the discount factor.
+
+The reason for fast convergence is that Policy Iteration is Newton's method on the Bellman equation. \citet{bertsekas2024} establishes this through a geometric observation: the policy operator $T^{\pi}$ for the greedy policy $\pi$ acts as a supporting hyperplane to the nonlinear operator $T$ at the current cost function $\tilde{J}$. Formally, $T^{\pi} \tilde{J} = T\tilde{J}$ and $T^{\pi} J \geq TJ$ for all $J$. The first equality holds because $\pi$ achieves the minimum at $\tilde{J}$. The second inequality holds because $T$ minimizes over all actions while $T^{\pi}$ uses a fixed action.
+
+Policy evaluation then solves the linearized equation exactly, just as Newton's method solves the linearized system at each iterate. This explains why Policy Iteration converges faster than Value Iteration: Newton's method achieves superlinear (quadratic) convergence near the solution, while fixed-point iteration achieves only linear convergence at rate $\gamma$.
+
+
+\subsection{Rollout and Multi-Step Lookahead}
+\label{sec:rollout}
+
+Rollout starts with a base policy $\mu$ and performs one step of policy improvement. Given the cost function $J^\mu$ of the base policy, the rollout policy $\tilde{\pi}$ selects actions by one-step lookahead: $\tilde{\pi}(s) = \argmin_{a} \{ g(s,a) + \gamma \sum_{s'} P(s'|s,a) J^\mu(s') \}$.
+
+Rollout is one iteration of Policy Iteration, hence a single Newton step. The cost improvement property guarantees that rollout never degrades performance: $J^{\tilde{\pi}}(s) \leq J^\mu(s)$ for all states $s$, with strict improvement at some state unless $\mu$ is already optimal. \citet{bertsekas2024} emphasizes that ``the size of the cost improvement over the base policy is often impressive, evidently owing to the fast convergence rate of Newton's method that underlies rollout.''
+
+Multi-step lookahead extends this idea. With $\ell$-step lookahead, the agent optimizes exactly over the next $\ell$ steps before consulting the terminal approximation $\tilde{J}$. \citet{bertsekas2024} proves a key result: the region of convergence of Newton's method expands as the lookahead length $\ell$ increases. This means longer lookahead compensates for worse value function approximations. If the approximation $\tilde{J}$ is poor, the error only affects decisions $\ell$ steps in the future, and exact optimization over the immediate steps corrects the trajectory.
+
+The architecture of AlphaZero and TD-Gammon follows this pattern: off-line training produces a cost function approximation (via neural networks), and on-line play executes Newton steps (via tree search or rollout) from that approximation. The off-line phase builds a starting point; the on-line phase refines it through policy improvement.
+
+
+\subsection{RL Algorithms Through the Newton Lens}
+\label{sec:rl_algorithms}
+
+The model-free algorithms of reinforcement learning fit the same framework. When the transition probabilities and costs are unknown, the agent replaces exact operator applications with stochastic estimates from sampled transitions. Each algorithm can be characterized by what operator it approximates and whether it takes small steps (VI-like) or big steps (PI-like).
+
+Q-learning applies stochastic estimates of $T$. Each update $Q(s,a) \leftarrow Q(s,a) + \alpha[c + \gamma \min_{a'} Q(s',a') - Q(s,a)]$ moves $Q$ toward the Bellman target by a small step $\alpha$. This is stochastic gradient descent on the Bellman error. \citet{bertsekas2024} notes that Q-learning inherits the linear convergence rate of Value Iteration, explaining why it requires many more samples than model-based methods.
+
+TD learning approximates $T^\pi$ stochastically for policy evaluation. The update $J(s) \leftarrow J(s) + \alpha[c + \gamma J(s') - J(s)]$ moves the value estimate toward the bootstrapped target. This is the stochastic version of iterative policy evaluation within Policy Iteration.
+
+SARSA updates the action-value function using the action actually taken: $Q(s,a) \leftarrow Q(s,a) + \alpha[c + \gamma Q(s',a') - Q(s,a)]$, where $a'$ is the next action under the current policy. SARSA evaluates the behavior policy rather than the optimal policy, making it an on-policy stochastic approximation to $T^\pi$.
+
+Actor-critic methods interleave policy evaluation (the critic) and policy improvement (the actor). The critic estimates $J^\pi$ or $Q^\pi$ using TD learning. The actor updates the policy parameters in the direction of improvement. This is approximate Policy Iteration: the critic performs partial policy evaluation, and the actor performs approximate policy improvement. In the Newton interpretation, actor-critic is an approximate Newton method because it does not solve the linearized problem exactly.
+
+Rollout performs a single Newton step from a base policy. \citet{bertsekas2024} shows that rollout always improves the base policy because one Newton step from a reasonable starting point produces substantial improvement. The base policy need not be close to optimal; it need only provide a reasonable estimate of continuation values.
+
+Model Predictive Control (MPC) with $\ell$-step lookahead is a truncated Newton step. \citet{bertsekas2024} proves that longer lookahead expands the region of convergence, so MPC with larger $\ell$ compensates for worse value function approximations. This is why MPC can work with crude terminal cost approximations if the lookahead horizon is long enough.
+
+Table~\ref{tab:newton_correspondence} summarizes the correspondence.
+
+\begin{table}[h!]
+\centering
+\caption{RL algorithms as fixed-point methods \citep{bertsekas2024}}
+\label{tab:newton_correspondence}
+\begin{tabular}{lll}
+\hline
+Algorithm & Operator & Convergence \\
+\hline
+Value Iteration & $T$ (exact) & Linear (rate $\gamma$) \\
+Policy Iteration & $T^\pi$ (exact solve) & Superlinear (Newton) \\
+Q-learning & $T$ (stochastic) & Linear (stochastic) \\
+TD learning & $T^\pi$ (stochastic) & Linear (stochastic) \\
+SARSA & $T^\pi$ (on-policy stochastic) & Linear (stochastic) \\
+Actor-Critic & $T^\pi$ (partial) + improvement & Approximate Newton \\
+Rollout ($\ell=1$) & One improvement step & Single Newton step \\
+MPC ($\ell > 1$) & $\ell$-step lookahead & Truncated Newton \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\subsection{Key Results from the Newton Framework}
+\label{sec:why_matters}
+
+The Newton interpretation yields four key results, all established in \citet{bertsekas2024}.
+
+First, Policy Iteration converges faster than Value Iteration. Newton's method achieves superlinear (quadratic) convergence near the solution; fixed-point iteration achieves only linear convergence at rate $\gamma$. In practice, PI often converges in 5-10 iterations while VI may require hundreds when $\gamma$ is close to 1.
+
+Second, model-free methods require more samples than model-based methods. Q-learning is stochastic fixed-point iteration, inheriting the linear convergence rate of VI plus the additional variance from sampling. \citet{bertsekas2024} notes that model-based methods need $O((1-\gamma)^{-3})$ samples while model-free methods need $O((1-\gamma)^{-4})$ samples; at $\gamma = 0.99$, model-based methods require roughly 100 times fewer samples.
+
+Third, rollout always improves the base policy. A single Newton step from a reasonable starting point yields substantial improvement. The base policy need not be close to optimal; it need only provide a reasonable estimate of continuation values. This is why crude heuristics combined with one-step lookahead often perform surprisingly well.
+
+Fourth, longer lookahead expands the region of convergence. \citet{bertsekas2024} proves that the region of convergence of Newton's method expands as the lookahead length $\ell$ increases. MPC with larger $\ell$ can tolerate worse terminal cost approximations because exact optimization over $\ell$ steps corrects the trajectory before the approximation is consulted.
+
+Fifth, the Newton framework yields quantitative bounds on approximation error. \citet{bertsekas2022} (Proposition 2.2.1) proves that if $\tilde{\pi}$ is the one-step lookahead policy based on approximation $\tilde{J}$, then
+\[
+\|J^{\tilde{\pi}} - J^*\|_v \leq \frac{2\gamma}{1-\gamma} \|\tilde{J} - J^*\|_v.
+\]
+The amplification factor $2\gamma/(1-\gamma)$ has concrete numerical consequences. At $\gamma = 0.95$, a 1\% approximation error produces at most 38\% policy cost error. At $\gamma = 0.99$, the same 1\% error amplifies to 198\%. This bound quantifies the ``region of convergence'' concept: the approximation $\tilde{J}$ must be accurate enough that the amplified error remains acceptable.
+
+For finite tabular MDPs, the sample complexity gap between model-based and model-free methods has been precisely characterized.\footnote{These bounds apply specifically to finite tabular MDPs and may not extend to function approximation settings.} \citet{li2024minimax} show that Q-learning requires $\tilde{O}(|\mathcal{S}||\mathcal{A}|/(1-\gamma)^4\varepsilon^2)$ samples to achieve $\varepsilon$-optimal policy, while model-based methods require $\tilde{O}(|\mathcal{S}||\mathcal{A}|/(1-\gamma)^3\varepsilon^2)$ samples. The $(1-\gamma)^{-1}$ gap reflects the difference between Newton-type and gradient-type convergence in the statistical setting.
+
+
+\subsection{Function Approximation}
+\label{sec:function_approx}
+
+When the state space is large or continuous, exact value functions cannot be stored. Function approximation replaces $J(s)$ with a parameterized approximation $\tilde{J}(s; w)$, typically linear in features: $\tilde{J}(s; w) = w^\top \phi(s)$.
+
+\citet{bertsekas2024} emphasizes a critical insight: if the approximation architecture is not powerful enough to bring $\tilde{J}$ within the region of convergence of Newton's method, approximation in value space with one-step lookahead will likely fail, no matter how much data is collected or how effective the training method is. This explains why the choice of function class matters so much in practice.
+
+Two remedies exist. First, use a more powerful approximation architecture (larger neural networks, better feature engineering) to reduce the approximation error $\|\tilde{J} - J^*\|$. Second, extend the lookahead horizon $\ell$ to bring the effective value of $\tilde{J}$ within the region of convergence. The second approach is why MPC and tree search methods (MCTS, AlphaZero) can succeed even with imperfect value function approximations.
+
+
+\subsection{Simulation: Validating the Newton Framework}
+\label{sec:simulation}
+
+We validate the key claims from \citet{bertsekas2024} through three experiments on a stochastic shortest path gridworld.
+
+\subsubsection{Environment}
+
+The environment is an $N \times N$ gridworld with terminal state at $(N-1, N-1)$. The agent starts at $(0,0)$ and seeks to reach the terminal at minimum expected cost. Actions are $\{L, R, U, D\}$. Transitions are stochastic: with probability 0.8, the intended action succeeds; with probability 0.2, a uniformly random action is taken. Each step incurs cost 1. The discount factor is $\gamma = 0.99$.
+
+\subsubsection{Experiment 1: PI vs VI Convergence}
+
+We compare Value Iteration and Policy Iteration on a $15 \times 15$ grid. Value Iteration applies $T$ exactly until $\|J_{k+1} - J_k\|_\infty < 10^{-6}$. Policy Iteration alternates exact policy evaluation and improvement until the policy stabilizes.
+
+Figure~\ref{fig:ssp_convergence} shows the convergence curves. Policy Iteration converges in 6 iterations. Value Iteration requires 66 iterations. The ratio of approximately 11:1 reflects the difference between Newton's superlinear convergence and linear convergence at rate $\gamma = 0.99$.
+
+\subsubsection{Experiment 2: Multi-Step Lookahead}
+
+We test whether longer lookahead improves performance, as predicted by \citet{bertsekas2024}. Starting from a Manhattan-distance heuristic as the base policy, we evaluate rollout with lookahead $\ell = 1, 2, 3$ steps.
+
+Figure~\ref{fig:ssp_lookahead} shows that each additional lookahead step improves the policy. One-step rollout achieves a substantial improvement over the base heuristic. Two-step and three-step lookahead provide further gains, approaching optimal performance. This validates the theoretical result that longer lookahead expands the region of convergence.
+
+\subsubsection{Experiment 3: Sample Complexity}
+
+We compare Q-learning episodes needed to match VI quality. Q-learning uses learning rate $\alpha = 0.1$ and $\varepsilon$-greedy exploration ($\varepsilon = 0.1$). Figure~\ref{fig:ssp_convergence} shows that Q-learning requires approximately 50,000 episodes to achieve comparable accuracy to VI's 66 iterations. This validates the sample complexity gap between model-free and model-based methods.
+
+\subsubsection{Results}
+
+Table~\ref{tab:ssp_results} reports the expected cost to reach the terminal under each method. Rollout with $\ell = 1$ achieves near-optimal performance starting from a crude Manhattan-distance heuristic, demonstrating the power of a single Newton step.
+
+\begin{table}[h!]
+\centering
+\caption{Expected cost to reach terminal (mean $\pm$ SE across 10 seeds)}
+\label{tab:ssp_results}
+\input{../ch02_planning_learning/sims/ssp_gridworld_results.tex}
+\end{table}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{../ch02_planning_learning/sims/ssp_convergence_comparison.png}
+\caption{Convergence comparison. Left: Value Iteration (66 iterations). Center: Policy Iteration (6 iterations). Right: Q-learning ($\sim$50,000 episodes). The ratio confirms Newton vs gradient descent convergence rates.}
+\label{fig:ssp_convergence}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.7\textwidth]{../ch02_planning_learning/sims/ssp_lookahead_comparison.png}
+\caption{Multi-step lookahead improves policy quality. Each additional lookahead step brings the policy closer to optimal, validating that longer lookahead expands the region of convergence.}
+\label{fig:ssp_lookahead}
+\end{figure}
+

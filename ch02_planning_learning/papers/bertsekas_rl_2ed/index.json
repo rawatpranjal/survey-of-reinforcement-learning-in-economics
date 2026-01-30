@@ -1,0 +1,539 @@
+{
+  "book": "A Course in Reinforcement Learning, 2nd Edition",
+  "author": "Dimitri P. Bertsekas",
+  "year": 2025,
+  "publisher": "Athena Scientific",
+  "source_pdf": "RLCOURSECOMPLETE 2ndEDITION.pdf",
+  "total_sections": 31,
+  "chapters": [
+    {
+      "num": 0,
+      "title": "Frontmatter",
+      "sections": "00_*"
+    },
+    {
+      "num": 1,
+      "title": "Exact and Approximate Dynamic Programming",
+      "sections": "01_*"
+    },
+    {
+      "num": 2,
+      "title": "Approximation in Value Space - Rollout Algorithms",
+      "sections": "02_*"
+    },
+    {
+      "num": 3,
+      "title": "Learning Values and Policies",
+      "sections": "03_*"
+    },
+    {
+      "num": 4,
+      "title": "References",
+      "sections": "04_*"
+    }
+  ],
+  "sections": [
+    {
+      "id": "00_frontmatter",
+      "file": "00_frontmatter.pdf",
+      "title": "Frontmatter and Contents",
+      "pages": "1-9",
+      "page_count": 9,
+      "topics": [
+        "title page",
+        "about author",
+        "contents",
+        "table of contents"
+      ],
+      "summary": "",
+      "markdown_file": "md/00_frontmatter.md"
+    },
+    {
+      "id": "01_01_alphazero_det_dp",
+      "file": "01_01_alphazero_det_dp.pdf",
+      "title": "1.1-1.2: AlphaZero & Deterministic DP",
+      "pages": "10-27",
+      "page_count": 18,
+      "topics": [
+        "AlphaZero",
+        "offline training",
+        "online play",
+        "deterministic DP",
+        "finite horizon",
+        "DP algorithm",
+        "approximation in value space",
+        "rollout"
+      ],
+      "summary": "",
+      "markdown_file": "md/01_01_alphazero_det_dp.md"
+    },
+    {
+      "id": "01_02_stochastic_dp",
+      "file": "01_02_stochastic_dp.pdf",
+      "title": "1.3: Stochastic Exact and Approximate DP",
+      "pages": "28-41",
+      "page_count": 14,
+      "topics": [
+        "stochastic DP",
+        "finite horizon stochastic",
+        "approximation in value space",
+        "approximation in policy space",
+        "training cost function",
+        "policy approximation"
+      ],
+      "summary": "",
+      "markdown_file": "md/01_02_stochastic_dp.md"
+    },
+    {
+      "id": "01_03_infinite_horizon",
+      "file": "01_03_infinite_horizon.pdf",
+      "title": "1.4: Infinite Horizon Problems Overview",
+      "pages": "42-55",
+      "page_count": 14,
+      "topics": [
+        "infinite horizon",
+        "infinite horizon methodology",
+        "approximation in value space",
+        "understanding approximation"
+      ],
+      "summary": "",
+      "markdown_file": "md/01_03_infinite_horizon.md"
+    },
+    {
+      "id": "01_04_newton_lq",
+      "file": "01_04_newton_lq.pdf",
+      "title": "1.5: Newton's Method & LQ Problems",
+      "pages": "56-78",
+      "page_count": 23,
+      "topics": [
+        "Newton's method",
+        "linear quadratic",
+        "LQ problems",
+        "region of stability",
+        "rollout",
+        "policy iteration",
+        "error bounds"
+      ],
+      "summary": "",
+      "markdown_file": "md/01_04_newton_lq.md"
+    },
+    {
+      "id": "01_05_examples_modeling",
+      "file": "01_05_examples_modeling.pdf",
+      "title": "1.6.1-1.6.4: Examples & Modeling",
+      "pages": "79-91",
+      "page_count": 13,
+      "topics": [
+        "modeling",
+        "termination state",
+        "discrete optimization",
+        "finite to infinite horizon",
+        "reformulations"
+      ],
+      "summary": "",
+      "markdown_file": "md/01_05_examples_modeling.md"
+    },
+    {
+      "id": "01_06_state_augmentation",
+      "file": "01_06_state_augmentation.pdf",
+      "title": "1.6.5-1.6.6: State Augmentation & POMDP",
+      "pages": "92-101",
+      "page_count": 10,
+      "topics": [
+        "state augmentation",
+        "time delays",
+        "forecasts",
+        "partial state information",
+        "belief states",
+        "POMDP"
+      ],
+      "summary": "",
+      "markdown_file": "md/01_06_state_augmentation.md"
+    },
+    {
+      "id": "01_07_multiagent_adaptive",
+      "file": "01_07_multiagent_adaptive.pdf",
+      "title": "1.6.7-1.6.8: Multiagent & Adaptive Control",
+      "pages": "102-117",
+      "page_count": 16,
+      "topics": [
+        "multiagent problems",
+        "multiagent rollout",
+        "unknown model",
+        "adaptive control"
+      ],
+      "summary": "",
+      "markdown_file": "md/01_07_multiagent_adaptive.md"
+    },
+    {
+      "id": "01_08_mpc",
+      "file": "01_08_mpc.pdf",
+      "title": "1.6.9: Model Predictive Control",
+      "pages": "118-130",
+      "page_count": 13,
+      "topics": [
+        "model predictive control",
+        "MPC",
+        "receding horizon",
+        "certainty equivalence"
+      ],
+      "summary": "",
+      "markdown_file": "md/01_08_mpc.md"
+    },
+    {
+      "id": "01_09_rl_dp_relations",
+      "file": "01_09_rl_dp_relations.pdf",
+      "title": "1.7: Reinforcement Learning and Decision/Control",
+      "pages": "131-140",
+      "page_count": 10,
+      "topics": [
+        "RL terminology",
+        "RL notation",
+        "DP vs RL",
+        "LLM synergy",
+        "machine learning",
+        "optimization"
+      ],
+      "summary": "",
+      "markdown_file": "md/01_09_rl_dp_relations.md"
+    },
+    {
+      "id": "01_10_notes_exercises",
+      "file": "01_10_notes_exercises.pdf",
+      "title": "1.8: Notes, Sources, and Exercises Ch1",
+      "pages": "141-165",
+      "page_count": 25,
+      "topics": [
+        "exercises",
+        "notes",
+        "sources",
+        "chapter 1"
+      ],
+      "summary": "",
+      "markdown_file": "md/01_10_notes_exercises.md"
+    },
+    {
+      "id": "02_01_det_finite_horizon",
+      "file": "02_01_det_finite_horizon.pdf",
+      "title": "2.1-2.2: Deterministic Finite Horizon & Approximation",
+      "pages": "166-176",
+      "page_count": 11,
+      "topics": [
+        "deterministic finite horizon",
+        "approximation in value space"
+      ],
+      "summary": "",
+      "markdown_file": "md/02_01_det_finite_horizon.md"
+    },
+    {
+      "id": "02_02_rollout_discrete_opt",
+      "file": "02_02_rollout_discrete_opt.pdf",
+      "title": "2.3: Rollout for Discrete Optimization",
+      "pages": "177-207",
+      "page_count": 31,
+      "topics": [
+        "rollout algorithms",
+        "discrete optimization",
+        "sequential consistency",
+        "sequential improvement",
+        "fortified rollout",
+        "parallel rollout",
+        "truncated rollout"
+      ],
+      "summary": "",
+      "markdown_file": "md/02_02_rollout_discrete_opt.md"
+    },
+    {
+      "id": "02_03_model_free_rollout",
+      "file": "02_03_model_free_rollout.pdf",
+      "title": "2.3.7-2.3.10: Model-Free Rollout & Inference",
+      "pages": "208-220",
+      "page_count": 13,
+      "topics": [
+        "expert rollout",
+        "model-free rollout",
+        "world model",
+        "local search",
+        "n-grams",
+        "transformers",
+        "HMM",
+        "Markov chains"
+      ],
+      "summary": "",
+      "markdown_file": "md/02_03_model_free_rollout.md"
+    },
+    {
+      "id": "02_04_multistep_lookahead",
+      "file": "02_04_multistep_lookahead.pdf",
+      "title": "2.4-2.5: Multistep Lookahead & Constrained Rollout",
+      "pages": "221-256",
+      "page_count": 36,
+      "topics": [
+        "multistep lookahead",
+        "iterative deepening",
+        "forward DP",
+        "incremental rollout",
+        "constrained rollout",
+        "integer programming"
+      ],
+      "summary": "",
+      "markdown_file": "md/02_04_multistep_lookahead.md"
+    },
+    {
+      "id": "02_05_continuous_time",
+      "file": "02_05_continuous_time.pdf",
+      "title": "2.6-2.7.2: Continuous-Time & Stochastic Rollout",
+      "pages": "257-270",
+      "page_count": 14,
+      "topics": [
+        "continuous-time rollout",
+        "small stage costs",
+        "long horizon",
+        "stochastic problems",
+        "simplified rollout",
+        "certainty equivalence"
+      ],
+      "summary": "",
+      "markdown_file": "md/02_05_continuous_time.md"
+    },
+    {
+      "id": "02_06_mcts",
+      "file": "02_06_mcts.pdf",
+      "title": "2.7.3-2.7.6: Simulation-Based & MCTS",
+      "pages": "271-282",
+      "page_count": 12,
+      "topics": [
+        "simulation-based rollout",
+        "variance reduction",
+        "Monte Carlo tree search",
+        "MCTS",
+        "randomized policy improvement"
+      ],
+      "summary": "",
+      "markdown_file": "md/02_06_mcts.md"
+    },
+    {
+      "id": "02_07_infinite_spaces",
+      "file": "02_07_infinite_spaces.pdf",
+      "title": "2.8: Rollout for Infinite-Spaces Problems",
+      "pages": "283-296",
+      "page_count": 14,
+      "topics": [
+        "infinite spaces",
+        "optimization heuristics",
+        "deterministic problems",
+        "stochastic programming",
+        "certainty equivalence"
+      ],
+      "summary": "",
+      "markdown_file": "md/02_07_infinite_spaces.md"
+    },
+    {
+      "id": "02_08_multiagent_rollout",
+      "file": "02_08_multiagent_rollout.pdf",
+      "title": "2.9: Multiagent Rollout",
+      "pages": "297-308",
+      "page_count": 12,
+      "topics": [
+        "multiagent rollout",
+        "asynchronous rollout",
+        "autonomous rollout"
+      ],
+      "summary": "",
+      "markdown_file": "md/02_08_multiagent_rollout.md"
+    },
+    {
+      "id": "02_09_bayesian_opt",
+      "file": "02_09_bayesian_opt.pdf",
+      "title": "2.10: Rollout for Bayesian Optimization",
+      "pages": "309-316",
+      "page_count": 8,
+      "topics": [
+        "Bayesian optimization",
+        "sequential estimation",
+        "rollout"
+      ],
+      "summary": "",
+      "markdown_file": "md/02_09_bayesian_opt.md"
+    },
+    {
+      "id": "02_10_adaptive_pomdp",
+      "file": "02_10_adaptive_pomdp.pdf",
+      "title": "2.11: Adaptive Control by Rollout with POMDP",
+      "pages": "317-326",
+      "page_count": 10,
+      "topics": [
+        "adaptive control",
+        "POMDP formulation",
+        "rollout"
+      ],
+      "summary": "",
+      "markdown_file": "md/02_10_adaptive_pomdp.md"
+    },
+    {
+      "id": "02_11_minimax",
+      "file": "02_11_minimax.pdf",
+      "title": "2.12: Minimax Control and RL",
+      "pages": "327-340",
+      "page_count": 14,
+      "topics": [
+        "minimax control",
+        "minimax DP",
+        "minimax approximation",
+        "computer chess",
+        "sequential games",
+        "noncooperative games"
+      ],
+      "summary": "",
+      "markdown_file": "md/02_11_minimax.md"
+    },
+    {
+      "id": "02_12_notes_exercises_ch2",
+      "file": "02_12_notes_exercises_ch2.pdf",
+      "title": "2.13: Notes, Sources, and Exercises Ch2",
+      "pages": "341-348",
+      "page_count": 8,
+      "topics": [
+        "exercises",
+        "notes",
+        "sources",
+        "chapter 2"
+      ],
+      "summary": "",
+      "markdown_file": "md/02_12_notes_exercises_ch2.md"
+    },
+    {
+      "id": "03_01_parametric_approx",
+      "file": "03_01_parametric_approx.pdf",
+      "title": "3.1: Parametric Approximation Architectures",
+      "pages": "349-369",
+      "page_count": 21,
+      "topics": [
+        "parametric approximation",
+        "cost function approximation",
+        "feature-based",
+        "linear architecture",
+        "nonlinear architecture",
+        "training"
+      ],
+      "summary": "",
+      "markdown_file": "md/03_01_parametric_approx.md"
+    },
+    {
+      "id": "03_02_neural_networks",
+      "file": "03_02_neural_networks.pdf",
+      "title": "3.2: Neural Networks",
+      "pages": "370-376",
+      "page_count": 7,
+      "topics": [
+        "neural networks",
+        "training neural networks",
+        "multilayer",
+        "deep neural networks"
+      ],
+      "summary": "",
+      "markdown_file": "md/03_02_neural_networks.md"
+    },
+    {
+      "id": "03_03_learning_cost",
+      "file": "03_03_learning_cost.pdf",
+      "title": "3.3: Learning Cost Functions in Approximate DP",
+      "pages": "377-396",
+      "page_count": 20,
+      "topics": [
+        "fitted value iteration",
+        "Q-factor approximation",
+        "model-free",
+        "approximate policy iteration",
+        "SARSA",
+        "DQN",
+        "advantage updating"
+      ],
+      "summary": "",
+      "markdown_file": "md/03_03_learning_cost.md"
+    },
+    {
+      "id": "03_04_learning_policy",
+      "file": "03_04_learning_policy.pdf",
+      "title": "3.4: Learning a Policy in Approximate DP",
+      "pages": "397-405",
+      "page_count": 9,
+      "topics": [
+        "policy learning",
+        "classifiers",
+        "policy network",
+        "value network",
+        "lookahead minimization"
+      ],
+      "summary": "",
+      "markdown_file": "md/03_04_learning_policy.md"
+    },
+    {
+      "id": "03_05_policy_gradient",
+      "file": "03_05_policy_gradient.pdf",
+      "title": "3.5: Policy Gradient and Related Methods",
+      "pages": "406-426",
+      "page_count": 21,
+      "topics": [
+        "policy gradient",
+        "gradient methods",
+        "proximal policy optimization",
+        "PPO",
+        "random direction",
+        "random search",
+        "cross-entropy"
+      ],
+      "summary": "",
+      "markdown_file": "md/03_05_policy_gradient.md"
+    },
+    {
+      "id": "03_06_aggregation",
+      "file": "03_06_aggregation.pdf",
+      "title": "3.6: Aggregation",
+      "pages": "427-448",
+      "page_count": 22,
+      "topics": [
+        "aggregation",
+        "representative states",
+        "discretization",
+        "POMDP discretization",
+        "error bounds",
+        "feature aggregation",
+        "biased aggregation",
+        "distributed aggregation"
+      ],
+      "summary": "",
+      "markdown_file": "md/03_06_aggregation.md"
+    },
+    {
+      "id": "03_07_notes_exercises_ch3",
+      "file": "03_07_notes_exercises_ch3.pdf",
+      "title": "3.7: Notes, Sources, and Exercises Ch3",
+      "pages": "449-454",
+      "page_count": 6,
+      "topics": [
+        "exercises",
+        "notes",
+        "sources",
+        "chapter 3"
+      ],
+      "summary": "",
+      "markdown_file": "md/03_07_notes_exercises_ch3.md"
+    },
+    {
+      "id": "04_references",
+      "file": "04_references.pdf",
+      "title": "References",
+      "pages": "455-521",
+      "page_count": 67,
+      "topics": [
+        "references",
+        "bibliography",
+        "citations"
+      ],
+      "summary": "",
+      "markdown_file": "md/04_references.md"
+    }
+  ],
+  "usage": "Search topics array to find relevant sections, then read the corresponding PDF file."
+}

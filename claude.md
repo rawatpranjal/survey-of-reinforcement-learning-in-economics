@@ -26,14 +26,17 @@ This is a PhD thesis component (Pranjal Rawat, Georgetown University, advisor: J
 |----|--------|-------|-----------------|--------|
 | 0 | `ch00_introduction/` | Abstract + Introduction | -- | Has draft tex |
 | 1 | `ch01_history/` | Historical Developments | -- | Has draft tex |
-| 2 | `ch02_planning_learning/` | Planning and Learning (DP vs RL) | Gridworld, Bus Engine | Has draft tex + sims |
-| 3 | `ch03_rl_structural_est/` | RL for Structural Estimation | Bus Engine (DP vs DQN) | Has draft tex + sim |
-| 4 | `ch04_inverse_rl/` | Inverse Reinforcement Learning | IRL LP Gridworld | Has draft tex + sims |
-| 5 | `ch05_rl_in_games/` | RL in Games (MARL) | Korean Auction, NFSP | Has draft tex + sims |
-| 6 | `ch06_bandits/` | Bandits & Online Learning | TBD | Draft tex; simulation pending |
-| 7 | `ch07_applications/` | Real World Applications | -- (survey chapter) | Stub; needs substantial expansion |
-| 8 | `ch08_rlhf/` | RLHF & Preference Learning | TBD | Draft tex; simulation pending |
-| 9 | `ch09_conclusion/` | Conclusion & Discussion | -- | Stub; needs expansion |
+| 2 | `ch02_planning_learning/` | Unified Theory of DP and RL | -- | Has draft tex (planning_learning_theory.tex) |
+| 3 | `ch03_rl_control_problems/` | RL for Control Problems | Gridworld, Bus Engine, Discount Targeting, Dispatch, Hotel RM, RTB Bidding, Execution, Datacenter, Inventory | Has draft tex + 9 sims |
+| 4 | `ch04_rl_econ_models/` | Solving Economic Models with RL | Bus Engine (DP vs DQN) | Has draft tex + sim |
+| 5 | `ch05_rl_in_games/` | RL in Games: Imperfect Information | Durable Goods Monopoly (Coase Conjecture), Kuhn Poker (CFR/FP equilibrium) | Has tex + 2 sims |
+| 6 | `ch06_bandits/` | Economic Bandits | Fundamentals, Dynamic Pricing, Auction Reserve, BwK | Has restructured tex + 4 sims |
+| 7 | `ch07_rlhf/` | RLHF & Preference Learning | TBD | Draft tex; simulation pending |
+| 8 | `ch08_conclusion/` | Conclusion | -- | Stub; needs expansion |
+
+**Removed:** `ch05_rl_as_behaviour/` (IRL content belongs in ORE_main sister survey). Archived to `archive/ch05_rl_as_behaviour/`. Old `ch03_benchmarks/` and `ch08_applications/` also archived after merge into `ch03_rl_control_problems/`.
+
+**Note:** Old ch02 tex files (planning_learning.tex, planning_learning_alt.tex) archived to `ch02_planning_learning/tex/backups/`. Old ch02 sims (gridworld.py, bus_engine_intro.py) remain in place as reference; canonical benchmark versions are in `ch03_rl_control_problems/sims/`.
 
 **Deferred:** "Economic Models for RL" chapter -- will decide placement later.
 
@@ -42,9 +45,12 @@ This is a PhD thesis component (Pranjal Rawat, Georgetown University, advisor: J
 ```
 chXX_topic/
   tex/          # LaTeX source for this chapter
+  tex/backups/  # Timestamped backups of tex files (YYYY-MM-DD-HHMMSS_filename)
   papers/       # Key reference PDFs for this chapter
   sims/         # Python scripts, figures (PNG), LaTeX tables (.tex)
 ```
+
+**Papers Directory:** Each chapter's `papers/` folder should contain reference PDFs for validating simulation implementations against the literature. Before implementing any algorithm or running benchmarks, verify formulations against reference papers in the chapter's `papers/` directory. Check that MDP definitions (state, action, transition, reward), update rules, and convergence conditions match the source. Document any intentional simplifications.
 
 ### Top-Level Layout
 
@@ -58,33 +64,29 @@ ORE_main/       # Sister survey (separate project, read-only reference)
 
 High priority (content gaps):
 
-1. Create a bandits simulation script for Chapter 6. The script should implement at least UCB and Thompson Sampling on a synthetic multi-armed bandit or dynamic pricing problem, compare regret against an epsilon-greedy baseline, and produce publication-quality figures saved to `ch06_bandits/sims/`.
+1. ~~Create a bandits simulation script for Chapter 6.~~ DONE. Created 4 simulation scripts: `bandit_fundamentals.py`, `dynamic_pricing_bandit.py`, `auction_reserve_price.py`, `bandits_with_knapsacks.py`. Each produces PNG figures and LaTeX tables in `ch06_bandits/sims/`.
 
-2. Expand Chapter 7 (Applications) from its current 26-line stub to a full survey section. Add structured case studies across domains (platform markets, finance, healthcare, operations) with explicit discussion of state/action/reward formulations used in each deployment.
+2. Create an RLHF and DPO simulation script for Chapter 7. The script should demonstrate reward learning from pairwise preferences and policy optimization under the Bradley-Terry model. Output figures and a comparison table saved to `ch07_rlhf/sims/`.
 
-3. Create an RLHF and DPO simulation script for Chapter 8. The script should demonstrate reward learning from pairwise preferences and policy optimization under the Bradley-Terry model. Output figures and a comparison table saved to `ch08_rlhf/sims/`.
-
-4. Expand Chapter 9 (Conclusion) from its current 6-line stub. Add discussion of open theoretical problems, emerging application areas, methodological limitations of current RL approaches in economics, and directions for future interdisciplinary research.
+3. Expand Chapter 8 (Conclusion) from its current 6-line stub. Add discussion of open theoretical problems, emerging application areas, methodological limitations of current RL approaches in economics, and directions for future interdisciplinary research.
 
 Medium priority (content quality):
 
-5. Split `se_in_rl_full.tex` in Chapter 6. Extract the bandits and online learning content into a standalone file; archive the remainder or redistribute to other chapters.
+4. ~~Split `se_in_rl_full.tex` in Chapter 6.~~ DONE. Replaced with `economic_bandits.tex` (8 subsections). Old file archived to `ch06_bandits/tex/backups/2026-01-28_se_in_rl_full.tex`.
 
-6. Consolidate the two tex variants in Chapter 2 (`planning_learning.tex` and `planning_learning_alt.tex`). Determine the canonical version and archive the other.
+5. Consolidate the two tex variants in Chapter 2 (`planning_learning.tex` and `planning_learning_alt.tex`). Determine the canonical version and archive the other.
 
-7. Triage exploratory notebooks in Chapter 4 (`testing0.ipynb`, `testing1.ipynb`, `testing2.ipynb`). Archive or document their purpose relative to the main IRL experiments.
-
-8. Deepen the RLHF chapter tex. Expand the DPO derivation, add a worked Bradley-Terry example, and connect more explicitly to discrete choice econometrics.
+6. Deepen the RLHF chapter tex (Chapter 7). Expand the DPO derivation, add a worked Bradley-Terry example, and connect more explicitly to discrete choice econometrics.
 
 Low priority (polish):
 
-9. Populate each chapter's `papers/` directory with key reference PDFs.
+7. Populate each chapter's `papers/` directory with key reference PDFs.
 
-10. Standardize existing simulation notebooks in Chapters 2 through 5 to match the simulation standards defined in this file.
+8. Standardize existing simulation notebooks in Chapters 2 through 5 to match the simulation standards defined in this file.
 
-11. Decide whether to include an "Economic Models for RL" chapter and determine its placement.
+9. Decide whether to include an "Economic Models for RL" chapter and determine its placement.
 
-12. Verify end-to-end LaTeX compilation from `docs/`.
+10. Verify end-to-end LaTeX compilation from `docs/`.
 
 ## Writing Style
 
@@ -94,16 +96,30 @@ Low priority (polish):
 - **Math:** `amsmath`, `amsthm`, `amssymb`. Use `\mathbb{}` for sets, `\mathcal{}` for calligraphic, `\boldsymbol{}` for vector notation.
 - **Theorems:** numbered as Theorem, Lemma, Definition, Assumption, Corollary. Use `\newtheorem`.
 - **Code listings:** `minted` package with light gray background (`bg` color), `breaklines=true`.
-- **Figures:** `graphicx` + `subfig`. Store in `docs/figs/` or chapter `sims/` dir. Reference with relative paths.
+- **Figures and tables:** `graphicx` + `subfig`. All figures and tables must be contained in the chapter they belong to (store in the chapter's `sims/` directory). Reference with relative paths from `docs/` (e.g., `../ch07_rlhf/sims/figure.png`).
+- **Block quotes:** Use `\begin{quote}\itshape ... \end{quote}` so quoted passages render in italics.
 - **Highlighting/TODOs:** `todonotes` package for draft notes. Remove before submission.
 
 ### Prose Style
-- Academic but accessible. Target audience: economists curious about RL, and RL researchers curious about economics.
+- Academic formal tone. Target audience: economists curious about RL, and RL researchers curious about economics.
 - Lighter than ORE_main. More expository. Explain intuition before formalism.
 - Each chapter: motivate the topic, review key papers broadly, drill into the math of 2-3 foundational papers, then present the simulation.
+- Do not re-define concepts already established in earlier chapters. If Chapter 2 defines the Bellman equation, later chapters should reference it (e.g., "recall the Bellman optimality equation from Section 2.3") rather than re-derive it. Use consistent notation across all chapters per the Notation Conventions below.
 - Use concrete examples early. Don't front-load notation.
 - Avoid jargon from one field without explaining it to the other. Define terms from both CS and economics when first used.
-- Keep paragraphs short. Use subsections liberally.
+- Keep paragraphs short. Use subsections liberally. However, avoid leaving stub paragraphs of 1-2 lines; merge these into adjacent paragraphs so the text flows naturally. Aim for 3-6 sentences per paragraph.
+- No em dashes. Use commas, semicolons, colons, or separate sentences.
+- No bullet points in LaTeX prose. Use full paragraphs or numbered lists only where structurally necessary.
+- No `\paragraph{Computational Experiment.}` or similar generic paragraph headers for simulation results. Use `\subsection{Simulation Study: <descriptive title>}` with a label.
+- Simulation writeups must be concise: two paragraphs maximum (setup, then results), one consolidated table of all results, one figure (convergence or learning curve style, not bar plots).
+- No \textbf{} anywhere in the document, including inside definitions, enumerations, and theorem environments. Use \emph{} sparingly. Let the math carry the weight.
+- When presenting historical formalisms, use the author's original notation first, then map to modern RL notation.
+- Focus on experiments and what practitioners did, not on what they "argued" or "proposed." Let the work speak.
+- Prefer paragraphs and tables for presenting information. Use figures and graphs rarely, only when a visual representation is genuinely necessary (e.g., learning curves in simulations). Exposition should be carried by prose and math, not by diagrams.
+- For simulation results and experiments: tables first, prose second. Present numerical findings in tables; keep surrounding prose minimal (1-2 sentences per table stating what it shows). Let the numbers speak.
+- Always use rigorous math and formalism. Define all objects (sets, operators, functions) before using them. State assumptions explicitly. Use Definition/Theorem/Lemma environments for formal results.
+- Relegate technical details (proof sketches, implementation specifics, auxiliary bounds, historical side notes) to footnotes. Keep the main text focused on the core argument and results.
+- State facts objectively. Do not give comments or opinions; do not make good/bad judgments. Let results speak for themselves.
 
 ### Notation Conventions
 - States: $s \in \mathcal{S}$, actions: $a \in \mathcal{A}$
@@ -139,13 +155,37 @@ Each simulation constitutes a computational experiment and should adhere to the 
 
 ### Python Conventions
 - Python 3.10+
-- Core: `numpy`, `scipy`, `matplotlib`
+- Core: `numpy`, `scipy`, `matplotlib`, `tqdm`
 - Deep RL (where needed): `torch`
 - Set random seeds explicitly: `np.random.seed(42)` at top. Use a loop over seeds for multi-run experiments.
 - Use descriptive variable names matching the math: `V` for value function, `Q` for Q-values, `pi` for policy.
 - Inline comments for non-obvious steps. No boilerplate docstrings.
 - Plots: `matplotlib` with clear labels, titles, legends. Use `fig, ax = plt.subplots()` pattern. Save at 300 dpi via `fig.savefig("filename.png", dpi=300, bbox_inches="tight")`.
 - LaTeX table output: write `.tex` files containing `tabular` environments, directly includable with `\input{}`.
+
+### Stdout Output Format
+Each simulation script must also produce a `_stdout.txt` file capturing all console output. Run via:
+```bash
+python3 chXX_topic/sims/script_name.py > chXX_topic/sims/script_name_stdout.txt 2>&1
+```
+
+Stdout content requirements:
+- **No opinions, only facts.** Report what the code did and what numbers it produced.
+- **Copious tables.** Print parameter sweeps, results grids, and validation metrics in tabular format.
+- **No subjective commentary.** Avoid words like "good", "bad", "impressive", "surprisingly". State results neutrally.
+- **Structure:** Header with parameters → Experiment results (one line per configuration) → Summary statistics → Output file paths.
+
+## Working Behavior
+
+When working on this project, follow these principles:
+
+- **Read papers thoroughly.** When asked to "read a paper" or "read a book", perform a deep read of the actual content. Use the Read tool to go through the file page by page or section by section. Do not just search for keywords and assume you have read it. Extract key definitions, theorems, algorithms, and notation. Summarize the main contributions and how they relate to the chapter being written.
+- **Never declare victory.** Do not say "looks good", "works correctly", "all done", or similar. State what happened factually: "Script ran without errors. Output files: X, Y, Z."
+- **Be skeptical of results.** If an algorithm "converges", ask why. If a number looks reasonable, verify it against theory. Do not trust outputs until independently checked.
+- **State facts, not judgments.** Instead of "The Q-learning trajectory looks nice", say "Q-learning reached K=1.62 after 5000 iterations (K*=1.615)."
+- **Show, don't tell.** Open figures for the user to inspect. Print numerical results. Do not describe what the user cannot see.
+- **Verify before reporting.** Run the code. Check the output files exist. Confirm numerical values match expectations. Only then report completion.
+- **When something fails, say so plainly.** Do not minimize or excuse failures. "Q-learning did not converge: final error 8.6, expected <0.1."
 
 ## File Tracking
 
@@ -156,9 +196,15 @@ Each simulation constitutes a computational experiment and should adhere to the 
 ## Key Commands
 
 ```bash
-# Build LaTeX (from docs/ dir)
+# Build full document (from docs/ dir)
 cd docs && pdflatex -shell-escape main.tex && bibtex main && pdflatex -shell-escape main.tex && pdflatex -shell-escape main.tex
+
+# Build single chapter (faster, from docs/ dir)
+# Replace chXX and tex path as needed
+cd docs && pdflatex -shell-escape -jobname=ch02_planning_learning "\def\chapterfile{../ch02_planning_learning/tex/unified_planning_learning}\input{compile_chapter}" && bibtex ch02_planning_learning && pdflatex -shell-escape -jobname=ch02_planning_learning "\def\chapterfile{../ch02_planning_learning/tex/unified_planning_learning}\input{compile_chapter}" && pdflatex -shell-escape -jobname=ch02_planning_learning "\def\chapterfile{../ch02_planning_learning/tex/unified_planning_learning}\input{compile_chapter}"
 
 # Run a simulation script
 python chXX_topic/sims/script_name.py
 ```
+
+**Always compile after modifying any `.tex` file and show the PDF output path.** When working on a single chapter, prefer chapter compilation for faster iteration.

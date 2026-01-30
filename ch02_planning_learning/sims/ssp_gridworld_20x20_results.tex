@@ -1,0 +1,25 @@
+\begin{tabular}{lrrr}
+\toprule
+Algorithm & Final Return & Std. Error & Time (s) \\
+\midrule
+Optimal (VI) & 6.3000 & -- & 0.0327 \\
+\midrule
+\multicolumn{4}{l}{\textit{Model-Free RL}} \\
+Q-Learning & 6.3000 & 0.0000 & 2.68 \\
+SARSA & 6.3000 & 0.0000 & 2.35 \\
+Expected SARSA & 6.3000 & 0.0000 & 4.52 \\
+MC Control & -20.0000 & 0.0000 & 8.27 \\
+REINFORCE & -17.3900 & 2.4761 & 55.74 \\
+SARSA(0.9) & 6.3000 & 0.0000 & 6.64 \\
+Q(0.9) & -20.0000 & 0.0000 & 14.71 \\
+\midrule
+\multicolumn{4}{l}{\textit{Planning Methods (Bertsekas Framework)}} \\
+Rollout (heuristic) & 6.3000 & 0.0000 & 0.32 \\
+Rollout (VI-5) & 6.3000 & 0.0000 & 0.32 \\
+Lookahead (l=2) & 6.3000 & 0.0000 & 0.33 \\
+MPC (H=5) & 6.3000 & 0.0000 & 0.56 \\
+MPC (H=10) & 6.3000 & 0.0000 & 0.99 \\
+Truncated Rollout (m=5) & 6.3000 & 0.0000 & 0.33 \\
+Truncated Rollout (m=10) & 6.3000 & 0.0000 & 0.34 \\
+\bottomrule
+\end{tabular}

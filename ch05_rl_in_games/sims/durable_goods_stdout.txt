@@ -1,0 +1,144 @@
+
+======================================================================
+DURABLE GOODS MONOPOLY: TWO-TYPE GAP SELLER-OFFER GAME
+Validation Framework: NashConv + Benchmark + Rationality
+======================================================================
+
+Parameters: V_H=200, V_L=100
+Screening price formula: P*(δ) = 200 - 100δ
+Critical π threshold: π* = 0.5
+======================================================================
+
+======================================================================
+π-SWEEP EXPERIMENT: Two-Type Gap Seller-Offer Game
+======================================================================
+Parameters: V_H=200, V_L=100, δ=0.5
+Screening price: P*(δ) = 150.0
+Critical threshold: π* = 0.50
+CFR iterations: 5000
+
+π=0.10: P(High)=0.000, Expl=5.0258, Theory=Pooling
+π=0.15: P(High)=0.000, Expl=7.5249, Theory=Pooling
+π=0.20: P(High)=0.000, Expl=10.0239, Theory=Pooling
+π=0.25: P(High)=0.000, Expl=12.5229, Theory=Pooling
+π=0.30: P(High)=0.000, Expl=15.0223, Theory=Pooling
+π=0.35: P(High)=0.000, Expl=17.5216, Theory=Pooling
+π=0.40: P(High)=0.000, Expl=20.0213, Theory=Pooling
+π=0.45: P(High)=0.000, Expl=22.5213, Theory=Pooling
+π=0.50: P(High)=0.001, Expl=25.0221, Theory=Indifferent
+π=0.55: P(High)=0.002, Expl=27.5256, Theory=Screening
+π=0.60: P(High)=0.506, Expl=30.0066, Theory=Screening
+π=0.65: P(High)=0.999, Expl=26.2553, Theory=Screening
+π=0.70: P(High)=1.000, Expl=22.5027, Theory=Screening
+π=0.75: P(High)=1.000, Expl=18.7531, Theory=Screening
+π=0.80: P(High)=1.000, Expl=15.0067, Theory=Screening
+π=0.85: P(High)=1.000, Expl=11.2576, Theory=Screening
+π=0.90: P(High)=1.000, Expl=7.5089, Theory=Screening
+
+============================================================
+Generating π-sweep validation outputs...
+============================================================
+Saved: /Users/pranjal/Code/rl/ch05_rl_in_games/sims/durable_goods_coase.png
+Saved: /Users/pranjal/Code/rl/ch05_rl_in_games/sims/durable_goods_nashconv.png
+Saved: /Users/pranjal/Code/rl/ch05_rl_in_games/sims/durable_goods_strategies.png
+Saved: /Users/pranjal/Code/rl/ch05_rl_in_games/sims/durable_goods_results.tex
+
+
+======================================================================
+δ-SWEEP EXPERIMENT: Screening Price Variation
+======================================================================
+Parameters: V_H=200, V_L=100, π=0.7
+CFR iterations: 5000
+
+δ=0.10: P*=190, P(High)=1.000, Expl=28.5009
+δ=0.15: P*=185, P(High)=1.000, Expl=27.7515
+δ=0.20: P*=180, P(High)=1.000, Expl=27.0021
+δ=0.25: P*=175, P(High)=1.000, Expl=26.2527
+δ=0.30: P*=170, P(High)=1.000, Expl=25.5002
+δ=0.35: P*=165, P(High)=1.000, Expl=24.7509
+δ=0.40: P*=160, P(High)=1.000, Expl=24.0014
+δ=0.45: P*=155, P(High)=1.000, Expl=23.2520
+δ=0.50: P*=150, P(High)=1.000, Expl=22.5027
+δ=0.55: P*=145, P(High)=1.000, Expl=21.7537
+δ=0.60: P*=140, P(High)=1.000, Expl=21.0048
+δ=0.65: P*=135, P(High)=0.999, Expl=20.2568
+δ=0.70: P*=130, P(High)=0.991, Expl=19.5154
+δ=0.75: P*=125, P(High)=0.013, Expl=17.5311
+δ=0.80: P*=120, P(High)=0.002, Expl=14.0209
+δ=0.85: P*=115, P(High)=0.001, Expl=10.5193
+δ=0.90: P*=110, P(High)=0.000, Expl=7.0188
+
+============================================================
+Generating δ-sweep validation outputs...
+============================================================
+Saved: /Users/pranjal/Code/rl/ch05_rl_in_games/sims/durable_goods_delta_sweep.png
+
+======================================================================
+VALIDATION SUMMARY
+======================================================================
+
+--- π-Sweep Results (δ=0.5) ---
+Mean NashConv: 17.2955
+Max NashConv: 30.0066
+Pooling region accuracy (π<0.4, P(Screen)<0.15): 100.0%
+Screening region accuracy (π>0.6, P(Screen)>0.85): 100.0%
+
+--- δ-Sweep Results (π=0.7) ---
+Mean NashConv: 21.2432
+Max NashConv: 28.5009
+Screening price formula verified: max error = 0.000000
+
+======================================================================
+DETAILED RESULTS: π-SWEEP
+======================================================================
+     π     P*  P(Screen)   Theory   NashConv         Type
+----------------------------------------------------------------------
+  0.10    150      0.000      0.0     5.0258      Pooling
+  0.15    150      0.000      0.0     7.5249      Pooling
+  0.20    150      0.000      0.0    10.0239      Pooling
+  0.25    150      0.000      0.0    12.5229      Pooling
+  0.30    150      0.000      0.0    15.0223      Pooling
+  0.35    150      0.000      0.0    17.5216      Pooling
+  0.40    150      0.000      0.0    20.0213      Pooling
+  0.45    150      0.000      0.0    22.5213      Pooling
+  0.50    150      0.001      0.5    25.0221  Indifferent
+  0.55    150      0.002      1.0    27.5256    Screening
+  0.60    150      0.506      1.0    30.0066    Screening
+  0.65    150      0.999      1.0    26.2553    Screening
+  0.70    150      1.000      1.0    22.5027    Screening
+  0.75    150      1.000      1.0    18.7531    Screening
+  0.80    150      1.000      1.0    15.0067    Screening
+  0.85    150      1.000      1.0    11.2576    Screening
+  0.90    150      1.000      1.0     7.5089    Screening
+
+======================================================================
+DETAILED RESULTS: δ-SWEEP
+======================================================================
+     δ     P*  P(Screen)   Theory   NashConv         Type
+----------------------------------------------------------------------
+  0.10    190      1.000      1.0    28.5009    Screening
+  0.15    185      1.000      1.0    27.7515    Screening
+  0.20    180      1.000      1.0    27.0021    Screening
+  0.25    175      1.000      1.0    26.2527    Screening
+  0.30    170      1.000      1.0    25.5002    Screening
+  0.35    165      1.000      1.0    24.7509    Screening
+  0.40    160      1.000      1.0    24.0014    Screening
+  0.45    155      1.000      1.0    23.2520    Screening
+  0.50    150      1.000      1.0    22.5027    Screening
+  0.55    145      1.000      1.0    21.7537    Screening
+  0.60    140      1.000      1.0    21.0048    Screening
+  0.65    135      0.999      1.0    20.2568    Screening
+  0.70    130      0.991      1.0    19.5154    Screening
+  0.75    125      0.013      1.0    17.5311    Screening
+  0.80    120      0.002      1.0    14.0209    Screening
+  0.85    115      0.001      1.0    10.5193    Screening
+  0.90    110      0.000      1.0     7.0188    Screening
+
+======================================================================
+OUTPUT FILES
+======================================================================
+  durable_goods_coase.png        - Phase transition plot (π-sweep)
+  durable_goods_nashconv.png     - Convergence plot
+  durable_goods_strategies.png   - Strategy rationality check
+  durable_goods_delta_sweep.png  - δ-sweep plot
+  durable_goods_results.tex      - LaTeX validation table
