@@ -1,0 +1,161 @@
+======================================================================
+NFXP vs RLHF: Two Approaches to Preference Recovery
+======================================================================
+
+Configuration:
+  States: 90
+  Discount: 0.9
+  True theta: [0. 1. 2.]
+  Replacement cost: 5.0
+  Seeds: 20
+
+Transition matrix built: P[a, s, s'] shape = (2, 90, 90)
+
+======================================================================
+EXPERIMENT 1: Recovery Accuracy vs Sample Size
+======================================================================
+Seeds:   0%|          | 0/20 [00:00<?, ?it/s]Seeds:   5%|▌         | 1/20 [00:31<10:06, 31.94s/it]Seeds:  10%|█         | 2/20 [01:09<10:39, 35.50s/it]Seeds:  15%|█▌        | 3/20 [02:20<14:32, 51.34s/it]Seeds:  20%|██        | 4/20 [03:15<14:06, 52.91s/it]Seeds:  25%|██▌       | 5/20 [04:04<12:54, 51.66s/it]Seeds:  30%|███       | 6/20 [05:04<12:40, 54.34s/it]Seeds:  35%|███▌      | 7/20 [06:18<13:12, 60.93s/it]Seeds:  40%|████      | 8/20 [07:12<11:44, 58.68s/it]Seeds:  45%|████▌     | 9/20 [07:55<09:48, 53.54s/it]Seeds:  50%|█████     | 10/20 [08:39<08:27, 50.72s/it]Seeds:  55%|█████▌    | 11/20 [09:27<07:29, 49.97s/it]Seeds:  60%|██████    | 12/20 [10:05<06:09, 46.22s/it]Seeds:  65%|██████▌   | 13/20 [10:40<04:59, 42.83s/it]Seeds:  70%|███████   | 14/20 [11:27<04:25, 44.23s/it]Seeds:  75%|███████▌  | 15/20 [12:41<04:25, 53.16s/it]Seeds:  80%|████████  | 16/20 [13:37<03:35, 53.82s/it]Seeds:  85%|████████▌ | 17/20 [14:22<02:34, 51.37s/it]Seeds:  90%|█████████ | 18/20 [16:20<02:22, 71.26s/it]Seeds:  95%|█████████▌| 19/20 [17:07<01:04, 64.15s/it]Seeds: 100%|██████████| 20/20 [17:36<00:00, 53.36s/it]Seeds: 100%|██████████| 20/20 [17:36<00:00, 52.80s/it]
+/Users/pranjal/Code/rl/ch07_rlhf/sims/nfxp_vs_rlhf.py:813: MatplotlibDeprecationWarning: The 'labels' parameter of boxplot() has been renamed 'tick_labels' since Matplotlib 3.9; support for the old name will be dropped in 3.11.
+  bp = ax.boxplot([nfxp_distances, rlhf_distances], labels=['NFXP', 'RLHF\n(normalized)'])
+
+NFXP Parameter Recovery (||theta_hat - theta*||):
+--------------------------------------------------
+   N choices   Mean Error    Std Error
+--------------------------------------------------
+         100       5.1117       0.6380
+         200       3.5704       0.4931
+         500       2.7022       0.3442
+        1000       1.9757       0.2644
+        2000       2.0961       0.1938
+        5000       1.4646       0.2353
+
+RLHF Cost Correlation (Pearson and Spearman):
+----------------------------------------------------------------------
+ M comparisons      Pearson       (SE)     Spearman       (SE)
+----------------------------------------------------------------------
+            50       0.9907     0.0026       0.9995     0.0005
+           100       0.9955     0.0013       1.0000     0.0000
+           200       0.9987     0.0004       1.0000     0.0000
+           500       0.9996     0.0002       1.0000     0.0000
+          1000       0.9998     0.0001       1.0000     0.0000
+          2000       1.0000     0.0000       1.0000     0.0000
+
+Note: Spearman correlation is robust to monotonic transforms,
+better suited to the identification-up-to-affine problem in Bradley-Terry.
+
+======================================================================
+EXPERIMENT 2: Policy Quality Comparison
+======================================================================
+
+True optimal threshold: state 50
+True RC = 5.0, max keep cost = 2.945, ratio = 1.698
+
+----------------------------------------------------------------------
+DIAGNOSTIC: Per-seed parameter comparison (NFXP vs RLHF)
+----------------------------------------------------------------------
+True theta = [0.000, 1.000, 2.000], RC = 5.0
+----------------------------------------------------------------------
+Seed  0: NFXP theta = [ 0.490,  1.206,  0.000]  |  RLHF phi_norm = [-0.333,  1.251,  2.009]
+Seed  1: NFXP theta = [ 0.152,  1.390,  0.000]  |  RLHF phi_norm = [-0.333,  1.198,  2.074]
+Seed  2: NFXP theta = [-0.730,  2.365,  0.000]  |  RLHF phi_norm = [-0.333,  1.112,  1.990]
+Seed  3: NFXP theta = [-0.400,  0.450,  5.610]  |  RLHF phi_norm = [-0.333,  1.168,  2.179]
+Seed  4: NFXP theta = [-0.866,  2.014,  2.513]  |  RLHF phi_norm = [-0.333,  1.138,  2.057]
+Seed  5: NFXP theta = [-0.643,  2.048,  0.000]  |  RLHF phi_norm = [-0.333,  1.118,  2.044]
+Seed  6: NFXP theta = [-0.246,  1.373,  1.336]  |  RLHF phi_norm = [-0.333,  0.937,  2.661]
+Seed  7: NFXP theta = [ 0.811,  0.000,  4.491]  |  RLHF phi_norm = [-0.333,  1.081,  2.249]
+Seed  8: NFXP theta = [-0.024,  0.000,  4.607]  |  RLHF phi_norm = [-0.395,  0.946,  2.450]
+Seed  9: NFXP theta = [-0.522,  1.852,  0.000]  |  RLHF phi_norm = [-0.333,  1.130,  2.023]
+Seed 10: NFXP theta = [-1.000,  1.985,  0.042]  |  RLHF phi_norm = [-0.333,  1.179,  2.081]
+Seed 11: NFXP theta = [ 0.115,  0.972,  0.580]  |  RLHF phi_norm = [-0.333,  1.277,  1.657]
+Seed 12: NFXP theta = [-0.308,  1.672,  0.000]  |  RLHF phi_norm = [-0.333,  1.002,  2.159]
+Seed 13: NFXP theta = [ 0.735,  0.137,  2.873]  |  RLHF phi_norm = [-0.339,  1.186,  1.982]
+Seed 14: NFXP theta = [-0.327,  1.735,  0.000]  |  RLHF phi_norm = [-0.333,  1.207,  2.136]
+Seed 15: NFXP theta = [ 0.163,  1.264,  1.355]  |  RLHF phi_norm = [-0.333,  0.940,  2.521]
+Seed 16: NFXP theta = [-0.183,  1.506,  0.778]  |  RLHF phi_norm = [-0.333,  1.232,  1.846]
+Seed 17: NFXP theta = [ 0.223,  0.747,  1.896]  |  RLHF phi_norm = [-0.333,  1.143,  2.064]
+Seed 18: NFXP theta = [ 0.258,  0.284,  3.538]  |  RLHF phi_norm = [-0.333,  1.089,  2.218]
+Seed 19: NFXP theta = [-0.715,  1.599,  0.000]  |  RLHF phi_norm = [-0.333,  1.213,  1.760]
+
+======================================================================
+PARAMETER RECOVERY COMPARISON
+======================================================================
+Parameter          True        NFXP (mean±std)   RLHF norm (mean±std)
+----------------------------------------------------------------------
+theta_0           0.000       -0.151 +/- 0.505        -0.337 +/- 0.014 
+theta_1           1.000        1.230 +/- 0.716         1.127 +/- 0.100 
+theta_2           2.000        1.481 +/- 1.792         2.108 +/- 0.233 
+----------------------------------------------------------------------
+Note: RLHF phi normalized by scaling so phi[3] = RC (known replacement cost).
+
+Policy Distance from Optimal (L1):
+------------------------------------------------------------
+            Method    Mean Dist    Std Error
+------------------------------------------------------------
+              NFXP       0.0869       0.0113
+ RLHF (normalized)       0.0163       0.0019
+        RLHF (raw)       0.1680       0.0016
+
+Replacement Threshold Recovery:
+------------------------------------------------------------
+            Method         Mean          Std         True
+------------------------------------------------------------
+              NFXP         56.6         12.0           50
+ RLHF (normalized)         48.5          1.0           50
+        RLHF (raw)         36.9          0.7           50
+
+Key insight: RLHF (raw) has wrong threshold because Bradley-Terry
+identifies rewards only up to affine transformation. Anchoring on
+the known replacement cost RC fixes the scale and recovers the correct policy.
+
+======================================================================
+EXPERIMENT 3: Sample Efficiency
+======================================================================
+
+Target policy distance: 0.05
+
+Sample requirements to achieve target:
+--------------------------------------------------
+NFXP @   100 choices: mean dist = 0.1796
+NFXP @   200 choices: mean dist = 0.1369
+NFXP @   500 choices: mean dist = 0.1330
+NFXP @  1000 choices: mean dist = 0.0869
+NFXP @  2000 choices: mean dist = 0.0777
+NFXP @  5000 choices: mean dist = 0.0500
+  -> NFXP achieves target at 5000 choices
+
+RLHF @    50 comparisons: mean dist = 0.0784
+RLHF @   100 comparisons: mean dist = 0.0495
+  -> RLHF achieves target at 100 comparisons
+RLHF @   200 comparisons: mean dist = 0.0305
+RLHF @   500 comparisons: mean dist = 0.0178
+RLHF @  1000 comparisons: mean dist = 0.0157
+RLHF @  2000 comparisons: mean dist = 0.0138
+
+======================================================================
+EXPERIMENT 4: Robustness to Suboptimal Agent
+======================================================================
+
+NFXP with suboptimal agent (noisy value function):
+------------------------------------------------------------
+   Noise    Param Error    Policy Dist
+------------------------------------------------------------
+     0.0         1.9303         0.0869
+     0.5         1.9535         0.0709
+     1.0         2.8555         0.1136
+     2.0         4.7235         0.2319
+     3.0         6.6191         0.3226
+
+RLHF is robust by design: does not assume optimal behavior.
+
+======================================================================
+Generating output files...
+======================================================================
+
+Saved: ch07_rlhf/sims/cost_recovery.png
+Saved: ch07_rlhf/sims/policy_comparison.png
+Saved: ch07_rlhf/sims/nfxp_vs_rlhf_results.tex
+
+Output files:
+  ch07_rlhf/sims/cost_recovery.png
+  ch07_rlhf/sims/policy_comparison.png
+  ch07_rlhf/sims/nfxp_vs_rlhf_results.tex

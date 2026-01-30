@@ -1,0 +1,31 @@
+This survey has examined reinforcement learning through the lens of economics. The central theoretical result is the unified view of planning and learning: RL extends dynamic programming to large state spaces and model-free settings where transition probabilities and reward functions are unknown. Value iteration, policy iteration, Q-learning, and policy gradients all seek fixed points of operators derived from the Bellman equation. The difference is whether that operator is applied with known transitions (planning) or sampled ones (learning).
+
+\subsection*{Key Achievements by Chapter}
+
+Chapter 2 established the operator framework connecting RL algorithms to classical DP methods. Policy Iteration achieves superlinear convergence by solving a linearized problem at each step; Value Iteration and Q-learning achieve only linear convergence at rate $\gamma$. This explains the $(1-\gamma)^{-1}$ sample complexity gap between model-based and model-free methods.
+
+Chapter 3 demonstrated that RL matches exact DP on tractable benchmarks and outperforms practitioner heuristics where DP is infeasible. Across nine benchmarks spanning dispatch, pricing, execution, inventory, and control, RL policies learned state-dependent strategies that simple rules cannot express.
+
+Chapter 4 showed how RL algorithms can be embedded in structural estimation pipelines. TD learning estimates the recursive value terms in CCP-based DDC estimation without requiring transition density estimation. Policy gradient methods solve the inner-loop DP problem in simulation-based estimators.
+
+Chapter 5 applied counterfactual regret minimization to the durable goods monopoly problem, recovering the theoretical predictions of Gul-Sonnenschein-Wilson without encoding economic structure. The algorithm discovered screening versus pooling equilibria as emergent behavior from regret minimization.
+
+Chapter 6 showed how economic structure (unimodal revenue, monotone demand) yields tighter regret bounds than generic bandit algorithms. Exploiting structure reduces regret from $O(\sqrt{KT})$ to $O(\log T)$.
+
+Chapter 7 connected RLHF to discrete choice econometrics. The Bradley-Terry preference model underlying reward learning is a binary logit. DPO and explicit reward modeling produce equivalent policies under appropriate conditions.
+
+\subsection*{Open Theoretical Problems}
+
+Several theoretical questions remain unresolved. First, the sample complexity of RL with function approximation is not fully characterized. Tabular bounds show model-free methods require $O((1-\gamma)^{-4})$ samples versus $O((1-\gamma)^{-3})$ for model-based, but these bounds may not extend to neural network approximators. Second, convergence guarantees for actor-critic methods with nonlinear function approximation remain incomplete. Third, the relationship between exploration and regret in economic environments with strategic agents is poorly understood.
+
+\subsection*{Methodological Challenges}
+
+Four methodological challenges limit current applications. First, reward misspecification: RL optimizes the stated reward function, which may diverge from the economic objective. Second, sample efficiency: in many economic applications, each sample requires costly experimentation or simulation time. Third, safety constraints: production systems require guarantees that RL will not take catastrophic actions during learning. Fourth, interpretability: RL policies are typically black boxes, limiting adoption in regulated industries.
+
+\subsection*{Directions for Integration}
+
+The most productive path forward combines economic theory with machine learning methods. Economic theory provides structure that constrains the hypothesis space: demand monotonicity, equilibrium conditions, and behavioral regularities all reduce the effective complexity of learning problems. Machine learning provides computational tools to solve models that were previously intractable: high-dimensional state spaces, continuous actions, and complex strategic interactions.
+
+Specific opportunities include: incorporating equilibrium constraints into multi-agent RL to ensure learned policies constitute Nash equilibria; using revealed preference theory to provide sample-efficient reward learning; applying mechanism design principles to shape the reward structure of RL systems; and developing RL methods that respect budget constraints, fairness requirements, and other economic restrictions.
+
+This bidirectional flow of ideas, already visible in the work surveyed here, will continue to shape both fields.

@@ -1,0 +1,50 @@
+Multi-agent reinforcement learning (MARL) operates at the intersection of traditional reinforcement learning and game theory. While single-agent RL concerns optimal behavior in stochastic environments, MARL extends this paradigm to settings where multiple agents simultaneously learn and adapt, naturally giving rise to strategic interactions analyzed in game theory. The theoretical foundations connecting individual learning rules to evolutionary dynamics were developed in the preceding chapter; here we focus on algorithms designed for competitive and cooperative multi-agent settings.
+
+A stochastic game (Markov game) for $n$ agents is a tuple $(\mathcal{S}, \{\mathcal{A}_i\}_{i=1}^n, P, \{r_i\}_{i=1}^n, \gamma)$ where $\mathcal{S}$ is the shared state space, $\mathcal{A}_i$ is agent $i$'s action space, $P(s' | s, \mathbf{a})$ is the transition kernel given joint action $\mathbf{a} = (a_1, \ldots, a_n)$, $r_i(s, \mathbf{a})$ is agent $i$'s reward, and $\gamma \in [0,1)$ is the common discount factor. When $n = 1$ the stochastic game reduces to a standard MDP $(\mathcal{S}, \mathcal{A}, P, r, \gamma)$.
+
+Early MARL research produced a family of algorithms with clean theoretical properties but limited scalability. Independent Q-learning \citep{Tan1993} treats co-players as part of the environment, sacrificing convergence guarantees. Minimax Q-learning \citep{littman1994_minimaxq} solves a linear program at each state to guarantee convergence to minimax values in two-player zero-sum games, but the per-state computation grows rapidly with the action space. Nash Q-learning \citep{hu2003_nashq} generalizes to general-sum games at the cost of requiring a unique Nash equilibrium at each state, a condition that is NP-hard to verify in general \citep{Daskalakis2009}. On the policy side, WoLF-PHC \citep{BowlingVeloso2002} stabilizes multi-agent policy gradient dynamics through adaptive learning rates but has convergence proofs only for two-player, two-action games. The algorithms that have achieved competitive or superhuman play in large games combine fictitious-play or regret-minimization principles with deep function approximation. We turn to these next.
+
+\subsection{Neural Fictitious Self-Play}
+
+\citet{HeinrichSilver2016} combined fictitious play with deep learning, enabling scalability to larger games. In classical fictitious play \citep{Brown1951}, each agent best-responds to the empirical average of opponent strategies; this converges to Nash equilibria in zero-sum games \citep{Robinson1951} and potential games \citep{MondererShapley1996}, but cycles in others \citep{Shapley1964}. NFSP replaces tabular computations with two neural networks per player: a best-response policy $\beta_i$ trained via deep Q-learning and an average strategy network $\bar{\pi}_i$ trained via supervised learning. The best-response network is updated according to:
+\begin{equation}
+L_i^{\text{RL}}(\theta_i) = \mathbb{E}_{(s,a_i,r_i,s') \sim \mathcal{M}_i^{\text{RL}}} [(r_i + \gamma \max_{a'_i} Q_i(s', a'_i; \theta_i^-) - Q_i(s, a_i; \theta_i))^2]
+\end{equation}
+where $\theta_i^-$ are the parameters of a target network. The average strategy network is trained via supervised learning on best-response actions:
+\begin{equation}
+L_i^{\text{SL}}(\phi_i) = \mathbb{E}_{(s,a_i) \sim \mathcal{M}_i^{\text{SL}}} [-\log \bar{\pi}_i(a_i|s; \phi_i)]
+\end{equation}
+where $\mathcal{M}_i^{\text{SL}}$ is a reservoir buffer of best-response actions. NFSP has demonstrated convergence to approximate Nash equilibria in games like Leduc poker, though subsequent methods have shown stronger performance in larger games.
+
+\subsection{Counterfactual Regret Minimization}
+
+\citet{zinkevich2008} developed CFR for extensive-form games, tracking regret at each information set:
+\begin{equation}
+R^T(I,a) = \sum_{t=1}^{T} [v^t(I,a) - v^t(I)]
+\end{equation}
+where $v^t(I,a)$ is the counterfactual value of action $a$ at information set $I$.
+
+The policy is updated via regret matching:
+\begin{equation}
+\pi^{t+1}(I,a) \propto \max(R^t(I,a), 0)
+\end{equation}
+
+CFR guarantees convergence to Nash equilibria in two-player zero-sum games at a rate of $O(1/\sqrt{T})$, with time-averaged strategies converging to the set of correlated equilibria in general-sum games.
+
+\subsection{Deep CFR}
+
+\citet{Brown2019} extended CFR to large-scale games using function approximation. Deep CFR approximates the advantages (counterfactual regrets) at each information set using neural networks:
+\begin{equation}
+A^t(I,a) \approx D^t_{\theta}(I,a)
+\end{equation}
+where $D^t_{\theta}$ is a deep neural network trained on sampled advantages. The training objective is given by:
+\begin{equation}
+L(\theta) = \mathbb{E}_{(I,a,v) \sim \mathcal{B}} [(D_{\theta}(I,a) - v)^2]
+\end{equation}
+where $\mathcal{B}$ is a buffer of advantage samples. The average strategy is similarly approximated with a separate neural network trained to minimize:
+\begin{equation}
+L(\phi) = \mathbb{E}_{(I,\pi) \sim \mathcal{S}} [D_{\text{KL}}(\pi || \bar{\pi}_{\phi}(I))]
+\end{equation}
+where $\mathcal{S}$ is a buffer of strategy samples. Deep CFR has demonstrated remarkable success in large games like no-limit Texas hold'em poker, achieving superhuman performance \citep{brown2019_deepcfr}. The combination of regret minimization theory with modern deep learning offers both theoretical guarantees and practical scalability.
+
+Deep CFR and its variants have demonstrated superhuman performance in poker \citep{moravcik2017}, and regret minimization techniques have been successfully applied beyond poker to games including Starcraft and Stratego \citep{deepmind2022}. NFSP has shown strong performance across imperfect-information games, though it is generally outperformed by CFR-based methods in poker variants \citep{moravcik2017}.
