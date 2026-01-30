@@ -1,0 +1,37 @@
+% Chapter 2: Planning and Learning for Economists
+% A narrative introduction to RL theory for PhD economists
+% Frames RL as asymptotic approximations of the Bellman fixed-point operator
+% Primary references: Bertsekas (2022, 2024), Puterman (1994), Agarwal et al. (2021)
+
+\section{Planning and Learning}
+\label{sec:planning_learning}
+
+\subsection{Introduction}
+\label{sec:ch2_intro}
+
+Economists solve dynamic programs. The Bellman equation appears in consumption-savings problems, job search, investment timing, and structural estimation of discrete choice models. Standard treatments in \citet{StokeyLucas1989} and \citet{Rust1987} assume the transition probabilities and reward functions are known; the computational task is to find the fixed point of the Bellman operator. Reinforcement learning solves the same fixed-point problem but under two additional constraints: the transition model may be unknown (requiring learning from sampled transitions), and the state space may be too large for exact computation (requiring function approximation). This chapter develops the theoretical foundations that govern when and why RL algorithms converge.
+
+The central insight is that RL algorithms are not mysterious: they are asymptotic approximations to classical dynamic programming operators. Value iteration becomes Q-learning when expectations are replaced by single samples. Policy iteration becomes the natural policy gradient when the greedy improvement step is approximated by gradient ascent. The stochastic approximation framework of \citet{Robbins1952} provides the mathematical foundation: under appropriate step-size conditions, noisy iterates converge to the same fixed points as their deterministic counterparts.
+
+Table~\ref{tab:ch2_roadmap} summarizes the six sections of this chapter, each motivated by a question that arises when moving from textbook dynamic programming to data-driven learning.
+
+\begin{table}[h!]
+\centering
+\caption{Chapter roadmap: from dynamic programming to reinforcement learning}
+\label{tab:ch2_roadmap}
+\small
+\begin{tabular}{c|l|l|l}
+\hline
+\S & Title & Economist's Question & Key Resolution \\
+\hline
+2.2 & The Newton Connection & Why does PI converge faster than VI? & PI = Newton's method \\
+2.3 & Stochastic Approximation & Can we replace $\mathbb{E}$ with one sample? & Robbins-Monro; Q-learning \\
+2.4 & The Deadly Triad & Why does regression inside Bellman diverge? & Projection geometry \\
+2.5 & Policy Gradient & Can we optimize $\pi$ directly without $V$? & Policy gradient theorem \\
+2.6 & Actor-Critic & How to reduce variance of policy gradient? & Two-timescale learning \\
+2.7 & Bridging Results & What are the error bounds? & Singh-Yee; sparse sampling \\
+\hline
+\end{tabular}
+\end{table}
+
+
