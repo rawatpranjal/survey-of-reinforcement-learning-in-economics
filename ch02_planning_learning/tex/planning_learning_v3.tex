@@ -130,3 +130,24 @@ Rollout methods extend this framework by performing one step of policy improveme
 \citet{bertsekas2021lessons} proves the cost improvement property: $V^{\tilde{\pi}}(s) \leq V^\mu(s)$ for all $s$, with strict inequality unless $\mu$ is already optimal. AlphaZero implements this principle at scale: neural networks provide $V^\mu$, and Monte Carlo Tree Search extends the effective lookahead. Each MCTS iteration is a sampled rollout, and the aggregation across many samples approximates the expectation in the Bellman operator.\footnote{The error bound for $H$-step lookahead with terminal approximation $V^\mu$ is $\|V^{\tilde{\pi}} - V^*\|_\infty \leq \frac{2\gamma^H}{1-\gamma} \|V^\mu - V^*\|_\infty$. At $H=50$ and $\gamma=0.99$, this multiplier is approximately 1.2; longer lookahead compensates for worse value approximations.}
 
 
+\subsection{The Deadly Triad}
+\label{sec:deadly_triad}
+
+The convergence results of the previous section assume tabular representations: a separate value for each state-action pair. When the state space is large or continuous, this is infeasible. The standard remedy is function approximation: represent $V(s) \approx \hat{V}(s; \theta)$ using a parameterized family such as polynomials, splines, or neural networks. Regression is then used to fit $\theta$ from sampled Bellman targets. This combination of regression and dynamic programming, however, can diverge.
+
+Temporal difference (TD) learning with function approximation does not minimize Bellman error directly. Instead, it finds a fixed point of the projected Bellman operator $\Pi T^\pi$, where $\Pi$ projects onto the function approximation subspace. Consider linear function approximation $\hat{V}(s; \theta) = \phi(s)^\top \theta$, where $\phi(s) \in \mathbb{R}^d$ is a feature vector. The projection $\Pi$ maps any value function to its best approximation in the span of the features, under some norm.
+
+\citet{tsitsiklis1997} establish the convergence conditions. Define the $d^\pi$-weighted norm $\|V\|_{d^\pi}^2 = \sum_s d^\pi(s) V(s)^2$, where $d^\pi$ is the stationary distribution of the Markov chain induced by policy $\pi$. When samples are drawn from $d^\pi$ (on-policy sampling), the projection $\Pi$ is non-expansive in this norm: $\|\Pi V_1 - \Pi V_2\|_{d^\pi} \leq \|V_1 - V_2\|_{d^\pi}$. Since $T^\pi$ is a $\gamma$-contraction in any weighted $\ell_\infty$ norm, the composition $\Pi T^\pi$ remains a contraction, and TD converges to the unique fixed point.
+
+Off-policy sampling breaks this argument. \citet{Baird1995} constructs a counterexample: a six-state MDP with two-dimensional linear function approximation, where samples are drawn uniformly rather than from $d^\pi$. The TD updates cause the weight vector to diverge to infinity. The geometric intuition is that uniform sampling induces a different norm under which $\Pi$ is no longer non-expansive; the composition $\Pi T^\pi$ ceases to be a contraction and can amplify errors.
+
+This phenomenon is called the deadly triad: the combination of function approximation, bootstrapping (TD targets that depend on current estimates), and off-policy learning. Removing any one element restores convergence:
+\begin{enumerate}
+\item Without function approximation (tabular), the projection $\Pi$ is the identity and convergence follows from Section~\ref{sec:stochastic_approx}.
+\item Without bootstrapping (Monte Carlo returns), targets are independent of current estimates and regression is well-posed.
+\item Without off-policy learning (on-policy sampling), the Tsitsiklis-Van Roy conditions are satisfied.
+\end{enumerate}
+
+DQN \citep{mnih2015} addresses the deadly triad through two mechanisms. Experience replay stores transitions in a buffer and samples mini-batches uniformly, breaking temporal correlation and making the sampling distribution approximately stationary. Target networks hold the regression target fixed for many updates: instead of regressing toward $r + \gamma \max_{a'} Q(s', a'; \theta)$, DQN regresses toward $r + \gamma \max_{a'} Q(s', a'; \theta^-)$, where $\theta^-$ is updated slowly. This decouples the moving target problem from the parameter updates.\footnote{\citet{sutton2009gtd} reformulate TD as a saddle-point problem, yielding gradient TD methods that converge off-policy with linear function approximation. These methods are less commonly used in practice than target networks.}
+
+
