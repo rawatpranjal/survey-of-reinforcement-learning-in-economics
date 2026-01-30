@@ -218,3 +218,47 @@ A2C (Advantage Actor-Critic) is the synchronous variant: collect a batch of tran
 The actor-critic structure separates identification from optimization. The critic solves a regression problem (estimate $V^\pi$ from data), while the actor solves an optimization problem (improve $\pi$ using the estimated values). This decomposition mirrors the structure of many econometric estimators: first estimate the model, then compute optimal decisions given the estimates.
 
 
+\subsection{Bridging Results}
+\label{sec:bridging_results}
+
+The preceding sections establish that RL algorithms converge under appropriate conditions. Two questions remain: how does approximation error in the value function propagate to the policy, and how does computational complexity scale with the problem size?
+
+\citet{singh1994} bound the policy degradation from value function errors. If $\hat{V}$ approximates $V^*$ with error $\|\hat{V} - V^*\|_\infty \leq \epsilon$, and $\hat{\pi}$ is the greedy policy with respect to $\hat{V}$, then:
+\begin{equation}
+\|V^* - V^{\hat{\pi}}\|_\infty \leq \frac{2\gamma}{1-\gamma} \epsilon.
+\label{eq:singh_yee}
+\end{equation}
+At $\gamma = 0.99$, the amplification factor is $2 \cdot 0.99 / 0.01 = 198$. A 1\% error in value function approximation yields at most 198\% error in policy value. This bound is pessimistic but finite: approximate value functions do not cause unbounded policy degradation.
+
+Classical dynamic programming complexity scales with the state space size $|\mathcal{S}|$. For problems like Go, where $|\mathcal{S}| \approx 10^{170}$, exact computation is impossible. \citet{kearns2002} prove that with access to a generative model (a simulator that samples transitions from any state-action pair), near-optimal planning requires samples polynomial in:
+\begin{enumerate}
+\item The effective horizon $H = O(\log(1/\epsilon) / \log(1/\gamma))$,
+\item The branching factor $|\mathcal{A}|$,
+\item The desired accuracy $1/\epsilon$.
+\end{enumerate}
+The sample complexity has no dependence on $|\mathcal{S}|$. The sparse sampling algorithm builds a random tree of depth $H$ from the current state, estimates values by averaging leaf rewards, and selects the action with highest estimated value. This result explains why Monte Carlo Tree Search succeeds in large state spaces: planning complexity depends on the horizon and action space, not the state space cardinality.
+
+The apparent dichotomy between model-based and model-free RL dissolves under closer examination. Model-based methods learn a transition model $\hat{P}$ and use it to generate synthetic experience; model-free methods use real experience directly. Dyna \citep{sutton1990} unifies both: after each real transition $(s, a, r, s')$, perform $k$ additional updates using transitions simulated from a learned model. In the limit of infinite simulated transitions, the model-based and model-free approaches converge to the same solution. The practical tradeoff is sample efficiency (model-based methods extract more information per real sample) versus model bias (errors in $\hat{P}$ can compound).
+
+Table~\ref{tab:convergence_summary} summarizes the quantitative results from this chapter.
+
+\begin{table}[h!]
+\centering
+\caption{Summary of convergence results}
+\label{tab:convergence_summary}
+\small
+\begin{tabular}{l|l|l}
+\hline
+Result & Rate/Bound & Implication \\
+\hline
+VI convergence & $\gamma^k$ & 460 iterations for 100$\times$ reduction at $\gamma=0.99$ \\
+PI convergence & Quadratic & 5--10 iterations for same \\
+Q-learning & $\tilde{O}(1/\sqrt{t})$ & $\sim 10^6$ samples for $\epsilon = 0.01$ \\
+Value error $\to$ policy & $\frac{2\gamma}{1-\gamma} \epsilon$ & Bounded degradation \\
+Sparse sampling & No $|\mathcal{S}|$ dependence & Curse of dimensionality broken for planning \\
+NPG & $O(1/k)$ & No $|\mathcal{S}|$, $|\mathcal{A}|$ dependence \\
+\hline
+\end{tabular}
+\end{table}
+
+
