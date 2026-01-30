@@ -151,3 +151,47 @@ This phenomenon is called the deadly triad: the combination of function approxim
 DQN \citep{mnih2015} addresses the deadly triad through two mechanisms. Experience replay stores transitions in a buffer and samples mini-batches uniformly, breaking temporal correlation and making the sampling distribution approximately stationary. Target networks hold the regression target fixed for many updates: instead of regressing toward $r + \gamma \max_{a'} Q(s', a'; \theta)$, DQN regresses toward $r + \gamma \max_{a'} Q(s', a'; \theta^-)$, where $\theta^-$ is updated slowly. This decouples the moving target problem from the parameter updates.\footnote{\citet{sutton2009gtd} reformulate TD as a saddle-point problem, yielding gradient TD methods that converge off-policy with linear function approximation. These methods are less commonly used in practice than target networks.}
 
 
+\subsection{Policy Gradient}
+\label{sec:policy_gradient}
+
+Value-based methods find fixed points of the Bellman operator. Policy-based methods take a different approach: parameterize the policy directly as $\pi_\theta(a|s)$ and maximize expected return $J(\theta) = \mathbb{E}_{\pi_\theta}[\sum_{t=0}^\infty \gamma^t R_t]$ by gradient ascent. This formulation sidesteps the Bellman equation entirely and frames reinforcement learning as constrained optimization.
+
+The policy gradient theorem \citep{SuttonMcAllester2000} provides a tractable expression for the gradient:
+\begin{equation}
+\nabla_\theta J(\theta) = \mathbb{E}_{s \sim d^{\pi_\theta}, a \sim \pi_\theta} \left[ \nabla_\theta \log \pi_\theta(a|s) \, Q^{\pi_\theta}(s,a) \right],
+\label{eq:policy_gradient}
+\end{equation}
+where $d^{\pi_\theta}(s) = (1-\gamma) \sum_{t=0}^\infty \gamma^t \mathbb{P}(s_t = s | \pi_\theta)$ is the discounted state visitation distribution. The gradient does not require $\nabla_\theta d^{\pi_\theta}$, the derivative of the state distribution with respect to policy parameters. This term is intractable in general, but it cancels in the derivation.
+
+REINFORCE \citep{williams1992} is the simplest policy gradient algorithm. Sample a trajectory $(s_0, a_0, r_0, s_1, \ldots)$, compute the return $G_t = \sum_{k=0}^\infty \gamma^k r_{t+k}$ from each time step, and update:
+\begin{equation}
+\theta \leftarrow \theta + \alpha \sum_t \nabla_\theta \log \pi_\theta(a_t|s_t) \, G_t.
+\end{equation}
+This is an unbiased estimator of $\nabla_\theta J(\theta)$, but its variance is high because a single trajectory provides a noisy estimate of $Q^{\pi_\theta}$.
+
+Standard gradient descent treats all parameter directions equally. But small changes in $\theta$ can cause large changes in the policy distribution $\pi_\theta$. The natural policy gradient \citep{Kakade2001} accounts for this curvature by preconditioning with the Fisher information matrix:
+\begin{equation}
+\tilde{\nabla}_\theta J(\theta) = F(\theta)^{-1} \nabla_\theta J(\theta), \quad F(\theta) = \mathbb{E}_{s,a} \left[ \nabla_\theta \log \pi_\theta(a|s) \nabla_\theta \log \pi_\theta(a|s)^\top \right].
+\end{equation}
+In the tabular setting, NPG is equivalent to policy iteration: the natural gradient direction exactly matches the policy improvement step. This explains why NPG inherits the fast convergence of PI.
+
+The RL objective $J(\theta)$ is non-convex, raising concerns about local optima. \citet{agarwal2021theory} establish that for softmax policies, $J(\theta)$ satisfies a gradient domination condition:
+\begin{equation}
+\|\nabla_\theta J(\theta)\|_2^2 \geq \frac{(1-\gamma)^3}{8} \left( J(\pi^*) - J(\pi_\theta) \right).
+\end{equation}
+This Polyak-\L{}ojasiewicz-type inequality implies that every stationary point is globally optimal. NPG with constant step size $\eta = (1-\gamma)/4$ achieves $J(\pi^*) - J(\pi_k) \leq O(1/k)$, with no dependence on $|\mathcal{S}|$ or $|\mathcal{A}|$.
+
+The performance difference lemma provides the foundation for trust region methods. For any two policies $\pi$ and $\pi'$:
+\begin{equation}
+J(\pi') - J(\pi) = \frac{1}{1-\gamma} \mathbb{E}_{s \sim d^{\pi'}} \left[ \sum_a \pi'(a|s) A^\pi(s,a) \right],
+\label{eq:performance_difference}
+\end{equation}
+where $A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)$ is the advantage function. This identity underlies TRPO \citep{Schulman2015} and PPO \citep{Schulman2017}, which constrain policy updates to regions where the advantage estimates remain accurate.
+
+Adding entropy regularization accelerates convergence. The entropy-regularized objective is:
+\begin{equation}
+J_\tau(\theta) = \mathbb{E}_{\pi_\theta} \left[ \sum_{t=0}^\infty \gamma^t \left( R_t + \tau \mathcal{H}(\pi_\theta(\cdot|s_t)) \right) \right],
+\end{equation}
+where $\mathcal{H}(\pi) = -\sum_a \pi(a) \log \pi(a)$ is the entropy and $\tau > 0$ is the temperature. \citet{cen2022fast} prove that NPG with entropy regularization achieves linear convergence: $J_\tau(\pi^*) - J_\tau(\pi_k) \leq (1 - c\tau)^k \cdot [J_\tau(\pi^*) - J_\tau(\pi_0)]$ for some constant $c > 0$. The optimal policy under entropy regularization is softmax: $\pi^*(a|s) \propto \exp(Q^*(s,a)/\tau)$, which matches the logit choice probability from discrete choice econometrics.
+
+
