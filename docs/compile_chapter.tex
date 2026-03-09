@@ -1,10 +1,11 @@
 % Wrapper for compiling individual chapters
 % Usage: Set \chapterfile before \input{compile_chapter.tex}
-% Example: pdflatex "\def\chapterfile{../ch02_planning_learning/tex/unified_planning_learning}\input{compile_chapter}"
+% Example: pdflatex "\def\chapterfile{../ch02_rl_algorithms/tex/rl_algorithms}\input{compile_chapter}"
 
 \documentclass[11pt,notitlepage,a4paper]{article}
 
 \usepackage{graphicx}
+\usepackage{float}
 \usepackage{booktabs}
 \usepackage[round]{natbib}
 \usepackage{amssymb}
@@ -76,6 +77,8 @@
 \definecolor{highlight}{rgb}{1,1,0.6}
 \usepackage[smartEllipses,hybrid]{markdown}
 
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc, decorations.pathreplacing}
 \usepackage{lmodern}
 \usepackage{bbm}
 \newcommand{\indicator}[1]{\mathbbm{1}\{#1\}}
@@ -110,6 +113,7 @@
 \DeclareRobustCommand\iff{\;\Longleftrightarrow\;}
 
 \usepackage{titlesec}
+\newcommand{\sectionbreak}{\clearpage}
 \usepackage{appendix}
 
 \setlist{noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt}

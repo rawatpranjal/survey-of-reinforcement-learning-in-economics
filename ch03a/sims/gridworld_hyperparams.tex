@@ -1,0 +1,19 @@
+\begin{tabular}{ll}
+\hline
+Parameter & Value \\
+\hline
+Grid size & $5 \times 5$ (25 states, 5 actions) \\
+Discount $\gamma$ & 0.95 \\
+Step penalty & -0.1 \\
+Terminal reward & 10.0 \\
+Training episodes & 500,000 \\
+Episode horizon & 50 \\
+Learning rate $\alpha$ & 0.1 (decay 0.99995/ep) \\
+Exploration $\epsilon$ & 1.0 $\to$ 0.01 (decay 0.9995/ep) \\
+Trace decay $\lambda$ & 0.9 \\
+Eval frequency & 10 (tabular), 100 (DQN), 50 (PG) \\
+Eval episodes & 10 \\
+Seeds & 1 (seeds 42--42) \\
+$V^*$ convergence threshold & $\max_s |V(s) - V^*(s)| < 0.1$ \\
+\hline
+\end{tabular}

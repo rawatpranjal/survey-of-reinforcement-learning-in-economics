@@ -4,13 +4,12 @@
 
 \usepackage{booktabs}
 \usepackage[round]{natbib}
-\usepackage{amssymb}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{amsfonts}
 \usepackage{amsmath, amsthm, amssymb}
 \usepackage[most]{tcolorbox}
-\usepackage{soul}      % for \hl highlighting
+\usepackage{soul}
 \soulregister\ref7
 \usepackage{geometry}
 \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in, rmargin=1in,}
@@ -26,7 +25,6 @@
 
 \usepackage{hyperref}
 \usepackage{listings}
-\usepackage{geometry}
 
 \usepackage{colortbl}
 \hypersetup{
@@ -41,41 +39,21 @@
     filebordercolor=linkbordercolor,
     linkbordercolor=linkbordercolor,
 }
-\usepackage[doublespacing]{setspace}
+\usepackage[singlespacing]{setspace}
 
 \usepackage{subfig}
 \renewcommand{\thesubfigure}{(\alph{subfigure})}
-\captionsetup[subfigure]{labelformat=default}
 
 
-\usepackage{fullpage}
-
-\usepackage{color,soul}
 \usepackage{verbatim}
 \usepackage{enumitem}
 
-\usepackage{minted}
-\definecolor{bg}{rgb}{0.95,0.95,0.95} % Light gray background
-\setlength{\fboxsep}{1mm}
-\setminted{
-    bgcolor=bg, % Apply the background color
-    frame=none,
-    linenos=false, % Enable line numbers
-    fontsize=\normalsize, % Adjust font size
-    breaklines=true, % Break long lines
-    breakanywhere=true,
-    tabsize=4, % Set tab size
-    breaksymbolleft={},
-    texcl=false,
-    escapeinside=||
-}
-\setmintedinline{
-    bgcolor=bg, % Apply background color
-    fontsize=\normalsize, % Set font size (adjust as needed)
-    breaklines=true, % Enable line wrapping for inline code
-}
-\definecolor{highlight}{rgb}{1,1,0.6} % Light yellow for highlighting
-\usepackage[smartEllipses,hybrid]{markdown}
+\definecolor{bg}{rgb}{0.95,0.95,0.95}
+\definecolor{highlight}{rgb}{1,1,0.6}
+
+% TikZ for diagrams
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc, decorations.pathreplacing}
 
 % Provides bold monospaced fonts
 \usepackage{lmodern}
@@ -89,10 +67,10 @@
 
 
 % Select what to do with todonotes:
-% \usepackage[disable]{todonotes} % notes not showed
+\usepackage[disable]{todonotes} % notes not showed
 % markup for editing
-\setlength{\marginparwidth}{2cm}
-\usepackage[draft,textsize=small]{todonotes}   % notes showed
+% \setlength{\marginparwidth}{2cm}
+% \usepackage[draft,textsize=small]{todonotes}   % notes showed
 \newcommand{\moveto}[2]{\todo[backgroundcolor=white, bordercolor=red, inline]{{\bf Move to $\longrightarrow$ #1}\\#2}}
 \usepackage[normalem]{ulem}
 \newcommand{\movedto}[2]{\todo[backgroundcolor=white, bordercolor=red, inline]{{\bf Moved to $\longrightarrow$ #1}\\\sout{#2}}}
@@ -113,15 +91,14 @@
 \newtheorem{conjecture}{Conjecture}
 \renewcommand\theconjecture{J\arabic{conjecture}}
 
-\renewcommand{\baselinestretch}{1.5}
+\renewcommand{\baselinestretch}{1.0}
 
 \def\argmin{\mathop{\it argmin}}
 \def\argmax{\mathop{\it argmax}}
 \DeclareRobustCommand\iff{\;\Longleftrightarrow\;}
 
 \usepackage{titlesec}
-
-\usepackage{appendix}
+\newcommand{\sectionbreak}{\clearpage}
 
 %compact lists
 \setlist{noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt}
@@ -131,12 +108,11 @@
 \begin{document}
 
 \begin{titlepage}
-\begin{spacing}{1}
 \title{\textsc{A Survey of Reinforcement Learning For Economics}}
 \author{
 \textsc{Pranjal Rawat, Georgetown University}\\
 }
-\date{\textsc{January 2026}}
+\date{\textsc{March 2026}}
 
 \maketitle
 \thispagestyle{empty}
@@ -151,11 +127,8 @@
 
 \end{abstract}
 
-\end{spacing}
 \end{titlepage}
 
-
-\large
 
 \section{Introduction}
 \label{section:intro}
@@ -165,43 +138,48 @@
 \label{section:history}
 \input{../ch01_history/tex/history}
 
-\section{Theory of Planning and Learning}
-\label{section:planning_learning}
-\input{../ch02_planning_learning/tex/planning_learning_v3}
+\section{Reinforcement Learning Algorithms}
+\label{section:rl_algorithms}
+\input{../ch02_rl_algorithms/tex/rl_algorithms}
 
-\section{Applications of Reinforcement Learning}
+\input{../ch03_theory/tex/planning_learning_v3}
+
+\section{Reinforcement Learning Algorithms: An Illustrated Example}
+\label{section:illustrated_example}
+\input{../ch03a/tex/illustrated_example}
+
+\section{Reinforcement Learning for Optimal Control}
 \label{section:applications}
-\input{../ch03_rl_control_problems/tex/applications}
+\input{../ch04_control_problems/tex/applications}
 
-\section{Solving Economic Models with Reinforcement Learning}
+\section{Structural Estimation with Reinforcement Learning}
 \label{section:rl_econ_models}
-\input{../ch04_rl_econ_models/tex/rl_in_se}
+\input{../ch05_econ_models/tex/rl_in_se}
 
 \section{Reinforcement Learning in Games}
 \label{section:rl_games}
-\input{../ch05_rl_in_games/tex/rl_in_games}
+\input{../ch06_games/tex/rl_in_games}
 
-\section{Multi-Armed Bandits in Economics}
+\section{Real-Time Reinforcement Learning and Economic Modelling}
 \label{section:bandits}
-\input{../ch06_bandits/tex/se_in_rl_full}
+\input{../ch07_bandits/tex/dynamic_pricing}
 
 \section{Reinforcement Learning from Human Feedback}
 \label{section:rlhf}
-\input{../ch07_rlhf/tex/rlhf}
+\input{../ch08_rlhf/tex/rlhf}
+
+\section{Offline Reinforcement Learning and Causal Inference}
+\label{section:causal_rl}
+\input{../ch09_causal/tex/causal_rl}
 
 \section{Conclusion}
 \label{section:conclusion}
-\input{../ch08_conclusion/tex/conclusion}
+\input{../ch10_conclusion/tex/conclusion}
 
 % REFERENCES
 \bibliographystyle{plainnat}
 \setcitestyle{maxcitenames=2}
 
-\singlespacing
 \bibliography{refs}
-\newpage
-\appendix
-\renewcommand{\thesection}{Appendix \Alph{section}}
-\renewcommand{\thefigure}{\Alph{section}\arabic{figure}}
 
 \end{document}
