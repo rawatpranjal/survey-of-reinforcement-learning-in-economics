@@ -1,0 +1,94 @@
+% Illustrated Example: 9 RL Algorithms on a 5x5 Gridworld
+% Per-state value function convergence analysis
+% All numbers from gridworld_illustrated.py (1 seed, 500,000 episodes)
+
+The preceding chapters derived convergence rates, identified failure modes, and catalogued the tradeoffs governing reinforcement learning algorithms. This section runs nine algorithms on a common environment to observe these properties empirically, with particular attention to per-state value function convergence.
+
+\subsection{Setup}
+\label{sec:illustrated_setup}
+
+The environment is a $5 \times 5$ deterministic gridworld with five actions (up, down, left, right, stay). Each non-terminal step incurs a penalty of $-0.1$; reaching the goal in the bottom-right corner yields $+10$. A small state-dependent perturbation ($\epsilon = 0.001$) breaks the symmetry between equally-long paths, ensuring a unique optimal policy.\footnote{Without the perturbation, any shortest path from start to goal is optimal. The perturbation subtracts $\epsilon \cdot i/N^2$ from each step reward, where $i$ is the destination state index. Since moving down increases the state index by $N$ while moving right increases it by 1, the agent strictly prefers right over down at every interior state.} The discount factor is $\gamma = 0.95$ and each episode is capped at 50 steps. The optimal path requires 8 steps, yielding an optimal discounted return of 9.30.\footnote{Shared hyperparameters across all learning algorithms: learning rate $\alpha = 0.1$ (decay 0.99995/episode) for value-based methods, $\alpha = 0.01$ for policy gradient methods; $\epsilon$-greedy exploration from 1.0 to 0.01 (decay 0.9995/episode); trace decay $\lambda = 0.9$; NPG actor step size $\eta = 0.2$, critic step size 0.5 (both decay 0.99995/episode). DQN uses a two-layer network with 64 hidden units, replay buffer of 50,000 transitions, batch size 64, learning rate $10^{-3}$, target network update every 100 episodes, and $\epsilon$-decay 0.9999. PPO uses clip ratio 0.2, 4 optimization epochs per batch, GAE $\lambda = 0.95$, learning rate $0.01$ (decay 0.99995/episode). All learning algorithms run for 500,000 episodes with seed 42.}
+
+With only 25 states, the value function $V^*(s)$ can be displayed in full. The grid ranges from $V^*(s_0) = 6.38$ at the top-left corner to $V^* = 10.0$ at the state adjacent to the goal, with values increasing monotonically along the optimal path. This small scale makes it feasible to track convergence at every state individually, rather than relying on aggregate metrics that can mask important differences between algorithms.
+
+Two planning methods serve as baselines: value iteration (VI) and policy iteration (PI), both requiring the full transition model $P(s'|s,a)$. Seven model-free learning algorithms observe only sampled transitions: Q-learning, SARSA, Q($\lambda$), DQN, REINFORCE with value baseline, Natural Policy Gradient (NPG), and Proximal Policy Optimization (PPO). DQN replaces Q-learning's lookup table with a two-layer neural network (64 hidden units) as function approximator, training on minibatches sampled from a replay buffer. Algorithm definitions appear in Sections~\ref{sec:classical_synthesis}--\ref{sec:actor_critic}; this section focuses on empirical behavior.
+
+Table~\ref{tab:gridworld_results} reports results for all nine algorithms.
+
+\begin{table}[ht]
+\centering
+\caption{Performance of nine algorithms on the $5 \times 5$ gridworld. ``Ep to $V^*$ conv'' is the first checkpoint at which $\max_s |V(s) - V^*(s)| < 0.1$ across all 25 states; ``---'' indicates the algorithm never reaches this threshold. All seven learning algorithms achieve the optimal return of 9.30, but only Q-learning, Q($\lambda$), and DQN converge to $V^*$ everywhere.}
+\label{tab:gridworld_results}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\input{ch03a/sims/gridworld_study_results}
+\end{table}
+
+\subsection{Planning Versus Learning}
+\label{sec:illustrated_planning}
+
+VI converges in 9 iterations (0.001 seconds). On this deterministic gridworld, the iteration count matches the MDP diameter: the longest shortest path from any state to the goal is 8 steps, and each Bellman backup propagates value one step outward from the terminal state.\footnote{The $\gamma^k$ contraction bound from Section~\ref{sec:newton_connection} predicts roughly $\log(\epsilon^{-1}) / \log(\gamma^{-1}) \approx 360$ iterations for $\epsilon = 10^{-8}$, making it loose by a factor of 40 on this structured problem.}
+
+PI converges in 9 policy-improvement steps (0.018 seconds). At each step, PI solves the linear system $V^\pi = r^\pi + \gamma P^\pi V^\pi$ and propagates value information across the full state space simultaneously, rather than one step at a time as in VI.
+
+The fastest learning method, Q($\lambda$), needs 20 episodes to reach 99\% of the optimal return; NPG and PPO need 50; SARSA needs 80. The gap between 0.001 seconds of planning and 20--80 episodes of learning is the price of not knowing the transition model $P(s'|s,a)$.
+
+
+\subsection{Value Function Convergence}
+\label{sec:illustrated_convergence}
+
+All seven learning algorithms achieve the optimal return of 9.30, yet only three converge to $V^*(s)$ for all 25 states (Table~\ref{tab:gridworld_results}). This distinction, invisible in the return metric, is the central finding of this comparison.
+
+Q-learning and Q($\lambda$) are off-policy: they learn $Q^*$ regardless of the behavior policy. Both achieve $\max_s |V(s) - V^*(s)| < 0.1$ by episode 610 and 550 respectively, with final RMSE below 0.01. Q($\lambda$) converges slightly faster due to eligibility traces propagating the terminal reward backward through the full 8-step trajectory within a single episode.
+
+DQN is also off-policy and converges to $V^*$ at all 25 states by episode 1600, with RMSE 0.006 and $\max_s |V(s) - V^*(s)| = 0.01$. These errors are comparable to the tabular methods. The cost is wall-clock time: DQN requires 2921 seconds versus 25 seconds for tabular Q-learning, a $118\times$ slowdown from neural network training overhead on a problem small enough for exact tabular representation.
+
+SARSA, REINFORCE, NPG, and PPO are on-policy: they learn the value of the exploration policy $\pi_\epsilon$, not $\pi^*$. SARSA leaves 9 of 25 states unconverged at episode 500,000, with a maximum error of 5.53 concentrated at the state farthest from the goal. REINFORCE leaves 15 of 25 states unconverged (max error 5.71), NPG leaves 12 of 25 unconverged (max error 9.72), and PPO leaves 16 of 25 unconverged (max error 5.42).
+
+Table~\ref{tab:value_convergence} tracks $\max_s |V(s) - V^*(s)|$ at five episode checkpoints. For Q-learning and Q($\lambda$), the maximum error drops below 0.1 by episode 1,000 and continues falling. DQN follows the same trajectory with a slight delay. The on-policy methods show a different pattern: SARSA's maximum error remains above 5.0 throughout training, and the policy gradient methods plateau at similar levels, confirming that the error is structural rather than a matter of insufficient training.
+
+\begin{table}[ht]
+\centering
+\caption{Maximum per-state value error $\max_s |V(s) - V^*(s)|$ over episodes (rolling average over $\pm 3$ snapshots). Off-policy methods converge uniformly; on-policy methods plateau at persistent errors driven by rarely-visited states.}
+\label{tab:value_convergence}
+\footnotesize
+\input{ch03a/sims/gridworld_value_convergence}
+\end{table}
+
+Table~\ref{tab:policy_convergence} tracks the fraction of states at which each algorithm's greedy policy matches $\pi^*$. Q-learning and Q($\lambda$) reach 100\% policy agreement by episode 10,000. DQN achieves 92\% at its best checkpoints but oscillates substantially between snapshots, a consequence of neural network weight updates shifting the argmax at states with similar Q-values. SARSA stabilizes at 88\% despite never converging in value. REINFORCE, NPG, and PPO plateau at 44--76\%.
+
+\begin{table}[ht]
+\centering
+\caption{Policy agreement $(\%$ of states where $\pi(s) = \pi^*(s))$ over episodes (rolling average over $\pm 3$ snapshots). Tabular off-policy methods reach full agreement. DQN's average is depressed by inter-snapshot oscillation. Policy gradient methods plateau below 80\%.}
+\label{tab:policy_convergence}
+\footnotesize
+\input{ch03a/sims/gridworld_policy_convergence}
+\end{table}
+
+
+\subsection{Optimal Returns Without Optimal Value Functions}
+\label{sec:illustrated_agreement}
+
+NPG reaches 99\% of optimal return at episode 50 but never converges to $V^*$ at 12 of 25 states. The per-state error pattern reveals why: NPG's value function is accurate along the optimal path (states near the diagonal from start to goal) but wildly inaccurate at off-path states. At state (1,4), NPG's error is 9.72, nearly the full magnitude of $V^*$. The agent has learned to act optimally on the equilibrium path without learning what off-equilibrium states are worth.
+
+This is the distinction between on-path and off-path behavior. An agent can achieve optimal performance in its observed environment, acting correctly on the equilibrium path, without having solved the complete decision problem for every contingency. In structural estimation terms, the agent's observed behavior reveals optimal choices, but its counterfactual predictions (what would it do at states it never visits?) are unreliable. Off-policy methods sidestep this problem by learning $Q^*$ from any data, including exploratory transitions; on-policy methods learn the value of the policy they actually follow, which is the exploration policy during training.
+
+Figure~\ref{fig:value_heatmaps} makes this visible. At $5\times 5$ resolution, each state's error is individually readable. Q-learning shows a wavefront of decreasing error spreading from the goal; by the final episode, the entire grid is white (error near zero). NPG, REINFORCE, and PPO show persistent dark patches at states the optimal policy rarely visits, with errors exceeding 5.0 at states in the far corners.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{ch03a/sims/gridworld_value_heatmaps.png}
+\caption{Learned value function $V(s)$ at percentage-based checkpoints of each algorithm's $V^*$-convergence time $T$, defined as the first episode where $\max_s |V(s) - V^*(s)| < 0.1$; algorithms that never converge use $T = 500{,}000$. All columns share the same color scale, so a converged algorithm's grid visually matches the $V^*$ reference column. Off-policy methods (Q-learning, Q($\lambda$), DQN) converge to $V^*$ everywhere. On-policy methods (SARSA, REINFORCE, NPG, PPO) show persistent discrepancies at off-path states even at the final episode.}
+\label{fig:value_heatmaps}
+\end{figure}
+
+Figure~\ref{fig:policy_heatmaps} shows the corresponding policy grids. Q-learning's arrows match $\pi^*$ everywhere by the final checkpoint. NPG and PPO show incorrect arrows concentrated at the same off-path states where value errors are largest: the agent has never needed to act at these states, so its policy there reflects the softmax initialization rather than learned behavior.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{ch03a/sims/gridworld_policy_heatmaps.png}
+\caption{Policy grids at percentage-based checkpoints of $V^*$-convergence time $T$ (same definition as Figure~\ref{fig:value_heatmaps}). Arrows indicate the greedy action at each state; dots indicate the stay action. Off-policy methods converge to $\pi^*$ everywhere. On-policy methods retain incorrect actions at states far from the optimal path.}
+\label{fig:policy_heatmaps}
+\end{figure}
+
+

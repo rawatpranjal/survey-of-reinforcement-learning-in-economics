@@ -29,3 +29,9 @@ ORE_main/
 
 # Paper download script cache
 scripts/.paper_cache.json
+
+# Lua bridge build artifacts
+*.luabridge.lua
+
+# Worktrees
+.worktrees/

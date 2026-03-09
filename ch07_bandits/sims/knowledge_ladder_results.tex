@@ -1,0 +1,12 @@
+\begin{tabular}{llrrrrl}
+\toprule
+Level & Algorithm & $T{=}10$K & $T{=}50$K & $T{=}100$K & $T{=}200$K & Rate \\
+\midrule
+0 & $\varepsilon$-greedy & 160 & 624 & 1,158 & 2,263 & $\Theta(T)$ \\
+1 & LTE (5\%) & 1,005 & 1,165 & 1,363 & 1,771 & $O(T^{2/3})$ \\
+2 & UCB1 & 719 & 2,609 & 4,263 & 6,734 & $O(\sqrt{KT})$ \\
+3 & Thompson & 290 & 628 & 844 & 1,136 & $O(\sqrt{KT})$ \\
+4 & UCB-PI & 789 & 2,266 & 3,244 & 4,503 & $O(\log T)$ \\
+5 & UCB-PI-tuned & 338 & 541 & 640 & 780 & $O(\log T)$ \\
+\bottomrule
+\end{tabular}
