@@ -1,0 +1,104 @@
+======================================================================
+WIND FARM STORAGE CONTROL: CURSE OF DIMENSIONALITY STUDY
+======================================================================
+Horizon: 24, Discount: 0.95
+State: wind ∈ [0,100], price ∈ [0,1], SoC ∈ [0,50]
+Action: charge/discharge ∈ [-20,20]
+
+--- Random Policy Baseline ---
+Random policy return: 1048.45
+
+======================================================================
+EXPERIMENT 1: CURSE OF DIMENSIONALITY SCALING
+======================================================================
+
+--- Dimension d=3 ---
+State space size: 3,375
+Time: 637.41s, Iterations: 50
+
+--- Dimension d=4 ---
+State space size: 50,625
+Time: 545.01s, Iterations: 25
+
+--- Dimension d=5 ---
+State space size: 759,375
+Time: 409.70s, Iterations: 16
+
+--- Curse Scaling Summary ---
+ Dim       States     Time (s)       Params
+--------------------------------------------
+   3        3,375        637.4        3,375
+   4       50,625        545.0       50,625
+   5      759,375        409.7      759,375
+   6   11,390,625        308.0 (est)   11,390,625
+
+======================================================================
+EXPERIMENT 2: SAMPLE EFFICIENCY COMPARISON
+======================================================================
+Seeds:   0%|          | 0/5 [00:00<?, ?it/s]Seeds:  20%|██        | 1/5 [03:00<12:03, 180.94s/it]Seeds:  40%|████      | 2/5 [06:06<09:10, 183.49s/it]Seeds:  60%|██████    | 3/5 [09:12<06:09, 184.88s/it]Seeds:  80%|████████  | 4/5 [12:21<03:06, 186.49s/it]Seeds: 100%|██████████| 5/5 [15:27<00:00, 186.33s/it]Seeds: 100%|██████████| 5/5 [15:27<00:00, 185.55s/it]
+
+--- Sample Efficiency Summary ---
+    factored: 1101.21 +/- 10.18
+         dqn: 1114.13 +/- 2.17
+    bilinear: 985.13 +/- 104.38
+
+======================================================================
+EXPERIMENT 3: SCALING ANALYSIS
+======================================================================
+
+--- Scaling Summary ---
+ Farms       DP (s) Factored (s)      DQN (s)
+------------------------------------------------
+     1          0.0          2.0          3.0
+     2          0.0          4.0          8.5
+     3         10.0          6.0         15.6
+     4        >1000          8.0         24.0
+     5        >1000         10.0         33.5
+
+======================================================================
+EXPERIMENT 4: STRUCTURE VERIFICATION
+======================================================================
+
+--- Transition Coupling ---
+Coupling matrix (|correlation|):
+        w'      p'      c'
+  w:  0.813 0.024 nan
+  p:  0.041 0.504 nan
+  c:  0.010 0.020 nan
+
+Mean off-diagonal coupling: nan
+
+--- Q-function Smoothness ---
+Empirical Lipschitz constant (95th percentile): 62.8174
+
+--- Feature Rank Analysis ---
+Feature covariance eigenvalues (top 5):
+  λ_1 = 0.4139
+  λ_2 = 0.1246
+  λ_3 = 0.0161
+  λ_4 = 0.0064
+  λ_5 = 0.0004
+Effective rank: 9
+
+======================================================================
+GENERATING OUTPUTS
+======================================================================
+Saved: curse_scaling.png
+Saved: sample_efficiency.png
+Saved: scaling_analysis.png
+Saved: structure_verification.png
+Saved: results.tex
+
+======================================================================
+SUMMARY
+======================================================================
+Coupling (Δ_P): nan
+Lipschitz constant: 62.8174
+Feature effective rank: 9
+
+Output files generated:
+  - curse_scaling.png
+  - sample_efficiency.png
+  - scaling_analysis.png
+  - structure_verification.png
+  - results.tex

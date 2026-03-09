@@ -1,0 +1,153 @@
+In this chapter we focus on ``online" or ``real-time" reinforcement learning where and agent learns ``live'' or ``in production'' and not in a ``offline" or simulation environment. This setting makes ``exploration'' a real cost, and the agent is forced to balance exploration vs exploitation. This setting is particularly relevant for economic applications, where the agent is typically a firm learning about demand and the cost of exploration is lost revenue. I focus on the problem of dynamic pricing, where a seller learns to set prices for products with unknown demand. This problem has been studied extensively in the economics and machine learning literatures, and it provides a rich testbed for understanding how structural assumptions about demand affect algorithmic learning. 
+
+\citet{Rothschild1974} posed pricing under demand uncertainty as a two-armed bandit problem. His insight was that a myopic seller can get stuck at a suboptimal price forever, because exploiting the currently best-looking price generates no information about alternatives. This chapter focuses on papers that develop these types of explore-exploit models and tries to quantify the value of structural modeling in online dynamic pricing. 
+
+A seller faces $T$ customers in sequence, setting a price for each and observing only whether the customer bought. The seller does not observe the customer's willingness to pay. Regret measures the total revenue gap between the seller's pricing policy and the best fixed price in hindsight. If the optimal fixed price earns revenue $r^*$ per customer, a policy with regret $R(T)$ earns approximately $T r^* - R(T)$ in total. The central question in dynamic pricing is how fast $R(T)$ can shrink, relative to $T$, as the seller accumulates purchase data.
+
+This chapter surveys the theoretical and empirical literature on bandit-based dynamic pricing. I begin with foundational results that establish the baseline regret rates under progressively stronger assumptions on demand. I then examine more recent research, each illustrating a distinct economic insight. A comparison table collects these results and I conclude with a simulation study replicating the \citet{Misra2019} pricing experiment.
+
+\subsection{Foundations}
+\label{sec:dp_foundations}
+
+\subsubsection{No Structure on Demand}
+\label{sec:kleinberg}
+
+\citet{Kleinberg2003} study the simplest version of the problem. Customers arrive with valuations drawn i.i.d.\ from an unknown distribution on $[0,1]$, and the seller posts a price from a continuous set. The demand curve $D(p) = \Pr(v \geq p)$ is unknown; the only feedback is whether each customer bought. The seller's goal is to minimize regret against the single price $p^*$ that maximizes $p \cdot D(p)$. Kleinberg and Leighton prove that the minimax regret is $\Theta(\sqrt{T})$.\footnote{The upper bound, $O(\sqrt{T \log T})$, discretizes $[0,1]$ into $K = \lceil (T/\log T)^{1/4} \rceil$ prices and runs the UCB1 algorithm of \citet{auer2002}. The lower bound, $\Omega(\sqrt{T})$, constructs a family of demand curves parameterized by the location of the optimal price $p^* \in [0.3, 0.4]$. The key tension: posting prices far from $p^*$ is informative about demand but costly in revenue; posting prices near $p^*$ is cheap but uninformative. Resolving this tension costs at least $\Omega(\sqrt{T})$ in cumulative revenue.} In concrete terms, after 10,000 customers the seller loses roughly 100 customers' worth of revenue to the uncertainty in demand. No algorithm can do better without imposing structure on $D$. For adversarial valuations (chosen by a worst-case opponent rather than drawn from a fixed distribution), the minimax regret rises to $\Theta(T^{2/3})$, achieved by the Exp3 algorithm on a discretized price grid. I focus on the stochastic setting throughout this chapter.
+
+\subsubsection{Parametric Demand}
+\label{sec:broder}
+
+\citet{Broder2012} consider a parametric demand model $d(p; z) = \Pr(V \geq p)$, where $z \in \mathbb{R}^n$ is an unknown parameter governing the demand curve. The seller observes binary purchase decisions and updates a maximum likelihood estimate of $z$. Under standard regularity conditions (bounded demand, unique optimal price, smooth revenue function), the minimax regret is again $\Theta(\sqrt{T})$.\footnote{The lower bound (Theorem 3.1 of \citet{Broder2012}) constructs a linear demand family where all demand curves pass through the same point at the optimal price $p^*(z_0)$. Observing purchases at this price provides no information about $z$. An MLE-Cycle policy that interleaves dedicated exploration rounds with greedy pricing achieves the matching upper bound $O(\sqrt{T})$ (Theorem 3.6).} Parametric structure alone does not break the $\sqrt{T}$ barrier.
+
+The picture changes under a ``well-separated'' condition requiring that every price in the feasible set is informative about the demand parameter. Formally, the Fisher information $I(p, z)$ is bounded below by $c_f > 0$ for all prices $p$ and parameters $z$.\footnote{This means no two demand curves $d(p; z)$ and $d(p; z')$ cross on the pricing interval, so every purchase observation distinguishes the two hypotheses. In the lower-bound family of Theorem 3.1, the curves all cross at $p = 1$, which is why the $\sqrt{T}$ floor emerges.} Under well-separation, a pure greedy policy (MLE-Greedy, which simply prices at $p^*(\hat{z}_t)$ in each period) achieves $O(\log T)$ regret (Theorem 4.8). After 10,000 customers, the revenue loss is only about 9 customers' worth. When every price teaches the seller something, dedicated exploration rounds become unnecessary.
+
+\subsubsection{High-Dimensional Features with Sparsity}
+\label{sec:javanmard}
+
+\citet{Javanmard2019} extend the setting to products described by $d$-dimensional feature vectors $x_t$. The market value is $v_t = x_t^\top \theta_0 + z_t$, where $\theta_0 \in \mathbb{R}^d$ is unknown and $z_t$ is i.i.d.\ noise from a known log-concave distribution $F$.\footnote{Log-concavity of $F$ and $1 - F$ is satisfied by the normal, logistic, uniform, Laplace, and exponential distributions. It ensures that expected revenue $p \cdot [1 - F(p - x_t^\top \theta_0)]$ is strictly quasi-concave in $p$, giving a unique optimal price.} Only $s_0$ of the $d$ coordinates of $\theta_0$ are nonzero, but the seller does not know which ones.
+
+Their RMLP algorithm (Regularized Maximum Likelihood Pricing) operates in episodes whose lengths double (1, 2, 4, 8, \ldots). At each episode boundary, the seller fits a LASSO-penalized maximum likelihood estimate of $\theta_0$ using data from the previous episode, then prices greedily throughout the current episode. The regret is $O(s_0 \log d \cdot \log T)$ (Theorem 4.1), with a matching lower bound of $\Omega(s_0 (\log d + \log T))$ (Theorem 5.1). The reason this beats $\sqrt{T}$ connects back to the Broder lower bound. In the parametric model of Section~\ref{sec:broder}, all demand curves can cross at the optimal price, making that price uninformative. Here, customer features vary across periods, so the aggregate demand function at any fixed price changes in proportion to the estimation error in $\theta_0$. Every price is informative, and dedicated exploration rounds become unnecessary.\footnote{If some feature directions are rarely observed, the seller cannot learn all coordinates of $\theta_0$ quickly, and regret degrades to $O(\sqrt{\log(d) \cdot T})$ (Theorem 4.2). If the noise distribution belongs to a known parametric family but its scale parameter is unknown, regret reverts to $\Omega(\sqrt{T})$ (Theorem 7.1), foreshadowing the result of \citet{Xu2021} discussed in Section~\ref{sec:xu}.} Even with hundreds of features, if only a handful matter, learning is fast. These results along with \citet{Kleinberg2003} and \citet{Broder2012} establish the baseline rates for how structural assumptions affect learning speed in dynamic pricing.
+
+\subsection{Revealed Preference and Partial Identification}
+\label{sec:misra}
+
+\citet{Misra2019} bring economic theory into the bandit pricing framework. Their model has $K$ discrete prices, $S$ consumer segments (segment membership observed, but valuations unknown), and within-segment heterogeneity $\delta$. A consumer in segment $s$ has valuation $v_i = v_s + n_i$, where $v_s$ is the segment midpoint and $n_i \in [-\delta, \delta]$ is idiosyncratic noise. The key structural assumption is WARP (Weak Axiom of Revealed Preference): if a consumer buys at price $p$, she would buy at any lower price $p' < p$. This is equivalent to downward-sloping demand. 
+
+WARP enables partial identification of each segment's valuation. Suppose the seller has offered several prices to segment $s$. Define $p_s^{\min} = \max\{p_k : \text{all customers purchased}\}$ and $p_s^{\max} = \min\{p_k : \text{no customer purchased}\}$. Then the segment midpoint lies in $[p_s^{\min}, p_s^{\max}]$, and within-segment heterogeneity satisfies $\hat{\delta}_s \leq (p_s^{\max} - p_s^{\min})/2$. These bounds propagate to aggregate demand: for each price $p_k$, the seller constructs upper and lower bounds on total profit $\pi(p_k) = p_k \cdot D(p_k)$. When the profit upper bound at some price falls below the best profit lower bound across all prices, that price is dominated and permanently eliminated from consideration.
+
+The UCB-PI algorithm combines dominance elimination with a price-scaled exploration bonus:
+\begin{equation}
+\label{eq:ucbpi}
+I_{p_k}(t) = \hat{\mu}_{p_k}(t) + p_k \sqrt{\frac{2 \ln t}{N_{p_k}(t)}}
+\end{equation}
+if $p_k$ is not dominated, and $I_{p_k}(t) = 0$ otherwise, where $\hat{\mu}_{p_k}(t)$ is the average profit observed at price $p_k$ and $N_{p_k}(t)$ is the number of trials.\footnote{Standard UCB1 uses an exploration bonus of $\sqrt{2\ln t / N_{p_k}(t)}$, which assumes rewards in $[0,1]$. Since profit at price $p_k$ is bounded by $p_k$, scaling the bonus by $p_k$ tightens exploration for cheap prices that cannot contribute much profit regardless.} Two innovations drive the improvement over standard UCB1. First, dominance elimination reduces the effective number of arms the algorithm must explore. Second, the $p_k$ scaling focuses exploration on prices where uncertainty actually matters for profit. Together, these yield $O(\log T)$ regret:
+\begin{equation}
+\mathbb{E}[R_T(\text{UCB-PI})] \leq \sum_{k \neq k^*} \frac{8 p_k \log T}{\Delta_k} + \left(1 + \frac{\pi^2}{3}\right) \sum_{k=1}^K \Delta_k
+\end{equation}
+where $\Delta_k = \mu_{k^*} - \mu_k$ is the gap between arm $k$ and the optimal arm.\footnote{The first sum is the leading term, scaling as $O(\log T)$. The second sum is a constant that does not grow with $T$. Replacing $p_k$ with 1 recovers the standard UCB1 bound, which is looser.}
+
+\citet{Misra2019} calibrate the model to a field experiment at ZipRecruiter, a B2B online recruiting platform. With 7,870 customers per month, 1,000 segments, and 10 price points from \$19 to \$399, UCB-PI achieves 98\% of oracle profit and produces 43\% higher profits during the first month of testing compared to a learn-then-earn alternative. The algorithm has both higher mean profit and lower variance, reflecting the value of eliminating dominated prices early.\footnote{For multi-product settings, \citet{Mueller2019} impose low-rank structure on the price-sensitivity matrix, achieving regret $O(T^{3/4}\sqrt{d})$ that scales with the latent demand dimension $d$ rather than the number of products. \citet{Badanidiyuru2013} extend the bandit framework to handle inventory constraints (``bandits with knapsacks''), relevant when the seller faces limited stock alongside the pricing decision.}
+
+\subsection{The Value of Knowing the Noise Distribution}
+\label{sec:xu}
+
+\citet{Xu2021} ask how much it helps to know the shape of demand uncertainty. In their model, a feature vector $x_t \in \mathbb{R}^d$ describes each sales session, the customer's valuation is $w_t = x_t^\top \theta^* + N_t$ where $\theta^*$ is unknown and $N_t$ is zero-mean i.i.d.\ noise with CDF $F$, and the seller observes only whether the customer bought at the posted price. The answer depends on whether $F$ is known.\footnote{The regret benchmark here differs from Section~\ref{sec:kleinberg}. \citet{Kleinberg2003} and \citet{Broder2012} measure regret against the best fixed price; \citet{Xu2021} and \citet{Liu2024strategic} measure regret against the clairvoyant contextual policy that sets the optimal price $p_t^*$ for each customer's features $x_t$. The contextual benchmark is harder, which makes the $O(d \log T)$ rate more impressive.}
+
+If $F$ is known (the seller knows that demand shocks are, say, normally distributed with known variance), the EMLP algorithm (Epoch-based Maximum Likelihood Pricing) achieves regret $O(d \log T)$ (Theorem 3).\footnote{EMLP runs in doubling epochs of length $\tau_k = 2^{k-1}$. At each epoch boundary, the seller fits a maximum likelihood estimate $\hat{\theta}_k$ using data from the previous epoch, then prices greedily at $p_t = J(x_t^\top \hat{\theta}_k)$ throughout the epoch, where $J(u) = \arg\max_v \, v[1 - F(v - u)]$ is the revenue-maximizing price function. The key technical insight is that the negative log-likelihood is strongly convex (Lemma 7 of \citet{Xu2021}), so MLE concentrates at rate $O(d / \tau_k)$. Since regret is quadratic in the parameter estimation error (Lemma 5) and there are $O(\log T)$ epochs, the total regret is $O(d \log T)$.} After 10,000 customers with $d = 5$ features, the revenue loss is roughly 50 customers' worth, an improvement over the $\sqrt{T} \approx 100$ customers' worth that Kleinberg's lower bound imposes without structural knowledge.
+
+If $F$ is unknown (even if only the variance of a Gaussian is unknown, with everything else known), the regret is at least $\Omega(\sqrt{T})$ (Theorem 12).\footnote{The lower bound constructs two noise variances $\sigma_1 = 1$ and $\sigma_2 = 1 - T^{-1/4}$. Any algorithm that performs well under both must spend $\Omega(\sqrt{T})$ revenue distinguishing the two cases. This extends the ``uninformative price'' phenomenon of \citet{Broder2012}: when the seller does not know $F$, there exist prices at which observed purchase behavior is nearly identical under different demand parameters.} The seller is back to the Kleinberg baseline, with no algorithm able to achieve sublinear improvement regardless of how many features are available.
+
+The gap between $O(d \log T)$ and $\Omega(\sqrt{T})$ is super-polynomial in $T$, not merely a constant factor. This separation quantifies, in regret units, the value of structural assumptions that econometricians routinely make. Knowing $F$ is the pricing analogue of specifying the structural model; not knowing $F$ is a more reduced-form agnostic position. When an economist specifies a logit or probit demand model, the assumed noise distribution is not merely a convenience for estimation; it purchases a qualitative improvement in the rate at which the algorithm learns. Conversely, semiparametric approaches that leave the error distribution unspecified pay a concrete cost in learning speed, reverting from logarithmic to polynomial regret.\footnote{\citet{Tullii2024} establish the tightest known bound under minimal distributional assumptions: if the noise distribution (c.d.f.) is merely Lipschitz continuous, the minimax regret is $\Theta(T^{2/3})$, strictly between the $\log T$ rate with known $F$ and the $\sqrt{T}$ rate with unknown $F$. \citet{Fan2024} consider a semiparametric setting where the noise density is smooth and connect the pricing problem to the econometrics of semiparametric estimation.}
+
+\subsection{Strategic Buyers}
+\label{sec:liu}
+
+\citet{Liu2024strategic} introduce buyer manipulation into contextual dynamic pricing. At time $t$, a buyer arrives with true covariates $x_t^0 \in \mathbb{R}^d$ and valuation $v_t = \theta_0^\top x_t^0 + z_t$. The seller announces a pricing rule $p_t = g(\hat{\theta}_k^\top x_t)$, where $\hat{\theta}_k$ is the current parameter estimate. Crucially, the buyer observes this rule and can distort her reported features. She solves a cost-minimization problem:
+\begin{equation}
+\label{eq:manipulation}
+\min_{\tilde{x}} \; (p - v_t) + \frac{1}{2}(\tilde{x} - x_t^0)^\top A (\tilde{x} - x_t^0)
+\end{equation}
+where $A$ is a positive definite matrix governing manipulation costs.\footnote{The matrix $A$ captures how costly it is for the buyer to distort each feature dimension. High eigenvalues of $A$ mean manipulation is expensive. This is the standard model of strategic classification \citep{Hardt2016}, adapted to pricing.} The first-order condition yields a systematic bias: the buyer shifts her features to make the seller's model predict a lower valuation, securing a lower price. The seller observes only the distorted features $\tilde{x}_t$, not the true $x_t^0$.
+
+\begin{theorem}[Theorem 1 of \citet{Liu2024strategic}]
+\label{thm:liu_impossibility}
+Under standard regularity conditions, any pricing policy that treats reported features as truthful accumulates regret $\Omega(T)$.
+\end{theorem}
+
+This is not $\sqrt{T}$ or $\log T$; it is linear in $T$. The revenue gap grows without bound and never stabilizes. Every standard dynamic pricing algorithm, including EMLP and RMLP, falls into this category because none accounts for strategic manipulation. The non-strategic policy is systematically biased. It underprices because it bases decisions on manipulated features, and the bias does not shrink with more data because the manipulation is endogenous to the pricing rule.
+
+The fix is to jointly estimate demand parameters and manipulation behavior. \citet{Liu2024strategic} propose an episodic algorithm with two phases per episode. During the exploration phase, the seller posts uniform random prices that do not depend on features. Since the price is independent of $\tilde{x}_t$, buyers have no incentive to manipulate, and the seller observes true features $x_t^0$. During the exploitation phase, the seller uses the corrected pricing rule that anticipates the manipulation:
+\begin{equation}
+\label{eq:strategic_price}
+p_t = g\left(\hat{\theta}_k^\top x_t + \hat{\beta}_k^\top A^{-1} \hat{\beta}_k \cdot g'(\hat{\theta}_k^\top x_t)\right)
+\end{equation}
+where $\hat{\beta}_k$ is the estimated coefficient on the manipulable features and $g$ is the optimal pricing function. This correction adds a markup that offsets the anticipated feature distortion.
+
+\begin{theorem}[Theorem 2 of \citet{Liu2024strategic}]
+\label{thm:liu_fix}
+With known manipulation cost matrix $A$, the strategic pricing algorithm achieves regret $O(d\sqrt{T})$.
+\end{theorem}
+
+When $A$ is unknown, the seller can still recover $O(d\sqrt{T/\tau})$ regret by tracking repeat buyers across exploration and exploitation phases, where $\tau$ is the fraction of buyers who appear in both phases (Theorem 3). Higher repeat rates mean more matched pairs for estimating manipulation behavior.
+
+Ignoring strategic behavior in online pricing is quite suboptimal. Incentive compatibility matters even in settings where the seller is ``just'' learning demand.\footnote{\citet{Agrawal2024ref} document a related phenomenon in pricing with reference effects. If consumers anchor on past prices, a static pricing policy that ignores reference dependence accumulates linear regret $\Omega(T)$. \citet{Chen2025fairness} show that imposing fairness constraints (requiring similar prices for similar customers) raises the regret floor to $\Theta(T^{2/3})$, a social cost of equitable treatment.}
+
+\subsection{Comparison of Regret Rates}
+\label{sec:comparison}
+
+Table~\ref{tab:regret_comparison} collects the regret rates across the papers discussed above. The table is ordered from weakest to strongest assumptions on demand, making visible three patterns. First, stronger assumptions yield faster learning, from $\sqrt{T}$ with no structure to $\log T$ with parametric or revealed-preference structure to $d \log T$ with known noise in high dimensions. Second, not knowing the noise distribution is expensive; moving from known to unknown $F$ costs a super-polynomial factor in the regret rate. Third, strategic behavior destroys standard algorithms, producing linear regret that no amount of data can overcome without an explicit correction.
+
+\begin{table}[!htbp]
+\centering
+\small
+\caption{Regret rates in dynamic pricing under progressively stronger assumptions. $T$ is the number of customers, $d$ the feature dimension, $s_0$ the sparsity level. The last column translates asymptotic rates into concrete terms for $T = 10{,}000$ with $d = 5$, setting constants to 1.}
+\label{tab:regret_comparison}
+\begin{tabular}{@{}llllp{2.8cm}@{}}
+\toprule
+Paper & Demand & Noise & Regret & Per 10K ($d{=}5$) \\
+\midrule
+\citet{Kleinberg2003} & none & none & $\sqrt{T}$ & $\sim$100 lost \\
+\citet{Broder2012} & parametric & known family & $\sqrt{T}$ & $\sim$100 lost \\
+\citet{Broder2012} & param., well-sep. & known family & $\log T$ & $\sim$9 lost \\
+\citet{Javanmard2019} & linear, $s_0$-sparse & known, log-conc. & $s_0 \log d \log T$ & fast if $s_0$ small \\
+\citet{Xu2021} & linear, contextual & known & $d \log T$ & $\sim$46 lost \\
+\citet{Xu2021} & linear, contextual & unknown var. & $\geq \sqrt{T}$ & $\sim$100 lost \\
+\citet{Tullii2024} & linear, contextual & Lipschitz only & $T^{2/3}$ & $\sim$464 lost \\
+\citet{Misra2019} & WARP & -- & $\log T$ & $\sim$9 lost \\
+\citet{Liu2024strategic} & linear $+$ strategic & known, na\"ive & $T$ & never improves \\
+\citet{Liu2024strategic} & linear $+$ strategic & known, corrected & $d\sqrt{T}$ & $\sim$500 lost \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Applications}
+\label{sec:dp_applications}
+
+\subsubsection{Joint Assortment and Pricing at Scale}
+
+\citet{Cai2023} tackle the joint assortment-pricing problem, where a retailer must simultaneously choose which products to display and at what prices. With a large catalog and limited shelf space, the number of possible assortments is combinatorially vast; for a Chinese instant noodle producer with 176 products and 30 display slots, there are $\binom{176}{30} \approx 6.4 \times 10^{33}$ possible assortments before prices are even set. Customer demand also depends on market context such as region and season. In each period $t$, the retailer selects an assortment-pricing vector $a_t \in \mathbb{R}^{d_a}$ (encoding which products to display and at what prices), observes a context vector $x_t \in \mathbb{R}^{d_x}$ (encoding customer demographics and market conditions), and earns revenue $Y_t$. Cai et al.\ model expected revenue as $\mathbb{E}[Y_t \mid x_t, a_t] = a_t^\top \Theta^* x_t$, where $\Theta^* \in \mathbb{R}^{d_a \times d_x}$ is an unknown matrix assumed to have low rank $r \ll \min\{d_a, d_x\}$. The low-rank assumption is the demand-side analogue of factor models in asset pricing; a small number of latent dimensions (flavor preferences, seasonal effects, price sensitivity) explain most of the variation in purchasing behavior.
+
+Their Hi-CCAB algorithm estimates $\Theta^*$ via penalized least squares, where the penalty is the nuclear norm (the sum of singular values) of $\Theta$. This penalty encourages low-rank solutions, playing the same role for matrices that the LASSO penalty plays for sparse vectors. The time-averaged regret is $\tilde{O}(T^{-1/6})$ with dimension dependence $r(d_a + d_x)$ rather than $d_a \cdot d_x$, so the effective parameter count scales with the number of latent factors, not the full product-by-context matrix. In simulation, Hi-CCAB achieves nearly four times the cumulative sales of the noodle producer's historical assortment strategies, averaged over 100 replications.
+
+\citet{Ganti2018} deploy Thompson Sampling for dynamic pricing at Walmart.com. Their MAX-REV-TS algorithm models demand for each item $i$ on day $t$ via a constant-elasticity function $d_{i,t}(p) = f_{i,t}(p/p_{i,t-1})^{\gamma_i^*}$, where $d_{i,t}(p)$ is unit sales at price $p$, $f_{i,t}$ is a baseline demand forecast at the previous day's price $p_{i,t-1}$, and $\gamma_i^* < -1$ is the unknown price elasticity. The structural assumption, that demand responds to price through a single elasticity parameter per item, reduces the learning problem from estimating a full demand curve to estimating one scalar per item. MAX-REV-TS places a Gaussian prior over the elasticity vector $\gamma^*$ and draws posterior samples at each period to solve a constrained revenue maximization problem. In a five-week field experiment on a basket of roughly 5,000 items, Thompson Sampling produced a statistically significant increase in per-item revenue relative to the passive pricing baseline.
+
+\subsection{Simulation Study: The Knowledge Ladder}
+\label{sec:bandit_sim}
+
+I run six algorithms on the \citet{Misra2019} demand environment to trace how cumulative regret responds to increasing structural knowledge. The environment has $K = 100$ prices on a grid from \$0.01 to \$1.00, $S = 1{,}000$ consumer segments with equal weights, within-segment heterogeneity $\delta = 0.1$, and segment midpoints $v_s \sim \mathrm{Uniform}(0.1, 0.9)$. A consumer purchases if and only if $v_i \geq p$ (WARP). The six algorithms, ordered by the structural knowledge they exploit, are: (0) $\varepsilon$-greedy with $\varepsilon = 0.1$, which never adapts its exploration rate; (1) Learn-Then-Earn (LTE), which explores uniformly for the first 5\% of rounds and then commits to the empirical best price; (2) UCB1 \citep{auer2002}, which adapts exploration via confidence bounds but ignores demand structure; (3) Thompson Sampling \citep{Thompson1933}, which maintains a Bayesian posterior over purchase rates; (4) UCB-PI \citep{Misra2019}, which uses WARP to eliminate dominated prices and scales the exploration bonus by the price level; and (5) UCB-PI-tuned, which adds a variance-based refinement to the exploration bonus. Each algorithm runs across 10 seeds with $T = 200{,}000$ rounds.
+
+Table~\ref{tab:knowledge_ladder} and Figure~\ref{fig:knowledge_ladder} report cumulative regret at four checkpoints. The results confirm the theoretical progression from Table~\ref{tab:regret_comparison}. $\varepsilon$-greedy regret grows linearly ($R/T$ stabilizes near 0.011). LTE pays its exploration cost upfront, with regret of 1,005 at $T = 10{,}000$ (entirely during the random phase), but flattens as the committed price earns near-optimal profit; $R/T^{2/3}$ stabilizes near 0.5. UCB1 and Thompson Sampling both grow as $\sqrt{T}$, with Thompson achieving a five-fold better constant (2.5 vs.\ 15.1 in $R/\sqrt{T}$ at $T = 200{,}000$). UCB-PI-tuned achieves the lowest regret at every checkpoint past $T = 10{,}000$, reaching 780 at $T = 200{,}000$, a 31\% reduction over Thompson Sampling and a 83\% reduction over UCB-PI without variance tuning. The untuned UCB-PI variant overexplores; its regret of 4,503 scales as $\sqrt{T}$ rather than the $\log T$ that the theoretical bound predicts with correct tuning, placing it closer to UCB1 (6,734) than to the tuned variant (780).
+
+\begin{table}[!htbp]
+\centering
+\caption{Cumulative regret for six pricing algorithms on the \citet{Misra2019} demand environment ($K = 100$, $S = 1{,}000$, 10 seeds).}
+\label{tab:knowledge_ladder}
+\input{../ch07_bandits/sims/knowledge_ladder_results.tex}
+\end{table}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{../ch07_bandits/sims/knowledge_ladder_regret.png}
+\caption{Cumulative regret on log-log axes. Dashed lines show $\Theta(T)$, $O(\sqrt{T})$, and $O(\log T)$ reference rates. Shaded regions are $\pm 2$ standard errors across 10 seeds.}
+\label{fig:knowledge_ladder}
+\end{figure}

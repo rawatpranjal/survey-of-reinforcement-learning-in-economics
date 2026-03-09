@@ -1,0 +1,346 @@
+======================================================================
+ILLUSTRATED EXAMPLE: 9 ALGORITHMS ON A 5x5 GRIDWORLD
+  (2 planning + 7 learning)
+======================================================================
+Date: 2026-03-08 19:27:49
+Grid: 5x5, gamma=0.95, episodes=500000, seeds=1
+Mode: plots-only (loading all from cache)
+
+======================================================================
+PHASE 1: PLANNING METHODS
+======================================================================
+
+[VI] Running Value Iteration...
+  Iterations:     9
+  Residual:       0.00e+00
+  Time:           0.0007s
+  Optimal return: 9.2979
+  Optimal steps:  8.00
+
+  V* (5x5 grid):
+    row 0:  6.378   6.819   7.284   7.772   8.287
+    row 1:  6.819   7.283   7.772   8.287   8.829
+    row 2:  7.283   7.772   8.287   8.829   9.399
+    row 3:  7.771   8.286   8.829   9.399  10.000
+    row 4:  8.286   8.828   9.399  10.000   0.000
+
+[PI] Running Policy Iteration...
+  Iterations:     6
+  Time:           0.0190s
+  Return:         9.2979
+  Policy changes: [15, 6, 5, 3, 1, 0]
+
+======================================================================
+PHASE 2: LEARNING ALGORITHMS (M=1 seeds)
+======================================================================
+
+[Q-Learning] Loaded from cache
+  Return:          9.298 +/- 0.000
+  Agreement:       100.00% +/- 0.00%
+  V* RMSE:         0.0000 +/- 0.0000
+  Max |V-V*|:      0.0001
+  Ep to 99% ret:   30
+  Ep to V(s0):     340
+  Ep to V* conv:   610
+  Time:            22.80 +/- 0.00s
+
+[SARSA] Loaded from cache
+  Return:          9.297 +/- 0.000
+  Agreement:       88.00% +/- 0.00%
+  V* RMSE:         1.6735 +/- 0.0000
+  Max |V-V*|:      5.5270
+  Ep to 99% ret:   80
+  Ep to V(s0):     7600
+  Ep to V* conv:   ---
+  Time:            22.40 +/- 0.00s
+
+[Q(λ)] Loaded from cache
+  Return:          9.298 +/- 0.000
+  Agreement:       100.00% +/- 0.00%
+  V* RMSE:         0.0005 +/- 0.0000
+  Max |V-V*|:      0.0026
+  Ep to 99% ret:   20
+  Ep to V(s0):     340
+  Ep to V* conv:   550
+  Time:            29.61 +/- 0.00s
+
+[DQN] Loaded from cache
+  Return:          9.298 +/- 0.000
+  Agreement:       92.00% +/- 0.00%
+  V* RMSE:         0.0057 +/- 0.0000
+  Max |V-V*|:      0.0097
+  Ep to 99% ret:   400
+  Ep to V(s0):     1600
+  Ep to V* conv:   1600
+  Time:            2920.62 +/- 0.00s
+
+[REINFORCE] Loaded from cache
+  Return:          9.297 +/- 0.000
+  Agreement:       76.00% +/- 0.00%
+  V* RMSE:         2.2017 +/- 0.0000
+  Max |V-V*|:      5.7131
+  Ep to 99% ret:   100
+  Ep to V(s0):     132000
+  Ep to V* conv:   ---
+  Time:            139.60 +/- 0.00s
+
+[NPG] Loaded from cache
+  Return:          9.296 +/- 0.000
+  Agreement:       44.00% +/- 0.00%
+  V* RMSE:         4.5168 +/- 0.0000
+  Max |V-V*|:      9.7152
+  Ep to 99% ret:   50
+  Ep to V(s0):     200
+  Ep to V* conv:   ---
+  Time:            117.01 +/- 0.00s
+
+[PPO] Loaded from cache
+  Return:          9.296 +/- 0.000
+  Agreement:       52.00% +/- 0.00%
+  V* RMSE:         1.8849 +/- 0.0000
+  Max |V-V*|:      5.4159
+  Ep to 99% ret:   50
+  Ep to V(s0):     30000
+  Ep to V* conv:   ---
+  Time:            253.30 +/- 0.00s
+
+======================================================================
+PHASE 3: PER-STATE VALUE CONVERGENCE (seed 42)
+======================================================================
+
+[Q-Learning]
+  Final episode: 500000
+  RMSE: 0.0000
+  Max |V-V*|: 0.0001 at state 15 ((np.int64(3), np.int64(0)))
+  Mean |V-V*|: 0.0000
+  |V(s0) - V*(s0)|: 0.0000
+  Per-state errors (5x5 grid):
+    row 0:  0.000   0.000   0.000   0.000   0.000
+    row 1:  0.000   0.000   0.000   0.000   0.000
+    row 2:  0.000   0.000   0.000   0.000   0.000
+    row 3:  0.000   0.000   0.000   0.000   0.000
+    row 4:  0.000   0.000   0.000   0.000   0.000
+  Per-state value convergence episode (threshold=0.1):
+    row 0:    340     340     440     610     590
+    row 1:    330     320     360     410     370
+    row 2:    320     300     320     310     270
+    row 3:    320     280     270     290     220
+    row 4:    300     260     250     220      10
+  States never converged (value): 0/25
+  Per-state policy convergence episode (pi(s)=pi*(s)):
+    row 0:     10      20      10     230      40
+    row 1:     70      60      50    1100      30
+    row 2:     10      20      50     160      30
+    row 3:     50      10      70     120      10
+    row 4:     40      10      10      10      10
+  States never converged (policy): 0/25
+  Wall time: 22.80s
+
+[SARSA]
+  Final episode: 500000
+  RMSE: 1.6735
+  Max |V-V*|: 5.5270 at state 20 ((np.int64(4), np.int64(0)))
+  Mean |V-V*|: 0.7536
+  |V(s0) - V*(s0)|: 0.0004
+  Per-state errors (5x5 grid):
+    row 0:  0.000   0.000   0.000   0.056   0.961
+    row 1:  0.209   0.038   0.000   0.000   0.037
+    row 2:  1.907   0.232   0.021   0.000   0.000
+    row 3:  4.807   1.463   0.068   0.000   0.000
+    row 4:  5.527   3.057   0.455   0.000   0.000
+  Per-state value convergence episode (threshold=0.1):
+    row 0:   7600    6000    6000    8900    ----
+    row 1:   ----    7500    6400    5900    4500
+    row 2:   ----    ----    5600    4700    3400
+    row 3:   ----    ----    6200    2600     200
+    row 4:   ----    ----    ----     270      10
+  States never converged (value): 9/25
+  Per-state policy convergence episode (pi(s)=pi*(s)):
+    row 0:     50      10      20      30      10
+    row 1:     60      20      90      20      50
+    row 2:     10      10     160      10      30
+    row 3:     50      10      50      10      10
+    row 4:     80      60      40      10      10
+  States never converged (policy): 0/25
+  Wall time: 22.40s
+
+[Q(λ)]
+  Final episode: 500000
+  RMSE: 0.0005
+  Max |V-V*|: 0.0026 at state 20 ((np.int64(4), np.int64(0)))
+  Mean |V-V*|: 0.0001
+  |V(s0) - V*(s0)|: 0.0000
+  Per-state errors (5x5 grid):
+    row 0:  0.000   0.000   0.000   0.000   0.000
+    row 1:  0.000   0.000   0.000   0.000   0.000
+    row 2:  0.000   0.000   0.000   0.000   0.000
+    row 3:  0.001   0.000   0.000   0.000   0.000
+    row 4:  0.003   0.000   0.000   0.000   0.000
+  Per-state value convergence episode (threshold=0.1):
+    row 0:    340     360     110     380     360
+    row 1:    350     120     100     330     120
+    row 2:    110     340     360     360     350
+    row 3:    350     310     300     260     220
+    row 4:    120     270     110     200      10
+  States never converged (value): 0/25
+  Per-state policy convergence episode (pi(s)=pi*(s)):
+    row 0:    190      30      10      10      30
+    row 1:     40      30      20     240      30
+    row 2:     10      30     270     250      30
+    row 3:     20     210     270     770      10
+    row 4:     20      10      10      10      10
+  States never converged (policy): 0/25
+  Wall time: 29.61s
+
+[DQN]
+  Final episode: 500000
+  RMSE: 0.0057
+  Max |V-V*|: 0.0097 at state 7 ((np.int64(1), np.int64(2)))
+  Mean |V-V*|: 0.0050
+  |V(s0) - V*(s0)|: 0.0057
+  Per-state errors (5x5 grid):
+    row 0:  0.006   0.007   0.005   0.006   0.002
+    row 1:  0.008   0.007   0.010   0.009   0.001
+    row 2:  0.006   0.009   0.007   0.003   0.004
+    row 3:  0.008   0.005   0.006   0.002   0.001
+    row 4:  0.004   0.005   0.002   0.001   0.003
+  Per-state value convergence episode (threshold=0.1):
+    row 0:   1600    1100    1000     900     600
+    row 1:   1000     900     800     700     500
+    row 2:    900     800     700     600     400
+    row 3:    800     700     600     500     300
+    row 4:    600     500     400     300     300
+  States never converged (value): 0/25
+  Per-state policy convergence episode (pi(s)=pi*(s)):
+    row 0:    200     100     100     100     300
+    row 1:    500     400     100     100     300
+    row 2:    400     100     300     800     100
+    row 3:    400     300     100     400     100
+    row 4:    300     200     100     100    1800
+  States never converged (policy): 0/25
+  Wall time: 2920.62s
+
+[REINFORCE]
+  Final episode: 500000
+  RMSE: 2.2017
+  Max |V-V*|: 5.7131 at state 20 ((np.int64(4), np.int64(0)))
+  Mean |V-V*|: 1.3838
+  |V(s0) - V*(s0)|: 0.0480
+  Per-state errors (5x5 grid):
+    row 0:  0.048   0.041   0.034   0.845   1.711
+    row 1:  1.255   0.605   0.030   0.024   0.324
+    row 2:  3.857   3.146   0.733   0.019   0.079
+    row 3:  4.481   3.166   0.914   0.012   0.006
+    row 4:  5.713   4.451   2.545   0.556   0.000
+  Per-state value convergence episode (threshold=0.1):
+    row 0: 132000   98000   68000    ----    ----
+    row 1:   ----    ----   58000   42000    ----
+    row 2:   ----    ----    ----   32000  330000
+    row 3:   ----    ----    ----   18000    9800
+    row 4:   ----    ----    ----    ----      50
+  States never converged (value): 15/25
+  Per-state policy convergence episode (pi(s)=pi*(s)):
+    row 0:     50      50      50     100     100
+    row 1:    100      50      50      50      50
+    row 2:   ----    ----      50    ----      50
+    row 3:    350      50      50     100      50
+    row 4:    100      50      50      50      50
+  States never converged (policy): 3/25
+  Wall time: 139.60s
+
+[NPG]
+  Final episode: 500000
+  RMSE: 4.5168
+  Max |V-V*|: 9.7152 at state 9 ((np.int64(1), np.int64(4)))
+  Mean |V-V*|: 2.6685
+  |V(s0) - V*(s0)|: 0.0031
+  Per-state errors (5x5 grid):
+    row 0:  0.003   1.103   8.224   8.808   9.366
+    row 1:  0.002   0.049   0.932   8.430   9.715
+    row 2:  0.002   0.002   0.029   2.783   8.075
+    row 3:  0.539   0.001   0.001   0.171   3.739
+    row 4:  4.724   0.016   0.000   0.000   0.000
+  Per-state value convergence episode (threshold=0.1):
+    row 0:    200    ----    ----    ----    ----
+    row 1:    100     100    ----    ----    ----
+    row 2:    100     100      50    ----    ----
+    row 3:   4300     100     100    ----    ----
+    row 4:   ----     250      50      50      50
+  States never converged (value): 12/25
+  Per-state policy convergence episode (pi(s)=pi*(s)):
+    row 0:   ----    ----      50    ----    ----
+    row 1:   ----    ----    ----    ----      50
+    row 2:     50    ----    ----    ----      50
+    row 3:     50      50    ----    ----      50
+    row 4:     50      50      50      50      50
+  States never converged (policy): 13/25
+  Wall time: 117.01s
+
+[PPO]
+  Final episode: 500000
+  RMSE: 1.8849
+  Max |V-V*|: 5.4159 at state 4 ((np.int64(0), np.int64(4)))
+  Mean |V-V*|: 1.2449
+  |V(s0) - V*(s0)|: 0.0126
+  Per-state errors (5x5 grid):
+    row 0:  0.013   2.356   1.658   2.237   5.416
+    row 1:  0.009   1.332   1.500   0.802   4.338
+    row 2:  0.008   0.006   0.005   0.004   2.243
+    row 3:  1.625   0.988   0.344   0.003   1.041
+    row 4:  2.974   1.991   0.229   0.001   0.000
+  Per-state value convergence episode (threshold=0.1):
+    row 0:  30000    ----    ----    ----    ----
+    row 1:  18000    ----    ----    ----    ----
+    row 2:  14000   12000    7600    7800    ----
+    row 3:   ----    ----    ----    4400    ----
+    row 4:   ----    ----    ----    2000      50
+  States never converged (value): 16/25
+  Per-state policy convergence episode (pi(s)=pi*(s)):
+    row 0:     50     150    ----    ----    ----
+    row 1:   ----    ----      50    ----    ----
+    row 2:    100      50      50    ----    ----
+    row 3:    100      50    ----    ----     100
+    row 4:     50      50      50      50      50
+  States never converged (policy): 11/25
+  Wall time: 253.30s
+
+======================================================================
+PHASE 4: GENERATING FIGURES
+======================================================================
+  Saved: gridworld_learning_curves.png
+  Saved: gridworld_value_heatmaps.png
+  Saved: gridworld_convergence.png
+  Saved: gridworld_policy_convergence.png
+  Saved: gridworld_policy_heatmaps.png
+
+======================================================================
+PHASE 5: GENERATING TABLES
+======================================================================
+  Saved: gridworld_study_results.tex
+  Saved: gridworld_hyperparams.tex
+  Saved: gridworld_value_convergence.tex
+  Saved: gridworld_policy_convergence.tex
+
+======================================================================
+OUTPUT FILES
+======================================================================
+  gridworld_convergence.png
+  gridworld_learning_curves.png
+  gridworld_policy_convergence.png
+  gridworld_policy_heatmaps.png
+  gridworld_value_heatmaps.png
+  gridworld_hyperparams.tex
+  gridworld_policy_convergence.tex
+  gridworld_study_results.tex
+  gridworld_value_convergence.tex
+
+CACHE (cache/):
+  dqn_results.pkl (24976 KB)
+  npg_results.pkl (35050 KB)
+  ppo_results.pkl (48238 KB)
+  ql_results.pkl (44511 KB)
+  ql_trace_results.pkl (54768 KB)
+  reinforce_results.pkl (35050 KB)
+  sarsa_results.pkl (44510 KB)
+
+Done.

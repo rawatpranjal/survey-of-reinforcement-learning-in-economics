@@ -1,0 +1,124 @@
+Bus Engine Replacement Benchmark
+Cost function: c(s,a) = 1.0 * sum(m_i) + 5.0 * |a|
+Fleet sizes: N in [1, 2, 3, 4, 5, 6]
+Seeds: [42, 123, 7]
+Gamma=0.95, Train horizon=50, Eval horizon=100
+======================================================================
+  Bus Engine Replacement: Scaling Analysis
+======================================================================
+  Fleet sizes: N in [1, 2, 3, 4, 5, 6]
+  Seeds: [42, 123, 7]
+  Mileage states: 6, Capacity: 3
+  Alpha=1.0, Beta=5.0, Gamma=0.95
+  Train horizon: 50, Eval horizon: 100
+  Cost function: c(s,a) = alpha * sum(m_i) + beta * |a|
+
+  N=1: 6 states, 2 actions
+    Running Value Iteration...
+    VI: 382 iter, residual=9.88e-09, time=0.02s, discounted reward=-55.09
+    Running DQN (3 seeds)...
+      seed=42: reward=-55.16, time=57.8s
+      seed=123: reward=-55.19, time=57.8s
+      seed=7: reward=-54.97, time=59.5s
+    Running Heuristics...
+      Threshold(3)=-55.74, Never=-93.98
+
+  N=2: 36 states, 4 actions
+    Running Value Iteration...
+    VI: 396 iter, residual=9.63e-09, time=0.05s, discounted reward=-110.25
+    Running DQN (3 seeds)...
+      seed=42: reward=-109.71, time=81.3s
+      seed=123: reward=-109.85, time=79.4s
+      seed=7: reward=-110.36, time=79.1s
+    Running Heuristics...
+      Threshold(3)=-111.44, Never=-187.70
+
+  N=3: 216 states, 8 actions
+    Running Value Iteration...
+    VI: 404 iter, residual=9.59e-09, time=0.52s, discounted reward=-165.34
+    Running DQN (3 seeds)...
+      seed=42: reward=-164.93, time=121.1s
+      seed=123: reward=-165.10, time=123.2s
+      seed=7: reward=-165.00, time=119.5s
+    Running Heuristics...
+      Threshold(3)=-168.26, Never=-282.11
+
+  N=4: 1,296 states, 15 actions
+    Running Value Iteration...
+    VI: 409 iter, residual=9.89e-09, time=6.38s, discounted reward=-220.02
+    Running DQN (3 seeds)...
+      seed=42: reward=-220.90, time=190.1s
+      seed=123: reward=-220.89, time=183.9s
+      seed=7: reward=-220.69, time=1509.6s
+    Running Heuristics...
+      Threshold(3)=-223.82, Never=-376.01
+
+  N=5: 7,776 states, 26 actions
+    Running Value Iteration...
+    VI: 414 iter, residual=9.56e-09, time=81.33s, discounted reward=-275.66
+    Running DQN (3 seeds)...
+      seed=42: reward=-276.41, time=350.9s
+      seed=123: reward=-276.05, time=396.8s
+      seed=7: reward=-276.18, time=374.3s
+    Running Heuristics...
+      Threshold(3)=-279.51, Never=-469.70
+
+  N=6: 46,656 states, 42 actions
+    DP skipped (state space too large)
+    Running DQN (3 seeds)...
+      seed=42: reward=-331.04, time=467.2s
+      seed=123: reward=-330.80, time=452.9s
+      seed=7: reward=-333.21, time=519.5s
+    Running Heuristics...
+      Threshold(3)=-336.59, Never=-562.84
+
+Figure saved to /Users/pranjal/Code/rl/ch04_control_problems/sims/bus_engine_scaling.png
+LaTeX table saved to /Users/pranjal/Code/rl/ch04_control_problems/sims/bus_engine_results.tex
+
+======================================================================
+  SCALING SUMMARY
+======================================================================
+
+  --------------------------------------------------------------------------------
+    N |     |S| |  DP Time |  DP Return |         DQN Return |  Thresh(3) |    Never
+  --------------------------------------------------------------------------------
+    1 |       6 |    0.02s |     -55.09 |    -55.10 +/- 0.10 |     -55.74 |   -93.98
+    2 |      36 |    0.05s |    -110.25 |   -109.97 +/- 0.28 |    -111.44 |  -187.70
+    3 |     216 |    0.52s |    -165.34 |   -165.01 +/- 0.07 |    -168.26 |  -282.11
+    4 |   1,296 |    6.38s |    -220.02 |   -220.82 +/- 0.10 |    -223.82 |  -376.01
+    5 |   7,776 |   81.33s |    -275.66 |   -276.21 +/- 0.15 |    -279.51 |  -469.70
+    6 |  46,656 |      --- |        --- |   -331.68 +/- 1.09 |    -336.59 |  -562.84
+  --------------------------------------------------------------------------------
+
+  Per-Seed DQN Returns:
+    N=1: -55.16, -55.19, -54.97
+    N=2: -109.71, -109.85, -110.36
+    N=3: -164.93, -165.10, -165.00
+    N=4: -220.90, -220.89, -220.69
+    N=5: -276.41, -276.05, -276.18
+    N=6: -331.04, -330.80, -333.21
+
+  Q-Error and Policy Agreement (where DP available):
+  ----------------------------------------
+    N |    Q-Error |  Agreement
+  ----------------------------------------
+    1 |      2.569 |    100.0%
+    2 |      1.748 |     98.3%
+    3 |      0.593 |     98.9%
+    4 |      0.212 |     93.4%
+    5 |      0.544 |     86.7%
+  ----------------------------------------
+
+  DQN Gap vs DP (where both available):
+    N=1: DQN is -0.0% vs DP
+    N=2: DQN is +0.3% vs DP
+    N=3: DQN is +0.2% vs DP
+    N=4: DQN is -0.4% vs DP
+    N=5: DQN is -0.2% vs DP
+
+  Output Files:
+    /Users/pranjal/Code/rl/ch04_control_problems/sims/bus_engine_scaling.png
+    /Users/pranjal/Code/rl/ch04_control_problems/sims/bus_engine_results.tex
+    /Users/pranjal/Code/rl/ch04_control_problems/sims/benchmark_bus_engine_stdout.txt
+
+Benchmark complete.

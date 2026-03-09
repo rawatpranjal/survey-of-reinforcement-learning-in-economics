@@ -1,0 +1,145 @@
+================================================================================
+DPO DIAGNOSTIC STUDY
+================================================================================
+
+Timestamp: 2026-03-08 04:06:16
+Python: 3.11.6, NumPy: 2.4.1
+
+BASELINE PARAMETERS:
+  Grid: 10x10, slip=0.1, gamma=0.99
+  Goal: (9, 9), Hazards: {(6, 7), (3, 3)}, Traps: {(5, 2)}
+  DPO defaults: lambda=[0.001, 0.01, 0.1], lr=0.005, epochs=300
+  Diagnostic seeds: 5
+
+  DP Oracle: V*(start)=6.5517, return=6.524 +/- 0.024
+
+================================================================================
+EXPERIMENT 1: GREEDY VS STOCHASTIC EVALUATION (H1)
+================================================================================
+Hypothesis: Stochastic evaluation inflates DPO failure.
+Config: K=2000, segment_length=25, 3 lambda candidates, 5 seeds
+
+  Seed  0: stochastic= -7.611, greedy= -9.943, delta= -2.333, lambda=0.1
+  Seed  1: stochastic= -8.138, greedy= -9.936, delta= -1.799, lambda=0.1
+  Seed  2: stochastic= -6.513, greedy= -9.359, delta= -2.846, lambda=0.1
+  Seed  3: stochastic= -8.313, greedy= -9.803, delta= -1.490, lambda=0.1
+  Seed  4: stochastic= -6.173, greedy= -9.458, delta= -3.285, lambda=0.1
+
+  Stochastic:  -7.349 +/- 0.385 (-112.7% of DP)
+  Greedy:      -9.700 +/- 0.110 (-148.7% of DP)
+  Difference:  -2.350 (greedy - stochastic)
+
+================================================================================
+EXPERIMENT 2: SEGMENT LENGTH ABLATION (H2)
+================================================================================
+Hypothesis: Long segments dilute credit assignment signal.
+Config: K=1000, lambda candidates=[0.001, 0.01, 0.1], 5 seeds
+
+  L= 1: return=-10.582 +/- 0.205 (-162.2% of DP)
+  L= 3: return=-10.106 +/- 0.100 (-154.9% of DP)
+  L= 5: return= -9.998 +/- 0.057 (-153.3% of DP)
+  L=10: return= -9.663 +/- 0.219 (-148.1% of DP)
+  L=25: return= -9.928 +/- 0.130 (-152.2% of DP)
+
+================================================================================
+EXPERIMENT 3: LAMBDA KL SEARCH (H3)
+================================================================================
+Hypothesis: Current lambda range is too narrow.
+Config: K=1000, segment_length=25, 5 seeds
+
+  lambda= 0.001: return= -9.911 +/- 0.136 (-151.9% of DP), loss=0.6877
+  lambda= 0.010: return= -9.857 +/- 0.197 (-151.1% of DP), loss=0.6431
+  lambda= 0.100: return= -9.928 +/- 0.130 (-152.2% of DP), loss=0.4381
+  lambda= 0.500: return= -9.963 +/- 0.039 (-152.7% of DP), loss=0.2801
+  lambda= 1.000: return= -9.692 +/- 0.262 (-148.6% of DP), loss=0.2349
+  lambda= 5.000: return= -9.905 +/- 0.019 (-151.8% of DP), loss=0.2055
+  lambda=10.000: return= -9.921 +/- 0.014 (-152.1% of DP), loss=0.2452
+
+================================================================================
+EXPERIMENT 4: TRAINING BUDGET (H4)
+================================================================================
+Hypothesis: 300 epochs with lr=5e-3 is insufficient.
+Config: K=1000, segment_length=25, lambda=0.1, 5 seeds
+
+  epochs |     lr |             return |   % DP |     loss
+  -------------------------------------------------------
+     300 | 0.0010 |  -9.846 +/- 0.236 | -150.9% |   0.6303
+     300 | 0.0050 |  -9.928 +/- 0.130 | -152.2% |   0.4381
+     300 | 0.0100 |  -9.986 +/- 0.095 | -153.1% |   0.3497
+    1000 | 0.0010 |  -9.964 +/- 0.124 | -152.7% |   0.4956
+    1000 | 0.0050 |  -9.900 +/- 0.077 | -151.8% |   0.2904
+    1000 | 0.0100 |  -9.935 +/- 0.017 | -152.3% |   0.2269
+
+================================================================================
+EXPERIMENT 5: 5x5 GRID (H5)
+================================================================================
+Hypothesis: 400 parameters with trajectory comparisons is too many.
+Config: 5x5 grid (100 params), segment_length=25, 5 seeds
+
+  5x5 DP Oracle: V*(start)=8.4809, return=8.450 +/- 0.021
+  K= 100: return= -9.539 +/- 0.238 (-112.9% of DP)
+  K= 500: return= -3.635 +/- 2.877 (-43.0% of DP)
+  K=2000: return= -2.084 +/- 2.801 (-24.7% of DP)
+
+================================================================================
+EXPERIMENT 6: INFORMED REFERENCE POLICY (H6)
+================================================================================
+Hypothesis: Uniform reference provides no useful regularization.
+Config: K=1000, segment_length=25, 5 seeds
+
+  Reference policy quality: return=6.237 (95.6% of DP)
+  Seed  0: uniform= -9.944, informed= -9.946, delta= -0.003
+  Seed  1: uniform=-10.100, informed=-10.661, delta= -0.561
+  Seed  2: uniform= -8.525, informed= -9.933, delta= -1.408
+  Seed  3: uniform= -9.957, informed= -9.855, delta= +0.102
+  Seed  4: uniform= -9.935, informed= -9.934, delta= +0.001
+
+  Uniform ref:   -9.692 +/- 0.262 (-148.6% of DP)
+  Informed ref: -10.066 +/- 0.134 (-154.3% of DP)
+
+================================================================================
+SUMMARY OF FINDINGS
+================================================================================
+
+  H1 (Evaluation artifact):
+    Stochastic: -7.349, Greedy: -9.700, Delta: -2.350
+    REJECTED: Evaluation method does not explain failure
+
+  H2 (Segment length):
+    L= 1: -10.582 (-162.2% of DP)
+    L= 3: -10.106 (-154.9% of DP)
+    L= 5:  -9.998 (-153.3% of DP)
+    L=10:  -9.663 (-148.1% of DP)
+    L=25:  -9.928 (-152.2% of DP)
+    WEAK/REJECTED: Segment length has limited effect
+
+  H3 (Lambda range):
+    lambda= 0.001:  -9.911 (-151.9% of DP)
+    lambda= 0.010:  -9.857 (-151.1% of DP)
+    lambda= 0.100:  -9.928 (-152.2% of DP)
+    lambda= 0.500:  -9.963 (-152.7% of DP)
+    lambda= 1.000:  -9.692 (-148.6% of DP)
+    lambda= 5.000:  -9.905 (-151.8% of DP)
+    lambda=10.000:  -9.921 (-152.1% of DP)
+    CONFIRMED: Best lambda=1.0 is outside original range [0.001, 0.1]
+
+  H4 (Training budget):
+    Best: epochs=300, lr=0.001: -9.846
+    Worst: epochs=300, lr=0.01: -9.986
+    REJECTED: Training budget is not the bottleneck
+
+  H5 (Grid size):
+    5x5, K= 100:  -9.539 (-112.9% of DP)
+    5x5, K= 500:  -3.635 (-43.0% of DP)
+    5x5, K=2000:  -2.084 (-24.7% of DP)
+    REJECTED: DPO still fails on 5x5 grid
+
+  H6 (Reference policy):
+    Uniform ref:  -9.692 (-148.6% of DP)
+    Informed ref: -10.066 (-154.3% of DP)
+    REJECTED: Reference policy quality does not matter much
+
+Saved: ch08_rlhf/sims/dpo_diagnosis.png
+
+OUTPUT FILES:
+  ch08_rlhf/sims/dpo_diagnosis.png

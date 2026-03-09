@@ -1,0 +1,170 @@
+% Chapter: Reinforcement Learning and the Curse of Dimensionality
+% Covers complexity results and structural conditions for tractability
+% Primary references: Chow-Tsitsiklis (1989), Du et al. (2021), Liu et al. (2022), Lu et al. (2025)
+
+\section{Reinforcement Learning and the Curse of Dimensionality}
+\label{sec:curse_of_dimensionality}
+
+\subsection{The Foundational Barrier}
+\label{sec:foundational_barrier}
+
+Exact solution methods must visit every state, and the number of states grows exponentially in the problem's natural dimension. With $d$ state variables each taking $n$ discrete values, the state space has $n^d$ elements and value iteration requires $O(n^{2d} \cdot |\mathcal{A}|)$ time per sweep.\footnote{The term ``curse of dimensionality'' is due to \citet{Bellman1957}.} At $d = 10$ and $n = 100$, this exceeds $10^{20}$ operations per sweep.
+
+The theoretical foundations of this barrier were established through a sequence of results in computational complexity. \citet{papadimitriou1987} proved that computing an optimal policy for finite-horizon MDPs is P-complete, placing it among the hardest problems solvable in polynomial time. For infinite-horizon discounted MDPs, they showed that policy iteration terminates in polynomial time, but the polynomial depends on the number of states and actions, which may themselves be exponential in the natural problem dimension.
+
+The decisive complexity result for continuous-state MDPs comes from \citet{chow1989complexity}. Consider the class of MDPs with $d_s$-dimensional continuous state spaces and $d_a$-dimensional continuous action spaces, where the transition density and reward function are Lipschitz continuous. The computational problem is to find an $\epsilon$-optimal policy. \citeauthor{chow1989complexity} establish both upper and lower bounds:
+
+\begin{theorem}[Chow-Tsitsiklis, 1989]
+\label{thm:chow_tsitsiklis}
+For the class of Lipschitz-continuous MDPs with $d_s$-dimensional states and $d_a$-dimensional actions, the sample complexity of any algorithm that returns an $\epsilon$-optimal policy is
+\begin{equation}
+\Theta\left( \epsilon^{-(2d_s + d_a)} \right).
+\end{equation}
+\end{theorem}
+
+This result has two implications. The upper bound, achieved by discretization-based algorithms, shows that $O(\epsilon^{-(2d_s + d_a)})$ samples suffice. The lower bound proves that no algorithm can do better without additional structural assumptions. For a ten-dimensional state space with five-dimensional actions, achieving $\epsilon = 0.01$ accuracy requires on the order of $10^{50}$ samples, clearly infeasible.
+
+The factor of $2d_s$ rather than $d_s$ arises from the need to estimate transition probabilities, since learning $P(s'|s,a)$ requires resolving uncertainty in both the current state $s$ and the next state $s'$, each contributing $d_s$ to the exponent. The lower bound construction uses an information-theoretic argument showing that any algorithm must distinguish among exponentially many possible transition structures, each requiring sufficient samples to identify.
+
+This complexity result extends the work of \citet{traub1988} on information-based complexity, which established similar exponential lower bounds for multivariate integration and function approximation. The connection is direct. Computing expected values under the Bellman operator involves integrating over the transition density, inheriting the curse from numerical integration. \citeauthor{traub1988} showed that for functions in standard Sobolev spaces, no integration method can achieve error $\epsilon$ with fewer than $\Theta(\epsilon^{-d})$ function evaluations. The MDP problem compounds this with the need to solve a fixed-point equation.
+
+\citet{rust1997} surveys these computational barriers in the context of structural econometric estimation of dynamic discrete choice models. The nested fixed-point algorithm (NFXP) requires solving the Bellman equation to compute choice probabilities at each parameter guess, making the curse of dimensionality a binding constraint on the complexity of estimable models.\footnote{This limitation motivated the development of conditional choice probability methods \citep{hotz1993} and simulation-based estimators that avoid full solution of the dynamic program. \citet{bray2022comment} provides a recent critique of randomization-based approaches to breaking the curse, demonstrating that variance reduction techniques cannot circumvent the fundamental complexity barrier without additional structural assumptions.}
+
+
+\subsection{Breaking the Curse: Three Pathways}
+\label{sec:breaking_curse}
+
+Recent theoretical work has identified three distinct structural conditions under which the curse of dimensionality can be circumvented: bilinear structure in the Bellman error, smoothness exploitable by neural networks, and factorization arising from weak coupling.
+
+\subsubsection{Bilinear Structure}
+
+\citet{du2021} introduce the Bilinear Class framework, which unifies and extends prior structural conditions for sample-efficient reinforcement learning. The unifying observation is that many tractable RL settings share a common algebraic property, namely that the Bellman error can be written as a bilinear form.
+
+\begin{definition}[Bilinear Class, Du et al. 2021]
+\label{def:bilinear_class}
+Consider an MDP $M$, a hypothesis class $\mathcal{H}$, a discrepancy function $\ell_f$, and a set of estimation policies $\Pi_{\text{est}}$. The tuple $(\mathcal{H}, \ell_f, \Pi_{\text{est}}, M)$ is a Bilinear Class if $\mathcal{H}$ is realizable in $M$ and there exist functions $W_h: \mathcal{H} \to \mathcal{V}$ and $X_h: \mathcal{H} \to \mathcal{V}$ for some Hilbert space $\mathcal{V}$ such that for all $f \in \mathcal{H}$ and $h \in [H]$:
+\begin{enumerate}
+\item The Bellman error decomposes as $\mathbb{E}_{a_{0:h} \sim \pi_f}[Q_{h,f}(s_h, a_h) - r_h - V_{h+1,f}(s_{h+1})] = \langle W_h(f) - W_h(f^*), X_h(f) \rangle$.
+\item The discrepancy measure permits estimation. For any $g \in \mathcal{H}$, $|\mathbb{E}_{a_{0:h-1} \sim \pi_f, a_h \sim \pi_{\text{est}}}[\ell_f(o_h, g)]| = |\langle W_h(g) - W_h(f^*), X_h(f) \rangle|$.
+\end{enumerate}
+\end{definition}
+
+The bilinear structure enables a key computational advantage. Data collected under one hypothesis can be reused to estimate the Bellman error for all hypotheses in the class simultaneously, analogous to uniform convergence in supervised learning. The resulting algorithm, BiLin-UCB, achieves polynomial sample complexity:
+
+\begin{theorem}[Du et al. 2021]
+\label{thm:bilinear_sample}
+For any Bilinear Class with hypothesis class $\mathcal{H}$ and inherent dimension $d$, there exists an algorithm that returns an $\epsilon$-optimal policy using $\tilde{O}(d^3 H^4 / \epsilon^2)$ samples, where $H$ is the horizon.
+\end{theorem}
+
+The Bilinear Class framework subsumes several previously studied settings, including tabular MDPs, linear MDPs \citep{jin2020}, linear mixture MDPs \citep{ayoub2020}, linear Bellman complete models \citep{zanette2020}, and factored MDPs \citep{kearns1999}. It also introduces new tractable settings, including the Linear $Q^*/V^*$ model where both the optimal Q-function and V-function are linear in known features. The unifying observation is that low Bellman rank (the dimension of the bilinear factorization) implies polynomial learnability.\footnote{The Bilinear Class is related to but distinct from the Bellman Eluder dimension of \citet{jin2021}. Neither framework strictly contains the other; they capture different structural properties that enable efficient learning.}
+
+
+\subsubsection{Smoothness and Neural Function Approximation}
+
+The second pathway exploits smoothness of the value function, which neural networks can approximate efficiently. \citet{liu2022deep} analyze deep Q-learning with $\epsilon$-greedy exploration, characterizing when neural function approximation provably works beyond the linear regime.
+
+The key assumption is that the optimal Q-function lies in a Besov space $\mathcal{B}^{\alpha}_{p,q}(\mathcal{X})$, where $\alpha > 0$ is the smoothness parameter. Besov spaces generalize Sobolev and H\"{o}lder spaces, allowing for spatially inhomogeneous smoothness with spikes and jumps. The smoothness parameter $\alpha$ controls the approximation rate, with smoother functions (larger $\alpha$) admitting more efficient approximation.
+
+\begin{assumption}[Bellman Smoothness, Liu et al. 2022]
+\label{ass:bellman_smoothness}
+Let $\tilde{R}$ be a fixed constant. Define $\mathcal{B}_{\tilde{R}} = \{f \in \mathcal{B}^{\alpha}_{p,q}(\mathcal{X}): \|f\|_{\mathcal{B}} \leq \tilde{R}\}$. For any $h \in [H]$ and $Q: \mathcal{S} \times \mathcal{A} \to [0, H]$, the Bellman operator satisfies $T^*_h Q \in \mathcal{B}_{\tilde{R}}$.
+\end{assumption}
+
+Under this assumption, \citeauthor{liu2022deep} prove that value iteration with deep ReLU networks achieves sublinear regret:
+
+\begin{theorem}[Liu et al. 2022]
+\label{thm:deep_rl_regret}
+Under Assumption~\ref{ass:bellman_smoothness} with smoothness $\alpha > d(1/p - 1/4)_+$, value iteration via deep ReLU networks with depth $L = O(\log T)$ and width $m = \tilde{O}(T^{d/(2\alpha + d)})$ achieves regret
+\begin{equation}
+\text{Regret}(T) = \tilde{O}\left( T^{\frac{\alpha K + (\alpha + d)(K+2)}{(2\alpha + d)(K+2)}} \right),
+\end{equation}
+where $K \in [1, H]$ is an MDP-dependent constant reflecting the exploration difficulty.
+\end{theorem}
+
+The regret bound improves with smoothness. As $\alpha \to \infty$, the exponent approaches $(K+1)/(K+2)$, matching the $\epsilon$-greedy contextual bandit rate. For the Barron space (two-layer networks), width $m = \Omega(\sqrt{T})$ suffices, and the bound becomes independent of the ambient dimension $d$, avoiding the curse for sufficiently smooth functions.
+
+The mechanism is that smooth functions can be approximated by neural networks with polynomially many parameters in the accuracy $\epsilon$, rather than the exponential scaling that generic Lipschitz functions require. The curse shifts from state-space size to the smoothness-to-dimension ratio $\alpha/d$; if the target function is sufficiently smooth relative to the dimension, neural approximation breaks the exponential barrier.
+
+
+\subsubsection{Factorization and Weak Coupling}
+
+The third pathway exploits structural sparsity in the transition dynamics. \citet{lu2025} study factored MDPs where the state vector $s = (s_1, \ldots, s_n)$ consists of $n$ components, and transitions factorize across components:
+\begin{equation}
+P(s'|s, a) = \prod_{i=1}^{n} P_i(s'_i | s_{\text{pa}(i)}, a),
+\end{equation}
+where $\text{pa}(i) \subseteq [n]$ denotes the parent set of component $i$. In an exactly factored MDP, each component's next value depends only on a small subset of current components, encoded in a directed graph.
+
+The challenge is that exact factorization rarely holds in practice. \citeauthor{lu2025} extend the theory to approximate factorization, where the true transition kernel $P$ is close to a factored kernel $\tilde{P}$:
+\begin{equation}
+\Delta_P := \max_{(s,a)} \left\| P(\cdot|s,a) - \tilde{P}(\cdot|s,a) \right\|_{\text{TV}} \leq \delta,
+\end{equation}
+for some coupling error $\delta \ll 1$. Formally, weak coupling, a common property of networked systems, implies approximate factorization.
+
+\begin{definition}[Weak Coupling]
+An MDP exhibits weak coupling if the transition of each state component $s_i$ depends strongly on a small set of parents $\text{pa}(i)$ and only weakly on the remaining components. Formally, the coupling error $\Delta_P$ is small.
+\end{definition}
+
+Under approximate factorization, \citeauthor{lu2025} develop two algorithms with polynomial sample complexity:
+
+\begin{theorem}[Lu et al. 2025]
+\label{thm:factored_complexity}
+For an MDP with $n$ state components, horizon $H$, and coupling error $\Delta_P \leq \delta$, the model-based algorithm achieves $\epsilon$-optimal policy with sample complexity
+\begin{equation}
+\tilde{O}\left( \frac{|\mathcal{S}_{\text{loc}}|^2 \cdot |\mathcal{A}| \cdot H^4}{\epsilon^2} \right),
+\end{equation}
+where $|\mathcal{S}_{\text{loc}}|$ is the size of the local state space (determined by the maximum parent set size), rather than the full state space $|\mathcal{S}| = \prod_i |\mathcal{S}_i|$.
+\end{theorem}
+
+The exponential dependence on dimension is replaced by polynomial dependence on the local structure. For a system with $n = 100$ components, each with 10 states and parent sets of size 3, the local complexity is $10^3 = 1000$ rather than $10^{100}$.
+
+The practical implication is that networked systems, such as supply chains, power grids, and multi-agent coordination problems, are often amenable to RL methods that exploit the factored structure, even when exact independence does not hold. The coupling error $\Delta_P$ serves as a regularization parameter, where smaller coupling yields faster learning, while the algorithms remain consistent even with moderate coupling.
+
+
+\subsection{Simulation Study: Wind Farm Storage Control}
+\label{sec:wind_farm_simulation}
+
+I demonstrate the curse of dimensionality through a wind farm storage control problem. Consider a wind farm with battery storage that must decide how much power to store or discharge each hour, facing stochastic wind generation, electricity prices, and demand. The problem is formulated as a finite-horizon MDP with horizon $H = 24$ hours and discount factor $\gamma = 0.95$.
+
+The state space $\mathcal{S} \subseteq \mathbb{R}^d$ contains $d$ continuous variables. The base problem ($d = 3$) has state $s_t = (w_t, p_t, c_t)$ where $w_t \in [0, 100]$ is wind power generation (kW), $p_t \in [0, 1]$ is the electricity spot price (\$/kWh), and $c_t \in [0, 50]$ is battery state-of-charge (kWh). For scaling experiments with $d > 3$, I append additional state variables $x_t^{(4)}, \ldots, x_t^{(d)} \in [0, 1]$ representing auxiliary system conditions. The action space is $\mathcal{A} = [-20, 20]$, representing battery charge (positive) or discharge (negative) rate in kW.
+
+Transition dynamics follow AR(1) processes with weak coupling:
+\begin{align}
+w_{t+1} &= 0.7 w_t + \epsilon_t^w, \quad \epsilon_t^w \sim \mathcal{N}(30, 25), \\
+p_{t+1} &= 0.6 p_t + 0.05 (w_t / 100) + \epsilon_t^p, \quad \epsilon_t^p \sim \mathcal{N}(0.4, 0.01), \\
+c_{t+1} &= c_t + 0.9 a_t, \\
+x_{t+1}^{(i)} &= 0.8 x_t^{(i)} + 0.01(w_t/100 - 0.5) + 0.1 + \epsilon_t^{(i)}, \quad \epsilon_t^{(i)} \sim \mathcal{N}(0, 0.0025),
+\end{align}
+with all variables clipped to their respective bounds. The auxiliary dimensions exhibit weak coupling, as each depends primarily on its own lagged value with only minor influence from the wind state.
+
+The instantaneous reward function is
+\begin{equation}
+r(s_t, a_t) = p_t \cdot \min(w_t + a_t, D_t) - 0.01 c_t - 5 \cdot \max(0, D_t - w_t - a_t),
+\end{equation}
+where $D_t \sim \text{Poisson}(50 + 10 \sin(2\pi t / 24))$ is stochastic demand following a diurnal pattern. Revenue equals price times supply (capped at demand), minus storage holding costs, minus a shortage penalty of \$5/kWh for unmet demand. The reward depends only on the base state $(w_t, p_t, c_t)$, not on the auxiliary dimensions.
+
+I compare four solution methods. Tabular DP discretizes each dimension into $n = 7$ bins and solves via backward induction with Monte Carlo integration over transitions (20 samples per state-action pair). The state space has $7^d$ states, yielding 343 states at $d = 3$ and 2,401 states at $d = 4$. Factored RL maintains separate Q-tables for each state dimension and aggregates additively, exploiting the weak coupling structure. Deep Q-Network (DQN) uses a two-layer neural network with 128 hidden units, experience replay, and target network stabilization. Bilinear Actor-Critic uses linear function approximation in polynomial features (intercept, linear, quadratic, and cross terms).
+
+Figure~\ref{fig:curse_scaling} presents computation times for all methods on a logarithmic scale. Tabular DP exhibits exponential growth, requiring 37 seconds at $d = 3$, 328 seconds at $d = 4$, and timing out at $d \geq 5$. The dashed extrapolation shows that DP would require approximately 50 minutes at $d = 5$ and 8 hours at $d = 6$ to complete. In contrast, RL methods scale gracefully. Bilinear Actor-Critic is fastest at 2--3 seconds across all dimensions, exploiting the polynomial feature structure. Factored RL grows linearly from 17 to 33 seconds as dimension increases, reflecting its additive decomposition over state components. DQN remains nearly constant at 42--45 seconds, as the neural network size is fixed and training cost is dominated by episode simulation rather than state-space enumeration.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{../ch03_theory/papers/curse_of_dimensionality/sims/computation_times.png}
+\caption{Computation time versus state dimension for all methods (log scale). Tabular DP exhibits exponential scaling, completing at $d = 3$ (38s) and $d = 4$ (328s) but timing out at $d \geq 5$. RL methods scale polynomially: Bilinear AC (2--5s), Factored RL (18--46s), and DQN (52--131s) all complete within minutes regardless of dimension.}
+\label{fig:curse_scaling}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{../ch03_theory/papers/curse_of_dimensionality/sims/performance.png}
+\caption{Policy performance versus state dimension. Tabular DP achieves returns of 1110--1113 where it completes ($d = 3, 4$). DQN and Bilinear AC match DP performance at 1107--1109; Factored RL achieves 1070--1104. All RL methods maintain stable performance at $d = 5, 6$ where DP is intractable.}
+\label{fig:performance}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Wind farm control: average returns (\$/day) and DP computation time by method and dimension. DP times out at $d \geq 5$; RL methods scale gracefully while achieving comparable returns.}
+\label{tab:curse_results}
+\input{../ch03_theory/papers/curse_of_dimensionality/sims/results.tex}
+\end{table}
+
+Table~\ref{tab:curse_results} reports policy performance across methods and dimensions. Where DP completes ($d = 3, 4$), it achieves returns of 1110--1113, providing a benchmark. DQN and Bilinear AC match this performance closely at 1107--1109, while Factored RL underperforms slightly at 1070--1091 in low dimensions but improves to 1100--1104 at higher dimensions. At $d = 5$ and $d = 6$ where DP is intractable, all RL methods maintain stable performance around 1100--1107. The results validate the theoretical predictions. Each RL method exploits different structural properties (weak coupling, smoothness, low-rank features) to achieve polynomial-complexity learning where tabular methods suffer exponential blowup.
