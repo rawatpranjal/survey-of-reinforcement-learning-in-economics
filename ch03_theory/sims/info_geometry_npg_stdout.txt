@@ -1,0 +1,27 @@
+============================================================
+Information Geometry of Natural Policy Gradient
+============================================================
+
+Fisher information matrix F:
+  [[2.0, 0.5],
+   [0.5, 0.8]]
+Fisher eigenvalues: 0.6190, 2.1810
+Condition number: 3.5236
+
+Gradient g = (1.0, 0.3)
+Natural gradient F^{-1}g = (0.4815, 0.0741)
+
+Euclidean step direction: (0.9578, 0.2873)
+  ||step||_2 = 1.0000
+  KL(step) = 1.0881
+
+Natural gradient step: (0.6784, 0.1044)
+  ||step||_2 = 0.6864
+  KL(step) = 0.5000
+
+Improvement (linear approx):
+  Euclidean: g^T * euc_step = 1.0440
+  Natural:   g^T * nat_step = 0.7097
+  Ratio (natural/euclidean): 0.6798
+
+Output: /Users/pranjal/Code/rl/ch03_theory/sims/info_geometry_npg.png

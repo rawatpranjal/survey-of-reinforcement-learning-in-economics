@@ -1,0 +1,110 @@
+======================================================================
+Brock-Mirman: BRM vs FQE on Offline Data
+Demonstrates Fujimoto (2022): lower Bellman error != lower value error
+alpha=0.36, beta=0.96, N_K=50, N_S=100, N_A=50, gamma=0.96
+Offline dataset: T=2000 | Training: 50,000 steps x 3 seeds
+======================================================================
+
+Capital grid: [0.0100, 0.3310], log-spaced, N=50
+
+[1] Building MDP (R, P)...
+  Feasible (s,a) pairs: 4795 / 5000
+
+[2] Computing Q* via value iteration...
+  r_mean (shift):     -1.3797
+  Q* original:  [-33.730, -25.070]
+  Q* shifted:   [0.762, 9.422]
+  VI vs closed-form policy agreement: 94.0%
+
+[3] Generating offline dataset D from optimal policy (seed=0)...
+  Dataset size: 2000 transitions
+  Unique (s',a) pairs in D: 11 / 4795 feasible
+  Coverage: 0.2%
+  Reward stats (shifted): mean=0.3459, min=-0.4903, max=0.5063
+
+[4] Training BRM (3 seeds x 50,000 steps)...
+
+  Seed 42:
+    Final BE on D:       0.000209
+    Final VE (all s,a):  7.060712
+    VE/BE ratio:         33808.38
+    Final pol. agree:    8.0%
+    Pearson r(BE, VE):   0.170
+
+  Seed 123:
+    Final BE on D:       0.000291
+    Final VE (all s,a):  7.450106
+    VE/BE ratio:         25629.99
+    Final pol. agree:    7.0%
+    Pearson r(BE, VE):   -0.315
+
+  Seed 777:
+    Final BE on D:       0.000312
+    Final VE (all s,a):  7.278114
+    VE/BE ratio:         23319.57
+    Final pol. agree:    8.0%
+    Pearson r(BE, VE):   0.022
+
+[5] Training FQE (3 seeds x 50,000 steps)...
+
+  Seed 42:
+    Final BE on D:       0.203655
+    Final VE (all s,a):  6.926888
+    VE/BE ratio:         34.01
+    Final pol. agree:    6.0%
+    Pearson r(BE, VE):   0.518
+
+  Seed 123:
+    Final BE on D:       0.217327
+    Final VE (all s,a):  7.465210
+    VE/BE ratio:         34.35
+    Final pol. agree:    6.0%
+    Pearson r(BE, VE):   0.686
+
+  Seed 777:
+    Final BE on D:       0.242506
+    Final VE (all s,a):  7.281134
+    VE/BE ratio:         30.02
+    Final pol. agree:    6.0%
+    Pearson r(BE, VE):   0.513
+
+[6] Running OLS expanding window...
+  Window: 10–1990 obs | Noise std: 0.3
+  Initial OOS MSE: 0.109373, Final OOS MSE: 0.095896
+  Initial OOS R²:  -0.0130,  Final OOS R²:  0.1118
+  Pearson r(OOS MSE, OOS R²): -1.000
+
+================================================================================
+SUMMARY TABLE
+Note: BE = mean squared Bellman error on D (current net both sides);
+      VE = mean absolute value error over all feasible (s,a) pairs
+================================================================================
+Method     Seed     Final BE     Final VE     VE/BE  Pol.Agree   r(BE,VE)
+--------------------------------------------------------------------------------
+BRM          42     0.000209     7.060712  33808.38       8.0%      0.170
+BRM         123     0.000291     7.450106  25629.99       7.0%     -0.315
+BRM         777     0.000312     7.278114  23319.57       8.0%      0.022
+BRM mean    ---     0.000271     7.262977  27585.98        ---        ---
+
+FQE          42     0.203655     6.926888     34.01       6.0%      0.518
+FQE         123     0.217327     7.465210     34.35       6.0%      0.686
+FQE         777     0.242506     7.281134     30.02       6.0%      0.513
+FQE mean    ---     0.221163     7.224411     32.80        ---        ---
+
+OLS         --- OOS MSE=0.095896  OOS R²=0.1118  r=-1.000
+
+================================================================================
+VERIFICATION (Fujimoto 2022 Table 1 pattern)
+================================================================================
+  [PASS] BRM BE < FQE BE: 0.000271 vs 0.221163
+  [PASS] BRM VE > FQE VE: 7.262977 vs 7.224411
+  [PASS] BRM VE/BE > FQE VE/BE: 27585.98 vs 32.80
+  [PASS] OLS r(MSE,R²) < -0.90: -1.000
+
+[7] Generating figure...
+
+Saved: /Users/pranjal/Code/rl/ch03b_deeprl_practice/sims/brock_mirman_bellman.png
+
+Output files:
+  /Users/pranjal/Code/rl/ch03b_deeprl_practice/sims/brock_mirman_bellman.png
+  /Users/pranjal/Code/rl/ch03b_deeprl_practice/sims/brock_mirman_bellman_stdout.txt

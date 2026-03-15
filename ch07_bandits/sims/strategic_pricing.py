@@ -1,14 +1,24 @@
 # Strategic Pricing with Reference Effects — Chapter 6, Economic Bandits.
 # Two-firm logit pricing with reference price dynamics: gradient ascent vs Q-learning vs Nash oracle.
 
+import argparse
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.plot_style import apply_style, COLORS, DOMAIN_COLORS, BENCH_STYLE
+from sims.sim_cache import load_results, save_results, add_cache_args
+apply_style()
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_DIR = os.path.join(OUTPUT_DIR, 'cache')
+SCRIPT_NAME = 'strategic_pricing'
+
 N_FIRMS = 2
 T = 5_000
 N_SEEDS = 30
@@ -40,6 +50,29 @@ Q_EPS_DECAY = T * 0.8    # linear decay over 80% of horizon
 GA_ETA0 = 0.5            # initial step size
 GA_DECAY = 50.0          # step size: eta_t = GA_ETA0 / (1 + t/GA_DECAY)
 GA_PERTURBATION = 0.01   # finite-difference perturbation
+
+CONFIG = {
+    'N_FIRMS': N_FIRMS,
+    'T': T,
+    'N_SEEDS': N_SEEDS,
+    'ALPHA': ALPHA.tolist(),
+    'BETA': BETA,
+    'GAMMA': GAMMA,
+    'DELTA': DELTA,
+    'MARGINAL_COST': MARGINAL_COST,
+    'P_MIN': P_MIN,
+    'P_MAX': P_MAX,
+    'N_PRICE_LEVELS': N_PRICE_LEVELS,
+    'Q_LR': Q_LR,
+    'Q_GAMMA_DISCOUNT': Q_GAMMA_DISCOUNT,
+    'Q_EPS_START': Q_EPS_START,
+    'Q_EPS_END': Q_EPS_END,
+    'Q_EPS_DECAY': Q_EPS_DECAY,
+    'GA_ETA0': GA_ETA0,
+    'GA_DECAY': GA_DECAY,
+    'GA_PERTURBATION': GA_PERTURBATION,
+    'version': 1,
+}
 
 # ---------------------------------------------------------------------------
 # Logit demand and profit functions
@@ -226,114 +259,158 @@ def run_nash_oracle(seed):
     return price_history, profit_history, rho_history
 
 # ---------------------------------------------------------------------------
-# Run experiments across seeds
+# Algorithm names and functions
 # ---------------------------------------------------------------------------
 algo_names = ["Gradient Ascent", "Q-learning", "Nash Oracle"]
 algo_funcs = [run_gradient_ascent, run_q_learning, run_nash_oracle]
 n_algos = len(algo_names)
 
-# Storage
-all_dist_to_ne = np.zeros((n_algos, N_SEEDS, T))
-all_cum_profit = np.zeros((n_algos, N_SEEDS, T))
-
-for algo_idx, (name, func) in enumerate(zip(algo_names, algo_funcs)):
-    for seed in range(N_SEEDS):
-        price_hist, profit_hist, rho_hist = func(seed)
-
-        # Distance to Nash equilibrium
-        dist = np.sqrt(np.sum((price_hist - NE_PRICES[np.newaxis, :]) ** 2, axis=1))
-        all_dist_to_ne[algo_idx, seed] = dist
-
-        # Cumulative profit (sum over firms)
-        all_cum_profit[algo_idx, seed] = np.cumsum(profit_hist.sum(axis=1))
-
-    print(f"Completed {name}: all {N_SEEDS} seeds")
-
 # ---------------------------------------------------------------------------
-# Aggregate statistics
+# Compute
 # ---------------------------------------------------------------------------
-mean_dist = all_dist_to_ne.mean(axis=1)
-se_dist = all_dist_to_ne.std(axis=1) / np.sqrt(N_SEEDS)
+def compute_data():
+    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+    if cached is not None:
+        print("Loaded from cache.")
+        return cached
 
-mean_cum_profit = all_cum_profit.mean(axis=1)
-se_cum_profit = all_cum_profit.std(axis=1) / np.sqrt(N_SEEDS)
+    # Storage
+    all_dist_to_ne = np.zeros((n_algos, N_SEEDS, T))
+    all_cum_profit = np.zeros((n_algos, N_SEEDS, T))
 
-# Final-round statistics
-final_dist_mean = all_dist_to_ne[:, :, -1].mean(axis=1)
-final_dist_se = all_dist_to_ne[:, :, -1].std(axis=1) / np.sqrt(N_SEEDS)
-final_profit_mean = all_cum_profit[:, :, -1].mean(axis=1)
-final_profit_se = all_cum_profit[:, :, -1].std(axis=1) / np.sqrt(N_SEEDS)
+    for algo_idx, (name, func) in enumerate(zip(algo_names, algo_funcs)):
+        for seed in range(N_SEEDS):
+            price_hist, profit_hist, rho_hist = func(seed)
 
-# Average distance over last 500 rounds
-avg_dist_last500_mean = all_dist_to_ne[:, :, -500:].mean(axis=2).mean(axis=1)
-avg_dist_last500_se = all_dist_to_ne[:, :, -500:].mean(axis=2).std(axis=1) / np.sqrt(N_SEEDS)
+            # Distance to Nash equilibrium
+            dist = np.sqrt(np.sum((price_hist - NE_PRICES[np.newaxis, :]) ** 2, axis=1))
+            all_dist_to_ne[algo_idx, seed] = dist
 
-print("\n=== Final Results ===")
-for i in range(n_algos):
-    print(f"{algo_names[i]:<20} dist_to_NE(last500): {avg_dist_last500_mean[i]:.4f} ± {avg_dist_last500_se[i]:.4f}  "
-          f"cum_profit: {final_profit_mean[i]:.1f} ± {final_profit_se[i]:.1f}")
+            # Cumulative profit (sum over firms)
+            all_cum_profit[algo_idx, seed] = np.cumsum(profit_hist.sum(axis=1))
 
-# ---------------------------------------------------------------------------
-# Figure: 2-panel (convergence to NE + cumulative profit)
-# ---------------------------------------------------------------------------
-colors = ["#2ca02c", "#1f77b4", "#7f7f7f"]
-ts = np.arange(1, T + 1)
+        print(f"Completed {name}: all {N_SEEDS} seeds")
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    # Aggregate statistics
+    mean_dist = all_dist_to_ne.mean(axis=1)
+    se_dist = all_dist_to_ne.std(axis=1) / np.sqrt(N_SEEDS)
 
-# Left panel: distance to Nash equilibrium
-for i in range(n_algos):
-    ax1.plot(ts, mean_dist[i], color=colors[i], label=algo_names[i], linewidth=1.5)
-    ax1.fill_between(ts, mean_dist[i] - se_dist[i], mean_dist[i] + se_dist[i],
-                     color=colors[i], alpha=0.15)
+    mean_cum_profit = all_cum_profit.mean(axis=1)
+    se_cum_profit = all_cum_profit.std(axis=1) / np.sqrt(N_SEEDS)
 
-ax1.set_xlabel("Round $t$")
-ax1.set_ylabel(r"$\|p_t - p^*_{\mathrm{NE}}\|_2$")
-ax1.set_title("Distance to Nash Equilibrium")
-ax1.legend(loc="upper right", fontsize=9)
-ax1.set_xlim(1, T)
-ax1.set_ylim(bottom=0)
-ax1.grid(True, alpha=0.3)
+    # Final-round statistics
+    final_dist_mean = all_dist_to_ne[:, :, -1].mean(axis=1)
+    final_dist_se = all_dist_to_ne[:, :, -1].std(axis=1) / np.sqrt(N_SEEDS)
+    final_profit_mean = all_cum_profit[:, :, -1].mean(axis=1)
+    final_profit_se = all_cum_profit[:, :, -1].std(axis=1) / np.sqrt(N_SEEDS)
 
-# Right panel: cumulative profit (sum over firms)
-for i in range(n_algos):
-    ax2.plot(ts, mean_cum_profit[i], color=colors[i], label=algo_names[i], linewidth=1.5)
-    ax2.fill_between(ts, mean_cum_profit[i] - se_cum_profit[i],
-                     mean_cum_profit[i] + se_cum_profit[i],
-                     color=colors[i], alpha=0.15)
+    # Average distance over last 500 rounds
+    avg_dist_last500_mean = all_dist_to_ne[:, :, -500:].mean(axis=2).mean(axis=1)
+    avg_dist_last500_se = all_dist_to_ne[:, :, -500:].mean(axis=2).std(axis=1) / np.sqrt(N_SEEDS)
 
-ax2.set_xlabel("Round $t$")
-ax2.set_ylabel("Cumulative Industry Profit")
-ax2.set_title("Cumulative Profit")
-ax2.legend(loc="upper left", fontsize=9)
-ax2.set_xlim(1, T)
-ax2.grid(True, alpha=0.3)
+    print("\n=== Final Results ===")
+    for i in range(n_algos):
+        print(f"{algo_names[i]:<20} dist_to_NE(last500): {avg_dist_last500_mean[i]:.4f} ± {avg_dist_last500_se[i]:.4f}  "
+              f"cum_profit: {final_profit_mean[i]:.1f} ± {final_profit_se[i]:.1f}")
 
-fig.tight_layout()
-fig_path = os.path.join(OUTPUT_DIR, "strategic_pricing_convergence.png")
-fig.savefig(fig_path, dpi=300, bbox_inches="tight")
-plt.close(fig)
-print(f"\nSaved figure: {fig_path}")
+    data = {
+        'mean_dist': mean_dist,
+        'se_dist': se_dist,
+        'mean_cum_profit': mean_cum_profit,
+        'se_cum_profit': se_cum_profit,
+        'avg_dist_last500_mean': avg_dist_last500_mean,
+        'avg_dist_last500_se': avg_dist_last500_se,
+        'final_profit_mean': final_profit_mean,
+        'final_profit_se': final_profit_se,
+    }
+    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    return data
 
-# ---------------------------------------------------------------------------
-# LaTeX table
-# ---------------------------------------------------------------------------
-tex_lines = [
-    r"\begin{tabular}{lcc}",
-    r"\hline",
-    r"Algorithm & Avg.\ Distance to NE (last 500) & Cumulative Industry Profit \\",
-    r"\hline",
-]
 
-for i in range(n_algos):
-    dist_str = f"${avg_dist_last500_mean[i]:.4f} \\pm {avg_dist_last500_se[i]:.4f}$"
-    prof_str = f"${final_profit_mean[i]:.1f} \\pm {final_profit_se[i]:.1f}$"
-    tex_lines.append(f"{algo_names[i]} & {dist_str} & {prof_str} \\\\")
+def generate_outputs(data):
+    mean_dist = data['mean_dist']
+    se_dist = data['se_dist']
+    mean_cum_profit = data['mean_cum_profit']
+    se_cum_profit = data['se_cum_profit']
+    avg_dist_last500_mean = data['avg_dist_last500_mean']
+    avg_dist_last500_se = data['avg_dist_last500_se']
+    final_profit_mean = data['final_profit_mean']
+    final_profit_se = data['final_profit_se']
 
-tex_lines.append(r"\hline")
-tex_lines.append(r"\end{tabular}")
+    # ---------------------------------------------------------------------------
+    # Figure: 2-panel (convergence to NE + cumulative profit)
+    # ---------------------------------------------------------------------------
+    colors = [COLORS['green'], COLORS['blue'], COLORS['gray']]
+    ts = np.arange(1, T + 1)
 
-tex_path = os.path.join(OUTPUT_DIR, "strategic_pricing_results.tex")
-with open(tex_path, "w") as f:
-    f.write("\n".join(tex_lines) + "\n")
-print(f"Saved table: {tex_path}")
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+    # Left panel: distance to Nash equilibrium
+    for i in range(n_algos):
+        ax1.plot(ts, mean_dist[i], color=colors[i], label=algo_names[i], linewidth=1.5)
+        ax1.fill_between(ts, mean_dist[i] - se_dist[i], mean_dist[i] + se_dist[i],
+                         color=colors[i], alpha=0.15)
+
+    ax1.set_xlabel("Round $t$")
+    ax1.set_ylabel(r"$\|p_t - p^*_{\mathrm{NE}}\|_2$")
+    ax1.set_title("Distance to Nash Equilibrium")
+    ax1.legend(loc="upper right", fontsize=9)
+    ax1.set_xlim(1, T)
+    ax1.set_ylim(bottom=0)
+    ax1.grid(True, alpha=0.3)
+
+    # Right panel: cumulative profit (sum over firms)
+    for i in range(n_algos):
+        ax2.plot(ts, mean_cum_profit[i], color=colors[i], label=algo_names[i], linewidth=1.5)
+        ax2.fill_between(ts, mean_cum_profit[i] - se_cum_profit[i],
+                         mean_cum_profit[i] + se_cum_profit[i],
+                         color=colors[i], alpha=0.15)
+
+    ax2.set_xlabel("Round $t$")
+    ax2.set_ylabel("Cumulative Industry Profit")
+    ax2.set_title("Cumulative Profit")
+    ax2.legend(loc="upper left", fontsize=9)
+    ax2.set_xlim(1, T)
+    ax2.grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    fig_path = os.path.join(OUTPUT_DIR, "strategic_pricing_convergence.png")
+    fig.savefig(fig_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    print(f"\nSaved figure: {fig_path}")
+
+    # ---------------------------------------------------------------------------
+    # LaTeX table
+    # ---------------------------------------------------------------------------
+    tex_lines = [
+        r"\begin{tabular}{lcc}",
+        r"\hline",
+        r"Algorithm & Avg.\ Distance to NE (last 500) & Cumulative Industry Profit \\",
+        r"\hline",
+    ]
+
+    for i in range(n_algos):
+        dist_str = f"${avg_dist_last500_mean[i]:.4f} \\pm {avg_dist_last500_se[i]:.4f}$"
+        prof_str = f"${final_profit_mean[i]:.1f} \\pm {final_profit_se[i]:.1f}$"
+        tex_lines.append(f"{algo_names[i]} & {dist_str} & {prof_str} \\\\")
+
+    tex_lines.append(r"\hline")
+    tex_lines.append(r"\end{tabular}")
+
+    tex_path = os.path.join(OUTPUT_DIR, "strategic_pricing_results.tex")
+    with open(tex_path, "w") as f:
+        f.write("\n".join(tex_lines) + "\n")
+    print(f"Saved table: {tex_path}")
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    add_cache_args(parser)
+    args = parser.parse_args()
+    if args.plots_only:
+        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+        assert data is not None, "No cache found. Run without --plots-only first."
+    else:
+        data = compute_data()
+    if not args.data_only:
+        generate_outputs(data)

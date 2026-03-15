@@ -1,0 +1,5 @@
+Myerson optimal reserve: r* = 0.7719
+Oracle expected revenue per round: 1.0647
+
+Saved figure: /Users/pranjal/Code/rl/ch07_bandits/sims/auction_reserve_regret.png
+Saved table:  /Users/pranjal/Code/rl/ch07_bandits/sims/auction_reserve_results.tex

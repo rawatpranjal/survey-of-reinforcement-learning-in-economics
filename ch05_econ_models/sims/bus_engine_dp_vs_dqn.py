@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import torch
 import torch.nn as nn
@@ -5,10 +6,22 @@ import torch.optim as optim
 import torch.nn.functional as F
 import random
 from collections import namedtuple, deque
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import time
+import itertools
+import math
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning) # Suppress minor warnings
 
-# --- Configuration ---
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.plot_style import apply_style, COLORS, DOMAIN_COLORS, BENCH_STYLE
+from sims.sim_cache import load_results, save_results, add_cache_args
+apply_style()
+
+# --- Configuration (Experiment 1: Single Engine) ---
 MAX_MILEAGE_KM = 100000  # Max mileage considered (e.g., 100k km)
 MILEAGE_STEP_KM = 5000   # Discretization step (e.g., 5k km)
 N_STATES = MAX_MILEAGE_KM // MILEAGE_STEP_KM + 1 # Number of discrete mileage states
@@ -41,6 +54,10 @@ EPS_START = 0.9         # Starting epsilon for exploration
 EPS_END = 0.05          # Minimum epsilon
 EPS_DECAY = 500         # Epsilon decay rate (episodes)
 N_EPISODES_DQN = 1000   # Number of training episodes for DQN
+
+OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_DIR = os.path.join(OUTPUT_DIR, 'cache')
+SCRIPT_NAME = 'bus_engine_dp_vs_dqn'
 
 # --- Helper Functions ---
 def state_to_index(mileage_km):
@@ -167,9 +184,9 @@ class DPSolver:
 # --- DQN Implementation ---
 
 # Define the Q-Network structure
-class QNetwork(nn.Module):
+class QNetwork_Exp1(nn.Module):
     def __init__(self, state_size, action_size):
-        super(QNetwork, self).__init__()
+        super(QNetwork_Exp1, self).__init__()
         # Simple MLP: Input state -> Hidden Layer -> Output Q-values for each action
         self.fc1 = nn.Linear(state_size, 64)
         self.fc2 = nn.Linear(64, 64)
@@ -184,7 +201,7 @@ class QNetwork(nn.Module):
 # Define the Replay Buffer
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
-class ReplayBuffer:
+class ReplayBuffer_Exp1:
     def __init__(self, capacity):
         self.memory = deque([], maxlen=capacity)
 
@@ -200,7 +217,7 @@ class ReplayBuffer:
         return len(self.memory)
 
 # Define the DQN Agent
-class DQNAgent:
+class DQNAgent_Exp1:
     def __init__(self, state_size, action_size):
         self.state_size = state_size
         self.action_size = action_size
@@ -209,13 +226,13 @@ class DQNAgent:
         print(f"Using device: {self.device}")
 
         # Q-Network & Target Network
-        self.policy_net = QNetwork(state_size, action_size).to(self.device)
-        self.target_net = QNetwork(state_size, action_size).to(self.device)
+        self.policy_net = QNetwork_Exp1(state_size, action_size).to(self.device)
+        self.target_net = QNetwork_Exp1(state_size, action_size).to(self.device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval() # Target network is only for inference
 
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=LR)
-        self.memory = ReplayBuffer(BUFFER_SIZE)
+        self.memory = ReplayBuffer_Exp1(BUFFER_SIZE)
         self.steps_done = 0
         self.epsilon = EPS_START
 
@@ -313,9 +330,13 @@ class DQNAgent:
                 q_values_all[s_idx, :] = q_vals
         return policy, q_values_all
 
-# --- Main Execution ---
-if __name__ == "__main__":
 
+#-----------------------------------------------------
+# Experiment 1: Single-engine DP vs DQN
+#-----------------------------------------------------
+
+def run_experiment1():
+    """Run single-engine bus replacement: DP vs DQN."""
     # --- 1. Solve with Dynamic Programming ---
     dp_solver = DPSolver()
     dp_V, dp_policy = dp_solver.solve(tolerance=0.1) # Lower tolerance for faster DP
@@ -326,6 +347,7 @@ if __name__ == "__main__":
 
     # Find the threshold mileage for replacement in DP
     dp_replace_threshold_idx = np.where(dp_policy == ACTION_REPLACE)[0]
+    dp_replace_threshold_km = None
     if len(dp_replace_threshold_idx) > 0:
         dp_replace_threshold_km = index_to_mileage(dp_replace_threshold_idx[0])
         print(f"DP Replacement Threshold: ~{dp_replace_threshold_km} km")
@@ -335,7 +357,7 @@ if __name__ == "__main__":
 
     # --- 2. Solve with DQN ---
     env = BusEnv()
-    agent = DQNAgent(state_size=1, action_size=N_ACTIONS) # State is just the index
+    agent = DQNAgent_Exp1(state_size=1, action_size=N_ACTIONS) # State is just the index
 
     episode_rewards = []
     losses = []
@@ -409,6 +431,7 @@ if __name__ == "__main__":
 
     # Find the threshold mileage for replacement in DQN
     dqn_replace_threshold_idx = np.where(dqn_policy == ACTION_REPLACE)[0]
+    dqn_replace_threshold_km = None
     if len(dqn_replace_threshold_idx) > 0:
         dqn_replace_threshold_km = index_to_mileage(dqn_replace_threshold_idx[0])
         print(f"DQN Replacement Threshold: ~{dqn_replace_threshold_km} km")
@@ -418,14 +441,33 @@ if __name__ == "__main__":
     print("\n--- Comparison ---")
     policy_diff = np.sum(dp_policy != dqn_policy)
     print(f"Number of states with different policies: {policy_diff} out of {N_STATES}")
-    print(f"DP Threshold: ~{dp_replace_threshold_km if 'dp_replace_threshold_km' in locals() else 'N/A'} km")
-    print(f"DQN Threshold: ~{dqn_replace_threshold_km if 'dqn_replace_threshold_km' in locals() else 'N/A'} km")
+    print(f"DP Threshold: ~{dp_replace_threshold_km if dp_replace_threshold_km is not None else 'N/A'} km")
+    print(f"DQN Threshold: ~{dqn_replace_threshold_km if dqn_replace_threshold_km is not None else 'N/A'} km")
+
+    return {
+        'dp_V': dp_V.tolist(),
+        'dp_policy': dp_policy.tolist(),
+        'dp_replace_threshold_km': dp_replace_threshold_km,
+        'dqn_policy': dqn_policy.tolist(),
+        'dqn_q_values': dqn_q_values.tolist(),
+        'dqn_V_approx': dqn_V_approx.tolist(),
+        'dqn_replace_threshold_km': dqn_replace_threshold_km,
+        'episode_rewards': episode_rewards,
+        'policy_diff': int(policy_diff),
+    }
 
 
-    # --- 4. Plotting ---
+def plot_experiment1(exp1_data):
+    """Generate figure for experiment 1."""
+    dp_V = np.array(exp1_data['dp_V'])
+    dp_policy = np.array(exp1_data['dp_policy'])
+    dqn_policy = np.array(exp1_data['dqn_policy'])
+    dqn_V_approx = np.array(exp1_data['dqn_V_approx'])
+    episode_rewards = exp1_data['episode_rewards']
+
     mileage_axis = [index_to_mileage(i) for i in range(N_STATES)]
 
-    plt.figure(figsize=(18, 6))
+    fig = plt.figure(figsize=(18, 6))
 
     # Plot Policies
     plt.subplot(1, 3, 1)
@@ -462,23 +504,11 @@ if __name__ == "__main__":
     plt.grid(True)
 
     plt.tight_layout()
-    plt.show()
+    out_path = os.path.join(OUTPUT_DIR, 'bus_engine_exp1.png')
+    fig.savefig(out_path, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    print(f"Experiment 1 figure saved: {out_path}")
 
-
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import random
-from collections import namedtuple, deque
-import matplotlib.pyplot as plt
-import time
-import itertools
-import math
-import pandas as pd # For table formatting
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning) # Suppress minor warnings
 
 #-----------------------------------------------------
 # MDP Definition (Multi-Engine Replacement Problem)
@@ -490,13 +520,13 @@ warnings.filterwarnings("ignore", category=UserWarning) # Suppress minor warning
 # Cost: c(s,a) = alpha * sum(op_cost(m_i) for i not in a) + beta * |a|
 # Reward: r = -c(s,a)
 
-# --- Configuration ---
+# --- Configuration (Experiment 2: Multi-Engine) ---
 MAX_MILEAGE_STATE = 5   # Mileage states: 0, 1, 2, 3, 4, 5 (6 levels)
 NUM_MILEAGE_LEVELS = MAX_MILEAGE_STATE + 1
 REPLACEMENT_CAPACITY_PER_STEP = 3 # C parameter from the text
 ALPHA_OPERATING_COST_FACTOR = 1.0 # alpha parameter
 BETA_REPLACEMENT_COST_UNIT = 5.0  # beta parameter
-GAMMA = 0.95            # Discount factor
+# GAMMA already defined above as 0.95
 
 # DP Configuration
 DP_TOLERANCE = 1e-5
@@ -734,12 +764,12 @@ class QNetwork(nn.Module):
         return self.network(state)
 
 # Replay Buffer (Standard implementation)
-Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
+Transition2 = namedtuple('Transition2', ('state', 'action', 'next_state', 'reward'))
 class ReplayBuffer:
     def __init__(self, capacity):
         self.memory = deque([], maxlen=capacity)
     def push(self, *args):
-        self.memory.append(Transition(*args))
+        self.memory.append(Transition2(*args))
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
     def __len__(self):
@@ -787,7 +817,7 @@ class DQNAgent:
             return None # Not enough samples yet
 
         transitions = self.memory.sample(self.batch_size)
-        batch = Transition(*zip(*transitions))
+        batch = Transition2(*zip(*transitions))
 
         # Convert batch arrays to tensors
         state_batch = torch.from_numpy(np.vstack(batch.state)).to(self.device)
@@ -847,10 +877,15 @@ class DQNAgent:
             return 0.0
         return np.mean(self.bellman_residuals[-last_n:])
 
+
 #-----------------------------------------------------
-# Main Comparison Loop
+# Experiment 2: Multi-Engine Comparison Loop
 #-----------------------------------------------------
-if __name__ == "__main__":
+
+def run_experiment2():
+    """Run multi-engine scaling experiment."""
+    import pandas as pd # For table formatting
+
     results = []
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -952,15 +987,111 @@ if __name__ == "__main__":
     df = pd.DataFrame(results)
     print(df.to_string(index=False))
 
+    return results
+
+
+def plot_experiment2(exp2_results, last_episode_rewards=None):
+    """Generate figure for experiment 2."""
     # Example Plot (DQN Reward Convergence for the last N run)
-    if episode_total_rewards:
-         plt.figure(figsize=(8, 5))
-         # Plot moving average of episode rewards
-         moving_avg = np.convolve(episode_total_rewards, np.ones(20)/20, mode='valid')
-         plt.plot(moving_avg)
-         plt.title(f'DQN Episode Reward Convergence (N={N}, Moving Avg)')
-         plt.xlabel('Episode (smoothed)')
-         plt.ylabel('Avg Total Reward per Episode')
-         plt.grid(True)
-         plt.tight_layout()
-         plt.show()
+    if last_episode_rewards is not None and len(last_episode_rewards) > 0:
+        fig = plt.figure(figsize=(8, 5))
+        # Plot moving average of episode rewards
+        moving_avg = np.convolve(last_episode_rewards, np.ones(20)/20, mode='valid')
+        plt.plot(moving_avg)
+        plt.title(f'DQN Episode Reward Convergence (Moving Avg)')
+        plt.xlabel('Episode (smoothed)')
+        plt.ylabel('Avg Total Reward per Episode')
+        plt.grid(True)
+        plt.tight_layout()
+        out_path = os.path.join(OUTPUT_DIR, 'bus_engine_exp2.png')
+        fig.savefig(out_path, dpi=300, bbox_inches='tight')
+        plt.close(fig)
+        print(f"Experiment 2 figure saved: {out_path}")
+
+
+# ============================================================================
+# CONFIG for caching (covers both experiments)
+# ============================================================================
+CONFIG = {
+    # Exp1 params
+    'max_mileage_km': MAX_MILEAGE_KM,
+    'mileage_step_km': MILEAGE_STEP_KM,
+    'replacement_cost': REPLACEMENT_COST,
+    'gamma': GAMMA,
+    'buffer_size': BUFFER_SIZE,
+    'batch_size': BATCH_SIZE,
+    'lr': LR,
+    'target_update': TARGET_UPDATE,
+    'eps_start': EPS_START,
+    'eps_end': EPS_END,
+    'eps_decay': EPS_DECAY,
+    'n_episodes_dqn': N_EPISODES_DQN,
+    # Exp2 params
+    'max_mileage_state': MAX_MILEAGE_STATE,
+    'replacement_capacity': REPLACEMENT_CAPACITY_PER_STEP,
+    'alpha_op': ALPHA_OPERATING_COST_FACTOR,
+    'beta_replace': BETA_REPLACEMENT_COST_UNIT,
+    'dqn_num_episodes': DQN_NUM_EPISODES,
+    'dqn_max_steps': DQN_MAX_STEPS_PER_EPISODE,
+    'version': 1,
+}
+
+
+# ============================================================================
+# compute_data / generate_outputs
+# ============================================================================
+
+def compute_data():
+    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+    if cached is not None:
+        print("Loaded from cache.")
+        return cached
+
+    print("=" * 70)
+    print("Bus Engine DP vs DQN: Two Experiments")
+    print("=" * 70)
+
+    print("\n--- Experiment 1: Single Engine ---")
+    exp1_data = run_experiment1()
+
+    print("\n--- Experiment 2: Multi-Engine Scaling ---")
+    exp2_results = run_experiment2()
+
+    data = {
+        'exp1': exp1_data,
+        'exp2': exp2_results,
+    }
+
+    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    return data
+
+
+def generate_outputs(data):
+    exp1_data = data['exp1']
+    exp2_results = data['exp2']
+
+    plot_experiment1(exp1_data)
+    plot_experiment2(exp2_results)
+
+    print("\nOutput files:")
+    print(f"  {os.path.join(OUTPUT_DIR, 'bus_engine_exp1.png')}")
+    print(f"  {os.path.join(OUTPUT_DIR, 'bus_engine_exp2.png')}")
+
+
+# ============================================================================
+# Entry point
+# ============================================================================
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    add_cache_args(parser)
+    args = parser.parse_args()
+
+    if args.plots_only:
+        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+        assert data is not None, "No cache found. Run without --plots-only first."
+    else:
+        data = compute_data()
+
+    if not args.data_only:
+        generate_outputs(data)

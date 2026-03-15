@@ -28,7 +28,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-from sims.plot_style import apply_style, COLORS, FIG_SINGLE
+from sims.plot_style import apply_style, COLORS, CMAP_SEQ, FIG_SINGLE
 apply_style()
 
 # =============================================================================
@@ -672,7 +672,7 @@ def generate_env_figure(env, V_star, pi_star):
     V_grid = V_star.reshape(env.N, env.N)
     fig, ax = plt.subplots(figsize=FIG_SINGLE)
 
-    im = ax.imshow(V_grid, cmap='viridis', interpolation='nearest')
+    im = ax.imshow(V_grid, cmap=CMAP_SEQ, interpolation='nearest')
     cbar = plt.colorbar(im, ax=ax, shrink=0.8)
     cbar.set_label('$V^*(s)$', fontsize=12)
 

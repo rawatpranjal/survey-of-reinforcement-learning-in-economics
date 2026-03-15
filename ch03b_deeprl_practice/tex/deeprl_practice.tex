@@ -1,0 +1,121 @@
+% deeprl_practice.tex
+% Chapter: The Empirics of Deep RL
+% What practitioners discover when applying deep RL: the failure modes, their causes,
+% and the diagnostic tools that expose them.
+
+I review the empirical pathologies of deep reinforcement learning, their causes, and the diagnostic tools that expose them.
+
+\subsection{The Moving Target Problem}
+\label{sec:moving_target}
+
+In supervised learning, the loss function is a \textit{fixed function} of the training data and model parameters. Deep reinforcement learning does not enjoy this property. Each gradient step moves both the current value estimates and the targets simultaneously, creating a ``nonstationary" optimization landscape. The target network heuristic introduced by \citet{mnih2015} slows target drift by periodically freezing a copy of the network, but does not eliminate it. Therefore Bellman residual is a poor proxy for the accuracy of the value function.
+
+\citet{Fujimoto2022} formalize this observation. Let $Q^\pi$ denote the true value function for policy $\pi$, let $\Delta(s,a) = Q(s,a) - Q^\pi(s,a)$ denote the value error, and let $\varepsilon(s,a) = Q(s,a) - (r + \gamma \mathbb{E}_{s',a'}[Q(s',a')])$ denote the Bellman error. Substituting the definition of $Q^\pi$ yields the key identity: $\varepsilon(s,a) = \Delta(s,a) - \gamma \mathbb{E}_{s',a'}[\Delta(s',a')]$. The Bellman error is a \emph{difference} of value errors at consecutive states, not the value error itself. If the errors $\Delta(s,a)$ and $\Delta(s',a')$ are correlated across time---the network is wrong in the same direction at successive state-action pairs---they cancel in the difference and the Bellman error is small regardless of how large the individual errors are.\footnote{In the extreme case, shifting all Q-values by the constant $c/(1-\gamma)$ leaves the Bellman error unchanged at zero while increasing value error by $c/(1-\gamma)$.}
+
+The second failure mode is specific to finite datasets: \citet[Corollary~1]{Fujimoto2022} show that over an incomplete dataset, zero Bellman error is consistent with arbitrarily large value error, because the network can fit unobserved successor pairs to whatever values make the observed residuals vanish.\footnote{The Bellman equation uniquely identifies $Q^\pi$ when enforced over the entire MDP, but over an incomplete dataset it admits infinitely many solutions. Whenever a transition $(s',a')$ that is reachable from the dataset is not itself in the dataset, the network is free to set $Q(s',a')$ at unobserved pairs to whatever value makes the residual vanish on the observed ones, unconstrained by any loss. A network can thus reach near-zero training loss while the value function remains arbitrarily inaccurate over the full state space.}
+
+The dual failure mode appears in policy gradient methods: \citet{IlyasFang2020} find that even when PPO's surrogate objective improves monotonically, episode return can plateau or decline, because the surrogate gradient is poorly aligned with the gradient of the true return.\footnote{\citet{IlyasFang2020} examine the surrogate objective used in Proximal Policy Optimization \citep{Schulman2017}. The PPO clipping mechanism is designed to keep policy updates within a trust region by bounding the probability ratio $\pi_\theta(a|s)/\pi_{\theta_{\text{old}}}(a|s)$. The gradient of the surrogate is poorly aligned with the gradient of the true return, particularly in later training phases where the policy has diverged from the behavior policy used to collect the replay data. The loss metric that practitioners monitor throughout training is measuring something other than what they care about.}
+
+\subsection{The Reproducibility Crisis and Sensitivity to Random Seeds}
+\label{sec:reproducibility}
+
+\citet{henderson2018deep} trained five leading policy gradient algorithms (PPO, TRPO, DDPG, TD3, SAC) on six MuJoCo benchmark environments, holding all hyperparameters fixed and varying only the random seed. The resulting learning curves from different seeds were non-overlapping: a seed that performed well under one algorithm performed comparably to a different algorithm's best seeds, making cross-algorithm comparison unreliable.\footnote{Differences as large as 2,000 points in final episode return arose from seed variation alone.} \citet{Agarwal2021} quantify the damage: comparing point estimates from 5 runs per task on Atari 100k yields Type I error exceeding 50\%, meaning a random noise injection appears beneficial in half of all comparisons.
+
+\citet{Agarwal2021} propose the \emph{interquartile mean} (IQM) as a replacement for mean and median when comparing algorithms. The IQM discards the top and bottom 25\% of runs before averaging, reducing sensitivity to outlier seeds. Using these tools and stratified bootstrap confidence intervals, \citet{Agarwal2021} find that several widely-cited algorithmic improvements on Atari 100k vanish or reverse when statistical uncertainty is accounted for.\footnote{They also introduce performance profiles, which plot the fraction of tasks and seeds where an algorithm achieves performance above a threshold $\tau$, as $\tau$ varies from 0 to the maximum. Performance profiles reveal the full shape of the score distribution rather than collapsing it to a single statistic.}\footnote{The fragility extends to hyperparameters. \citet{Eimer2023} conduct a systematic study of hyperparameter sensitivity across 6 algorithms and 17 environments, finding that default hyperparameters from published papers perform competitively in the specific environments used in those papers but generalize poorly across environments. \citet{Patterson2024} synthesize these findings into an empirical design handbook, recommending at minimum 10 seeds per configuration, IQM-based comparisons, and preregistration of hyperparameter search protocols.}
+
+\subsection{Value Overestimation and Spikes}
+\label{sec:overestimation}
+
+Q-learning uses the Bellman optimality update
+\begin{equation}
+    Q(s,a) \leftarrow r + \gamma \max_{a'} Q(s', a'),
+    \label{eq:q_update}
+\end{equation}
+where the maximum is taken over the estimated Q-values of all actions at the successor state. \citet{ThrunSchwartz1993} identify a positive bias intrinsic to this update: if the Q-value estimates contain noise with mean zero, the maximum over noisy estimates is biased upward by Jensen's inequality. An agent that uses a single network for both action selection ($\arg\max$) and value estimation ($\max Q$) systematically overestimates the values of every state it visits, biasing the Bellman target upward at every update step. The bias compounds through bootstrapping: overestimated targets produce overestimated updates, which produce further overestimated targets.
+
+\citet{vanHasselt2010} propose double Q-learning as a remedy: maintain two independent Q-networks $Q_A$ and $Q_B$. Use $Q_A$ to select the greedy action at $s'$, but use $Q_B$ to evaluate that action. Because the two networks are trained on different data, their errors are approximately independent, and the positive bias largely cancels. \citet{vanHasselt2016ddqn} implement this as Double DQN, using the online network for action selection and the periodically-frozen target network for evaluation. On 49 Atari games, Double DQN reduces overestimation by a factor of 3--5 and improves median performance by 20\% relative to DQN.
+
+\citet{fujimoto2018td3} observe that Double DQN's correction is incomplete in continuous-action settings, where the target network and online network remain correlated through shared updates. They propose Clipped Double Q-learning: compute two Q-value estimates $Q_1, Q_2$ with separate networks trained on the same data, and use $y = r + \gamma \min(Q_1(s',a'), Q_2(s',a'))$ as the Bellman target. The minimum operator introduces pessimistic underestimation, which is conservative but avoids the explosive positive bias.\footnote{\citet{Ciosek2019} note that clipped double Q can cause excessive pessimism under high uncertainty, proposing optimistic actor-critic as a counterweight.}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\textwidth]{../ch03b_deeprl_practice/sims/overestimation_bias.png}
+\caption{Overestimation bias from Jensen's inequality with $n=2$ actions. Blue: density of individual $\hat{Q}(s,a_i) \sim \mathcal{N}(\mu,\sigma^2)$. Red: density of $\max_i \hat{Q}(s,a_i)$, shifted right by $\sigma/\sqrt{\pi} \approx 0.56$. The shaded gap is the bias. With $n=100$ actions the bias exceeds $2.5\sigma$.}
+\label{fig:overestimation_bias}
+\end{figure}
+
+DQN prevents outright divergence, but \citet{vanHasselt2018} find that \emph{soft divergence}, defined as a temporary spike in value estimates by more than 10\% followed by recovery, occurs in the majority of DQN training runs across 57 Atari games.\footnote{Larger networks diverge more frequently than smaller ones, counter to the usual intuition that more expressive models should generalize better.} The deadly triad does not announce itself as a training failure: the value estimates may spike and recover, leaving no visible trace in the loss curve while corrupting the policy.
+
+\citet{KumarImplicit2021} describe a continuous manifestation of the deadly triad: \emph{implicit under-parameterization}.\footnote{Neural networks trained with bootstrapped TD objectives progressively lose their effective rank, with fewer and fewer neurons contributing distinct directions in the representation. This rank collapse is silent (training loss continues to decrease) but the network's ability to represent new information degrades over time, a form of capacity loss distinct from but related to plasticity loss.}
+
+\subsection{Plasticity Loss and Primacy Bias}
+\label{sec:plasticity}
+
+A network that trains well at step $t = 100$ may be incapable of learning at step $t = 100{,}000$, even if the data quality at the later step is higher. \citet{Lyle2022} call this \emph{capacity loss}: the network's ability to update its own weights degrades progressively during training, measured by the fraction of effective parameters and the network's ability to fit new random labels. \citet{Lyle2023} extend this to \emph{plasticity loss}, identifying dead ReLU neurons, weight norm growth, and feature rank collapse as three distinct mechanisms, not all of which co-occur.
+
+\citet{Nikishin2022} identify \emph{primacy bias} as a specific cause. Because the replay buffer is filled incrementally, early transitions are oversampled relative to later ones, and the network over-fits to early environment transitions, corrupting representations throughout the remainder of training.\footnote{\citet{Nikishin2022} show that 100 initial ``priming'' steps of excessive gradient updates degrade a SAC agent's performance for hundreds of thousands of subsequent steps. \citet{Sokar2023} measure the fraction of dormant neurons (units with near-zero activation across the replay buffer) accumulating monotonically during training. \citet{DohareEtAl2024} find that standard deep networks lose all plasticity within a few million gradient steps in continual learning tasks.}
+
+The proposed remedies fall into three categories: periodic resets, continual backpropagation, and architectural interventions.\footnote{Periodic resets reinitialize the last layers of the network while retaining the replay buffer, allowing the agent to forget overfit representations without discarding experience \citep{Nikishin2022, Doro2023}. Continual backpropagation replaces neurons with near-zero utility at each gradient step rather than waiting for a global reset \citep{DohareEtAl2024}. Architectural interventions---layer normalization \citep{Lyle2025}, orthogonal initialization, spectral normalization---reduce the rate at which plasticity is lost by stabilizing gradient magnitudes and preventing weight norm growth.}
+
+\subsection{Implementation Dominates Algorithmic Innovation}
+\label{sec:implementation}
+
+\citet{Engstrom2020} find that PPO with the clipping mechanism disabled performs indistinguishably from the full algorithm; TRPO \citep{Schulman2015} with the same code-level additions matches PPO.\footnote{The non-clipping components that suffice are: observation normalization, reward normalization, value function clipping, global gradient norm clipping, orthogonal weight initialization, and the Adam optimizer.} \citet{andrychowicz2021matters} identify observation normalization, orthogonal initialization, and learning rate annealing as the three choices accounting for most variance across 250,000 agents and 250 hyperparameter configurations. \citet{huang2022ppo} catalog 37 implementation details required to reproduce PPO on Atari;\footnote{These include reward clipping to $[-1, 1]$, frame stacking to 4 frames, a specific episode termination convention, and a numerically stable normalization of the advantage estimate.} omitting any produces materially different results.
+
+The most consequential implementation detail is the distinction between termination and truncation \citep{pardo2018time}. In reinforcement learning, an episode can end for two distinct reasons: \emph{termination}, where the environment reaches a natural absorbing state (the pole falls in CartPole, the robot falls in locomotion tasks), and \emph{truncation}, where the episode is cut short by an external time limit. At a termination, the value of the successor state is zero: $V(s_\text{term}) = 0$. At a truncation, the episode is merely paused and the successor state has non-zero value: $V(s_\text{trunc}) \neq 0$. Treating truncated transitions as terminated substitutes zero for a non-zero bootstrap value at every time limit boundary, corrupting every Bellman update in the vicinity of episode boundaries. \citet{pardo2018time} show that this conflation degrades performance by 20--40\% on standard MuJoCo benchmarks.\footnote{The Gymnasium API \citep{Towers2024} enforces the distinction by returning separate \texttt{terminated} and \texttt{truncated} flags, but most pre-2022 codebases conflate them in the \texttt{done} flag.}
+
+\subsection{Replay Buffer Pathologies and Reward Scaling}
+\label{sec:replay_reward}
+
+Experience replay \citep{Lin1992} decouples the data collection and learning processes, allowing a single transition to be used for multiple gradient updates. The replay ratio (the number of gradient updates per environment step) governs the trade-off between sample efficiency and data staleness. \citet{Zhang2017replay} show that increasing the replay ratio beyond a modest threshold degrades performance.\footnote{At high replay ratios, the distribution shift between the current policy and the behavior policy that generated the stored data grows large enough to violate the off-policy assumptions of Q-learning. The relationship is non-monotone and environment-dependent, making replay buffer size a sensitive hyperparameter with no universal default.}
+
+\citet{schaul2016prioritized} propose prioritized experience replay (PER).\footnote{PER samples transitions with probability proportional to the magnitude of their TD error, on the argument that high-error transitions are the most informative.} \citet{fedus2020revisiting} revisit PER on large-scale Atari experiments and find that uniform sampling from a large enough buffer matches or outperforms PER, while being simpler to implement and tune.
+
+Reward scaling introduces a separate class of failure modes. Standard DQN \citep{mnih2015} clips rewards to $[-1, +1]$ across all environments to stabilize training. \citet{vanHasselt2016popart} observe that reward clipping changes the objective: clipped rewards make all positive events equivalent regardless of magnitude, so the agent learns to maximize the frequency of positive events rather than their cumulative value. This substitution can produce policies that are locally rational under the clipped reward but qualitatively suboptimal under the true reward. \citet{vanHasselt2016popart} propose PopArt as a remedy.\footnote{PopArt normalizes targets to have unit variance while adjusting the output layer so that the policy remains invariant to the normalization. PopArt allows consistent learning across reward scales spanning several orders of magnitude without reward clipping.}
+
+\citet{Skalse2022} formalize reward hacking and show that any non-constant proxy reward can in principle be exploited by a sufficiently capable optimizer.\footnote{\citet{Skalse2022} define a proxy as \emph{unhackable} if increasing expected proxy return cannot decrease expected true return. Their main result states that for the set of all stochastic policies, two reward functions are unhackable only if one of them is constant. For deterministic policies and finite policy sets, non-trivial unhackable pairs exist, but the conditions are stringent.}
+
+\subsection{Simulation Study: Bellman Error and Value Error in Offline Policy Evaluation}
+\label{sec:bellman_sim}
+
+The MDP uses $s = (k, z)$ with $k$ on a 50-point log-spaced capital grid and $z \in \{0.9, 1.1\}$ following a Markov chain with persistence 0.8. Actions are next-period capital choices on the same grid. Reward is $\log(zk^\alpha - k')$ with $\alpha = 0.36$, $\beta = 0.96$. Rewards are shifted by $-\bar{r}$ (mean reward over feasible pairs) to center $Q^*$ near zero, which avoids initialization issues without altering the optimal policy. The offline dataset $\mathcal{D}$ consists of $T = 2{,}000$ transitions simulated from the closed-form optimal policy $k^*(k,z) = \alpha\beta z k^\alpha$. Since the optimal policy concentrates capital near its steady state, $\mathcal{D}$ covers only 11 of the 4,795 feasible $(s,a)$ pairs---0.2\% coverage---the distribution mismatch condition in \citet[Corollary~1]{Fujimoto2022}.
+
+Two algorithms are trained on $\mathcal{D}$.\footnote{50,000 gradient steps per seed, 3 seeds; two-layer MLP with 64 hidden units, Adam at $5 \times 10^{-4}$; target network updated every 500 steps.} BRM minimizes $\mathbb{E}_\mathcal{D}[(Q(s,a) - (r + \gamma \max_{a'} Q(s',a')))^2]$ where both $Q(s,a)$ and $Q(s',a')$ use the current network; gradients flow through both sides simultaneously. The key consequence is that the network can zero the residual at an observed pair $(s,a)$ by co-moving $Q(s,a)$ and $Q(s',a')$ together, rather than moving either toward $Q^*$. This is the opposite of supervised learning, where labels are fixed external targets that do not move with the model weights. FQE prevents this by using a frozen target network for $Q(s',a')$; the network must reduce $Q(s,a)$ toward a target that does not respond to its own gradient steps. Every 500 steps we record the Bellman error on $\mathcal{D}$ (current network on both sides) and the value error $\frac{1}{|\mathcal{F}|}\sum_{(s,a)\in\mathcal{F}}|Q_\theta(s,a) - Q^*(s,a)|$ over all 4,795 feasible pairs. As a supervised baseline, OLS regression of $\log c$ on $\log k$ and $\log z$ is estimated on expanding windows.\footnote{Noise $\sigma = 0.30$; windows from $n = 10$ to $2{,}000$; held-out test set of 500 transitions.}
+
+The OLS baseline shows tight coupling between training and test loss (Pearson $r = -1.000$; Table~\ref{tab:bellman_sim}). The RL results reproduce \citet{Fujimoto2022} in the economic model: BRM achieves Bellman error $816\times$ lower than FQE, yet both methods have nearly identical value error over the full MDP, yielding a VE/BE ratio three orders of magnitude higher for BRM. Both mechanisms from Section~\ref{sec:moving_target} operate: error cancellation on the 11 observed pairs and unconstrained $Q(s',a')$ at the 4,784 unobserved pairs.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Method & Final BE on $\mathcal{D}$ & Final VE (all states) & VE/BE ratio \\
+\midrule
+BRM (seed 42)  & $2.09 \times 10^{-4}$ & 7.061 & 33,808 \\
+BRM (seed 123) & $2.91 \times 10^{-4}$ & 7.450 & 25,630 \\
+BRM (seed 777) & $3.12 \times 10^{-4}$ & 7.278 & 23,320 \\
+BRM (mean)     & $2.71 \times 10^{-4}$ & 7.263 & 27,586 \\
+\midrule
+FQE (seed 42)  & $0.2037$ & 6.927 & 34 \\
+FQE (seed 123) & $0.2173$ & 7.465 & 34 \\
+FQE (seed 777) & $0.2425$ & 7.281 & 30 \\
+FQE (mean)     & $0.2212$ & 7.224 & 33 \\
+\midrule
+OLS ($n = 2{,}000$) & OOS MSE $= 0.096$ & OOS $R^2 = 0.112$ & $r = -1.000$ \\
+\bottomrule
+\end{tabular}
+\caption{Bellman error on dataset $\mathcal{D}$ and value error on the full MDP for BRM and FQE trained on offline Brock--Mirman data. BE is mean squared Bellman error evaluated with the current network on both sides; VE is mean absolute deviation from $Q^*$ over all 4,795 feasible state-action pairs.}
+\label{tab:bellman_sim}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{../ch03b_deeprl_practice/sims/brock_mirman_bellman.png}
+\caption{Left: OLS regression of log consumption on log capital and log productivity, estimated on expanding windows from the Brock--Mirman optimal policy. Out-of-sample MSE (left axis, red) and out-of-sample $R^2$ (right axis, blue) track each other with Pearson $r = -1.000$. Right: BRM (orange) and FQE (blue) trained on offline Brock--Mirman data $\mathcal{D}$ ($T = 2{,}000$ transitions, 0.2\% state-space coverage); note the log scale on the $y$-axis. Solid lines show Bellman error on $\mathcal{D}$ (current network both sides); dashed lines show mean absolute value error against $Q^*$ over all 4,795 feasible state-action pairs; shaded bands are $\pm 1$ SE over 3 seeds.}
+\label{fig:bellman_vs_return}
+\end{figure}
+
+\subsection{Discussion and Recommendations}
+\label{sec:checklist}
+
+Track episode return and policy entropy alongside training loss; entropy collapse and stagnating return are early warning signs of plasticity loss (Section~\ref{sec:plasticity}). Use PPO or SAC as default baselines before implementing custom algorithms. Report at least 10 seeds per configuration with IQM-based comparisons (Section~\ref{sec:reproducibility}).
+

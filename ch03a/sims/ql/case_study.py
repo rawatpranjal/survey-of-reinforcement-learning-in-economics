@@ -8,7 +8,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-from sims.plot_style import apply_style, ALGO_COLORS, FIG_SINGLE, FIG_DOUBLE
+from sims.plot_style import apply_style, ALGO_COLORS, CMAP_SEQ, FIG_SINGLE, FIG_DOUBLE
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'ch03_theory', 'sims'))
 from gridworld_algorithms import (GridworldEnv, run_value_iteration, run_q_learning,
                                    v_to_array, policy_to_array)
@@ -135,7 +135,7 @@ for s, count in metrics.state_visit_counts.items():
     r, c = s
     visit_grid[r, c] = count
 
-im = ax.imshow(np.log10(visit_grid + 1), cmap='YlOrRd', origin='upper')
+im = ax.imshow(np.log10(visit_grid + 1), cmap=CMAP_SEQ, origin='upper')
 for r in range(N):
     for c in range(N):
         val = int(visit_grid[r, c])

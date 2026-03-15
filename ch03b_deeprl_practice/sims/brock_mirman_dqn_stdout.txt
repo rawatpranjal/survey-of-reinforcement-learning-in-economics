@@ -1,0 +1,63 @@
+=================================================================
+Brock-Mirman DQN: TD Loss vs. True Value Error
+alpha=0.36, beta=0.96, N_K=50, N_S=100, N_A=50
+DQN: 80,000 steps x 3 seeds
+=================================================================
+
+Capital grid: [0.0100, 0.3310], log-spaced, N=50
+
+[1] Building MDP (R, P)...
+  Feasible (s,a) pairs: 4795 / 5000
+
+[2] Computing Q* via value iteration...
+  Q* over feasible pairs: min=-33.730, max=-25.070
+  V*: min=-27.718, max=-25.070
+  VI policy vs. closed-form: 94.0%
+
+[3] Running DQN (3 seeds x 80,000 steps)...
+
+  Seed 42:
+    Log interval: every 500 steps, 160 records
+    Final TD loss:     0.0591
+    Final value error: 1.7790
+    Final pol. agree:  7.0%
+    Pearson r(TD loss, value error): 0.391
+
+  Seed 123:
+    Log interval: every 500 steps, 160 records
+    Final TD loss:     0.0788
+    Final value error: 1.9962
+    Final pol. agree:  6.0%
+    Pearson r(TD loss, value error): 0.634
+
+  Seed 777:
+    Log interval: every 500 steps, 160 records
+    Final TD loss:     0.0865
+    Final value error: 2.3899
+    Final pol. agree:  11.0%
+    Pearson r(TD loss, value error): 0.834
+
+[4] Running OLS expanding window...
+  Window sizes: 30 to 2000 obs
+  Initial MSE: 0.002668, Final MSE: 0.002663
+  Initial R²:  0.8632, Final R²:  0.8635
+  Pearson r(MSE, R²): -1.000
+
+=================================================================
+SUMMARY TABLE
+=================================================================
+Method                                 Final loss  Final err  Pearson r
+----------------------------------------------------------------------
+OLS (Euler eq.)                           2.6629m     0.8635     -1.000
+DQN (seed 42)                              0.0591     1.7790      0.391
+DQN (seed 123)                             0.0788     1.9962      0.634
+DQN (seed 777)                             0.0865     2.3899      0.834
+DQN (mean, 3 seeds)                        0.0748     2.0550      0.768
+
+[5] Generating figure...
+
+Saved: /Users/pranjal/Code/rl/ch03b_deeprl_practice/sims/brock_mirman_dqn.png
+
+Output files:
+  /Users/pranjal/Code/rl/ch03b_deeprl_practice/sims/brock_mirman_dqn.png
+  /Users/pranjal/Code/rl/ch03b_deeprl_practice/sims/brock_mirman_dqn_stdout.txt

@@ -1,0 +1,57 @@
+======================================================================
+BROCK-MIRMAN ILLUSTRATED EXAMPLE: 8 ALGORITHMS
+======================================================================
+Parameters: alpha=0.36, beta=0.96, z=[0.9, 1.1]
+Grid: n_k=50, n_z=2 -> 100 states, 50 actions
+Mode: plots-only
+
+Phase 1: Planning
+----------------------------------------
+  Running VI... 567 iters, 0.04s
+  Running PI... 9 iters, 0.00s
+  Running LP... 0.03s
+  VI policy agreement (±1) with closed-form: 100.0%
+  PI policy agreement (±1) with closed-form: 100.0%
+  LP policy agreement (±1) with closed-form: 100.0%
+
+Phase 2: Loading learning algorithms from cache
+----------------------------------------
+  Q-Learning: loaded from cache
+  SARSA: loaded from cache
+  DQN: loaded from cache
+  REINFORCE: loaded from cache
+  PPO: loaded from cache
+
+Phase 3: Figures
+----------------------------------------
+  Saved: /Users/pranjal/Code/rl/ch03a_bm/sims/bm_learning_curves.png
+  Saved: /Users/pranjal/Code/rl/ch03a_bm/sims/bm_policy_curves.png
+  Saved: /Users/pranjal/Code/rl/ch03a_bm/sims/bm_value_functions.png
+  Saved: /Users/pranjal/Code/rl/ch03a_bm/sims/bm_convergence.png
+
+Phase 4: Table
+----------------------------------------
+  Saved: /Users/pranjal/Code/rl/ch03a_bm/sims/bm_study_results.tex
+
+======================================================================
+RESULTS SUMMARY
+======================================================================
+Algorithm        RMSE  Max Err  Agr±1 %     Time
+----------------------------------------------------
+VI             0.0000   0.0000   100.0%     0.0s
+PI             0.0000   0.0000   100.0%     0.0s
+LP             0.0000   0.0000   100.0%     0.0s
+Q-Learning     0.0107   0.0318    76.0%   405.9s
+SARSA          0.3199   0.3940    37.0%   339.9s
+DQN            1.6031   1.7905    24.0%   689.3s
+REINFORCE      3.8029   6.1862    14.0%  1033.5s
+PPO            3.7036   5.6211    13.0%  2485.5s
+
+Output files:
+  bm_convergence.png
+  bm_learning_curves.png
+  bm_policy_curves.png
+  bm_study_results.tex
+  bm_value_functions.png
+
+Done.

@@ -20,17 +20,20 @@ mkdir -p "$BUILD_DIR"
 sed 's|\.\./ch|ch|g' "$REPO_ROOT/docs/main.tex" > "$BUILD_DIR/main.tex"
 echo "  Copied main.tex (rewrote paths)"
 
-# --- 2. Copy bibliography (.bib only; let arXiv run bibtex) ---
+# --- 2. Copy bibliography (.bbl for arXiv, .bib as backup) ---
 cp "$REPO_ROOT/docs/refs.bib" "$BUILD_DIR/"
-echo "  Copied refs.bib"
+cp "$REPO_ROOT/docs/main.bbl" "$BUILD_DIR/"
+echo "  Copied refs.bib and main.bbl"
 
 # --- 3. Copy chapter tex files (rewrite ../chXX/ paths) ---
 CHAPTERS=(
     "ch00_introduction/tex/abstract.tex"
     "ch00_introduction/tex/intro.tex"
+    "ch00_introduction/tex/language.tex"
     "ch01_history/tex/history.tex"
     "ch02_rl_algorithms/tex/rl_algorithms.tex"
     "ch03_theory/tex/planning_learning_v3.tex"
+    "ch03b_deeprl_practice/tex/deeprl_practice.tex"
     "ch03a/tex/illustrated_example.tex"
     "ch04_control_problems/tex/applications.tex"
     "ch05_econ_models/tex/rl_in_se.tex"
@@ -47,14 +50,32 @@ for f in "${CHAPTERS[@]}"; do
 done
 echo "  Copied ${#CHAPTERS[@]} chapter tex files (rewrote paths)"
 
-# --- 4. Copy figures (PNG) ---
+# --- 4. Copy figures (PNG + PDF) ---
 FIGURES=(
+    "ch02_rl_algorithms/sims/algorithm_architectures.png"
+    "ch03_theory/sims/brock_mirman_convergence.png"
+    "ch03_theory/sims/lqc_fvi_fqi.png"
+    "ch03_theory/sims/deadly_triad_geometry.png"
+    "ch03_theory/sims/info_geometry_npg.png"
+    "ch03_theory/sims/mm_surrogate_trpo.png"
+    "ch03_theory/sims/trust_region_lqc.png"
+    "ch03a_bm/sims/bm_fvi_fqi.png"
+    "ch03b_deeprl_practice/sims/overestimation_bias.png"
+    "ch03b_deeprl_practice/sims/brock_mirman_bellman.png"
     "ch03a/sims/gridworld_value_heatmaps.png"
     "ch03a/sims/gridworld_policy_heatmaps.png"
     "ch04_control_problems/sims/bus_engine_scaling.png"
+    "ch05_econ_models/sims/estimation_flowcharts.pdf"
+    "ch06_games/sims/cournot_bertrand_marl.png"
+    "ch07_bandits/sims/uninformative_price.png"
+    "ch07_bandits/sims/regret_rates.png"
     "ch07_bandits/sims/knowledge_ladder_regret.png"
-    "ch08_rlhf/sims/gridworld_rlhf_env.png"
-    "ch08_rlhf/sims/gridworld_sample_complexity.png"
+    "ch08_rlhf/sims/rlhf_dpo_pipeline.png"
+    "ch08_rlhf/sims/job_search_env.png"
+    "ch08_rlhf/sims/job_search_sample_complexity.png"
+    "ch08_rlhf/sims/job_search_horizon.png"
+    "ch09_causal/sims/identification_dags.png"
+    "ch09_causal/sims/simulation_dag.png"
     "ch09_causal/sims/confounded_ope_bias.png"
 )
 
@@ -66,15 +87,19 @@ echo "  Copied ${#FIGURES[@]} figure files"
 
 # --- 5. Copy table fragments (.tex in sims/) ---
 TABLES=(
+    "ch03_theory/sims/brock_mirman_results.tex"
+    "ch03_theory/sims/lqc_fvi_fqi_weights.tex"
+    "ch03a_bm/sims/bm_fvi_fqi_results.tex"
     "ch03a/sims/gridworld_study_results.tex"
     "ch03a/sims/gridworld_value_convergence.tex"
     "ch03a/sims/gridworld_policy_convergence.tex"
     "ch04_control_problems/sims/bus_engine_results.tex"
+    "ch06_games/sims/cournot_bertrand_results.tex"
     "ch06_games/sims/durable_goods_results.tex"
     "ch07_bandits/sims/knowledge_ladder_results.tex"
-    "ch08_rlhf/sims/gridworld_rlhf_results.tex"
-    "ch08_rlhf/sims/gridworld_rlhf_diagnostics.tex"
-    "ch08_rlhf/sims/gridworld_online_offline.tex"
+    "ch08_rlhf/sims/job_search_results.tex"
+    "ch08_rlhf/sims/job_search_diagnostics.tex"
+    "ch08_rlhf/sims/job_search_horizon.tex"
     "ch09_causal/sims/confounded_ope_results.tex"
 )
 

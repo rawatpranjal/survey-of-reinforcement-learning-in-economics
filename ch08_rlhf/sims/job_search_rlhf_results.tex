@@ -1,0 +1,40 @@
+\begin{tabular}{llrr}
+\hline
+Method & $K$ & $V^\pi(s_0)$ & \% of DP \\
+\hline
+DP Oracle & --- & $74.13$ & $100.0$ \\
+Q-Learning & --- & $73.60 \pm 0.05$ & $99.3$ \\
+\hline
+NN RLHF & $25$ & $73.05 \pm 0.13$ & $98.5$ \\
+Correct & $25$ & $74.03 \pm 0.03$ & $99.9$ \\
+Misspecified & $25$ & $67.34 \pm 0.38$ & $90.8$ \\
+\hline
+NN RLHF & $50$ & $73.31 \pm 0.08$ & $98.9$ \\
+Correct & $50$ & $74.07 \pm 0.02$ & $99.9$ \\
+Misspecified & $50$ & $67.12 \pm 0.33$ & $90.6$ \\
+\hline
+NN RLHF & $100$ & $73.62 \pm 0.06$ & $99.3$ \\
+Correct & $100$ & $74.10 \pm 0.01$ & $100.0$ \\
+Misspecified & $100$ & $67.24 \pm 0.28$ & $90.7$ \\
+\hline
+NN RLHF & $200$ & $73.84 \pm 0.05$ & $99.6$ \\
+Correct & $200$ & $74.12 \pm 0.00$ & $100.0$ \\
+Misspecified & $200$ & $67.54 \pm 0.17$ & $91.1$ \\
+\hline
+NN RLHF & $500$ & $73.98 \pm 0.03$ & $99.8$ \\
+Correct & $500$ & $74.13 \pm 0.00$ & $100.0$ \\
+Misspecified & $500$ & $67.55 \pm 0.15$ & $91.1$ \\
+\hline
+NN RLHF & $1000$ & $73.94 \pm 0.02$ & $99.7$ \\
+Correct & $1000$ & $74.12 \pm 0.00$ & $100.0$ \\
+Misspecified & $1000$ & $67.52 \pm 0.12$ & $91.1$ \\
+\hline
+NN RLHF & $2000$ & $74.03 \pm 0.02$ & $99.9$ \\
+Correct & $2000$ & $74.13 \pm 0.00$ & $100.0$ \\
+Misspecified & $2000$ & $67.41 \pm 0.11$ & $90.9$ \\
+\hline
+NN RLHF & $5000$ & $74.08 \pm 0.01$ & $99.9$ \\
+Correct & $5000$ & $74.13 \pm 0.00$ & $100.0$ \\
+Misspecified & $5000$ & $67.46 \pm 0.11$ & $91.0$ \\
+\hline
+\end{tabular}

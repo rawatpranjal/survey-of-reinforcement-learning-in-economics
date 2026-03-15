@@ -1,9 +1,16 @@
 # Bandit Fundamentals — Chapter 6, Economic Bandits.
 # Baseline comparison of ε-greedy, UCB1, and Thompson Sampling on a K-armed Gaussian bandit.
 
+import argparse
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.plot_style import apply_style, COLORS, DOMAIN_COLORS, BENCH_STYLE
+from sims.sim_cache import load_results, save_results, add_cache_args
+apply_style()
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 
@@ -16,6 +23,15 @@ optimal_arm = np.argmax(mu)
 Delta = mu_star - mu    # sub-optimality gaps
 
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_DIR = os.path.join(OUT_DIR, 'cache')
+SCRIPT_NAME = 'bandit_fundamentals'
+CONFIG = {
+    'K': K,
+    'T': T,
+    'N_SEEDS': N_SEEDS,
+    'mu': mu.tolist(),
+    'version': 1,
+}
 
 # ─── Algorithm implementations ───────────────────────────────────────────────
 
@@ -86,7 +102,7 @@ def run_thompson_sampling(rewards):
     return actions
 
 
-# ─── Monte Carlo runs ────────────────────────────────────────────────────────
+# ─── Algorithm registry ──────────────────────────────────────────────────────
 
 algorithms = {
     r"$\varepsilon$-greedy (decaying)": run_epsilon_greedy,
@@ -94,102 +110,135 @@ algorithms = {
     "Thompson Sampling": run_thompson_sampling,
 }
 
-# Storage: (N_SEEDS, T) cumulative regret for each algorithm
-cum_regret = {name: np.zeros((N_SEEDS, T)) for name in algorithms}
-optimal_pulls = {name: np.zeros(N_SEEDS) for name in algorithms}
+# ─── Compute ──────────────────────────────────────────────────────────────────
 
-for seed in range(N_SEEDS):
-    np.random.seed(seed)
-    # Pre-generate reward matrix so all algorithms face identical draws
-    rewards = np.random.randn(T, K) + mu[np.newaxis, :]  # shape (T, K)
+def compute_data():
+    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+    if cached is not None:
+        print("Loaded from cache.")
+        return cached
 
-    for name, algo_fn in algorithms.items():
-        np.random.seed(seed + 1000)  # separate seed for algorithm randomness
-        # Offset by 1000 so algorithm randomness is independent of reward draws
-        # but reproducible across runs
-        actions = algo_fn(rewards)
+    # Storage: (N_SEEDS, T) cumulative regret for each algorithm
+    cum_regret = {name: np.zeros((N_SEEDS, T)) for name in algorithms}
+    optimal_pulls = {name: np.zeros(N_SEEDS) for name in algorithms}
 
-        # Instantaneous regret
-        inst_regret = mu_star - mu[actions]
-        cum_regret[name][seed] = np.cumsum(inst_regret)
+    for seed in range(N_SEEDS):
+        np.random.seed(seed)
+        # Pre-generate reward matrix so all algorithms face identical draws
+        rewards = np.random.randn(T, K) + mu[np.newaxis, :]  # shape (T, K)
 
-        # Fraction of optimal arm pulls
-        optimal_pulls[name][seed] = np.mean(actions == optimal_arm)
+        for name, algo_fn in algorithms.items():
+            np.random.seed(seed + 1000)  # separate seed for algorithm randomness
+            # Offset by 1000 so algorithm randomness is independent of reward draws
+            # but reproducible across runs
+            actions = algo_fn(rewards)
 
-# ─── Theoretical bounds ──────────────────────────────────────────────────────
+            # Instantaneous regret
+            inst_regret = mu_star - mu[actions]
+            cum_regret[name][seed] = np.cumsum(inst_regret)
 
-t_range = np.arange(1, T + 1)
+            # Fraction of optimal arm pulls
+            optimal_pulls[name][seed] = np.mean(actions == optimal_arm)
 
-# Lai-Robbins instance-dependent lower bound: sum_{i: Delta_i > 0} (Delta_i / KL_i) * ln(t)
-# For Gaussian with unit variance, KL(mu_i, mu_star) = 0.5 * Delta_i^2
-lai_robbins_coeff = 0.0
-for i in range(K):
-    if Delta[i] > 0:
-        KL_i = 0.5 * Delta[i] ** 2
-        lai_robbins_coeff += Delta[i] / KL_i  # = 2 / Delta_i
+    data = {
+        'cum_regret': cum_regret,
+        'optimal_pulls': optimal_pulls,
+    }
+    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    return data
 
-lai_robbins = lai_robbins_coeff * np.log(t_range)
 
-# Minimax bound: c * sqrt(K * t)
-c_minimax = 0.5
-minimax = c_minimax * np.sqrt(K * t_range)
+def generate_outputs(data):
+    cum_regret = data['cum_regret']
+    optimal_pulls = data['optimal_pulls']
 
-# ─── Plot: cumulative regret ─────────────────────────────────────────────────
+    # ─── Theoretical bounds ──────────────────────────────────────────────────
 
-colors = {"$\\varepsilon$-greedy (decaying)": "#d62728",
-          "UCB1": "#1f77b4",
-          "Thompson Sampling": "#2ca02c"}
+    t_range = np.arange(1, T + 1)
 
-fig, ax = plt.subplots(figsize=(8, 5))
+    # Lai-Robbins instance-dependent lower bound: sum_{i: Delta_i > 0} (Delta_i / KL_i) * ln(t)
+    # For Gaussian with unit variance, KL(mu_i, mu_star) = 0.5 * Delta_i^2
+    lai_robbins_coeff = 0.0
+    for i in range(K):
+        if Delta[i] > 0:
+            KL_i = 0.5 * Delta[i] ** 2
+            lai_robbins_coeff += Delta[i] / KL_i  # = 2 / Delta_i
 
-for name in algorithms:
-    mean_regret = cum_regret[name].mean(axis=0)
-    se_regret = cum_regret[name].std(axis=0) / np.sqrt(N_SEEDS)
-    ax.plot(t_range, mean_regret, label=name, color=colors[name], linewidth=1.5)
-    ax.fill_between(t_range, mean_regret - se_regret, mean_regret + se_regret,
-                     color=colors[name], alpha=0.15)
+    lai_robbins = lai_robbins_coeff * np.log(t_range)
 
-# Theoretical overlays
-ax.plot(t_range, lai_robbins, 'k--', linewidth=1.0, alpha=0.7,
-        label=r"Lai--Robbins $\sum \frac{\Delta_i}{\mathrm{KL}_i} \ln t$")
-ax.plot(t_range, minimax, 'k:', linewidth=1.0, alpha=0.7,
-        label=r"Minimax $0.5\sqrt{Kt}$")
+    # Minimax bound: c * sqrt(K * t)
+    c_minimax = 0.5
+    minimax = c_minimax * np.sqrt(K * t_range)
 
-ax.set_xlabel("Round $t$", fontsize=12)
-ax.set_ylabel("Cumulative Regret", fontsize=12)
-ax.set_title("Cumulative Regret: $K$=10 Gaussian Bandit", fontsize=13)
-ax.legend(fontsize=9, loc="upper left")
-ax.set_xlim(1, T)
-ax.set_ylim(bottom=0)
-ax.grid(True, alpha=0.3)
+    # ─── Plot: cumulative regret ─────────────────────────────────────────────
 
-fig_path = os.path.join(OUT_DIR, "bandit_fundamentals_regret.png")
-fig.savefig(fig_path, dpi=300, bbox_inches="tight")
-plt.close(fig)
-print(f"Saved figure: {fig_path}")
+    colors = {"$\\varepsilon$-greedy (decaying)": COLORS['red'],
+              "UCB1": COLORS['blue'],
+              "Thompson Sampling": COLORS['green']}
 
-# ─── LaTeX table: summary results ────────────────────────────────────────────
+    fig, ax = plt.subplots(figsize=(8, 5))
 
-tex_lines = []
-tex_lines.append(r"\begin{tabular}{lcc}")
-tex_lines.append(r"\hline")
-tex_lines.append(r"Algorithm & Final Regret (mean $\pm$ SE) & \% Optimal Arm Pulls \\")
-tex_lines.append(r"\hline")
+    for name in algorithms:
+        mean_regret = cum_regret[name].mean(axis=0)
+        se_regret = cum_regret[name].std(axis=0) / np.sqrt(N_SEEDS)
+        ax.plot(t_range, mean_regret, label=name, color=colors[name], linewidth=1.5)
+        ax.fill_between(t_range, mean_regret - se_regret, mean_regret + se_regret,
+                         color=colors[name], alpha=0.15)
 
-for name in algorithms:
-    final_regrets = cum_regret[name][:, -1]
-    mean_reg = final_regrets.mean()
-    se_reg = final_regrets.std() / np.sqrt(N_SEEDS)
-    mean_opt = optimal_pulls[name].mean() * 100
-    # Escape special LaTeX characters in algorithm name for table
-    table_name = name.replace("$\\varepsilon$", r"$\varepsilon$")
-    tex_lines.append(f"{table_name} & {mean_reg:.1f} $\\pm$ {se_reg:.1f} & {mean_opt:.1f}\\% \\\\")
+    # Theoretical overlays
+    ax.plot(t_range, lai_robbins, color=COLORS['black'], linestyle='--', linewidth=1.0, alpha=0.7,
+            label=r"Lai--Robbins $\sum \frac{\Delta_i}{\mathrm{KL}_i} \ln t$")
+    ax.plot(t_range, minimax, color=COLORS['black'], linestyle=':', linewidth=1.0, alpha=0.7,
+            label=r"Minimax $0.5\sqrt{Kt}$")
 
-tex_lines.append(r"\hline")
-tex_lines.append(r"\end{tabular}")
+    ax.set_xlabel("Round $t$", fontsize=12)
+    ax.set_ylabel("Cumulative Regret", fontsize=12)
+    ax.set_title("Cumulative Regret: $K$=10 Gaussian Bandit", fontsize=13)
+    ax.legend(fontsize=9, loc="upper left")
+    ax.set_xlim(1, T)
+    ax.set_ylim(bottom=0)
+    ax.grid(True, alpha=0.3)
 
-tex_content = "\n".join(tex_lines)
-tex_path = os.path.join(OUT_DIR, "bandit_fundamentals_results.tex")
-with open(tex_path, "w") as f:
-    f.write(tex_content)
-print(f"Saved table: {tex_path}")
+    fig_path = os.path.join(OUT_DIR, "bandit_fundamentals_regret.png")
+    fig.savefig(fig_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved figure: {fig_path}")
+
+    # ─── LaTeX table: summary results ────────────────────────────────────────
+
+    tex_lines = []
+    tex_lines.append(r"\begin{tabular}{lcc}")
+    tex_lines.append(r"\hline")
+    tex_lines.append(r"Algorithm & Final Regret (mean $\pm$ SE) & \% Optimal Arm Pulls \\")
+    tex_lines.append(r"\hline")
+
+    for name in algorithms:
+        final_regrets = cum_regret[name][:, -1]
+        mean_reg = final_regrets.mean()
+        se_reg = final_regrets.std() / np.sqrt(N_SEEDS)
+        mean_opt = optimal_pulls[name].mean() * 100
+        # Escape special LaTeX characters in algorithm name for table
+        table_name = name.replace("$\\varepsilon$", r"$\varepsilon$")
+        tex_lines.append(f"{table_name} & {mean_reg:.1f} $\\pm$ {se_reg:.1f} & {mean_opt:.1f}\\% \\\\")
+
+    tex_lines.append(r"\hline")
+    tex_lines.append(r"\end{tabular}")
+
+    tex_content = "\n".join(tex_lines)
+    tex_path = os.path.join(OUT_DIR, "bandit_fundamentals_results.tex")
+    with open(tex_path, "w") as f:
+        f.write(tex_content)
+    print(f"Saved table: {tex_path}")
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    add_cache_args(parser)
+    args = parser.parse_args()
+    if args.plots_only:
+        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+        assert data is not None, "No cache found. Run without --plots-only first."
+    else:
+        data = compute_data()
+    if not args.data_only:
+        generate_outputs(data)
