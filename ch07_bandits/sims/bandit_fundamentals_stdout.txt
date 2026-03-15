@@ -1,0 +1,2 @@
+Saved figure: /Users/pranjal/Code/rl/ch07_bandits/sims/bandit_fundamentals_regret.png
+Saved table: /Users/pranjal/Code/rl/ch07_bandits/sims/bandit_fundamentals_results.tex

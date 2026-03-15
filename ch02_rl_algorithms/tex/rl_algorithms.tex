@@ -1,8 +1,6 @@
 % Chapter: Reinforcement Learning Algorithms
 % Two sections: Classical Synthesis (Sutton-Baird), Deep Learning Era (Mnih-AlphaGo)
 
-In this section I introduce important reinforcement learning algorithms while pushing the theoretical results to the next chapter. The central problem is how do we move from estiamating $V_{\pi}$ and $V_{*}$ when we do not have a model. 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{The Classical Synthesis}
 \label{sec:classical_synthesis}
@@ -10,7 +8,7 @@ In this section I introduce important reinforcement learning algorithms while pu
 
 \subsubsection{Monte Carlo Estimation}
 
-When $P(s'|s,a)$ and $r(s,a)$ are unknown, the obvious approach is to use Monte Carlo (MC) to approximate them. These methods estimate value functions from sampled episodes $(s_0, a_0, r_1, s_1, a_1, r_2, \ldots, s_T)$. The realized return from state $s_t$ is:
+When $P(s'|s,a)$ and $r(s,a)$ are unknown, the obvious approach is to use Monte Carlo (MC) to approximate them. These methods estimate value functions from sampled \textit{episodes} $(s_0, a_0, r_1, s_1, a_1, r_2, \ldots, s_T)$. The realized \textit{return} from state $s_t$ is
 \begin{equation}
 G_t = \sum_{k=0}^{T-t-1} \gamma^k r_{t+k+1}
 \end{equation}
@@ -20,15 +18,15 @@ For MC control, we can estimate action-values $Q(s,a)$ by averaging first-visit 
 
 \subsubsection{Sutton (1988)}
 
-Monte Carlo has two limitations. The agent must wait for episode termination to compute $G_t$, ruling out continuing tasks. And $G_t$ is unbiased ($\mathbb{E}[G_t \mid S_t = s] = V^\pi(s)$) but high-variance, because it sums random rewards over the entire trajectory.
+Monte Carlo has two limitations. The agent must wait for episode termination to compute $G_t$, ruling out continuing tasks. And $G_t$ is unbiased ($\mathbb{E}[G_t \mid S_t = s] = V^\pi(s)$) but high-variance, because it sums random rewards over the entire \textit{trajectory}.
 
 \citet{sutton1988} proposed temporal difference (TD) learning to fix both problems. TD(0) replaces the full return $G_t$ with a one-step target:
 \begin{equation}
 V(s_t) \leftarrow V(s_t) + \alpha \left[ r_{t+1} + \gamma V(s_{t+1}) - V(s_t) \right]
 \end{equation}
-The target $r_{t+1} + \gamma V(s_{t+1})$ depends on one random reward and one random transition, so its variance is low. The cost is bias: $V(s_{t+1})$ is the agent's current estimate, not the true value. This is ``bootstrapping".\footnote{Bootstrapping means updating value estimates using other value estimates rather than observed returns.} As $V$ improves, the bias shrinks; the low variance persists regardless. Sutton demonstrated this tradeoff on a five-state random walk where TD(0) converged faster than Monte Carlo with less data.
+The target $r_{t+1} + \gamma V(s_{t+1})$ depends on one random reward and one random transition, so its variance is low. The cost is bias. The bootstrap target $V(s_{t+1})$ is the agent's current estimate, not the true value. This is ``\textit{bootstrapping}''.\footnote{See Section~\ref{section:language} for the distinction between RL bootstrapping and Efron's resampling procedure.} As $V$ improves, the bias shrinks; the low variance persists regardless. Sutton demonstrated this tradeoff on a five-state random walk where TD(0) converged faster than Monte Carlo with less data.
 
-The general TD($\lambda$) update interpolates between these extremes through an eligibility trace:\footnote{The eligibility trace records which states were recently visited, allowing credit assignment to propagate backward in time. States visited more recently receive stronger updates when the TD error is observed.}
+The general TD($\lambda$) update interpolates between these extremes through an eligibility trace.\footnote{The eligibility trace records which states were recently visited, allowing credit assignment to propagate backward in time. States visited more recently receive stronger updates when the TD error is observed.}
 \begin{equation}
 V(s_t) \leftarrow V(s_t) + \alpha \, \delta_t \, e_t(s)
 \end{equation}
@@ -42,21 +40,21 @@ TD(0) learns value functions $V(s)$, but converting these to actions (the contro
 \begin{equation}
 Q^*(s,a) = \mathbb{E}\left[r + \gamma \max_{a'} Q^*(s',a') \mid s, a\right]
 \end{equation}
-Q-learning achieves this via incremental updates:
+Q-learning achieves this via the update
 \begin{equation}
 Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_{t+1} + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \right]
 \end{equation}
-Q-learning converges to $Q^*$ under standard regularity conditions (Section~\ref{sec:stochastic_approx}). The maximization over $a'$ makes Q-learning off-policy:\footnote{Off-policy learning means the agent learns about a policy different from the one generating data. Q-learning learns about the greedy policy $\pi^*(s) = \argmax_a Q(s,a)$ while collecting data with an exploratory policy. This exploratory policy needs only to be sufficiently ``exploratory'' and admits a wide range of policies; including a fully random policy.} the update target uses the greedy action at the next state regardless of the action actually taken. Therefore the agent can follow an $\varepsilon$-greedy exploration strategy or even a fully random policy, while learning about the optimal policy directly.
+Q-learning converges to $Q^*$ under standard regularity conditions (Section~\ref{sec:stochastic_approx}). The maximization over $a'$ makes Q-learning \textit{off-policy}:\footnote{See Section~\ref{section:language} for the on-policy/off-policy distinction. Q-learning learns about the greedy policy $\pi^*(s) = \argmax_a Q(s,a)$ while collecting data with an exploratory policy. This exploratory policy needs only to be sufficiently ``exploratory'' and admits a wide range of policies; including a fully random policy.} the update target uses the greedy action at the next state regardless of the action actually taken. Therefore the agent can follow an $\varepsilon$-greedy exploration strategy or even a fully random policy, while learning about the optimal policy directly.
 
 \subsubsection{Williams (1992)}
 
-Value-based methods learn an action-value function and derive a policy from it. \citet{williams1992} derived an alternative, policy gradients, that optimize the policy directly by gradient ascent on expected return:
+Value-based methods learn an action-value function and derive a policy from it. \citet{williams1992} derived an alternative, policy gradients, that optimize the policy directly by gradient ascent on expected return
 \begin{equation}
 \nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta} \left[ \sum_{t=0}^{T} \nabla_\theta \log \pi_\theta(a_t|s_t) \, G_t \right]
 \end{equation}
 where $G_t = \sum_{k=0}^{T-t} \gamma^k r_{t+k+1}$ is the discounted return from time $t$. The log-derivative trick allows the gradient to be estimated from sampled trajectories without differentiating through the environment dynamics.
 
-Consider a robot arm that must apply a continuous torque $a \in \mathbb{R}$ to reach a target angle. Q-learning requires computing $\max_a Q(s,a)$ at every update, which becomes a nested optimization problem \footnote{In continuous action spaces, $\max_a Q(s,a)$ has no closed-form solution in general and must be solved numerically at every Bellman update. Discretizing a $d$-dimensional action space on a grid of $m$ points per dimension costs $O(m^d)$ evaluations per update step.} when the action space is continuous. A policy gradient method sidesteps the issue. Parameterize the policy as a Gaussian $\pi_\theta(a|s) = \mathcal{N}(\mu_\theta(s),\, \sigma_\theta^2(s))$,\footnote{The Gaussian distribution $\mathcal{N}(\mu, \sigma^2)$ has density $(2\pi\sigma^2)^{-1/2}\exp(-(a-\mu)^2/2\sigma^2)$. Here $\mu_\theta(s)$ and $\sigma_\theta(s)$ are neural network outputs parameterizing the policy mean and standard deviation.} sample an action, observe the return, and update $\theta$ by REINFORCE. No maximization over actions is required. Virtually all continuous-control results in reinforcement learning descend from the policy gradient framework rather than from Q-learning for this reason.
+Consider a robot arm that must apply a continuous torque $a \in \mathbb{R}$ to reach a target angle. Q-learning requires computing $\max_a Q(s,a)$ at every update, which becomes a nested optimization problem \footnote{In continuous action spaces, $\max_a Q(s,a)$ has no closed-form solution in general and must be solved numerically at every Bellman update. Discretizing a $d$-dimensional action space on a grid of $m$ points per dimension costs $O(m^d)$ evaluations per update step.} when the action space is continuous. A policy gradient method sidesteps the issue. Parameterize the policy as a Gaussian $\pi_\theta(a|s) = \mathcal{N}(\mu_\theta(s),\, \sigma_\theta^2(s))$,\footnote{The Gaussian distribution $\mathcal{N}(\mu, \sigma^2)$ has density $(2\pi\sigma^2)^{-1/2}\exp(-(a-\mu)^2/2\sigma^2)$. Here $\mu_\theta(s)$ and $\sigma_\theta(s)$ are neural network outputs parameterizing the policy mean and standard deviation.} sample an action, observe the return, and update $\theta$ by REINFORCE. Virtually all continuous-control results in reinforcement learning descend from the policy gradient framework for this reason.
 
 %REINFORCE has a few practical issues, which motivated. First, because $G_t$ is a sum of stochastic rewards, gradient estimates can be noisy. Variance reduction techniques, including baselines $b(s_t)$ subtracted from $G_t$, are essential. One approach is to also estimate $V(s_t)$ and use it as a baseline. Secondly, REINFORCE uses each trajectory exactly once and discards it making it very sample-inefficient. This led to parallelization to gather more data faster and importance-sampling methods that re-use older data. Thirdly, a few outliers could destabilize learning if the gradient update is too severe. This led to KL trust regions and other limits on policy updates.  Thirdly, there is no mechanism to prevent the policy from collapsing into a deterministic policy early in training. This led to entropy regularization to encourage exploration by penalizing low-entropy policies.
 
@@ -64,7 +62,7 @@ Consider a robot arm that must apply a continuous torque $a \in \mathbb{R}$ to r
 
 \citet{tesauro1994}'s TD-Gammon demonstrated that temporal difference learning with neural network function approximation could achieve expert-level play in a domain with approximately $10^{20}$ legal positions\footnote{The state $\mathbf{x}(s)$ was a 198-dimensional binary encoding of the raw board (four units per board point per player indicating checker counts, plus bar and borne-off counts). The output was a four-component vector estimating probabilities of each game outcome (White/Black $\times$ normal win/gammon), and the move maximizing expected outcome among all legal moves was selected at each step.}. 
 
-Backgammon was far beyond tabular methods, yet TD-Gammon trained a feedforward neural network to estimate the probability of winning from any board position. A hidden layer of 80 sigmoid units fed a single sigmoid output:
+Backgammon was far beyond tabular methods, yet TD-Gammon trained a feedforward neural network to estimate the probability of winning from any board position. A hidden layer of 80 sigmoid units fed a single sigmoid output.
 \begin{equation}
 \hat{V}(s) = \sigma\!\bigl(\mathbf{w}^\top \sigma(W\mathbf{x}(s) + \mathbf{b}) + c\bigr)
 \end{equation}
@@ -74,11 +72,11 @@ where $\sigma$ is the logistic sigmoid, $W$ is the input-to-hidden weight matrix
 \end{equation}
 where the eligibility trace $\mathbf{e}_t = \sum_{k=1}^{t} \lambda^{t-k} \nabla_{\boldsymbol{\theta}} \hat{V}(s_k)$ accumulates exponentially decayed gradients of past predictions.\footnote{In the neural network case, the eligibility trace $\mathbf{e}_t \in \mathbb{R}^{|\boldsymbol{\theta}|}$ is a vector accumulating exponentially-weighted gradients, extending the scalar state-based trace to parameter space.} At game's end, $\hat{V}(s_{t+1})$ is replaced by the outcome $z \in \{0, 1\}$.
 
-Self-play proceeds as follows. A single neural network $\hat{V}$ serves as the evaluation function for both players. At each turn, the current player rolls the dice, which determines the set of legal moves. For each legal move, the network evaluates the resulting board position $\hat{V}(s')$. The player selects the move that maximizes $\hat{V}(s')$ from its own perspective. The opponent then does the same using the identical network. After each move from position $s_t$ to $s_{t+1}$, the weights are updated by the TD($\lambda$) rule using the error $\hat{V}(s_{t+1}) - \hat{V}(s_t)$, which pushes earlier predictions toward later ones. When the game ends, the terminal signal $z \in \{0,1\}$ replaces $\hat{V}(s_{t+1})$, grounding the entire chain of predictions in the actual outcome. As the network improves, it generates stronger play on both sides, which produces harder training games, which in turn drives further improvement. The dice rolls ensure that the network encounters a wide variety of board positions without requiring an explicit exploration mechanism\footnote{TD-Gammon 1.0, trained on 300{,}000 self-play games, played at a strong intermediate level. Version 1.0 trained on 300,000 self-play games with 80 hidden units and no lookahead search; version 2.1 trained on 1,500,000 games with 2-ply search, reducing its average loss rate against world-class human players from $-0.25$ to $-0.02$ points per game. Version 2.1 achieved near-parity with Bill Robertie, a former world champion. The program discovered novel positional strategies subsequently adopted by the human backgammon community.}. 
+A single neural network $\hat{V}$ serves as the evaluation function for both players. At each turn, the current player selects the legal move maximizing $\hat{V}(s')$ from its own perspective. As the network improves, it generates stronger play on both sides, producing harder training games that drive further improvement. The dice rolls ensure diverse board positions without requiring an explicit exploration mechanism.\footnote{Version 2.1, trained on 1,500,000 games with 2-ply search, achieved near-parity with former world champion Bill Robertie and discovered novel positional strategies subsequently adopted by the human backgammon community.} 
 
 \subsubsection{SARSA (1994)}
 
-Q-learning learns the optimal action-value function regardless of the policy generating experience. This off-policy property is useful but introduces complications when combined with function approximation. \citet{rummery1994} introduced SARSA as an on-policy\footnote{On-policy methods learn about the policy currently generating data, in contrast to off-policy methods (see footnote on Q-learning above) which learn about a different target policy.} alternative that learns the value of the policy actually being followed. The name derives from the quintuple $(s_t, a_t, r_{t+1}, s_{t+1}, a_{t+1})$ used in each update:
+Q-learning learns the optimal action-value function regardless of the policy generating experience. This off-policy property is useful but introduces complications when combined with function approximation. \citet{rummery1994} introduced SARSA as an \textit{on-policy}\footnote{See Section~\ref{section:language} for the on-policy/off-policy distinction.} alternative that learns the value of the policy actually being followed. The name derives from the quintuple $(s_t, a_t, r_{t+1}, s_{t+1}, a_{t+1})$ used in each update:
 \begin{equation}
 Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_{t+1} + \gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t) \right]
 \end{equation}
@@ -94,13 +92,11 @@ This result explains the asymmetry between Tesauro's success and Baird's failure
 
 \subsubsection{Actor-Critic Methods (2000)}
 
-The idea of maintaining both a policy (actor) and a value function (critic) dates to \citet{barto1983neuronlike}, who used a two-component system to solve the pole-balancing task. The actor selected actions; the critic predicted future reinforcement and generated training signals for the actor. This architecture addressed a limitation of pure policy gradient methods. REINFORCE estimates gradients from Monte Carlo returns, which are unbiased but have high variance because returns depend on the full trajectory of stochastic transitions and rewards. TD methods use bootstrapped targets $r + \gamma V(s')$, which have lower variance but introduce bias when $V$ is approximate.
-
-Actor-critic methods combine both ideas. The critic learns a value function $V(s)$ by TD updates:
+The idea of maintaining both a policy (\textit{actor}) and a value function (\textit{critic}) dates to \citet{barto1983neuronlike}, who used a two-component system to solve the pole-balancing task. Actor-critic methods address the high variance of REINFORCE by replacing Monte Carlo returns with bootstrapped TD targets as the learning signal. The critic learns a value function $V(s)$ by TD updates.
 \begin{equation}
 V(s_t) \leftarrow V(s_t) + \alpha_c \, \delta_t, \quad \delta_t = r_{t+1} + \gamma V(s_{t+1}) - V(s_t)
 \end{equation}
-The actor updates the policy using the TD error as a sample of the advantage:
+The actor updates the policy using the TD error as a sample of the advantage.
 \begin{equation}
 \theta \leftarrow \theta + \alpha_a \nabla_\theta \log \pi_\theta(a_t|s_t) \, \delta_t
 \end{equation}
@@ -116,7 +112,7 @@ Standard gradient descent treats all parameter directions equally, but policy pa
 \begin{equation}
 F(\theta) = \mathbb{E}_{s \sim d^\pi, a \sim \pi_\theta} \left[ \nabla_\theta \log \pi_\theta(a|s) \nabla_\theta \log \pi_\theta(a|s)^\top \right]
 \end{equation}
-The natural gradient is:
+The natural gradient is
 \begin{equation}
 \tilde{\nabla}_\theta J(\theta) = F(\theta)^{-1} \nabla_\theta J(\theta)
 \end{equation}
@@ -124,34 +120,55 @@ This direction is invariant to reparameterization of the policy. In the tabular 
 
 The computational bottleneck is inverting $F(\theta) \in \mathbb{R}^{d \times d}$. Practical implementations use conjugate gradient methods to solve $F(\theta) x = \nabla_\theta J(\theta)$ without forming $F$ explicitly. This approach was later scaled to deep neural networks by TRPO and PPO.
 
+\subsubsection{Fitted Value Iteration and Fitted Q-Iteration (2005)}
+\label{sec:fvi_fqi_algorithms}
+
+Tabular Q-learning maintains a separate entry for every state-action pair. When $|\mathcal{S}|$ is large or the state space is continuous, as in most economic applications, this is infeasible. \emph{Fitted Q-Iteration} (FQI) \citep{Ernst2005} replaces the tabular update with a supervised regression step: given a batch of transitions, fit a function approximator to the Bellman targets.
+
+Let $\mathcal{F}$ be a function class mapping $\mathcal{S} \times \mathcal{A} \to \mathbb{R}$.\label{def:fqi} Initialize $Q_0 \equiv 0$. At each iteration $k = 0, 1, \ldots, K-1$: (i) draw $N$ transitions $(s_i, a_i, r_i, s_i')$ from a generative model; (ii) construct regression targets $y_i^{(k)} = r_i + \gamma \max_{a'} Q_k(s_i', a')$; (iii) set $Q_{k+1} \leftarrow \arg\min_{f \in \mathcal{F}} \frac{1}{N} \sum_{i=1}^N \bigl( f(s_i, a_i) - y_i^{(k)} \bigr)^2$. The output is the greedy policy $\pi_K(s) = \arg\max_a Q_K(s,a)$.
+
+The regression step replaces the exact Bellman application with a projection onto $\mathcal{F}$: $Q_{k+1} = \Pi_{\mathcal{F}} \mathcal{T} Q_k$, where $\mathcal{T}$ is the Bellman optimality operator and $\Pi_{\mathcal{F}}$ is the $L^2$-projection under the sample distribution. Fitted Value Iteration (FVI) \citep{MunosSzepesvari2008} applies the same idea to the value function directly: $V_{k+1} = \Pi_{\mathcal{F}} \mathcal{T}^* V_k$, where $(\mathcal{T}^* V)(s) = \max_a \{ r(s,a) + \gamma \sum_{s'} P(s'|s,a) V(s') \}$.
+
+With feature matrix $\Phi \in \mathbb{R}^{|\mathcal{S}| \times d}$ (rows $\phi(s)^\top$) and per-action weight vectors $\theta_a \in \mathbb{R}^d$, each FQI regression step for action $a$ reduces to the normal equations:
+\begin{equation}
+\theta_a^{(k+1)} = \bigl(\Phi^\top \Phi\bigr)^{-1} \Phi^\top y_a^{(k)},
+\label{eq:fqi_normal}
+\end{equation}
+where $y_a^{(k)}(s) = r(s,a) + \gamma \sum_{s'} P(s'|s,a) \max_{a'} \phi(s')^\top \theta_{a'}^{(k)}$. Computation is $O(d^2 |\mathcal{S}| + d^3)$ per action per iteration. The FVI update takes the same form with a single weight vector $\theta_V$:
+\begin{equation}
+\theta_V^{(k+1)} = \bigl(\Phi^\top \Phi\bigr)^{-1} \Phi^\top V_{\mathrm{target}}^{(k)},
+\label{eq:fvi_normal}
+\end{equation}
+where $V_{\mathrm{target}}^{(k)}(s) = \max_a \bigl\{ r(s,a) + \gamma \sum_{s'} P(s'|s,a) \phi(s')^\top \theta_V^{(k)} \bigr\}$. The finite-sample error theory for these methods is developed in Section~\ref{sec:fvi_fqi_theory}.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{The Deep Learning Era}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsubsection{Deep Q-Networks (2015)}
 
-The two decades after TD-Gammon saw limited success in applying neural networks to reinforcement learning. Attempts to replicate Tesauro's approach in chess and Go did not achieve comparable results, though progress continued in robotics and other domains. \citet{mnih2015} changed this by training a single convolutional neural network\footnote{A convolutional neural network applies learned spatial filters to detect local patterns in grid-structured data, commonly used for image inputs.} to play 49 Atari 2600 games directly from pixel inputs ($210 \times 160 \times 3$) and a scalar score, using no game-specific features.
+\citet{mnih2015} trained a single convolutional neural network\footnote{A convolutional neural network applies learned spatial filters to detect local patterns in grid-structured data, commonly used for image inputs.} to play 49 Atari 2600 games directly from pixel inputs ($210 \times 160 \times 3$) and a scalar score, using no game-specific features.
 
-The architecture processed four consecutive frames through three convolutional layers and a fully connected layer. The network $Q(s, a; \theta)$ was trained to minimize the squared temporal difference error:
+The architecture processed four consecutive frames through three convolutional layers and a fully connected layer. The network $Q(s, a; \theta)$ was trained to minimize the squared temporal difference error
 \begin{equation}
 L(\theta) = \mathbb{E}_{(s,a,r,s') \sim \mathcal{D}} \left[ \left( r + \gamma \max_{a'} Q(s', a'; \theta^-) - Q(s, a; \theta) \right)^2 \right]
 \end{equation}
 
-Two innovations stabilized learning. Experience replay \citep{Lin1992} stored transitions $(s, a, r, s')$ in a buffer $\mathcal{D}$ holding $10^6$ transitions and sampled uniformly for training. This breaks the temporal correlation between consecutive updates that would otherwise cause the network to overfit to recent experience. A target network used a frozen copy of parameters $\theta^-$,\footnote{The notation $\theta^-$ denotes target network parameters, a lagged copy of $\theta$ updated periodically. This stabilizes learning by keeping the regression target fixed during gradient steps.} updated to match $\theta$ only every $C = 10{,}000$ steps, so the regression target does not shift with each gradient step.
+Two innovations stabilized learning. \textit{Experience replay} \citep{Lin1992} stored transitions $(s, a, r, s')$ in a buffer $\mathcal{D}$ and sampled uniformly for training, breaking the temporal correlation between consecutive updates. A \textit{target network} used a frozen copy of parameters $\theta^-$, updated periodically,\footnote{The buffer held $10^6$ transitions; the target network $\theta^-$ was synchronized to $\theta$ every $C = 10{,}000$ steps.} so the regression target does not shift with each gradient step.
 
 %These techniques address the deadly triad identified by Baird. Experience replay creates a more stationary data distribution, partially mitigating off-policy issues. The target network holds the bootstrap target fixed between updates, making the regression problem approximately stationary. Neither technique provides theoretical guarantees, but the empirical success demonstrated that the deadly triad can be managed in practice.
 
-DQN exceeded human-level performance on 29 of 49 games using a single architecture and hyperparameters. The same network that learned Breakout (where the agent must track a ball and position a paddle) also learned Space Invaders (where the agent must track multiple enemies and time shots). Games requiring long-horizon planning or sparse rewards, such as Montezuma's Revenge (where the agent must navigate rooms and collect keys before receiving any reward), remained difficult.
+DQN exceeded human-level performance on 29 of 49 games using a single architecture and hyperparameters. Games requiring long-horizon planning or sparse rewards, such as Montezuma's Revenge, remained difficult.
 
 \subsubsection{TRPO and PPO (2015, 2017)}
 
-Policy gradient methods suffer from a practical instability. A single large gradient step can move the policy into a region of parameter space where performance collapses, and recovery may be slow or impossible. The objective $J(\theta)$ is not well approximated by its linear Taylor expansion when the step size is large relative to the curvature of the policy space.
+Policy gradient methods suffer from a practical instability: a single large gradient step can move the policy into a region where performance collapses and recovery is slow.
 
 \citet{Schulman2015} addressed this with Trust Region Policy Optimization (TRPO). TRPO solves the constrained optimization problem
 \begin{equation}
 \max_\theta \; L_{\theta_{\text{old}}}(\theta) \quad \text{subject to} \quad \bar{D}_{\mathrm{KL}}(\theta_{\text{old}}, \theta) \leq \delta
 \end{equation}
-where $L$ is a surrogate objective based on the advantage function $A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)$.\footnote{The Kullback-Leibler divergence $D_{\mathrm{KL}}(p \| q) = \sum_x p(x) \log(p(x)/q(x))$ measures statistical distance between distributions. The bar denotes expectation over states: $\bar{D}_{\mathrm{KL}} = \mathbb{E}_{s}[D_{\mathrm{KL}}(\pi_{\theta_{\text{old}}}(\cdot|s) \| \pi_\theta(\cdot|s))]$.} The KL constraint prevents the policy from moving so far in one update that performance collapses and recovery becomes impossible.
+where $L$ is a surrogate objective based on the advantage function $A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)$.\footnote{The Kullback-Leibler divergence $D_{\mathrm{KL}}(p \| q) = \sum_x p(x) \log(p(x)/q(x))$ measures statistical distance between distributions. The bar denotes expectation over states: $\bar{D}_{\mathrm{KL}} = \mathbb{E}_{s}[D_{\mathrm{KL}}(\pi_{\theta_{\text{old}}}(\cdot|s) \| \pi_\theta(\cdot|s))]$.}
 
 \citet{Schulman2017} proposed Proximal Policy Optimization (PPO) as a simpler alternative. PPO replaces the KL constraint with a clipped surrogate objective:
 \begin{equation}
@@ -175,24 +192,31 @@ SAC maintains two Q-networks (to reduce overestimation bias) and a policy networ
 \end{equation}
 SAC is off-policy (using experience replay), handles continuous actions naturally, and achieves state-of-the-art sample efficiency on continuous control benchmarks. The entropy regularization provides automatic exploration without $\varepsilon$-greedy schedules.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{../ch02_rl_algorithms/sims/algorithm_architectures.png}
+\caption{Architecture comparison of the three fundamental algorithm families. (a) DQN maps states to Q-values for all actions, selecting the argmax. (b) REINFORCE maps states to a probability distribution over actions, then samples. (c) Actor-Critic maintains separate policy and value networks; the critic's TD error $\delta_t$ provides a low-variance learning signal to the actor.}
+\label{fig:algorithm_architectures}
+\end{figure}
+
 \subsubsection{AlphaGo Zero (2017)}
 \label{subsubsec:alphago_zero}
 
 The game of Go has approximately $10^{170}$ legal positions and a branching factor of roughly 250, far beyond the reach of brute-force search. Hand-crafted evaluation functions, which had succeeded in chess, failed here because positional concepts like influence, territory, and group viability are holistic and contextual. Monte Carlo tree search (MCTS) had achieved amateur-level play by using random simulations to estimate position values, but progress had stalled below professional strength. \citet{Silver2016} broke through by combining supervised learning from 30 million human expert positions, reinforcement learning via self-play, and MCTS with learned value and policy networks; the resulting system defeated Lee Sedol four games to one in March 2016. A year later, \citet{Silver2017} showed that none of the human data was necessary.
 
-AlphaGo Zero uses a single neural network $f_\theta(s) = (\mathbf{p}, v)$ that takes a board position $s$ and outputs both a policy vector $\mathbf{p}$ over legal moves and a scalar value $v$ estimating the probability of winning.\footnote{A convolutional neural network applies small learned filters that slide across a grid input, detecting local patterns regardless of position on the board. The same filter that recognizes a capturing pattern in one corner will recognize it in another.} The input representation consists of 17 binary planes on the $19 \times 19$ board, encoding the raw game state without any hand-crafted features: eight planes for Black's stone positions over the last eight moves, eight for White's, and one indicating which color plays next.\footnote{The history planes allow the network to detect ko situations (positions that cannot be immediately repeated) and infer the trajectory of play without any explicit feature engineering.} The board's fixed grid structure makes convolutional networks effective, since spatial patterns learned in one region transfer to others. The architecture uses residual blocks,\footnote{A residual block computes $\mathbf{x} + g(\mathbf{x})$ rather than just $g(\mathbf{x})$, where $g$ is a learned transformation. The skip connection allows gradients to flow through very deep networks without vanishing. AlphaGo Zero's 40-block architecture has 79 parameterized layers.} which allow training of very deep networks.
+AlphaGo Zero uses a single convolutional neural network $f_\theta(s) = (\mathbf{p}, v)$ that takes a board position $s$ and outputs both a policy vector $\mathbf{p}$ over legal moves and a scalar value $v$ estimating the probability of winning. The input representation consists of 17 binary planes on the $19 \times 19$ board encoding the raw game state without hand-crafted features.\footnote{Eight planes for Black's stone positions over the last eight moves, eight for White's, and one indicating which color plays next. The history planes allow the network to detect ko situations and infer the trajectory of play.} The architecture uses residual blocks,\footnote{A residual block computes $\mathbf{x} + g(\mathbf{x})$ rather than just $g(\mathbf{x})$, where $g$ is a learned transformation. The skip connection allows gradients to flow through very deep networks without vanishing. AlphaGo Zero's 40-block architecture has 79 parameterized layers.} which allow training of very deep networks.
 
-During play, each move is selected by running MCTS, which conducts 1,600 simulated games from the current position to estimate move quality. Each simulation proceeds in four phases, illustrated in Figure~\ref{fig:mcts_phases}. In the selection phase, the algorithm starts from the current position and traverses the partially built search tree by choosing at each node the action that maximizes $Q(s,a) + c_{\text{puct}} \cdot P(s,a) \cdot \sqrt{\sum_b N(s,b)} \,/\, (1 + N(s,a))$, where $Q(s,a)$ is the current average value of action $a$, $P(s,a)$ is the prior probability from the neural network, and $N(s,a)$ is the visit count.\footnote{The constant $c_{\text{puct}}$ controls exploration. Actions visited often have well-estimated $Q$ values but a shrinking exploration bonus; rarely visited actions have uncertain values but a large bonus. This is a continuous analogue of the upper confidence bound (UCB) strategy from bandit theory.} In the expansion and evaluation phase, when the traversal reaches a position not yet in the tree, the neural network evaluates it in a single forward pass,\footnote{A forward pass is one evaluation of the neural network on an input, producing outputs without any parameter updates.} producing a policy vector $\mathbf{p}$ and a value estimate $v$; the policy initializes prior probabilities $P(s',a) = p_a$ for each child edge. In the backup phase, the value $v$ propagates back up the traversed path, incrementing each edge's visit count $N(s,a)$ and updating its mean value $Q(s,a)$. After all 1,600 simulations, the algorithm selects the move with the highest visit count at the root.
+During play, each move is selected by running MCTS, which conducts 1,600 simulated games from the current position to estimate move quality. Each simulation proceeds in four phases, illustrated in Figure~\ref{fig:mcts_phases}. In the selection phase, the algorithm starts from the current position and traverses the partially built search tree by choosing at each node the action that maximizes $Q(s,a) + c_{\text{puct}} \cdot P(s,a) \cdot \sqrt{\sum_b N(s,b)} \,/\, (1 + N(s,a))$, where $Q(s,a)$ is the current average value of action $a$, $P(s,a)$ is the prior probability from the neural network, and $N(s,a)$ is the visit count.\footnote{The constant $c_{\text{puct}}$ controls exploration. Actions visited often have well-estimated $Q$ values but a shrinking exploration bonus; rarely visited actions have uncertain values but a large bonus. This is a continuous analogue of the upper confidence bound (UCB) strategy from bandit theory.} In the expansion and evaluation phase, when the traversal reaches a position not yet in the tree, the neural network evaluates it in a single forward pass, producing a policy vector $\mathbf{p}$ and a value estimate $v$; the policy initializes prior probabilities $P(s',a) = p_a$ for each child edge. In the backup phase, the value $v$ propagates back up the traversed path, incrementing each edge's visit count $N(s,a)$ and updating its mean value $Q(s,a)$. After all 1,600 simulations, the algorithm selects the move with the highest visit count at the root.
 
 \begin{figure}[t]
 \centering
 \begin{tikzpicture}[
-    nd/.style={circle, draw, minimum size=5mm, inner sep=0pt, fill=gray!12, line width=0.4pt},
-    sel/.style={circle, draw, minimum size=5mm, inner sep=0pt, fill=blue!15, draw=blue!60, line width=0.7pt},
-    newnd/.style={circle, draw, dashed, minimum size=5mm, inner sep=0pt, fill=green!10, draw=green!50!black, line width=0.7pt},
-    edg/.style={-, gray!40, line width=0.3pt},
-    sedg/.style={-, blue!60, line width=0.9pt},
-    bedg/.style={-{Stealth[length=1.8mm]}, red!60, line width=0.7pt},
+    nd/.style={circle, draw, minimum size=5mm, inner sep=0pt, fill=rlgray!12, line width=0.4pt},
+    sel/.style={circle, draw, minimum size=5mm, inner sep=0pt, fill=rlblue!15, draw=rlblue!60, line width=0.7pt},
+    newnd/.style={circle, draw, dashed, minimum size=5mm, inner sep=0pt, fill=rlgreen!10, draw=rlgreen!50!black, line width=0.7pt},
+    edg/.style={-, rlgray!40, line width=0.3pt},
+    sedg/.style={-, rlblue!60, line width=0.9pt},
+    bedg/.style={-{Stealth[length=1.8mm]}, rlred!60, line width=0.7pt},
     phaselabel/.style={font=\footnotesize, anchor=north},
 ]
 % ---- Panel 1: Selection ----
@@ -228,7 +252,7 @@ During play, each move is selected by running MCTS, which conducts 1,600 simulat
     \draw[edg] (a2) -- (d2);
     \draw[edg] (b2) -- (e2);
     \draw[edg] (b2) -- (f2);
-    \draw[-, blue!60, dashed, line width=0.7pt] (e2) -- (g2);
+    \draw[-, rlblue!60, dashed, line width=0.7pt] (e2) -- (g2);
     \node[phaselabel] at (0,-3.8) {(b) Expansion};
 \end{scope}
 % ---- Panel 3: Evaluation ----
@@ -248,8 +272,8 @@ During play, each move is selected by running MCTS, which conducts 1,600 simulat
     \draw[edg] (b3) -- (e3);
     \draw[edg] (b3) -- (f3);
     \draw[edg] (e3) -- (g3);
-    \node[draw, rounded corners=2pt, fill=orange!12, font=\scriptsize, inner sep=3pt, draw=orange!60, line width=0.5pt] (nn3) at (-0.9,-3.3) {$f_\theta$};
-    \draw[-{Stealth[length=1.8mm]}, orange!60, line width=0.6pt] (nn3) -- (g3) node[midway, above, font=\tiny, yshift=1pt] {$(\mathbf{p}, v)$};
+    \node[draw, rounded corners=2pt, fill=rlorange!12, font=\scriptsize, inner sep=3pt, draw=rlorange!60, line width=0.5pt] (nn3) at (-0.9,-3.3) {$f_\theta$};
+    \draw[-{Stealth[length=1.8mm]}, rlorange!60, line width=0.6pt] (nn3) -- (g3) node[midway, above, font=\tiny, yshift=1pt] {$(\mathbf{p}, v)$};
     \node[phaselabel] at (0,-3.8) {(c) Evaluation};
 \end{scope}
 % ---- Panel 4: Backup ----
@@ -272,7 +296,7 @@ During play, each move is selected by running MCTS, which conducts 1,600 simulat
     \draw[bedg] ([xshift=2pt]g4.north) -- ([xshift=2pt]e4.south);
     \draw[bedg] ([xshift=2pt]e4.north) -- ([xshift=-2pt]b4.south);
     \draw[bedg] ([xshift=2pt]b4.north) -- ([xshift=2pt]r4.south);
-    \node[font=\tiny, red!60, anchor=west] at (0.85,-2.75) {$v$};
+    \node[font=\tiny, rlred!60, anchor=west] at (0.85,-2.75) {$v$};
     \node[phaselabel] at (0,-3.8) {(d) Backup};
 \end{scope}
 \end{tikzpicture}

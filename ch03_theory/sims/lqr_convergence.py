@@ -33,10 +33,31 @@ THEORY REFERENCE:
   See also: ch02_planning_learning/papers/bertsekas2019_qlearning_theory.md
 """
 
+import argparse
+import os
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.sim_cache import load_results, save_results, add_cache_args
+
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
 from collections import defaultdict
+
+CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
+SCRIPT_NAME = 'lqr_convergence'
+CONFIG = {
+    'A': 2.0, 'B': 1.0, 'Q_cost': 1.0, 'R_cost': 1.0,
+    'GAMMA_DP': 0.99, 'GAMMA_QL': 0.95,
+    'K0': 5.0,
+    'n_episodes': 500000, 'check_interval': 10,
+    'n_states': 101, 'n_actions': 101,
+    'vi_iters': 30, 'pi_iters': 10,
+    'stepsize_n_episodes': 100000, 'stepsize_check_interval': 100,
+    'stepsize_n_states': 51, 'stepsize_n_actions': 51,
+    'exploration_n_episodes': 50000, 'exploration_n_states': 31, 'exploration_n_actions': 31,
+    'version': 1,
+}
 
 # =============================================================================
 # Parameters
@@ -124,7 +145,7 @@ NOTE: Q-learning uses gamma={GAMMA_QL} (vs {GAMMA_DP} for VI/PI) because:
   - This demonstrates a key model-free vs model-based tradeoff
 """)
 
-print_problem_formulation()
+# NOTE: print_problem_formulation() is called inside compute_data(), not at module level
 
 # =============================================================================
 # Riccati Operator
@@ -3163,15 +3184,583 @@ Off-line/on-line & Newton constant $C$ & {newton_constant:.4f} & $\\approx 0.03$
     }
 
 
+def compute_data():
+    """Run all computation. Returns cached results dict if available."""
+    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+    if cached is not None:
+        print("Loaded from cache.")
+        return cached
+
+    print_problem_formulation()
+
+    # ---- Main comparison: VI, PI, Q-learning ----
+    print("\n" + "=" * 70)
+    print("LQR Convergence Rate Comparison")
+    print("=" * 70)
+
+    print("\n" + "-" * 70)
+    print(f"Running Value Iteration (gamma={GAMMA_DP})...")
+    print("-" * 70)
+    vi_history = run_vi(n_iters=30, start_k=K0, gamma=GAMMA_DP)
+    vi_errors = np.array([h[1] for h in vi_history])
+    print(f"\nVI summary: {len(vi_history) - 1} iterations")
+    print(f"  Initial error: {vi_errors[0]:.6f}")
+    print(f"  Final error: {vi_errors[-1]:.2e}")
+
+    print("\n" + "-" * 70)
+    print(f"Running Policy Iteration (gamma={GAMMA_DP})...")
+    print("-" * 70)
+    pi_history = run_pi(n_iters=10, start_k=K0, gamma=GAMMA_DP)
+    pi_errors = np.array([h[1] for h in pi_history])
+    print(f"\nPI summary: {len(pi_history) - 1} iterations")
+    print(f"  Initial error: {pi_errors[0]:.6f}")
+    print(f"  Final error: {pi_errors[-1]:.2e}")
+
+    n_episodes = 500000
+    check_interval = 10
+    print("\n" + "-" * 70)
+    print(f"Running Q-Learning ({n_episodes} episodes, gamma={GAMMA_QL})...")
+    print("-" * 70)
+    ql_errors, ql_K_estimates, ql_K_single, debug_data = run_q_learning(
+        n_episodes, check_interval,
+        gamma=GAMMA_QL, start_k=K0,
+        n_states=101, n_actions=101,
+        debug_log_path=None  # skip CSV log during cached computation
+    )
+    print(f"\nQ-learning summary: {len(ql_errors)} checkpoints")
+    print(f"  Target K* (gamma={GAMMA_QL}): {K_STAR_QL:.4f}")
+    print(f"  Initial K estimate (avg): {ql_K_estimates[0]:.4f}")
+    print(f"  Final K estimate (avg): {ql_K_estimates[-1]:.4f}")
+    print(f"  Final error: {ql_errors[-1]:.4e}")
+
+    print_debug_summary(debug_data, check_interval)
+
+    # ---- Theory verification tests (Tests 1-4) ----
+    print("\n")
+    print("+" + "=" * 78 + "+")
+    print("|" + " " * 15 + "BERTSEKAS Q-LEARNING THEORY VERIFICATION" + " " * 22 + "|")
+    print("+" + "=" * 78 + "+")
+
+    contraction_results = verify_contraction_property(GAMMA_DP, K0)
+    rate_results = verify_convergence_rate(GAMMA_DP, K0)
+
+    print("  Running Q-learning with constant vs diminishing stepsize...")
+    stepsize_results = verify_stepsize_experiment(n_episodes=100000, check_interval=100)
+
+    print("  Running exploration coverage analysis...")
+    coverage_results = verify_exploration_coverage(n_episodes=50000)
+
+    theory_results = {
+        'contraction': contraction_results,
+        'rate': rate_results,
+        'stepsize': stepsize_results,
+        'coverage': coverage_results,
+    }
+
+    # ---- Extended theory tests (Tests 5-9) ----
+    pi_mono = verify_pi_monotonic_improvement(GAMMA_DP, K0)
+    pi_quad = verify_pi_quadratic_convergence(GAMMA_DP, K0)
+    opt_pi = verify_optimistic_pi(GAMMA_DP, K0, m_values=[1, 2, 5, 10, 50])
+    approx_vi = verify_approximate_vi_error_bounds(GAMMA_DP, K0, delta_values=[0.001, 0.01, 0.05, 0.1])
+    weighted = verify_weighted_norm_contraction(GAMMA_DP, K0)
+
+    extended_results = {
+        'pi_monotonic': pi_mono,
+        'pi_quadratic': pi_quad,
+        'optimistic_pi': opt_pi,
+        'approximate_vi': approx_vi,
+        'weighted_norm': weighted,
+    }
+
+    # ---- Newton framework experiments ----
+    gamma = GAMMA_DP
+    K_star = solve_K_star(gamma)
+    stability_info = compute_stability_region(gamma)
+
+    K_tilde = 8.0
+    K_stable_max = stability_info['K_max'] if stability_info['K_max'] else 10.0
+
+    # Compute truncated rollout results
+    m_values_tr = [0, 1, 2, 3, 5, 10]
+    rollout_results_table = []
+    for m in m_values_tr:
+        K = K_tilde
+        for _ in range(m):
+            K = riccati_operator(K, gamma)
+        K_after_vi = K
+        K_newton = newton_iterate(K_after_vi, gamma)
+        L_K = -gamma * A * B * K_after_vi / (R + gamma * B**2 * K_after_vi)
+        closed_loop = abs(A + B * L_K)
+        is_stable = closed_loop < 1.0
+        error_before_newton = abs(K_after_vi - K_star)
+        error_after_newton = abs(K_newton - K_star)
+        rollout_results_table.append({
+            'm': m,
+            'K_after_vi': K_after_vi,
+            'K_after_newton': K_newton,
+            'error_before': error_before_newton,
+            'error_after': error_after_newton,
+            'is_stable': is_stable,
+            'improvement': error_before_newton - error_after_newton if is_stable else float('nan'),
+        })
+
+    # Compute offline/online synergy data
+    epsilons = np.linspace(-1.5, 2.5, 100)
+    epsilons = epsilons[epsilons + K_star > 0.1]
+    synergy_results = []
+    for eps in epsilons:
+        K_tilde_val = K_star + eps
+        L_tilde = -gamma * A * B * K_tilde_val / (R + gamma * B**2 * K_tilde_val)
+        closed_loop_val = A + B * L_tilde
+        if abs(closed_loop_val) >= 1.0 / np.sqrt(gamma):
+            K_policy = np.inf
+        else:
+            K_policy = (Q + R * L_tilde**2) / (1 - gamma * closed_loop_val**2)
+        approx_error = abs(K_tilde_val - K_star)
+        policy_error = abs(K_policy - K_star) if K_policy != np.inf else np.inf
+        synergy_results.append({
+            'epsilon': float(eps),
+            'K_tilde': K_tilde_val,
+            'L_tilde': L_tilde,
+            'K_policy': K_policy,
+            'approx_error': approx_error,
+            'policy_error': policy_error,
+            'is_stable': K_policy != np.inf,
+        })
+
+    # Compute Newton constant
+    stable_synergy = [r for r in synergy_results if r['is_stable']]
+    valid_for_fit = [(r['approx_error'], r['policy_error']) for r in stable_synergy
+                     if r['approx_error'] > 0.01 and r['policy_error'] > 1e-10]
+    if len(valid_for_fit) > 5:
+        x_fit = np.array([v[0] for v in valid_for_fit])
+        y_fit = np.array([v[1] for v in valid_for_fit])
+        newton_constant = float(np.mean(y_fit / x_fit**2))
+    else:
+        newton_constant = None
+
+    newton_results = {
+        'stability_info': {
+            'K_min': stability_info['K_min'],
+            'K_max': stability_info['K_max'],
+        },
+        'rollout_results': rollout_results_table,
+        'newton_constant': newton_constant,
+        'synergy_results': synergy_results,
+    }
+
+    data = {
+        'vi_history': vi_history,
+        'vi_errors': vi_errors.tolist(),
+        'pi_history': pi_history,
+        'pi_errors': pi_errors.tolist(),
+        'ql_errors': ql_errors.tolist(),
+        'ql_K_estimates': ql_K_estimates.tolist(),
+        'ql_K_single': ql_K_single.tolist(),
+        'debug_data': debug_data,
+        'theory_results': theory_results,
+        'extended_results': extended_results,
+        'newton_results': newton_results,
+        'n_episodes': n_episodes,
+        'check_interval': check_interval,
+    }
+    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    return data
+
+
+def generate_outputs(data):
+    """Generate all plots, tables, and printed output from cached data."""
+    vi_history = data['vi_history']
+    vi_errors = np.array(data['vi_errors'])
+    pi_history = data['pi_history']
+    pi_errors = np.array(data['pi_errors'])
+    ql_errors = np.array(data['ql_errors'])
+    ql_K_estimates = np.array(data['ql_K_estimates'])
+    ql_K_single = np.array(data['ql_K_single'])
+    debug_data = data['debug_data']
+    theory_results = data['theory_results']
+    extended_results = data['extended_results']
+    newton_results = data['newton_results']
+    n_episodes = data['n_episodes']
+    check_interval = data['check_interval']
+
+    # ---- Newton framework figures ----
+    gamma = GAMMA_DP
+    K_star = solve_K_star(gamma)
+    base_path = "/Users/pranjal/Code/rl/ch02_planning_learning/sims/"
+
+    print("\n" + "+" + "=" * 78 + "+")
+    print("|" + " " * 15 + "BERTSEKAS NEWTON FRAMEWORK VISUALIZATIONS" + " " * 21 + "|")
+    print("+" + "=" * 78 + "+")
+    print(f"\n  Parameters: gamma={gamma}, K*={K_star:.6f}")
+    print(f"  System: a={A}, b={B}, q={Q}, r={R}")
+
+    save_path1 = base_path + "lqr_newton_step.png"
+    plot_newton_step(gamma, save_path1)
+
+    save_path2 = base_path + "lqr_region_of_stability.png"
+    plot_region_of_stability(gamma, save_path2)
+
+    save_path3 = base_path + "lqr_truncated_rollout.png"
+    plot_truncated_rollout(gamma, save_path3)
+
+    save_path4 = base_path + "lqr_offline_online_synergy.png"
+    plot_offline_online_synergy(gamma, save_path4)
+
+    # Newton framework table
+    stability_info = newton_results['stability_info']
+    rollout_results = newton_results['rollout_results']
+    newton_constant = newton_results['newton_constant']
+    rho_theory = gamma * A**2 * R**2 / (R + gamma * B**2 * K_star)**2
+
+    m_stable = None
+    for r in rollout_results:
+        if r['is_stable']:
+            m_stable = r['m']
+            break
+
+    table_content = f"""\\begin{{tabular}}{{llccl}}
+\\toprule
+Experiment & Parameter & Value & Theoretical & Match \\\\
+\\midrule
+Newton step & Contraction $\\rho$ (VI) & {rho_theory:.4f} & {rho_theory:.4f} & YES \\\\
+Region of stability & $K_{{\\min}}$ & {stability_info['K_min']:.2f} & -- & -- \\\\
+Region of stability & $K_{{\\max}}$ & {stability_info['K_max']:.2f} & -- & -- \\\\
+Truncated rollout (m=0) & Final error & {rollout_results[0]['error_after'] if rollout_results[0]['is_stable'] else 'N/A'} & -- & {'YES' if rollout_results[0]['is_stable'] else 'NO'} \\\\
+Truncated rollout (m={m_stable}) & Final error & {[r for r in rollout_results if r['m']==m_stable][0]['error_after']:.4e} & -- & YES \\\\
+Off-line/on-line & Newton constant $C$ & {newton_constant:.4f} & $\\approx 0.03$ & YES \\\\
+\\bottomrule
+\\end{{tabular}}"""
+
+    table_path = base_path + "newton_framework_results.tex"
+    with open(table_path, 'w') as f:
+        f.write(table_content)
+    print(f"  Saved: {table_path}")
+
+    # ---- Theory verification figure ----
+    contraction_results = theory_results['contraction']
+    rate_results = theory_results['rate']
+    stepsize_results = theory_results['stepsize']
+    coverage_results = theory_results['coverage']
+
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+
+    ax1 = axes[0, 0]
+    ratios = contraction_results['ratios']
+    ax1.plot(range(len(ratios)), ratios, 'b-o', markersize=6, label='Empirical ratio')
+    ax1.axhline(contraction_results['rho_theory'], color='r', linestyle='--', linewidth=2,
+                label=f"Theoretical $\\rho$ = {contraction_results['rho_theory']:.4f}")
+    ax1.set_xlabel('Iteration', fontsize=11)
+    ax1.set_ylabel('Error ratio $|e_{k+1}|/|e_k|$', fontsize=11)
+    ax1.set_title('Test 1: Contraction Property Verification\n$||K_{k+1} - K^*|| / ||K_k - K^*|| = \\rho$', fontsize=12)
+    ax1.legend(fontsize=10)
+    ax1.grid(True, alpha=0.3)
+    ax1.set_ylim(0, 0.3)
+
+    ax2 = axes[0, 1]
+    log_errors = rate_results['log_errors']
+    iters = np.arange(len(log_errors))
+    ax2.plot(iters, log_errors, 'b-o', markersize=6, label='$\\log_{10}|K_k - K^*|$')
+    theoretical_line = rate_results['slope_theory'] * iters + log_errors[0]
+    ax2.plot(iters, theoretical_line, 'r--', linewidth=2,
+             label=f'Theoretical slope = {rate_results["slope_theory"]:.4f}')
+    ax2.set_xlabel('Iteration', fontsize=11)
+    ax2.set_ylabel('$\\log_{10}|K_k - K^*|$', fontsize=11)
+    ax2.set_title(f'Test 2: Linear Convergence Rate\nSlope = {rate_results["slope_empirical"]:.4f} (theory: {rate_results["slope_theory"]:.4f})', fontsize=12)
+    ax2.legend(fontsize=10)
+    ax2.grid(True, alpha=0.3)
+
+    ax3 = axes[1, 0]
+    episodes_ss = np.arange(len(stepsize_results['constant']['K_estimates'])) * 100
+    ax3.plot(episodes_ss, stepsize_results['constant']['K_estimates'], 'r-',
+             alpha=0.7, linewidth=0.8, label='Constant $\\alpha$ = 0.3')
+    ax3.plot(episodes_ss, stepsize_results['diminishing']['K_estimates'], 'b-',
+             alpha=0.7, linewidth=0.8, label='Diminishing $\\alpha$ = 1/(1+k/5000)')
+    ax3.axhline(stepsize_results['K_star'], color='k', linestyle='--', linewidth=2,
+                label=f"$K^*$ = {stepsize_results['K_star']:.4f}")
+    ax3.set_xlabel('Episode', fontsize=11)
+    ax3.set_ylabel('K estimate', fontsize=11)
+    ax3.set_title('Test 3: Stepsize Requirements (Robbins-Monro)\nConstant oscillates; diminishing converges', fontsize=12)
+    ax3.legend(fontsize=9, loc='upper right')
+    ax3.grid(True, alpha=0.3)
+
+    ax4 = axes[1, 1]
+    visit_log = np.log10(coverage_results['visit_counts'] + 1)
+    im = ax4.imshow(visit_log.T, aspect='auto', cmap='viridis', origin='lower')
+    ax4.set_xlabel('State index', fontsize=11)
+    ax4.set_ylabel('Action index', fontsize=11)
+    ax4.set_title(f'Test 4: Exploration Coverage\n{coverage_results["coverage_pct"]:.1f}% of (s,a) pairs visited', fontsize=12)
+    cbar = plt.colorbar(im, ax=ax4)
+    cbar.set_label('$\\log_{10}$(visits + 1)', fontsize=10)
+
+    plt.tight_layout()
+    theory_save_path = "/Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_qlearning_theory_test.png"
+    fig.savefig(theory_save_path, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    print(f"  Saved: {theory_save_path}")
+
+    # ---- Extended theory figure ----
+    pi_mono = extended_results['pi_monotonic']
+    pi_quad = extended_results['pi_quadratic']
+    opt_pi = extended_results['optimistic_pi']
+    approx_vi = extended_results['approximate_vi']
+    weighted = extended_results['weighted_norm']
+
+    fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+
+    ax1 = axes[0, 0]
+    iters_mono = [h['iter'] for h in pi_mono['history']]
+    ax1.semilogy(iters_mono, [h['improvement'] for h in pi_mono['history']], 'g-o', markersize=8,
+                 label='Improvement $K_{k-1} - K_k$')
+    ax1.axhline(0, color='k', linestyle='--', alpha=0.3)
+    ax1.set_xlabel('Iteration', fontsize=11)
+    ax1.set_ylabel('Cost Improvement', fontsize=11)
+    ax1.set_title('Test 5: PI Monotonic Improvement\n(Prop 4.5.1: $J_{\\mu_{k+1}} \\leq J_{\\mu_k}$)', fontsize=12)
+    ax1.legend(fontsize=9)
+    ax1.grid(True, alpha=0.3)
+
+    ax2 = axes[0, 1]
+    errors_pq = pi_quad['errors']
+    ax2.loglog(errors_pq[:-1], errors_pq[1:], 'bo-', markersize=8, label='Actual: $|e_{k+1}|$ vs $|e_k|$')
+    e_range = np.logspace(np.log10(min(e for e in errors_pq if e > 1e-14)),
+                          np.log10(max(errors_pq)), 50)
+    ax2.loglog(e_range, pi_quad['newton_constant'] * e_range**2, 'r--', linewidth=2,
+               label=f'Quadratic: $C \\cdot |e_k|^2$, C={pi_quad["newton_constant"]:.2f}')
+    ax2.loglog(e_range, e_range, 'k:', alpha=0.5, label='Linear: $|e_{k+1}| = |e_k|$')
+    ax2.set_xlabel('$|e_k|$', fontsize=11)
+    ax2.set_ylabel('$|e_{k+1}|$', fontsize=11)
+    ax2.set_title('Test 6: PI Quadratic Convergence\n$|e_{k+1}| \\approx C |e_k|^2$', fontsize=12)
+    ax2.legend(fontsize=9)
+    ax2.grid(True, alpha=0.3, which='both')
+
+    ax3 = axes[0, 2]
+    colors_opt = ['red', 'orange', 'green', 'blue', 'purple']
+    for i, m in enumerate([1, 2, 5, 10, 50]):
+        K_hist = opt_pi[m]['K_history']
+        ax3.semilogy(range(len(K_hist)), [abs(K_val - opt_pi['K_star']) for K_val in K_hist],
+                     color=colors_opt[i], linewidth=1.5, label=f'm={m}')
+    ax3.axhline(1e-12, color='k', linestyle='--', alpha=0.3, label='Machine precision')
+    ax3.set_xlabel('Outer Iteration', fontsize=11)
+    ax3.set_ylabel('Error $|K - K^*|$', fontsize=11)
+    ax3.set_title('Test 7: Optimistic PI\n(m=1: VI, m=\u221e: exact PI)', fontsize=12)
+    ax3.legend(fontsize=8, loc='upper right')
+    ax3.grid(True, alpha=0.3)
+
+    ax4 = axes[1, 0]
+    deltas = [0.001, 0.01, 0.05, 0.1]
+    max_errors_avi = [approx_vi[d]['max_error'] for d in deltas]
+    bounds_avi = [approx_vi[d]['cost_bound'] for d in deltas]
+    x_pos = np.arange(len(deltas))
+    width = 0.35
+    ax4.bar(x_pos - width/2, max_errors_avi, width, label='Empirical Max Error', color='blue', alpha=0.7)
+    ax4.bar(x_pos + width/2, bounds_avi, width, label='Bound $\\delta/(1-\\gamma)$', color='red', alpha=0.7)
+    ax4.set_xticks(x_pos)
+    ax4.set_xticklabels([f'\u03b4={d}' for d in deltas])
+    ax4.set_ylabel('Error', fontsize=11)
+    ax4.set_title('Test 8: Approximate VI Error Bounds\n(Sec 4.4: error \u2264 \u03b4/(1-\u03b3))', fontsize=12)
+    ax4.legend(fontsize=9)
+    ax4.grid(True, alpha=0.3, axis='y')
+
+    ax5 = axes[1, 1]
+    for label in ['K0', '2*K0', 'K0/2', 'K*+1']:
+        if label in weighted:
+            r_w = weighted[label]
+            ax5.semilogy(range(len(r_w['errors'])), r_w['errors'], linewidth=1.5, label=f'Start: {label}')
+    ax5.axhline(1e-14, color='k', linestyle='--', alpha=0.3)
+    ax5.set_xlabel('Iteration', fontsize=11)
+    ax5.set_ylabel('Error $|K - K^*|$', fontsize=11)
+    ax5.set_title('Test 9: Weighted Norm Contraction\n(all start points converge)', fontsize=12)
+    ax5.legend(fontsize=9)
+    ax5.grid(True, alpha=0.3)
+
+    ax6 = axes[1, 2]
+    for label in ['K0', '2*K0', 'K0/2', 'K*+1']:
+        if label in weighted:
+            r_w = weighted[label]
+            ax6.plot(range(len(r_w['ratios'])), r_w['ratios'], 'o-', markersize=5, label=f'Start: {label}')
+    ax6.axhline(weighted['rho_theory'], color='red', linestyle='--', linewidth=2,
+                label=f'Theoretical \u03c1 = {weighted["rho_theory"]:.4f}')
+    ax6.set_xlabel('Iteration', fontsize=11)
+    ax6.set_ylabel('Contraction Ratio $|e_{k+1}|/|e_k|$', fontsize=11)
+    ax6.set_title('Test 9b: Contraction Ratio\n(all \u2264 \u03c1 after transient)', fontsize=12)
+    ax6.legend(fontsize=8)
+    ax6.grid(True, alpha=0.3)
+    ax6.set_ylim(0, 0.3)
+
+    plt.tight_layout()
+    ext_save_path = "/Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_bertsekas_theory_full.png"
+    fig.savefig(ext_save_path, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    print(f"  Saved: {ext_save_path}")
+
+    # ---- Main convergence plots ----
+    # Plot 1: Convergence Rates
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.semilogy(range(len(vi_errors)), vi_errors, 'b-o', linewidth=2,
+                markersize=6, label=f'Value Iteration ($\\gamma$={GAMMA_DP})')
+    ax.semilogy(range(len(pi_errors)), pi_errors, 'g-s', linewidth=2,
+                markersize=8, label=f'Policy Iteration ($\\gamma$={GAMMA_DP})')
+    ql_x_scaled = np.arange(len(ql_errors)) * 0.05
+    ax.semilogy(ql_x_scaled[:min(200, len(ql_errors))],
+                ql_errors[:min(200, len(ql_errors))],
+                'r-', linewidth=1.5, alpha=0.8,
+                label=f'Q-Learning ($\\gamma$={GAMMA_QL}, {n_episodes} episodes)')
+    ax.axhline(1e-10, color='gray', linestyle=':', alpha=0.5, label='Machine precision')
+    ax.set_xlabel('Iteration', fontsize=12)
+    ax.set_ylabel(r'Error $|K - K^*|$', fontsize=12)
+    ax.set_title('LQR Convergence Rates: VI vs PI vs Q-Learning\n' +
+                 f'(a={A}, b={B}, q={Q}, r={R}, $K_0$={K0})', fontsize=14)
+    ax.legend(fontsize=10, loc='upper right')
+    ax.grid(True, alpha=0.3, which='both')
+    ax.set_xlim(-0.5, 35)
+    ax.set_ylim(1e-16, 10)
+    if len(vi_errors) > 15:
+        ax.annotate('Linear\nconvergence', xy=(15, vi_errors[15]),
+                    xytext=(20, 1e-2), fontsize=9, color='blue',
+                    arrowprops=dict(arrowstyle='->', color='blue', alpha=0.5))
+    ax.annotate('Quadratic\nconvergence', xy=(3, 1e-10),
+                xytext=(6, 1e-8), fontsize=9, color='green',
+                arrowprops=dict(arrowstyle='->', color='green', alpha=0.5))
+    save_path1_main = "/Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_convergence_rates.png"
+    fig.savefig(save_path1_main, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    print(f"Saved: {save_path1_main}")
+
+    # Plot 2-5: Riccati maps and debug
+    save_path_vi = "/Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_riccati_vi.png"
+    plot_riccati_vi(vi_history, GAMMA_DP, save_path_vi)
+
+    save_path_pi = "/Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_riccati_pi.png"
+    plot_riccati_pi(pi_history, GAMMA_DP, save_path_pi)
+
+    save_path_ql = "/Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_riccati_ql.png"
+    plot_riccati_ql(ql_K_estimates, GAMMA_QL, save_path_ql)
+
+    save_path_debug = "/Users/pranjal/Code/rl/ch02_planning_learning/sims/lqr_qlearning_debug.png"
+    plot_qlearning_debug(debug_data, check_interval, save_path_debug)
+
+    # ---- Print convergence rate analysis ----
+    print("\n")
+    print("+" + "=" * 78 + "+")
+    print("|" + " " * 25 + "CONVERGENCE RATE ANALYSIS" + " " * 28 + "|")
+    print("+" + "=" * 78 + "+")
+
+    print("\n" + "-" * 80)
+    print(f"VALUE ITERATION (gamma={GAMMA_DP})")
+    print("-" * 80)
+    print(f"\n  Convergence type: LINEAR (contraction mapping)")
+    print(f"  Contraction factor: gamma * a^2 / (1 + gamma * b^2 * K*)^2 approx {GAMMA_DP * A**2 / (1 + GAMMA_DP * B**2 * K_STAR_DP)**2:.4f}")
+    print(f"\n  {'Iter':<6} {'K_k':>14} {'|K_k - K*|':>14} {'Ratio':>14} {'Log10(error)':>14}")
+    print("  " + "-" * 62)
+    for k in range(min(25, len(vi_errors))):
+        ratio = vi_errors[k] / vi_errors[k-1] if k > 0 and vi_errors[k-1] > 1e-15 else 0
+        log_err = np.log10(vi_errors[k]) if vi_errors[k] > 0 else -16
+        print(f"  {k:<6} {vi_history[k][0]:>14.8f} {vi_errors[k]:>14.2e} {ratio:>14.6f} {log_err:>14.2f}")
+
+    vi_ratios = [vi_errors[k+1]/vi_errors[k] for k in range(5, min(15, len(vi_errors)-1)) if vi_errors[k] > 1e-14]
+    if vi_ratios:
+        avg_ratio = np.mean(vi_ratios)
+        print(f"\n  Average contraction ratio (iters 5-15): {avg_ratio:.6f}")
+        print(f"  Iterations to reduce error by 10x: {-1/np.log10(avg_ratio):.1f}")
+
+    print("\n" + "-" * 80)
+    print(f"POLICY ITERATION (gamma={GAMMA_DP})")
+    print("-" * 80)
+    print(f"\n  Convergence type: QUADRATIC (Newton's method)")
+    print(f"  Each iteration squares the error (approximately)")
+    print(f"\n  {'Iter':<6} {'K_k':>14} {'L_k':>14} {'|K_k - K*|':>14} {'Log10(error)':>14}")
+    print("  " + "-" * 62)
+    for k in range(len(pi_errors)):
+        L_k = optimal_gain(pi_history[k][0], GAMMA_DP)
+        log_err = np.log10(pi_errors[k]) if pi_errors[k] > 0 else -16
+        print(f"  {k:<6} {pi_history[k][0]:>14.8f} {L_k:>14.8f} {pi_errors[k]:>14.2e} {log_err:>14.2f}")
+
+    print(f"\n  Quadratic convergence evidence (error_k+1 / error_k^2):")
+    for k in range(1, min(4, len(pi_errors)-1)):
+        if pi_errors[k] > 1e-14:
+            quadratic_factor = pi_errors[k+1] / (pi_errors[k]**2) if pi_errors[k] > 1e-10 else 0
+            print(f"    k={k}: |e_{{k+1}}| / |e_{{k}}|^2 = {quadratic_factor:.2f}")
+
+    print("\n" + "-" * 80)
+    print(f"Q-LEARNING (gamma={GAMMA_QL})")
+    print("-" * 80)
+    print(f"\n  Convergence type: STOCHASTIC (noisy gradient descent)")
+    print(f"  Note: Different gamma, so different K* target ({K_STAR_QL:.6f} vs {K_STAR_DP:.6f})")
+    print(f"\n  {'Episode':<10} {'K_estimate':>14} {'|K - K*|':>14} {'dK':>14} {'Log10(error)':>14}")
+    print("  " + "-" * 66)
+
+    checkpoints = [0, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 49999]
+    for i in checkpoints:
+        if i < len(ql_errors):
+            episode = i * check_interval
+            dK = ql_K_estimates[i] - ql_K_estimates[i-1] if i > 0 else 0
+            log_err = np.log10(ql_errors[i]) if ql_errors[i] > 0 else -16
+            print(f"  {episode:<10} {ql_K_estimates[i]:>14.6f} {ql_errors[i]:>14.4e} {dK:>+14.6f} {log_err:>14.2f}")
+
+    dK_all = np.diff(ql_K_estimates)
+    print(f"\n  Episode-to-episode K changes:")
+    print(f"    Mean(dK):  {np.mean(dK_all):>+14.8f}")
+    print(f"    Std(dK):   {np.std(dK_all):>14.8f}")
+    print(f"    Min(dK):   {np.min(dK_all):>+14.8f}")
+    print(f"    Max(dK):   {np.max(dK_all):>+14.8f}")
+
+    def iters_to_error(errors, threshold):
+        for i, e in enumerate(errors):
+            if e < threshold:
+                return i
+        return ">{}".format(len(errors))
+
+    print("\n" + "-" * 80)
+    print("FINAL COMPARISON TABLE")
+    print("-" * 80)
+    print(f"\n  {'Method':<20} {'gamma':>8} {'K*':>12} {'Final K':>12} {'Final Error':>14} {'Model?':<8}")
+    print("  " + "-" * 74)
+    print(f"  {'Value Iteration':<20} {GAMMA_DP:>8.2f} {K_STAR_DP:>12.6f} {vi_history[-1][0]:>12.6f} {vi_errors[-1]:>14.2e} {'Yes':<8}")
+    print(f"  {'Policy Iteration':<20} {GAMMA_DP:>8.2f} {K_STAR_DP:>12.6f} {pi_history[-1][0]:>12.6f} {pi_errors[-1]:>14.2e} {'Yes':<8}")
+    print(f"  {'Q-Learning':<20} {GAMMA_QL:>8.2f} {K_STAR_QL:>12.6f} {ql_K_estimates[-1]:>12.6f} {ql_errors[-1]:>14.2e} {'No':<8}")
+
+    print(f"\n  Iterations/Episodes to reach error threshold:")
+    print(f"  {'Method':<20} {'< 0.1':>10} {'< 0.01':>10} {'< 1e-4':>10} {'< 1e-8':>10} {'< 1e-12':>10}")
+    print("  " + "-" * 60)
+    print(f"  {'Value Iteration':<20} {iters_to_error(vi_errors, 0.1):>10} {iters_to_error(vi_errors, 0.01):>10} "
+          f"{iters_to_error(vi_errors, 1e-4):>10} {iters_to_error(vi_errors, 1e-8):>10} {iters_to_error(vi_errors, 1e-12):>10}")
+    print(f"  {'Policy Iteration':<20} {iters_to_error(pi_errors, 0.1):>10} {iters_to_error(pi_errors, 0.01):>10} "
+          f"{iters_to_error(pi_errors, 1e-4):>10} {iters_to_error(pi_errors, 1e-8):>10} {iters_to_error(pi_errors, 1e-12):>10}")
+
+    ql_iters_01 = iters_to_error(ql_errors, 0.1)
+    ql_iters_001 = iters_to_error(ql_errors, 0.01)
+    ql_eps_01 = ql_iters_01 * check_interval if isinstance(ql_iters_01, int) else ql_iters_01
+    ql_eps_001 = ql_iters_001 * check_interval if isinstance(ql_iters_001, int) else ql_iters_001
+    print(f"  {'Q-Learning (eps)':<20} {ql_eps_01:>10} {ql_eps_001:>10} {'N/A':>10} {'N/A':>10} {'N/A':>10}")
+
+    print("\n" + "=" * 80)
+    print("OUTPUT FILES")
+    print("=" * 80)
+    print(f"\n  Plots:")
+    print(f"    {save_path1_main}")
+    print(f"    {save_path_vi}")
+    print(f"    {save_path_pi}")
+    print(f"    {save_path_ql}")
+    print(f"    {save_path_debug}")
+    print(f"    {theory_save_path}")
+    print(f"    {ext_save_path}")
+    print(f"    {save_path1}")
+    print(f"    {save_path2}")
+    print(f"    {save_path3}")
+    print(f"    {save_path4}")
+    print(f"    {table_path}")
+
+
 if __name__ == "__main__":
-    # Run Newton framework experiments (new visualizations)
-    newton_results = run_newton_framework_experiments()
+    parser = argparse.ArgumentParser(description='LQR Convergence Rate Comparison')
+    add_cache_args(parser)
+    args = parser.parse_args()
 
-    # Run basic theory verification tests (Tests 1-4)
-    theory_results = run_theory_verification_tests()
+    if args.plots_only:
+        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+        assert data is not None, "No cache found. Run without --plots-only first."
+    else:
+        data = compute_data()
 
-    # Run extended Bertsekas theory tests (Tests 5-9)
-    extended_results = run_extended_theory_tests()
-
-    # Then run the main comparison
-    main()
+    if not args.data_only:
+        generate_outputs(data)

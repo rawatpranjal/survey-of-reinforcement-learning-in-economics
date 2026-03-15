@@ -1,0 +1,9 @@
+
+============================================================
+GENERATING OUTPUTS
+============================================================
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/kuhn_poker_exploitability.png
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/kuhn_poker_strategies.png
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/kuhn_poker_results.tex
+
+Done!

@@ -1,0 +1,94 @@
+
+======================================================================
+COASE CONJECTURE STRESS TESTS
+======================================================================
+Validating that CFR results are genuine, not artifacts
+
+======================================================================
+STRESS TEST 1: AWKWARD PRIMES
+======================================================================
+V_L = 37, V_H = 83, delta = 0.6
+Theory: P* = 83 - 0.6*(83-37) = 83 - 27.6 = 55.4
+
+Theoretical screening price: P* = 55.40
+Nearest grid point: 55
+
+Seller R1 Strategy (price index -> probability):
+  Price 37: 0.000
+  Price 45: 0.000
+  Price 55: 0.994
+  Price 60: 0.004
+  Price 70: 0.001
+  Price 83: 0.000
+
+Modal price offered: 55
+Theoretical P*: 55.40
+Nearest grid point: 55
+
+[PASS] AI converged to correct screening price region
+
+======================================================================
+STRESS TEST 2: INFORMATION LEAK CHECK
+======================================================================
+Verifying seller cannot see buyer type at t=0
+
+Seller R1 info sets found: ['S:']
+[PASS] Single seller info set at t=0 (no type leakage)
+  Strategy: P(low)=0.999, P(high)=0.001
+
+======================================================================
+STRESS TEST 3: GRID SHIFT (Missing Optimal Action)
+======================================================================
+Theoretical P* = 150, but grid = [100, 140, 145, 155, 160, 200]
+Expected: AI should mix between 145 and 155
+
+Seller R1 Strategy:
+  Price 100: 0.001
+  Price 140: 0.003
+  Price 145: 0.994
+  Price 155: 0.001
+  Price 160: 0.001
+  Price 200: 0.000
+
+Expected price: 144.99
+Theoretical P*: 150
+
+[PASS] AI uses 145 (0.994) and/or 155 (0.001)
+[PASS] Expected price 145.0 is near 150
+
+======================================================================
+STRESS TEST 4: HORIZON EXTENSION (3 Periods)
+======================================================================
+T=3, delta=0.8, V_L=100, V_H=200
+
+Backward induction:
+  P3 = 100 (floor)
+  P2 = 200 - 0.8*(200-100) = 120
+  P1 = 200 - 0.8*(200-120) = 136
+
+Theoretical screening prices: P1=136, P2=120, P3=100
+Training 3-period game (10000 iterations)...
+
+Seller R1 Strategy (S:):
+  Price 120: 0.998
+Expected P1: 120.0 (Theory: 136)
+
+Seller R2 Strategies (after R1 rejection):
+  S:0R: Expected price = 199.2
+  S:1R: Expected price = 118.5
+  S:2R: Expected price = 100.0
+
+[FAIL] P1 error = 16.0 >= 15
+  Cache saved: /Users/pranjal/Code/rl/ch06_games/sims/cache/coase_stress_tests.pkl
+
+======================================================================
+STRESS TEST SUMMARY
+======================================================================
+  awkward_primes: [PASS]
+  information_leak: [PASS]
+  grid_shift: [PASS]
+  horizon_extension: [FAIL]
+
+Total: 3/4 tests passed
+
+Some tests failed. Review implementation.

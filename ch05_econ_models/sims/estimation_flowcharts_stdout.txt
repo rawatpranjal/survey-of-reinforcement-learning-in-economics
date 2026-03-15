@@ -1,0 +1,2 @@
+Output file: /Users/pranjal/Code/rl/ch05_econ_models/sims/estimation_flowcharts.png
+Estimation flowcharts diagram generated.

@@ -9,13 +9,34 @@
 # 2. Benchmark Check - replicates analytical Coase Conjecture threshold
 # 3. Rationality Check - verifies monotonic, economically sensible strategies
 
+import argparse
+import sys, os
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Dict, List, Tuple
 from collections import defaultdict
 import time
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.sim_cache import load_results, save_results, add_cache_args
+
 np.random.seed(42)
+
+CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
+SCRIPT_NAME = 'durable_goods_monopoly'
+CONFIG = {
+    'V_LOW': 100,
+    'V_HIGH': 200,
+    'P_LOW': 100,
+    'SELLER_COST': 0,
+    'pi_sweep_delta': 0.5,
+    'pi_sweep_n_points': 17,
+    'pi_sweep_iterations': 5000,
+    'delta_sweep_pi_high': 0.7,
+    'delta_sweep_n_points': 17,
+    'delta_sweep_iterations': 5000,
+    'version': 1,
+}
 
 # =============================================================================
 # GAME DEFINITION: TWO-TYPE GAP CASE (Unique Equilibrium Guaranteed)
@@ -953,9 +974,12 @@ def generate_validation_table(results: List[Dict], save_path: str):
     print(f"Saved: {save_path}")
 
 
-def main():
-    """Main entry point."""
-    output_dir = '/Users/pranjal/Code/rl/ch05_rl_in_games/sims'
+def compute_data():
+    """Run all computation: pi-sweep and delta-sweep experiments."""
+    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+    if cached is not None:
+        print("Loaded from cache.")
+        return cached
 
     print("\n" + "=" * 70)
     print("DURABLE GOODS MONOPOLY: TWO-TYPE GAP SELLER-OFFER GAME")
@@ -969,42 +993,13 @@ def main():
     # ==========================================================================
     # EXPERIMENT 1: π-SWEEP (PRIMARY VALIDATION)
     # ==========================================================================
-    # This is the main validation: sweep π at fixed δ=0.5
-    # Sharp phase transition at π* = 0.5 validates unique equilibrium
-
     pi_sweep_results = run_pi_sweep_experiment(delta=0.5, num_iterations=5000)
-
-    print("\n" + "=" * 60)
-    print("Generating π-sweep validation outputs...")
-    print("=" * 60)
-
-    # Primary validation plot: Phase transition at π* = 0.5
-    plot_pi_sweep_benchmark(pi_sweep_results, f'{output_dir}/durable_goods_coase.png')
-
-    # NashConv convergence
-    plot_exploitability_convergence(pi_sweep_results, f'{output_dir}/durable_goods_nashconv.png')
-
-    # Strategy rationality
-    plot_buyer_strategy_heatmap(pi_sweep_results, f'{output_dir}/durable_goods_strategies.png')
-
-    # Validation table
-    generate_validation_table(pi_sweep_results, f'{output_dir}/durable_goods_results.tex')
 
     # ==========================================================================
     # EXPERIMENT 2: δ-SWEEP (SECONDARY VALIDATION)
     # ==========================================================================
-    # Secondary validation: sweep δ at fixed π=0.7 (screening region)
-    # Verifies screening price P*(δ) = 200 - 100δ
-
     print("\n")
     delta_sweep_results = run_delta_sweep_experiment(pi_high=0.7, num_iterations=5000)
-
-    print("\n" + "=" * 60)
-    print("Generating δ-sweep validation outputs...")
-    print("=" * 60)
-
-    # δ-sweep plot showing price variation
-    plot_coase_benchmark(delta_sweep_results, f'{output_dir}/durable_goods_delta_sweep.png')
 
     # ==========================================================================
     # SUMMARY STATISTICS
@@ -1059,6 +1054,67 @@ def main():
         print(f"{r['delta']:>6.2f} {r['p_star']:>6.0f} {r['prob_high_cfr']:>10.3f} "
               f"{r['prob_high_analytical']:>8.1f} {r['exploitability']:>10.4f} {r['eq_type_theory']:>12}")
 
+    # Convert numpy arrays inside strategy dicts to lists for pickling reliability
+    def serialize_results(results_list):
+        serialized = []
+        for r in results_list:
+            rc = dict(r)
+            if 'strategy' in rc:
+                rc['strategy'] = {k: v.tolist() for k, v in rc['strategy'].items()}
+            if 'training_history' in rc:
+                rc['training_history'] = list(rc['training_history'])
+            serialized.append(rc)
+        return serialized
+
+    data = {
+        'pi_sweep_results': serialize_results(pi_sweep_results),
+        'delta_sweep_results': serialize_results(delta_sweep_results),
+    }
+    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    return data
+
+
+def _deserialize_results(results_list):
+    """Convert strategy lists back to numpy arrays after loading from cache."""
+    deserialized = []
+    for r in results_list:
+        rc = dict(r)
+        if 'strategy' in rc:
+            rc['strategy'] = {k: np.array(v) for k, v in rc['strategy'].items()}
+        deserialized.append(rc)
+    return deserialized
+
+
+def generate_outputs(data):
+    """Generate all plots and tables from precomputed data."""
+    output_dir = '/Users/pranjal/Code/rl/ch06_games/sims'
+
+    pi_sweep_results = _deserialize_results(data['pi_sweep_results'])
+    delta_sweep_results = _deserialize_results(data['delta_sweep_results'])
+
+    print("\n" + "=" * 60)
+    print("Generating π-sweep validation outputs...")
+    print("=" * 60)
+
+    # Primary validation plot: Phase transition at π* = 0.5
+    plot_pi_sweep_benchmark(pi_sweep_results, f'{output_dir}/durable_goods_coase.png')
+
+    # NashConv convergence
+    plot_exploitability_convergence(pi_sweep_results, f'{output_dir}/durable_goods_nashconv.png')
+
+    # Strategy rationality
+    plot_buyer_strategy_heatmap(pi_sweep_results, f'{output_dir}/durable_goods_strategies.png')
+
+    # Validation table
+    generate_validation_table(pi_sweep_results, f'{output_dir}/durable_goods_results.tex')
+
+    print("\n" + "=" * 60)
+    print("Generating δ-sweep validation outputs...")
+    print("=" * 60)
+
+    # δ-sweep plot showing price variation
+    plot_coase_benchmark(delta_sweep_results, f'{output_dir}/durable_goods_delta_sweep.png')
+
     print("\n" + "=" * 70)
     print("OUTPUT FILES")
     print("=" * 70)
@@ -1070,4 +1126,13 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    add_cache_args(parser)
+    args = parser.parse_args()
+    if args.plots_only:
+        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+        assert data is not None, "No cache found. Run without --plots-only first."
+    else:
+        data = compute_data()
+    if not args.data_only:
+        generate_outputs(data)

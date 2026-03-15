@@ -5,21 +5,21 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 # ---------------------------------------------------------------------------
-# Color palette (tab10 defaults, named for convenience)
+# Color palette (muted/desaturated, named for convenience)
 # ---------------------------------------------------------------------------
 
 COLORS = {
-    'blue':   '#1f77b4',
-    'orange': '#ff7f0e',
-    'green':  '#2ca02c',
-    'red':    '#d62728',
-    'purple': '#9467bd',
-    'brown':  '#8c564b',
-    'pink':   '#e377c2',
-    'gray':   '#7f7f7f',
-    'olive':  '#bcbd22',
-    'cyan':   '#17becf',
-    'black':  '#333333',
+    'blue':   '#4878A8',
+    'orange': '#D4915C',
+    'green':  '#6BA368',
+    'red':    '#C25B56',
+    'purple': '#8B7BAF',
+    'brown':  '#9B7B6B',
+    'pink':   '#C99BBD',
+    'gray':   '#888888',
+    'olive':  '#A3A95E',
+    'cyan':   '#5DA5A8',
+    'black':  '#2D2D2D',
 }
 
 # ---------------------------------------------------------------------------
@@ -27,20 +27,58 @@ COLORS = {
 # ---------------------------------------------------------------------------
 
 ALGO_COLORS = {
-    'VI':             '#333333',
-    'PI':             '#7f7f7f',
-    'Q-Learning':     '#1f77b4',
-    'SARSA':          '#ff7f0e',
-    'Expected SARSA': '#2ca02c',
-    'MC Control':     '#d62728',
-    'SARSA(\u03bb)':  '#9467bd',
-    'Q(\u03bb)':      '#8c564b',
-    'REINFORCE':      '#e377c2',
-    'NPG':            '#e6550d',
-    'PPO':            '#bcbd22',
-    'DQN':            '#17becf',
-    'SAC':            '#637939',
-    'Actor-Critic':   '#6a3d9a',
+    'VI':             COLORS['black'],
+    'PI':             COLORS['gray'],
+    'Q-Learning':     COLORS['blue'],
+    'SARSA':          COLORS['orange'],
+    'Expected SARSA': COLORS['green'],
+    'MC Control':     COLORS['red'],
+    'SARSA(\u03bb)':  COLORS['purple'],
+    'Q(\u03bb)':      COLORS['brown'],
+    'REINFORCE':      COLORS['pink'],
+    'NPG':            '#C47832',
+    'PPO':            COLORS['olive'],
+    'LP':             '#B07070',
+    'DQN':            COLORS['cyan'],
+    'SAC':            '#6B8F5E',
+    'Actor-Critic':   '#7055A0',
+}
+
+# ---------------------------------------------------------------------------
+# Standard sequential colormap for all heatmaps/contour plots
+# ---------------------------------------------------------------------------
+
+CMAP_SEQ = 'viridis'
+
+# ---------------------------------------------------------------------------
+# Benchmark/reference line style (Nash equilibria, oracle, optimal, analytical)
+# ---------------------------------------------------------------------------
+
+BENCH_STYLE = {'color': '#2D2D2D', 'linestyle': '--', 'linewidth': 1.0, 'zorder': 1}
+
+# ---------------------------------------------------------------------------
+# Domain-specific color maps (non-algorithm concepts)
+# ---------------------------------------------------------------------------
+
+DOMAIN_COLORS = {
+    # Causal estimators (ch09)
+    'Naive':      COLORS['orange'],
+    'Backdoor':   COLORS['blue'],
+    'Front-door': COLORS['green'],
+    'IV':         COLORS['purple'],
+    'Proximal':   COLORS['red'],
+    # Bandit algorithms (ch07)
+    'UCB1':       COLORS['blue'],
+    'Thompson':   COLORS['green'],
+    'ε-greedy':   COLORS['red'],
+    'Oracle':     COLORS['black'],
+    # Game theory agents (ch06)
+    'IQL':        COLORS['blue'],
+    'Nash-Q':     COLORS['red'],
+    'WoLF-PHC':   COLORS['green'],
+    # RLHF methods (ch08)
+    'RLHF':       COLORS['blue'],
+    'DPO':        COLORS['orange'],
 }
 
 # ---------------------------------------------------------------------------

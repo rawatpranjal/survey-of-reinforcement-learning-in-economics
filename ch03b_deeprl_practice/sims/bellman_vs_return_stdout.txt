@@ -1,0 +1,43 @@
+============================================================
+Experiment: Bellman Residual vs. Episode Return Disconnect
+============================================================
+Environment: CartPole-v1 | Steps: 60000 | Seeds: [42, 123, 777]
+Batch: 64 | Buffer: 10000 | Target update: 100
+
+Training DQN, seed=42...
+  Seed 42: 120 checkpoints logged
+  Final TD loss: 1.3981 | Final rolling return: 375.5
+Training DQN, seed=123...
+  Seed 123: 120 checkpoints logged
+  Final TD loss: 0.6997 | Final rolling return: 436.2
+Training DQN, seed=777...
+  Seed 777: 120 checkpoints logged
+  Final TD loss: 0.9563 | Final rolling return: 414.3
+
+    Step      TD Loss (mean±se)    Ep Return (mean±se)
+--------------------------------------------------------
+     500    0.3671 ± 0.0781       12.3 ±    0.9
+    6500    1.2761 ± 0.5167      190.3 ±   10.8
+   12500    0.1765 ± 0.0383      195.5 ±   11.3
+   18500    0.1015 ± 0.0338      265.0 ±   24.9
+   24500    0.3006 ± 0.0726      346.3 ±    1.9
+   30500    0.5332 ± 0.0596      373.0 ±    2.4
+   36500    0.3189 ± 0.1293      400.6 ±   49.0
+   42500    0.5533 ± 0.2010      391.8 ±   35.9
+   48500    0.7780 ± 0.2409      362.9 ±   34.4
+   54500    1.1659 ± 0.5160      386.9 ±   18.7
+
+Training logistic regression (supervised analogue)...
+  Final CE loss: 0.1661 | Final accuracy: 92.6%
+
+Figure saved: /Users/pranjal/Code/rl/ch03b_deeprl_practice/sims/bellman_vs_return.png
+
+Correlation analysis (TD loss vs. episode return):
+  Pearson correlation (TD loss, episode return): 0.1694
+  (In supervised learning the analogous metric is near +1.0 / -1.0)
+
+  Correlation (first half): 0.0561
+  Correlation (second half): -0.1059
+
+Output files:
+  /Users/pranjal/Code/rl/ch03b_deeprl_practice/sims/bellman_vs_return.png

@@ -1,0 +1,52 @@
+=================================================================
+Baird's Counterexample: Divergence and Three Fixes
+=================================================================
+
+Parameters: gamma=0.99, alpha=0.01, epochs=1000
+Initial w_8 = 10.0
+
+Expected update matrix A — eigenvalues (real parts):
+  lambda_1 = +0.2393 <-- unstable
+  lambda_2 = +0.0222 <-- unstable
+  lambda_3 = -0.0000
+  lambda_4 = -0.5714
+  lambda_5 = -0.5714
+  lambda_6 = -0.5714
+  lambda_7 = -0.5714
+  lambda_8 = -0.5714
+
+Spectral radius of (I + alpha*A): 1.002393
+System diverges (rho > 1)
+
+Fitted VI iteration matrix:
+  Spectral radius: 0.9900 (= gamma = 0.99)
+
+With L2 regularization (eta=1.0):
+  Max real eigenvalue of (A - eta*I): -0.7607
+  Spectral radius of (I + alpha*(A-eta*I)): 0.992393
+
+--- w_8 trajectory ---
+Method                      w_8(0)   w_8(100)   w_8(500)   w_8(1000)
+--------------------------------------------------------------------
+Semi-gradient TD             10.00      18.50      84.28      335.84
+Fitted VI                    10.00       4.14       0.07        0.00
+TDC (Gradient TD)            10.00       7.03       6.70        6.70
+L2 regularization            10.00       6.81       0.56        0.01
+
+--- max|V(s)| trajectory ---
+Method                         t=0      t=100      t=500      t=1000
+--------------------------------------------------------------------
+Semi-gradient TD             21.00      37.95     168.99      669.47
+Fitted VI                    21.00       7.69       0.14        0.00
+TDC (Gradient TD)            21.00      11.97      11.05       11.05
+L2 regularization            21.00      13.96       1.13        0.03
+
+Verification (Section 5a):
+  w_8 at epoch 0:   10.0000  (expected 10.0000)
+  w_8 at epoch 1:   10.0747  (expected 10.0747)
+  w_8 at epoch 100: 18.50  (expected ~18.50)
+  V(1) at epoch 0:  12.00  (expected 12.00)
+  V(7) at epoch 0:  21.00  (expected 21.00)
+  delta(1) epoch 0: 8.79  (expected 8.79)
+
+Figure saved: /Users/pranjal/Code/rl/ch03_theory/sims/bairds_counterexample.png

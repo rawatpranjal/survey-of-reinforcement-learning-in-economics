@@ -6,6 +6,12 @@ This script validates the key theoretical claims from Bertsekas (2022, 2024) and
 through controlled experiments on a stochastic gridworld MDP.
 """
 
+import argparse
+import os
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.sim_cache import load_results, save_results, add_cache_args
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
@@ -17,6 +23,22 @@ SEED = 42
 N_SEEDS = 20
 GRID_SIZE = 10
 OUTPUT_DIR = Path(__file__).resolve().parent
+
+CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
+SCRIPT_NAME = 'theory_validation'
+CONFIG = {
+    'SEED': SEED, 'N_SEEDS': N_SEEDS, 'GRID_SIZE': GRID_SIZE,
+    'slip_prob': 0.2,
+    'gammas_exp1': [0.90, 0.95, 0.99],
+    'epsilons_exp1': [0.01, 0.02, 0.05, 0.10, 0.20, 0.30],
+    'gammas_exp2': [0.90, 0.95, 0.97, 0.99],
+    'n_seeds_exp2': 5,
+    'gammas_exp3': [0.90, 0.95, 0.97, 0.99, 0.995, 0.999],
+    'approx_qualities_exp4': {'good': 0.05, 'poor': 0.30},
+    'lookaheads_exp4': [1, 2, 3],
+    'n_seeds_exp4': 5,
+    'version': 1,
+}
 
 np.random.seed(SEED)
 
@@ -980,7 +1002,13 @@ def experiment_lookahead_tradeoff():
 # Main
 # =============================================================================
 
-if __name__ == "__main__":
+def compute_data():
+    """Run all experiments, cache results. Returns data dict."""
+    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+    if cached is not None:
+        print("Loaded from cache.")
+        return cached
+
     print("=" * 70)
     print("Chapter 2: Empirical Validation of Newton Framework")
     print("=" * 70)
@@ -991,20 +1019,225 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-    # Run experiments
+    # Run experiments (these produce prints and intermediate figures as side effects)
     exp1_results = experiment_error_amplification()
     exp3_results = experiment_convergence_scaling()
     exp4_results, optimal_cost = experiment_lookahead_tradeoff()
 
-    # Experiment 2 is computationally expensive - run last
     print("\n" + "=" * 70)
     print("Note: Experiment 2 (sample complexity) may take several minutes.")
     print("=" * 70)
     exp2_results, slope_ql, slope_mb = experiment_sample_complexity()
 
     elapsed = time.time() - start_time
+    print(f"\n  Computation time: {elapsed/60:.1f} minutes")
 
-    # Final summary
+    data = {
+        'exp1_results': exp1_results,
+        'exp2_results': exp2_results,
+        'exp3_results': exp3_results,
+        'exp4_results': exp4_results,
+        'optimal_cost': optimal_cost,
+        'slope_ql': slope_ql,
+        'slope_mb': slope_mb,
+    }
+    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    return data
+
+
+def generate_outputs(data):
+    """Regenerate all figures, tables, and summary from cached data."""
+    exp1_results = data['exp1_results']
+    exp2_results = data['exp2_results']
+    exp3_results = data['exp3_results']
+    exp4_results = data['exp4_results']
+    optimal_cost = data['optimal_cost']
+    slope_ql = data['slope_ql']
+    slope_mb = data['slope_mb']
+
+    # ---- Experiment 1 figure + table ----
+    gammas = [0.90, 0.95, 0.99]
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4.5))
+    for i, gamma in enumerate(gammas):
+        ax = axes[i]
+        results_g = [r for r in exp1_results if r['gamma'] == gamma]
+        eps_vals = [r['eps'] for r in results_g]
+        ratio_vals = [r['mean_ratio'] for r in results_g]
+        se_vals = [r['se_ratio'] for r in results_g]
+        bound = results_g[0]['bound']
+        ax.errorbar(eps_vals, ratio_vals, yerr=se_vals, fmt='o-',
+                    color='blue', markersize=8, capsize=4, linewidth=2,
+                    label='Actual amplification')
+        ax.axhline(bound, color='red', linestyle='--', linewidth=2,
+                   label=f'Bound: 2\u03b3/(1-\u03b3) = {bound:.1f}')
+        ax.set_xlabel('Input error \u03b5')
+        ax.set_ylabel('Amplification ratio')
+        ax.set_title(f'\u03b3 = {gamma}')
+        ax.legend(loc='upper left')
+        ax.grid(True, alpha=0.3)
+        ax.set_ylim(0, bound * 1.2)
+    plt.tight_layout()
+    fig.savefig(OUTPUT_DIR / 'error_amplification.png', dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    print(f"  Figure saved: {OUTPUT_DIR / 'error_amplification.png'}")
+
+    lines = []
+    lines.append(r'\begin{tabular}{cccccc}')
+    lines.append(r'\toprule')
+    lines.append(r'$\gamma$ & $\varepsilon$ & Mean Ratio & SE & Bound & Within? \\')
+    lines.append(r'\midrule')
+    for r in exp1_results:
+        within = r'\checkmark' if r['within'] else r'$\times$'
+        lines.append(f"{r['gamma']:.2f} & {r['eps']:.2f} & {r['mean_ratio']:.2f} & "
+                    f"{r['se_ratio']:.2f} & {r['bound']:.1f} & {within} \\\\")
+    lines.append(r'\bottomrule')
+    lines.append(r'\end{tabular}')
+    with open(OUTPUT_DIR / 'error_amplification_results.tex', 'w') as f:
+        f.write('\n'.join(lines))
+    print(f"  Table saved: {OUTPUT_DIR / 'error_amplification_results.tex'}")
+
+    # ---- Experiment 2 figure + table ----
+    x_sc = np.log([1 / (1 - r['gamma']) for r in exp2_results])
+    y_ql = np.log([r['ql_mean'] for r in exp2_results])
+    y_mb = np.log([r['mb_mean'] for r in exp2_results])
+    slope_ql_r, intercept_ql, _, _, se_ql = stats.linregress(x_sc, y_ql)
+    slope_mb_r, intercept_mb, _, _, se_mb = stats.linregress(x_sc, y_mb)
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    x_vals = [1 / (1 - r['gamma']) for r in exp2_results]
+    ql_vals = [r['ql_mean'] for r in exp2_results]
+    ql_err = [r['ql_se'] for r in exp2_results]
+    mb_vals = [r['mb_mean'] for r in exp2_results]
+    mb_err = [r['mb_se'] for r in exp2_results]
+    ax.errorbar(x_vals, ql_vals, yerr=ql_err, fmt='o-', color='blue',
+                markersize=10, capsize=5, linewidth=2, label=f'Q-learning (slope={slope_ql:.2f})')
+    ax.errorbar(x_vals, mb_vals, yerr=mb_err, fmt='s-', color='green',
+                markersize=10, capsize=5, linewidth=2, label=f'Model-based (slope={slope_mb:.2f})')
+    x_fit = np.linspace(min(x_vals) * 0.8, max(x_vals) * 1.2, 100)
+    ax.plot(x_fit, np.exp(intercept_ql) * x_fit ** slope_ql_r, '--', color='blue', alpha=0.5)
+    ax.plot(x_fit, np.exp(intercept_mb) * x_fit ** slope_mb_r, '--', color='green', alpha=0.5)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlabel('Effective horizon 1/(1-\u03b3)')
+    ax.set_ylabel('Samples to convergence')
+    ax.set_title('Sample Complexity Scaling: Q-learning vs Model-based')
+    ax.legend(loc='upper left')
+    ax.grid(True, alpha=0.3, which='both')
+    plt.tight_layout()
+    fig.savefig(OUTPUT_DIR / 'sample_complexity_scaling.png', dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    print(f"  Figure saved: {OUTPUT_DIR / 'sample_complexity_scaling.png'}")
+
+    lines = []
+    lines.append(r'\begin{tabular}{ccccc}')
+    lines.append(r'\toprule')
+    lines.append(r'$\gamma$ & $1/(1-\gamma)$ & Q-learning & Model-based & Gap \\')
+    lines.append(r'\midrule')
+    for r in exp2_results:
+        gap = r['ql_mean'] / r['mb_mean']
+        lines.append(f"{r['gamma']:.2f} & {1/(1-r['gamma']):.0f} & "
+                    f"{r['ql_mean']/1000:.0f}k $\\pm$ {r['ql_se']/1000:.0f}k & "
+                    f"{r['mb_mean']/1000:.0f}k $\\pm$ {r['mb_se']/1000:.0f}k & "
+                    f"{gap:.1f}x \\\\")
+    lines.append(r'\midrule')
+    lines.append(f"Slope & & {slope_ql:.2f} $\\pm$ {se_ql:.2f} & {slope_mb:.2f} $\\pm$ {se_mb:.2f} & \\\\")
+    lines.append(r'\bottomrule')
+    lines.append(r'\end{tabular}')
+    with open(OUTPUT_DIR / 'sample_complexity_results.tex', 'w') as f:
+        f.write('\n'.join(lines))
+    print(f"  Table saved: {OUTPUT_DIR / 'sample_complexity_results.tex'}")
+
+    # ---- Experiment 3 figure + table ----
+    horizons = [r['horizon'] for r in exp3_results]
+    vi_vals = [r['vi_iters'] for r in exp3_results]
+    pi_vals = [r['pi_iters'] for r in exp3_results]
+    x_arr = np.array(horizons)
+    y_vi_arr = np.array(vi_vals)
+    slope_conv, intercept_conv, r_val, _, _ = stats.linregress(x_arr, y_vi_arr)
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.plot(horizons, vi_vals, 'o-', color='blue', markersize=10, linewidth=2,
+            label=f'Value Iteration (slope={slope_conv:.3f})')
+    ax.plot(horizons, pi_vals, 's-', color='green', markersize=10, linewidth=2,
+            label=f'Policy Iteration (mean={np.mean(pi_vals):.1f})')
+    x_fit = np.linspace(0, max(horizons) * 1.1, 100)
+    ax.plot(x_fit, slope_conv * x_fit + intercept_conv, '--', color='blue', alpha=0.5)
+    ax.axhline(np.mean(pi_vals), linestyle='--', color='green', alpha=0.5)
+    ax.set_xlabel('Effective horizon 1/(1-\u03b3)')
+    ax.set_ylabel('Iterations to convergence')
+    ax.set_title('Convergence Scaling: VI (linear) vs PI (constant)')
+    ax.legend(loc='upper left')
+    ax.grid(True, alpha=0.3)
+    ax.set_xlim(0, max(horizons) * 1.1)
+    ax.set_ylim(0, max(vi_vals) * 1.1)
+    plt.tight_layout()
+    fig.savefig(OUTPUT_DIR / 'convergence_scaling.png', dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    print(f"  Figure saved: {OUTPUT_DIR / 'convergence_scaling.png'}")
+
+    lines = []
+    lines.append(r'\begin{tabular}{cccc}')
+    lines.append(r'\toprule')
+    lines.append(r'$\gamma$ & $1/(1-\gamma)$ & VI iterations & PI iterations \\')
+    lines.append(r'\midrule')
+    for r in exp3_results:
+        lines.append(f"{r['gamma']:.3f} & {r['horizon']:.0f} & {r['vi_iters']} & {r['pi_iters']} \\\\")
+    lines.append(r'\bottomrule')
+    lines.append(r'\end{tabular}')
+    with open(OUTPUT_DIR / 'convergence_scaling_results.tex', 'w') as f:
+        f.write('\n'.join(lines))
+    print(f"  Table saved: {OUTPUT_DIR / 'convergence_scaling_results.tex'}")
+
+    # ---- Experiment 4 figure + table ----
+    approx_qualities = {'good': 0.05, 'poor': 0.30}
+    lookaheads = [1, 2, 3]
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    colors_la = {'good': 'blue', 'poor': 'red'}
+    markers_la = {'good': 'o', 'poor': 's'}
+    for approx_name in approx_qualities:
+        means = [exp4_results[approx_name][ell]['mean'] for ell in lookaheads]
+        ses = [exp4_results[approx_name][ell]['se'] for ell in lookaheads]
+        ax.errorbar(lookaheads, means, yerr=ses, fmt=f'{markers_la[approx_name]}-',
+                   color=colors_la[approx_name], markersize=10, capsize=5, linewidth=2,
+                   label=f'{approx_name.capitalize()} approx (\u03b5={approx_qualities[approx_name]:.0%})')
+    ax.axhline(optimal_cost, color='green', linestyle='--', linewidth=2,
+               label=f'Optimal: {optimal_cost:.2f}')
+    ax.set_xlabel('Lookahead depth \u2113')
+    ax.set_ylabel('Expected cost from start')
+    ax.set_title('Lookahead Compensates for Approximation Error')
+    ax.legend(loc='upper right')
+    ax.grid(True, alpha=0.3)
+    ax.set_xticks(lookaheads)
+    plt.tight_layout()
+    fig.savefig(OUTPUT_DIR / 'lookahead_tradeoff.png', dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    print(f"  Figure saved: {OUTPUT_DIR / 'lookahead_tradeoff.png'}")
+
+    header_cols = ' & '.join([f'$\\ell={ell}$' for ell in lookaheads])
+    lines = []
+    lines.append(r'\begin{tabular}{l' + 'c' * len(lookaheads) + '}')
+    lines.append(r'\toprule')
+    lines.append(f'Approximation & {header_cols} \\\\')
+    lines.append(r'\midrule')
+    for approx_name in approx_qualities:
+        label = 'Good (5\\%)' if approx_name == 'good' else 'Poor (30\\%)'
+        row = label
+        for ell in lookaheads:
+            r = exp4_results[approx_name][ell]
+            row += f" & {r['mean']:.2f} $\\pm$ {r['se']:.2f}"
+        row += r" \\"
+        lines.append(row)
+    lines.append(r'\midrule')
+    n_cols = len(lookaheads)
+    lines.append(f"Optimal & \\multicolumn{{{n_cols}}}{{c}}{{{optimal_cost:.2f}}} \\\\")
+    lines.append(r'\bottomrule')
+    lines.append(r'\end{tabular}')
+    with open(OUTPUT_DIR / 'lookahead_tradeoff_results.tex', 'w') as f:
+        f.write('\n'.join(lines))
+    print(f"  Table saved: {OUTPUT_DIR / 'lookahead_tradeoff_results.tex'}")
+
+    # ---- Final summary ----
     print("\n" + "=" * 70)
     print("SUMMARY OF RESULTS")
     print("=" * 70)
@@ -1023,13 +1256,11 @@ if __name__ == "__main__":
     print(f"    PI iterations: {min(pi_iters)}-{max(pi_iters)} (constant)")
 
     print("\n  Experiment 4 (Lookahead Tradeoff):")
-    good_l3 = exp4_results[0]['good'][3]['mean'] if isinstance(exp4_results, tuple) else exp4_results['good'][3]['mean']
-    poor_l1 = exp4_results[0]['poor'][1]['mean'] if isinstance(exp4_results, tuple) else exp4_results['poor'][1]['mean']
-    print(f"    Good approx (ℓ=3): {good_l3:.2f}")
-    print(f"    Poor approx (ℓ=1): {poor_l1:.2f}")
+    good_l3 = exp4_results['good'][3]['mean']
+    poor_l1 = exp4_results['poor'][1]['mean']
+    print(f"    Good approx (\u2113=3): {good_l3:.2f}")
+    print(f"    Poor approx (\u2113=1): {poor_l1:.2f}")
     print(f"    Longer lookahead compensates for worse approximation")
-
-    print(f"\n  Total runtime: {elapsed/60:.1f} minutes")
 
     print("\n" + "=" * 70)
     print("OUTPUT FILES")
@@ -1046,3 +1277,18 @@ if __name__ == "__main__":
     print(f"    {OUTPUT_DIR / 'lookahead_tradeoff_results.tex'}")
 
     print("\nAll experiments complete.")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Theory Validation Experiments')
+    add_cache_args(parser)
+    args = parser.parse_args()
+
+    if args.plots_only:
+        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+        assert data is not None, "No cache found. Run without --plots-only first."
+    else:
+        data = compute_data()
+
+    if not args.data_only:
+        generate_outputs(data)

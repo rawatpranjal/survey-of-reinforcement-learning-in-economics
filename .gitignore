@@ -22,7 +22,7 @@ __pycache__/
 *.dvi
 
 # Downloaded reference PDFs (large, copyrighted)
-**/papers/*.pdf
+**/papers/
 
 # Sister survey (separate repo)
 ORE_main/
@@ -35,3 +35,36 @@ scripts/.paper_cache.json
 
 # Worktrees
 .worktrees/
+
+# AI/project config
+claude.md
+GEMINI.md
+AGENTS.md
+.claude/
+
+# Internal project management
+changelog.md
+summary.md
+
+# Old repo structure (archived)
+archive/
+
+# Internal tooling docs
+docs/superpowers/
+
+# arXiv build artifacts
+arxiv_submission/
+arxiv_submission.tar.gz
+
+# Cached simulation results (non-portable)
+**/sims/cache/
+
+# Internal scripts (paper downloaders, splitters, transcribers)
+scripts/download_*.sh
+scripts/generate_download_scripts.py
+scripts/split_*.py
+scripts/transcribe_*.py
+scripts/revert_dp_theory.sh
+
+# Internal notes
+ch10_conclusion/notes_for_conclusion.md

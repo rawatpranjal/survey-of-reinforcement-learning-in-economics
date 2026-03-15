@@ -17,7 +17,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-from sims.plot_style import apply_style, COLORS, FIG_DOUBLE
+from sims.plot_style import apply_style, COLORS, CMAP_SEQ, FIG_DOUBLE
 apply_style()
 
 # Import from main RLHF script
@@ -820,7 +820,7 @@ def run_diagnostics():
     for i, ep in enumerate(epoch_vals):
         for j, lr in enumerate(lr_vals):
             grid[i, j] = np.mean(e4_results[(ep, lr)])
-    im = ax.imshow(grid, cmap='RdYlGn', aspect='auto')
+    im = ax.imshow(grid, cmap=CMAP_SEQ, aspect='auto')
     ax.set_xticks(range(len(lr_vals)))
     ax.set_xticklabels([f'{lr:.0e}' for lr in lr_vals], fontsize=7)
     ax.set_yticks(range(len(epoch_vals)))

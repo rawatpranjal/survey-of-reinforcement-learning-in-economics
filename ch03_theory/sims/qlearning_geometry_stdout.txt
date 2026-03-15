@@ -1,0 +1,36 @@
+Q-Learning Geometry on Brock-Mirman (V, TV) Diagram
+Parameters: alpha=0.36, beta=0.96, N_K=50
+
+Steady-state capital: k_ss=0.1901, grid index=27, k_grid[ik_ss]=0.1869
+s_med = 55 (ik=27, iz=1, z=1.1)
+
+Running VI...
+  VI: 567 iterations, 0.16s
+Running PI...
+  PI: 9 iterations, 0.00s
+  V*[s_med] = -25.382352
+
+Empirical T curve: 240 points, V range [-33.00, 12.69]
+PI trajectory: 9 iterations
+  PI iter 0: V=-41.5983, TV=-40.9013, V_next=-26.0335
+  PI iter 1: V=-26.0335, TV=-26.0048, V_next=-25.4077
+  PI iter 2: V=-25.4077, TV=-25.4077, V_next=-25.3867
+  PI iter 3: V=-25.3867, TV=-25.3861, V_next=-25.3836
+  PI iter 4: V=-25.3836, TV=-25.3836, V_next=-25.3825
+  PI iter 5: V=-25.3825, TV=-25.3825, V_next=-25.3824
+  PI iter 6: V=-25.3824, TV=-25.3824, V_next=-25.3824
+  PI iter 7: V=-25.3824, TV=-25.3824, V_next=-25.3824
+  PI iter 8: V=-25.3824, TV=-25.3824, V_next=-25.3824
+
+Running Q-learning...
+  ep  100000: V[s_med]=-25.1990, visits=142004
+  ep  200000: V[s_med]=-25.3625, visits=277791
+  ep  300000: V[s_med]=-25.3916, visits=311854
+  ep  400000: V[s_med]=-25.4029, visits=328932
+  ep  500000: V[s_med]=-25.3858, visits=349074
+  Q-learning: 466.2s, 349074 visits to s_med
+  V_ql[s_med] = -25.385765 (V* = -25.382352)
+
+Plotting...
+
+Saved: /Users/pranjal/Code/rl/ch03_theory/sims/qlearning_geometry.png

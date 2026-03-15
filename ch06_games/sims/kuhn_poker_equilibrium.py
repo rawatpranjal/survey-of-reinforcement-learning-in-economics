@@ -1,13 +1,26 @@
 # Kuhn Poker Equilibrium Computation — Chapter 5, RL in Games
 # Compares CFR, CFR+, and Fictitious Play convergence to Nash equilibrium
 
+import argparse
+import sys, os
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Dict, List, Tuple
 from collections import defaultdict
 import time
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.sim_cache import load_results, save_results, add_cache_args
+
 np.random.seed(42)
+
+CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
+SCRIPT_NAME = 'kuhn_poker_equilibrium'
+CONFIG = {
+    'num_iterations': 2000,
+    'num_seeds': 10,
+    'version': 1,
+}
 
 # =============================================================================
 # GAME DEFINITION
@@ -580,7 +593,13 @@ def generate_results_table(aggregated, save_path):
     print(f"Saved: {save_path}")
 
 
-def main():
+def compute_data():
+    """Run all computation and return results dict."""
+    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+    if cached is not None:
+        print("Loaded from cache.")
+        return cached
+
     print("=" * 60)
     print("Kuhn Poker Equilibrium Computation")
     print("Chapter 5: RL in Games")
@@ -593,7 +612,8 @@ def main():
     print("(Should be ~0 for exact Nash equilibrium)")
 
     # Run experiments
-    results = run_experiment(num_iterations=2000, num_seeds=10)
+    results = run_experiment(num_iterations=CONFIG['num_iterations'],
+                             num_seeds=CONFIG['num_seeds'])
     aggregated = aggregate_results(results)
 
     # Summary
@@ -601,19 +621,49 @@ def main():
     print("RESULTS SUMMARY")
     print("=" * 60)
     for method in ['CFR', 'CFR+', 'FP']:
-        data = aggregated[method]
-        final = data['mean_exploitability'][-1]
-        conv = find_convergence_iteration(data['iterations'], data['mean_exploitability'], 0.01)
+        d = aggregated[method]
+        final = d['mean_exploitability'][-1]
+        conv = find_convergence_iteration(d['iterations'], d['mean_exploitability'], 0.01)
         print(f"\n{method}:")
         print(f"  Final exploitability: {final:.6f}")
         print(f"  Iterations to ε < 0.01: {conv if conv else '>2000'}")
-        print(f"  Time: {data['mean_time']:.2f}s ± {data['std_time']:.2f}s")
+        print(f"  Time: {d['mean_time']:.2f}s ± {d['std_time']:.2f}s")
 
-    # Generate outputs
+    # Serialize for caching: convert numpy arrays in final_strategy to lists
+    serialized_aggregated = {}
+    for method, d in aggregated.items():
+        sd = dict(d)
+        if sd['final_strategy'] is not None:
+            sd['final_strategy'] = {k: v.tolist() for k, v in sd['final_strategy'].items()}
+        serialized_aggregated[method] = sd
+
+    data = {
+        'aggregated': serialized_aggregated,
+        'nash_expl': nash_expl,
+    }
+    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    return data
+
+
+def _deserialize_aggregated(aggregated):
+    """Convert strategy lists back to numpy arrays after loading from cache."""
+    deserialized = {}
+    for method, d in aggregated.items():
+        dd = dict(d)
+        if dd['final_strategy'] is not None:
+            dd['final_strategy'] = {k: np.array(v) for k, v in dd['final_strategy'].items()}
+        deserialized[method] = dd
+    return deserialized
+
+
+def generate_outputs(data):
+    """Generate all plots and tables from precomputed data."""
+    aggregated = _deserialize_aggregated(data['aggregated'])
+
     print("\n" + "=" * 60)
     print("GENERATING OUTPUTS")
     print("=" * 60)
-    output_dir = "/Users/pranjal/Code/rl/ch05_rl_in_games/sims"
+    output_dir = "/Users/pranjal/Code/rl/ch06_games/sims"
     generate_exploitability_plot(aggregated, f"{output_dir}/kuhn_poker_exploitability.png")
     generate_strategy_plot(aggregated, f"{output_dir}/kuhn_poker_strategies.png")
     generate_results_table(aggregated, f"{output_dir}/kuhn_poker_results.tex")
@@ -621,4 +671,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    add_cache_args(parser)
+    args = parser.parse_args()
+    if args.plots_only:
+        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+        assert data is not None, "No cache found. Run without --plots-only first."
+    else:
+        data = compute_data()
+    if not args.data_only:
+        generate_outputs(data)

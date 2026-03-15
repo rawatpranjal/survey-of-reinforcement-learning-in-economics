@@ -20,11 +20,21 @@ Implementation follows paper's setup (Section 4):
 - δ = 0.1 (10% within-segment heterogeneity)
 """
 
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple
 from tqdm import tqdm
 import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.plot_style import apply_style, COLORS, DOMAIN_COLORS, BENCH_STYLE
+from sims.sim_cache import load_results, save_results, add_cache_args
+apply_style()
+
+CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
+SCRIPT_NAME = 'structural_pricing_misra'
 
 # =============================================================================
 # Configuration — Matching Paper's Setup (Section 4, p. 238)
@@ -40,6 +50,18 @@ PRICES = np.linspace(0.01, 1.0, K)  # Paper uses [0,1] range
 V_L, V_H = 0.0, 1.0          # Valuation bounds known to firm
 
 np.random.seed(42)
+
+CONFIG = {
+    'K': K,
+    'T': T,
+    'N_SEEDS': N_SEEDS,
+    'N_SEGMENTS': N_SEGMENTS,
+    'DELTA_TRUE': DELTA_TRUE,
+    'PRICES': PRICES.tolist(),
+    'V_L': V_L,
+    'V_H': V_H,
+    'version': 1,
+}
 
 # =============================================================================
 # Segmented Demand Model (Misra et al. Section 2.1)
@@ -357,43 +379,6 @@ class ThompsonSampling:
 
 
 # =============================================================================
-# Print Configuration
-# =============================================================================
-print("=" * 70)
-print("UCB WITH PARTIAL IDENTIFICATION — MISRA ET AL. (2019)")
-print("=" * 70)
-print()
-print("Configuration (matching paper's Section 4):")
-print(f"  Number of prices (K):       {K}")
-print(f"  Time horizon (T):           {T:,}")
-print(f"  Number of seeds:            {N_SEEDS}")
-print(f"  Price range:                [{PRICES[0]:.2f}, {PRICES[-1]:.2f}]")
-print(f"  Number of segments (S):     {N_SEGMENTS:,}")
-print(f"  True delta (unknown):       {DELTA_TRUE}")
-print()
-print("Demand Model: Segmented with within-segment heterogeneity")
-print(f"  Segment valuations v_s ~ Uniform([{V_L + DELTA_TRUE:.1f}, {V_H - DELTA_TRUE:.1f}])")
-print(f"  Consumer valuation v_i ~ Uniform(v_s - δ, v_s + δ)")
-print()
-
-# Print demand curve at selected prices
-print("Expected Profit by Price (selected):")
-print("-" * 60)
-print(f"{'Price':>8}  {'Demand':>10}  {'E[Profit]':>12}  {'Optimal':>8}")
-print("-" * 60)
-sample_indices = [0, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99]
-for i in sample_indices:
-    if i < K:
-        opt_marker = "  <--" if i == OPTIMAL_ARM else ""
-        print(f"{PRICES[i]:8.2f}  {canonical_demand.true_demand(PRICES[i]):10.4f}  "
-              f"{TRUE_PROFITS[i]:12.4f}{opt_marker}")
-print("-" * 60)
-print(f"Optimal price: {OPTIMAL_PRICE:.2f} (arm {OPTIMAL_ARM}), "
-      f"expected profit: {OPTIMAL_PROFIT:.4f}")
-print()
-
-
-# =============================================================================
 # Run Experiments
 # =============================================================================
 
@@ -508,509 +493,619 @@ def run_experiment(seed: int, pbar: tqdm = None) -> dict:
     }
 
 
-print("Running experiments...")
-print("-" * 50)
-sys.stdout.flush()
+def compute_data():
+    """Run all experiments and aggregate results. Uses cache if available."""
+    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+    if cached is not None:
+        print("Loaded from cache.")
+        return cached
 
-# Collect results with progress bar
-all_results = []
-total_iterations = N_SEEDS * T
+    # =========================================================================
+    # Print Configuration
+    # =========================================================================
+    print("=" * 70)
+    print("UCB WITH PARTIAL IDENTIFICATION — MISRA ET AL. (2019)")
+    print("=" * 70)
+    print()
+    print("Configuration (matching paper's Section 4):")
+    print(f"  Number of prices (K):       {K}")
+    print(f"  Time horizon (T):           {T:,}")
+    print(f"  Number of seeds:            {N_SEEDS}")
+    print(f"  Price range:                [{PRICES[0]:.2f}, {PRICES[-1]:.2f}]")
+    print(f"  Number of segments (S):     {N_SEGMENTS:,}")
+    print(f"  True delta (unknown):       {DELTA_TRUE}")
+    print()
+    print("Demand Model: Segmented with within-segment heterogeneity")
+    print(f"  Segment valuations v_s ~ Uniform([{V_L + DELTA_TRUE:.1f}, {V_H - DELTA_TRUE:.1f}])")
+    print(f"  Consumer valuation v_i ~ Uniform(v_s - δ, v_s + δ)")
+    print()
 
-with tqdm(total=total_iterations, desc="Simulating", unit="rounds",
-          bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]') as pbar:
-    for seed in range(N_SEEDS):
-        pbar.set_description(f"Seed {seed}/{N_SEEDS}")
-        results = run_experiment(seed, pbar)
-        all_results.append(results)
-        tqdm.write(f"  Seed {seed}: UCB-PI δ̂={results['delta_estimates']['ucb_pi']:.3f}, "
-                   f"dominated={results['dominated_final']['ucb_pi']}/{K}")
+    # Print demand curve at selected prices
+    print("Expected Profit by Price (selected):")
+    print("-" * 60)
+    print(f"{'Price':>8}  {'Demand':>10}  {'E[Profit]':>12}  {'Optimal':>8}")
+    print("-" * 60)
+    sample_indices = [0, 9, 19, 29, 39, 49, 59, 69, 79, 89, 99]
+    for i in sample_indices:
+        if i < K:
+            opt_marker = "  <--" if i == OPTIMAL_ARM else ""
+            print(f"{PRICES[i]:8.2f}  {canonical_demand.true_demand(PRICES[i]):10.4f}  "
+                  f"{TRUE_PROFITS[i]:12.4f}{opt_marker}")
+    print("-" * 60)
+    print(f"Optimal price: {OPTIMAL_PRICE:.2f} (arm {OPTIMAL_ARM}), "
+          f"expected profit: {OPTIMAL_PROFIT:.4f}")
+    print()
 
-# Aggregate results
-sample_interval = 1000
-time_points = np.arange(sample_interval, T + 1, sample_interval)
+    # =========================================================================
+    # Run main experiments
+    # =========================================================================
+    print("Running experiments...")
+    print("-" * 50)
+    sys.stdout.flush()
 
-alg_names = ['oracle', 'ucb1', 'ucb_pi', 'ucb_pi_tuned', 'lte', 'thompson']
-profit_arrays = {name: np.array([r['profits'][name] for r in all_results])
-                 for name in alg_names}
+    # Collect results with progress bar
+    all_results = []
+    total_iterations = N_SEEDS * T
 
-mean_profits = {name: arr.mean(axis=0) for name, arr in profit_arrays.items()}
-se_profits = {name: arr.std(axis=0) / np.sqrt(N_SEEDS) for name, arr in profit_arrays.items()}
+    with tqdm(total=total_iterations, desc="Simulating", unit="rounds",
+              bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]') as pbar:
+        for seed in range(N_SEEDS):
+            pbar.set_description(f"Seed {seed}/{N_SEEDS}")
+            results = run_experiment(seed, pbar)
+            all_results.append(results)
+            tqdm.write(f"  Seed {seed}: UCB-PI δ̂={results['delta_estimates']['ucb_pi']:.3f}, "
+                       f"dominated={results['dominated_final']['ucb_pi']}/{K}")
 
-# Final cumulative profits
-final_profits = {name: np.mean([r['cumulative'][name] for r in all_results])
-                 for name in alg_names}
-final_profits_se = {name: np.std([r['cumulative'][name] for r in all_results]) / np.sqrt(N_SEEDS)
-                    for name in alg_names}
+    # Aggregate results
+    sample_interval = 1000
+    time_points = np.arange(sample_interval, T + 1, sample_interval)
 
-# Aggregate arm selections
-arms_arrays = {name: np.array([r['arms'][name] for r in all_results])
-               for name in alg_names}
-mean_arms = {name: arr.mean(axis=0) for name, arr in arms_arrays.items()}
+    alg_names = ['oracle', 'ucb1', 'ucb_pi', 'ucb_pi_tuned', 'lte', 'thompson']
+    profit_arrays = {name: np.array([r['profits'][name] for r in all_results])
+                     for name in alg_names}
 
-# Per-seed fraction at per-seed optimal arm
-frac_optimal = {}
-for name in alg_names:
-    fracs = [r['arms'][name][r['opt_arm']] / T for r in all_results]
-    frac_optimal[name] = np.mean(fracs)
+    mean_profits = {name: arr.mean(axis=0) for name, arr in profit_arrays.items()}
+    se_profits = {name: arr.std(axis=0) / np.sqrt(N_SEEDS) for name, arr in profit_arrays.items()}
 
-# Compute regret
-regret = {name: mean_profits['oracle'] - mean_profits[name]
-          for name in alg_names if name != 'oracle'}
+    # Final cumulative profits
+    final_profits = {name: np.mean([r['cumulative'][name] for r in all_results])
+                     for name in alg_names}
+    final_profits_se = {name: np.std([r['cumulative'][name] for r in all_results]) / np.sqrt(N_SEEDS)
+                        for name in alg_names}
 
-# Final best arm accuracy
-final_best_correct = {
-    name: sum(1 for r in all_results if r['final_best'].get(name) == r['opt_arm'])
-    for name in ['ucb1', 'ucb_pi', 'ucb_pi_tuned', 'lte', 'thompson']
-}
+    # Aggregate arm selections
+    arms_arrays = {name: np.array([r['arms'][name] for r in all_results])
+                   for name in alg_names}
+    mean_arms = {name: arr.mean(axis=0) for name, arr in arms_arrays.items()}
 
-# Delta estimation
-delta_estimates_mean = {
-    'ucb_pi': np.mean([r['delta_estimates']['ucb_pi'] for r in all_results]),
-    'ucb_pi_tuned': np.mean([r['delta_estimates']['ucb_pi_tuned'] for r in all_results]),
-}
-delta_estimates_se = {
-    'ucb_pi': np.std([r['delta_estimates']['ucb_pi'] for r in all_results]) / np.sqrt(N_SEEDS),
-    'ucb_pi_tuned': np.std([r['delta_estimates']['ucb_pi_tuned'] for r in all_results]) / np.sqrt(N_SEEDS),
-}
+    # Per-seed fraction at per-seed optimal arm
+    frac_optimal = {}
+    for name in alg_names:
+        fracs = [r['arms'][name][r['opt_arm']] / T for r in all_results]
+        frac_optimal[name] = np.mean(fracs)
 
-# Dominated counts
-dominated_final_mean = {
-    'ucb_pi': np.mean([r['dominated_final']['ucb_pi'] for r in all_results]),
-    'ucb_pi_tuned': np.mean([r['dominated_final']['ucb_pi_tuned'] for r in all_results]),
-}
+    # Compute regret
+    regret = {name: mean_profits['oracle'] - mean_profits[name]
+              for name in alg_names if name != 'oracle'}
 
-# Ex-post profit ratios (paper's main metric)
-ex_post_ratios = {}
-for name in alg_names:
-    ratios = []
-    for r in all_results:
-        oracle_profit = r['cumulative']['oracle']
-        alg_profit = r['cumulative'][name]
-        ratios.append(alg_profit / oracle_profit if oracle_profit > 0 else 0)
-    ex_post_ratios[name] = {
-        'mean': np.mean(ratios),
-        'std': np.std(ratios),
-        'min': np.min(ratios),
-        'max': np.max(ratios),
+    # Final best arm accuracy
+    final_best_correct = {
+        name: sum(1 for r in all_results if r['final_best'].get(name) == r['opt_arm'])
+        for name in ['ucb1', 'ucb_pi', 'ucb_pi_tuned', 'lte', 'thompson']
     }
 
+    # Delta estimation
+    delta_estimates_mean = {
+        'ucb_pi': np.mean([r['delta_estimates']['ucb_pi'] for r in all_results]),
+        'ucb_pi_tuned': np.mean([r['delta_estimates']['ucb_pi_tuned'] for r in all_results]),
+    }
+    delta_estimates_se = {
+        'ucb_pi': np.std([r['delta_estimates']['ucb_pi'] for r in all_results]) / np.sqrt(N_SEEDS),
+        'ucb_pi_tuned': np.std([r['delta_estimates']['ucb_pi_tuned'] for r in all_results]) / np.sqrt(N_SEEDS),
+    }
 
-# =============================================================================
-# Print Results
-# =============================================================================
-print()
-print("=" * 70)
-print("RESULTS: ALGORITHM COMPARISON")
-print("=" * 70)
-print()
+    # Dominated counts
+    dominated_final_mean = {
+        'ucb_pi': np.mean([r['dominated_final']['ucb_pi'] for r in all_results]),
+        'ucb_pi_tuned': np.mean([r['dominated_final']['ucb_pi_tuned'] for r in all_results]),
+    }
 
-# Ex-post profit ratio table (paper's primary metric)
-print("Ex Post Profit Ratio (Algorithm / Oracle):")
-print("-" * 85)
-print(f"{'Algorithm':<16}  {'Mean':>10}  {'Std Dev':>10}  {'Min':>10}  {'Max':>10}  {'Range':>12}")
-print("-" * 85)
-for name, label in [('oracle', 'Oracle'), ('ucb_pi_tuned', 'UCB-PI-tuned'),
-                    ('ucb_pi', 'UCB-PI'), ('ucb1', 'UCB1'),
-                    ('lte', 'LTE (5%)'), ('thompson', 'Thompson')]:
-    r = ex_post_ratios[name]
-    range_str = f"[{100*r['min']:.0f}-{100*r['max']:.0f}%]"
-    print(f"{label:<16}  {100*r['mean']:>10.1f}%  {100*r['std']:>10.1f}%  "
-          f"{100*r['min']:>10.1f}%  {100*r['max']:>10.1f}%  {range_str:>12}")
-print("-" * 85)
-print()
+    # Ex-post profit ratios (paper's main metric)
+    ex_post_ratios = {}
+    for name in alg_names:
+        ratios = []
+        for r in all_results:
+            oracle_profit = r['cumulative']['oracle']
+            alg_profit = r['cumulative'][name]
+            ratios.append(alg_profit / oracle_profit if oracle_profit > 0 else 0)
+        ex_post_ratios[name] = {
+            'mean': np.mean(ratios),
+            'std': np.std(ratios),
+            'min': np.min(ratios),
+            'max': np.max(ratios),
+        }
 
-# Cumulative profit table
-print(f"Cumulative Profit at T = {T:,}:")
-print("-" * 85)
-print(f"{'Algorithm':<16}  {'Profit':>14}  {'Std Err':>10}  {'% of Oracle':>12}  {'Profit Lost':>14}")
-print("-" * 85)
-for name, label in [('oracle', 'Oracle'), ('ucb_pi_tuned', 'UCB-PI-tuned'),
-                    ('ucb_pi', 'UCB-PI'), ('ucb1', 'UCB1'),
-                    ('lte', 'LTE (5%)'), ('thompson', 'Thompson')]:
-    profit = final_profits[name]
-    se = final_profits_se[name]
-    pct = 100 * profit / final_profits['oracle']
-    lost = final_profits['oracle'] - profit
-    print(f"{label:<16}  {profit:>14,.0f}  {se:>10,.0f}  {pct:>12.2f}%  {lost:>14,.0f}")
-print("-" * 85)
-print()
+    # Dominated prices over time (averaged across seeds)
+    dom_sample_interval = 5000
+    n_dom_samples = len(all_results[0]['dominated_over_time']['ucb_pi'])
+    dom_time_points = np.arange(K, T, dom_sample_interval)[:n_dom_samples]
 
-# Fraction at optimal
-print("Fraction of Time at Optimal Price:")
-print("-" * 65)
-print(f"{'Algorithm':<16}  {'Frac Optimal':>14}  {'Final Best = Opt':>18}")
-print("-" * 65)
-for name, label in [('oracle', 'Oracle'), ('ucb_pi_tuned', 'UCB-PI-tuned'),
-                    ('ucb_pi', 'UCB-PI'), ('ucb1', 'UCB1'),
-                    ('lte', 'LTE (5%)'), ('thompson', 'Thompson')]:
-    frac = frac_optimal[name]
-    if name in final_best_correct:
-        correct = f"{final_best_correct[name]}/{N_SEEDS}"
-    else:
-        correct = "N/A"
-    print(f"{label:<16}  {frac:>14.4f}  {correct:>18}")
-print("-" * 65)
-print()
+    dom_ucb_pi = np.zeros(n_dom_samples)
+    dom_ucb_pi_tuned = np.zeros(n_dom_samples)
+    for r in all_results:
+        dom_ucb_pi += np.array(r['dominated_over_time']['ucb_pi'][:n_dom_samples])
+        dom_ucb_pi_tuned += np.array(r['dominated_over_time']['ucb_pi_tuned'][:n_dom_samples])
+    dom_ucb_pi /= N_SEEDS
+    dom_ucb_pi_tuned /= N_SEEDS
 
-# UCB-PI diagnostics
-print("UCB-PI Partial Identification Diagnostics:")
-print("-" * 65)
-print(f"True δ (unknown to algorithm):       {DELTA_TRUE:.3f}")
-print(f"UCB-PI estimated δ:                  {delta_estimates_mean['ucb_pi']:.3f} ± "
-      f"{delta_estimates_se['ucb_pi']:.3f}")
-print(f"UCB-PI-tuned estimated δ:            {delta_estimates_mean['ucb_pi_tuned']:.3f} ± "
-      f"{delta_estimates_se['ucb_pi_tuned']:.3f}")
-print()
-print(f"Avg dominated prices at T (UCB-PI):       {dominated_final_mean['ucb_pi']:.1f} / {K}")
-print(f"Avg dominated prices at T (UCB-PI-tuned): {dominated_final_mean['ucb_pi_tuned']:.1f} / {K}")
-print("-" * 65)
-print()
+    # =========================================================================
+    # Delta tracking run (seed 0)
+    # =========================================================================
+    print("  Tracking δ estimation for seed 0...")
+    rng = np.random.RandomState(0)
+    demand_model = SegmentedDemandModel(N_SEGMENTS, DELTA_TRUE, seed=0)
+    ucb_pi_track = UCB_PI(PRICES, N_SEGMENTS, demand_model.segment_weights)
 
-# Regret scaling
-print("Profit Loss Scaling Analysis (Loss / log(t)):")
-print("-" * 85)
-checkpoints = [10000, 25000, 50000, 100000, 200000]
-checkpoint_indices = [(c // sample_interval) - 1 for c in checkpoints]
-print(f"{'t':>10}  {'UCB-PI-tuned':>14}  {'UCB-PI':>12}  {'UCB1':>12}  {'LTE':>12}  {'Thompson':>12}")
-print("-" * 85)
-for t_check, idx in zip(checkpoints, checkpoint_indices):
-    if idx < len(regret['ucb_pi']):
-        print(f"{t_check:>10}  "
-              f"{regret['ucb_pi_tuned'][idx] / np.log(t_check):>14.1f}  "
-              f"{regret['ucb_pi'][idx] / np.log(t_check):>12.1f}  "
-              f"{regret['ucb1'][idx] / np.log(t_check):>12.1f}  "
-              f"{regret['lte'][idx] / np.log(t_check):>12.1f}  "
-              f"{regret['thompson'][idx] / np.log(t_check):>12.1f}")
-print("-" * 85)
-print()
+    delta_history = []
+    delta_sample_interval = 2000
+    segment_ids = rng.choice(N_SEGMENTS, size=T, p=demand_model.segment_weights)
+    valuation_offsets = rng.uniform(-DELTA_TRUE, DELTA_TRUE, size=T)
 
-
-# =============================================================================
-# Generate Figures
-# =============================================================================
-print("Generating figures...")
-
-# Figure 1: Cumulative Profit
-fig, ax = plt.subplots(figsize=(10, 6))
-
-colors = {'oracle': 'black', 'ucb1': 'C0', 'ucb_pi': 'C1', 'ucb_pi_tuned': 'C3',
-          'lte': 'C2', 'thompson': 'C4'}
-labels_plot = {'oracle': 'Oracle', 'ucb1': 'UCB1', 'ucb_pi': 'UCB-PI',
-               'ucb_pi_tuned': 'UCB-PI-tuned', 'lte': 'LTE (5%)', 'thompson': 'Thompson'}
-
-for name in ['oracle', 'ucb_pi_tuned', 'ucb_pi', 'ucb1', 'lte', 'thompson']:
-    lw = 2 if name == 'oracle' else 1.5
-    ls = '--' if name == 'oracle' else '-'
-    ax.plot(time_points, mean_profits[name], label=labels_plot[name], color=colors[name],
-            linewidth=lw, linestyle=ls)
-    if name != 'oracle':
-        ax.fill_between(time_points, mean_profits[name] - 2*se_profits[name],
-                        mean_profits[name] + 2*se_profits[name], alpha=0.15, color=colors[name])
-
-ax.set_xlabel('Customers $t$', fontsize=12)
-ax.set_ylabel('Cumulative Profit', fontsize=12)
-ax.set_title(f'Dynamic Pricing with Partial Identification (K={K}, S={N_SEGMENTS:,})', fontsize=14)
-ax.legend(loc='upper left', fontsize=10)
-ax.grid(True, alpha=0.3)
-ax.set_xlim(0, T)
-ax.set_ylim(0, None)
-
-plt.tight_layout()
-fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_profit.png',
-            dpi=300, bbox_inches='tight')
-print("  Saved: structural_pricing_misra_profit.png")
-
-# Figure 2: Profit Loss (Regret)
-fig, ax = plt.subplots(figsize=(10, 6))
-
-for name in ['ucb_pi_tuned', 'ucb_pi', 'ucb1', 'lte', 'thompson']:
-    ax.plot(time_points, regret[name], label=labels_plot[name], color=colors[name], linewidth=1.5)
-
-midpoint = len(time_points) // 2
-c_log = regret['ucb_pi_tuned'][midpoint] / np.log(time_points[midpoint])
-ax.plot(time_points, c_log * np.log(time_points), '--', color='gray',
-        label=r'$O(\log T)$ ref', linewidth=1, alpha=0.7)
-
-ax.set_xlabel('Customers $t$', fontsize=12)
-ax.set_ylabel('Cumulative Profit Loss vs Oracle', fontsize=12)
-ax.set_title(f'Cost of Learning (K={K} prices)', fontsize=14)
-ax.legend(loc='upper left', fontsize=10)
-ax.grid(True, alpha=0.3)
-ax.set_xlim(0, T)
-ax.set_ylim(0, None)
-
-plt.tight_layout()
-fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_regret.png',
-            dpi=300, bbox_inches='tight')
-print("  Saved: structural_pricing_misra_regret.png")
-
-# Figure 3: Arm Selection Distribution
-fig, axes = plt.subplots(1, 4, figsize=(16, 4), sharey=True)
-
-for ax, name in zip(axes, ['oracle', 'ucb_pi_tuned', 'ucb1', 'thompson']):
-    n_bins = 20
-    bin_size = K // n_bins
-    binned_arms = np.array([mean_arms[name][i*bin_size:(i+1)*bin_size].sum()
-                           for i in range(n_bins)]) / T
-    bin_centers = np.array([(i + 0.5) * bin_size for i in range(n_bins)])
-    bin_prices = PRICES[bin_centers.astype(int)]
-
-    ax.bar(range(n_bins), binned_arms, color=colors[name], alpha=0.7,
-           edgecolor='black', linewidth=0.5)
-
-    opt_bin = OPTIMAL_ARM // bin_size
-    ax.axvline(opt_bin, color='red', linestyle='--', linewidth=1.5,
-               label=f'Opt (p={OPTIMAL_PRICE:.2f})')
-
-    ax.set_xlabel('Price Bin', fontsize=11)
-    ax.set_title(labels_plot[name], fontsize=12)
-    ax.set_xticks(range(0, n_bins, 4))
-    ax.set_xticklabels([f'{bin_prices[i]:.2f}' for i in range(0, n_bins, 4)])
-    ax.legend(loc='upper right', fontsize=8)
-    ax.grid(True, alpha=0.3, axis='y')
-
-axes[0].set_ylabel('Fraction of Pulls', fontsize=11)
-
-plt.tight_layout()
-fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_arms.png',
-            dpi=300, bbox_inches='tight')
-print("  Saved: structural_pricing_misra_arms.png")
-
-# Figure 4: Dominated prices over time
-fig, ax = plt.subplots(figsize=(10, 5))
-
-# Use first seed's data for illustration
-dom_sample_interval = 5000
-n_dom_samples = len(all_results[0]['dominated_over_time']['ucb_pi'])
-dom_time_points = np.arange(K, T, dom_sample_interval)[:n_dom_samples]
-
-dom_ucb_pi = np.zeros(n_dom_samples)
-dom_ucb_pi_tuned = np.zeros(n_dom_samples)
-for r in all_results:
-    dom_ucb_pi += np.array(r['dominated_over_time']['ucb_pi'][:n_dom_samples])
-    dom_ucb_pi_tuned += np.array(r['dominated_over_time']['ucb_pi_tuned'][:n_dom_samples])
-dom_ucb_pi /= N_SEEDS
-dom_ucb_pi_tuned /= N_SEEDS
-
-ax.plot(dom_time_points, dom_ucb_pi, label='UCB-PI', color='C1', linewidth=1.5)
-ax.plot(dom_time_points, dom_ucb_pi_tuned, label='UCB-PI-tuned', color='C3', linewidth=1.5)
-ax.axhline(K - 1, color='gray', linestyle='--', alpha=0.5, label=f'Max possible ({K-1})')
-
-ax.set_xlabel('Round $t$', fontsize=12)
-ax.set_ylabel('Number of Dominated Prices', fontsize=12)
-ax.set_title('Partial Identification: Dominated Prices Over Time', fontsize=14)
-ax.legend(loc='lower right', fontsize=10)
-ax.grid(True, alpha=0.3)
-ax.set_xlim(0, T)
-ax.set_ylim(0, K)
-
-plt.tight_layout()
-fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_bounds.png',
-            dpi=300, bbox_inches='tight')
-print("  Saved: structural_pricing_misra_bounds.png")
-
-# Figure 5: Delta estimation
-fig, ax = plt.subplots(figsize=(10, 5))
-
-print("  Tracking δ estimation for seed 0...")
-rng = np.random.RandomState(0)
-demand_model = SegmentedDemandModel(N_SEGMENTS, DELTA_TRUE, seed=0)
-ucb_pi_track = UCB_PI(PRICES, N_SEGMENTS, demand_model.segment_weights)
-
-delta_history = []
-delta_sample_interval = 2000
-segment_ids = rng.choice(N_SEGMENTS, size=T, p=demand_model.segment_weights)
-valuation_offsets = rng.uniform(-DELTA_TRUE, DELTA_TRUE, size=T)
-
-for t in range(T):
-    arm = ucb_pi_track.select_arm(t)
-    v_s = demand_model.segment_valuations[segment_ids[t]]
-    v_i = v_s + valuation_offsets[t]
-    purchased = (v_i >= PRICES[arm])
-    reward = PRICES[arm] if purchased else 0.0
-    ucb_pi_track.update(arm, reward, segment_ids[t], purchased)
-
-    if t >= K and (t - K) % delta_sample_interval == 0:
-        delta_history.append(ucb_pi_track.delta_hat)
-
-delta_time_points = np.arange(K, T + 1, delta_sample_interval)
-ax.plot(delta_time_points[:len(delta_history)], delta_history, color='C1',
-        linewidth=1.5, label=r'$\hat{\delta}_t$')
-ax.axhline(DELTA_TRUE, color='red', linestyle='--', linewidth=2,
-           label=f'True $\\delta$ = {DELTA_TRUE}')
-
-ax.set_xlabel('Round $t$', fontsize=12)
-ax.set_ylabel(r'Estimated $\hat{\delta}$', fontsize=12)
-ax.set_title('Partial Identification: Heterogeneity Parameter Estimation', fontsize=14)
-ax.legend(loc='upper right', fontsize=10)
-ax.grid(True, alpha=0.3)
-ax.set_xlim(0, T)
-
-plt.tight_layout()
-fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_delta.png',
-            dpi=300, bbox_inches='tight')
-print("  Saved: structural_pricing_misra_delta.png")
-
-# =============================================================================
-# NEW VALIDATION FIGURES
-# =============================================================================
-
-# Figure 6: Regret Scaling (Log-Log) — validates O(log T) vs O(sqrt(T))
-fig, ax = plt.subplots(figsize=(10, 6))
-
-for name in ['ucb_pi_tuned', 'ucb_pi', 'ucb1', 'thompson']:
-    ax.loglog(time_points, regret[name] + 1, label=labels_plot[name],
-              color=colors[name], linewidth=1.5)
-
-# Reference lines for theoretical rates
-ax.loglog(time_points, 100 * np.log(time_points), '--', color='gray',
-          alpha=0.7, linewidth=1.5, label=r'$O(\log T)$')
-ax.loglog(time_points, 0.5 * np.sqrt(time_points), ':', color='gray',
-          alpha=0.7, linewidth=1.5, label=r'$O(\sqrt{T})$')
-
-ax.set_xlabel('Customers $t$', fontsize=12)
-ax.set_ylabel('Cumulative Regret', fontsize=12)
-ax.set_title('Regret Scaling: Log-Log Plot', fontsize=14)
-ax.legend(loc='upper left', fontsize=10)
-ax.grid(True, alpha=0.3, which='both')
-ax.set_xlim(time_points[0], time_points[-1])
-
-plt.tight_layout()
-fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_regret_scaling.png',
-            dpi=300, bbox_inches='tight')
-print("  Saved: structural_pricing_misra_regret_scaling.png")
-
-# Figure 7: Dominated Arms Over Time with Checkpoints
-fig, ax = plt.subplots(figsize=(10, 6))
-
-ax.plot(dom_time_points, dom_ucb_pi, label='UCB-PI', color='C1', linewidth=1.5)
-ax.plot(dom_time_points, dom_ucb_pi_tuned, label='UCB-PI-tuned', color='C3', linewidth=1.5)
-
-# Mark checkpoints with vertical lines and annotations
-checkpoints_dom = [10000, 50000, 100000, 200000]
-for t_check in checkpoints_dom:
-    ax.axvline(t_check, color='gray', linestyle=':', alpha=0.5, linewidth=1)
-    # Find dominated count at this checkpoint
-    idx = np.searchsorted(dom_time_points, t_check)
-    if idx < len(dom_ucb_pi_tuned):
-        ax.annotate(f'{dom_ucb_pi_tuned[idx]:.0f}',
-                    xy=(t_check, dom_ucb_pi_tuned[idx] + 3),
-                    fontsize=9, ha='center', color='C3')
-        ax.annotate(f'{dom_ucb_pi[idx]:.0f}',
-                    xy=(t_check, dom_ucb_pi[idx] - 5),
-                    fontsize=9, ha='center', color='C1')
-
-ax.set_xlabel('Round $t$', fontsize=12)
-ax.set_ylabel('Number of Dominated Prices', fontsize=12)
-ax.set_title('Partial Identification: Price Elimination Checkpoints', fontsize=14)
-ax.legend(loc='lower right', fontsize=10)
-ax.grid(True, alpha=0.3)
-ax.set_xlim(0, T)
-ax.set_ylim(0, K)
-
-plt.tight_layout()
-fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_dominated_checkpoints.png',
-            dpi=300, bbox_inches='tight')
-print("  Saved: structural_pricing_misra_dominated_checkpoints.png")
-
-# Figure 8: Price Selection Frequency (Histogram)
-fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-
-for ax, name in zip(axes.flat, ['ucb_pi_tuned', 'ucb_pi', 'ucb1', 'thompson']):
-    # Direct histogram of arm selections
-    ax.bar(PRICES, mean_arms[name] / T, width=0.008, color=colors[name], alpha=0.7)
-    ax.axvline(OPTIMAL_PRICE, color='red', linestyle='--', linewidth=2,
-               label=f'$p^*$ = {OPTIMAL_PRICE:.2f}')
-    ax.set_xlabel('Price', fontsize=11)
-    ax.set_ylabel('Selection Frequency', fontsize=11)
-    ax.set_title(labels_plot[name], fontsize=12)
-    ax.legend(loc='upper right', fontsize=9)
-    ax.set_xlim(0, 1)
-    ax.grid(True, alpha=0.3, axis='y')
-
-plt.suptitle(f'Price Selection Distribution (T={T:,})', fontsize=14, y=1.02)
-plt.tight_layout()
-fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_price_histogram.png',
-            dpi=300, bbox_inches='tight')
-print("  Saved: structural_pricing_misra_price_histogram.png")
-
-# Figure 9: Convergence Trajectory — moving average of selected prices
-# Re-use the UCB-PI tracking run for convergence data
-print("  Computing convergence trajectory...")
-
-# Track price selections during a fresh simulation run
-rng_conv = np.random.RandomState(0)
-demand_model_conv = SegmentedDemandModel(N_SEGMENTS, DELTA_TRUE, seed=0)
-segment_ids_conv = rng_conv.choice(N_SEGMENTS, size=T, p=demand_model_conv.segment_weights)
-valuation_offsets_conv = rng_conv.uniform(-DELTA_TRUE, DELTA_TRUE, size=T)
-
-# Initialize algorithms for tracking
-ucb_pi_tuned_track = UCB_PI_Tuned(PRICES, N_SEGMENTS, demand_model_conv.segment_weights)
-ucb_pi_track_conv = UCB_PI(PRICES, N_SEGMENTS, demand_model_conv.segment_weights)
-ucb1_track = UCB1(K, PRICES)
-thompson_track = ThompsonSampling(K, PRICES)
-
-track_algs = {
-    'ucb_pi_tuned': ucb_pi_tuned_track,
-    'ucb_pi': ucb_pi_track_conv,
-    'ucb1': ucb1_track,
-    'thompson': thompson_track,
-}
-
-# Subsample price selections (every 100th) to save memory
-subsample = 100
-prices_subsampled = {name: [] for name in track_algs}
-
-for t in range(T):
-    v_s = demand_model_conv.segment_valuations[segment_ids_conv[t]]
-    v_i = v_s + valuation_offsets_conv[t]
-
-    for name, alg in track_algs.items():
-        arm = alg.select_arm(t)
-        if t % subsample == 0:
-            prices_subsampled[name].append(PRICES[arm])
+    for t in range(T):
+        arm = ucb_pi_track.select_arm(t)
+        v_s = demand_model.segment_valuations[segment_ids[t]]
+        v_i = v_s + valuation_offsets[t]
         purchased = (v_i >= PRICES[arm])
         reward = PRICES[arm] if purchased else 0.0
-        alg.update(arm, reward, segment_ids_conv[t], purchased)
+        ucb_pi_track.update(arm, reward, segment_ids[t], purchased)
 
-# Compute moving average
-fig, ax = plt.subplots(figsize=(10, 6))
+        if t >= K and (t - K) % delta_sample_interval == 0:
+            delta_history.append(ucb_pi_track.delta_hat)
 
-window = 50  # 50 subsampled points = 5000 actual rounds
-conv_time_points = np.arange(0, T, subsample)
+    delta_time_points = np.arange(K, T + 1, delta_sample_interval)
 
-for name in ['ucb_pi_tuned', 'ucb_pi', 'ucb1', 'thompson']:
-    prices_array = np.array(prices_subsampled[name])
-    # Compute moving average with np.convolve
-    kernel = np.ones(window) / window
-    moving_avg = np.convolve(prices_array, kernel, mode='valid')
-    time_for_avg = conv_time_points[window-1:]
+    # =========================================================================
+    # Convergence trajectory run (seed 0)
+    # =========================================================================
+    print("  Computing convergence trajectory...")
 
-    ax.plot(time_for_avg, moving_avg, label=labels_plot[name], color=colors[name], linewidth=1.5)
+    rng_conv = np.random.RandomState(0)
+    demand_model_conv = SegmentedDemandModel(N_SEGMENTS, DELTA_TRUE, seed=0)
+    segment_ids_conv = rng_conv.choice(N_SEGMENTS, size=T, p=demand_model_conv.segment_weights)
+    valuation_offsets_conv = rng_conv.uniform(-DELTA_TRUE, DELTA_TRUE, size=T)
 
-ax.axhline(OPTIMAL_PRICE, color='red', linestyle='--', linewidth=2,
-           label=f'$p^*$ = {OPTIMAL_PRICE:.2f}')
+    # Initialize algorithms for tracking
+    ucb_pi_tuned_track = UCB_PI_Tuned(PRICES, N_SEGMENTS, demand_model_conv.segment_weights)
+    ucb_pi_track_conv = UCB_PI(PRICES, N_SEGMENTS, demand_model_conv.segment_weights)
+    ucb1_track = UCB1(K, PRICES)
+    thompson_track = ThompsonSampling(K, PRICES)
 
-ax.set_xlabel('Round $t$', fontsize=12)
-ax.set_ylabel('Moving Average of Selected Price', fontsize=12)
-ax.set_title(f'Price Convergence (window = {window * subsample:,} rounds)', fontsize=14)
-ax.legend(loc='upper right', fontsize=10)
-ax.grid(True, alpha=0.3)
-ax.set_xlim(0, T)
-ax.set_ylim(0.2, 0.7)
+    track_algs = {
+        'ucb_pi_tuned': ucb_pi_tuned_track,
+        'ucb_pi': ucb_pi_track_conv,
+        'ucb1': ucb1_track,
+        'thompson': thompson_track,
+    }
 
-plt.tight_layout()
-fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_convergence.png',
-            dpi=300, bbox_inches='tight')
-print("  Saved: structural_pricing_misra_convergence.png")
+    # Subsample price selections (every 100th) to save memory
+    subsample = 100
+    prices_subsampled = {name: [] for name in track_algs}
 
-plt.close('all')
+    for t in range(T):
+        v_s = demand_model_conv.segment_valuations[segment_ids_conv[t]]
+        v_i = v_s + valuation_offsets_conv[t]
+
+        for name, alg in track_algs.items():
+            arm = alg.select_arm(t)
+            if t % subsample == 0:
+                prices_subsampled[name].append(PRICES[arm])
+            purchased = (v_i >= PRICES[arm])
+            reward = PRICES[arm] if purchased else 0.0
+            alg.update(arm, reward, segment_ids_conv[t], purchased)
+
+    # Convert lists to arrays for caching
+    prices_subsampled_arrays = {name: np.array(vals) for name, vals in prices_subsampled.items()}
+
+    # =========================================================================
+    # Package all data
+    # =========================================================================
+    data = {
+        'time_points': time_points,
+        'alg_names': alg_names,
+        'mean_profits': mean_profits,
+        'se_profits': se_profits,
+        'final_profits': final_profits,
+        'final_profits_se': final_profits_se,
+        'mean_arms': mean_arms,
+        'frac_optimal': frac_optimal,
+        'regret': regret,
+        'final_best_correct': final_best_correct,
+        'delta_estimates_mean': delta_estimates_mean,
+        'delta_estimates_se': delta_estimates_se,
+        'dominated_final_mean': dominated_final_mean,
+        'ex_post_ratios': ex_post_ratios,
+        'dom_time_points': dom_time_points,
+        'dom_ucb_pi': dom_ucb_pi,
+        'dom_ucb_pi_tuned': dom_ucb_pi_tuned,
+        'delta_history': delta_history,
+        'delta_time_points': delta_time_points,
+        'prices_subsampled': prices_subsampled_arrays,
+        'subsample': subsample,
+    }
+
+    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    return data
 
 
-# =============================================================================
-# Generate LaTeX Table
-# =============================================================================
-latex_table = r"""\begin{tabular}{lcccccc}
+def generate_outputs(data):
+    """Generate all printed output, figures, and LaTeX tables from cached data."""
+    # Unpack data
+    time_points = data['time_points']
+    alg_names = data['alg_names']
+    mean_profits = data['mean_profits']
+    se_profits = data['se_profits']
+    final_profits = data['final_profits']
+    final_profits_se = data['final_profits_se']
+    mean_arms = data['mean_arms']
+    frac_optimal = data['frac_optimal']
+    regret = data['regret']
+    final_best_correct = data['final_best_correct']
+    delta_estimates_mean = data['delta_estimates_mean']
+    delta_estimates_se = data['delta_estimates_se']
+    dominated_final_mean = data['dominated_final_mean']
+    ex_post_ratios = data['ex_post_ratios']
+    dom_time_points = data['dom_time_points']
+    dom_ucb_pi = data['dom_ucb_pi']
+    dom_ucb_pi_tuned = data['dom_ucb_pi_tuned']
+    delta_history = data['delta_history']
+    delta_time_points = data['delta_time_points']
+    prices_subsampled = data['prices_subsampled']
+    subsample = data['subsample']
+
+    sample_interval = 1000
+
+    # =========================================================================
+    # Print Results
+    # =========================================================================
+    print()
+    print("=" * 70)
+    print("RESULTS: ALGORITHM COMPARISON")
+    print("=" * 70)
+    print()
+
+    # Ex-post profit ratio table (paper's primary metric)
+    print("Ex Post Profit Ratio (Algorithm / Oracle):")
+    print("-" * 85)
+    print(f"{'Algorithm':<16}  {'Mean':>10}  {'Std Dev':>10}  {'Min':>10}  {'Max':>10}  {'Range':>12}")
+    print("-" * 85)
+    for name, label in [('oracle', 'Oracle'), ('ucb_pi_tuned', 'UCB-PI-tuned'),
+                        ('ucb_pi', 'UCB-PI'), ('ucb1', 'UCB1'),
+                        ('lte', 'LTE (5%)'), ('thompson', 'Thompson')]:
+        r = ex_post_ratios[name]
+        range_str = f"[{100*r['min']:.0f}-{100*r['max']:.0f}%]"
+        print(f"{label:<16}  {100*r['mean']:>10.1f}%  {100*r['std']:>10.1f}%  "
+              f"{100*r['min']:>10.1f}%  {100*r['max']:>10.1f}%  {range_str:>12}")
+    print("-" * 85)
+    print()
+
+    # Cumulative profit table
+    print(f"Cumulative Profit at T = {T:,}:")
+    print("-" * 85)
+    print(f"{'Algorithm':<16}  {'Profit':>14}  {'Std Err':>10}  {'% of Oracle':>12}  {'Profit Lost':>14}")
+    print("-" * 85)
+    for name, label in [('oracle', 'Oracle'), ('ucb_pi_tuned', 'UCB-PI-tuned'),
+                        ('ucb_pi', 'UCB-PI'), ('ucb1', 'UCB1'),
+                        ('lte', 'LTE (5%)'), ('thompson', 'Thompson')]:
+        profit = final_profits[name]
+        se = final_profits_se[name]
+        pct = 100 * profit / final_profits['oracle']
+        lost = final_profits['oracle'] - profit
+        print(f"{label:<16}  {profit:>14,.0f}  {se:>10,.0f}  {pct:>12.2f}%  {lost:>14,.0f}")
+    print("-" * 85)
+    print()
+
+    # Fraction at optimal
+    print("Fraction of Time at Optimal Price:")
+    print("-" * 65)
+    print(f"{'Algorithm':<16}  {'Frac Optimal':>14}  {'Final Best = Opt':>18}")
+    print("-" * 65)
+    for name, label in [('oracle', 'Oracle'), ('ucb_pi_tuned', 'UCB-PI-tuned'),
+                        ('ucb_pi', 'UCB-PI'), ('ucb1', 'UCB1'),
+                        ('lte', 'LTE (5%)'), ('thompson', 'Thompson')]:
+        frac = frac_optimal[name]
+        if name in final_best_correct:
+            correct = f"{final_best_correct[name]}/{N_SEEDS}"
+        else:
+            correct = "N/A"
+        print(f"{label:<16}  {frac:>14.4f}  {correct:>18}")
+    print("-" * 65)
+    print()
+
+    # UCB-PI diagnostics
+    print("UCB-PI Partial Identification Diagnostics:")
+    print("-" * 65)
+    print(f"True δ (unknown to algorithm):       {DELTA_TRUE:.3f}")
+    print(f"UCB-PI estimated δ:                  {delta_estimates_mean['ucb_pi']:.3f} ± "
+          f"{delta_estimates_se['ucb_pi']:.3f}")
+    print(f"UCB-PI-tuned estimated δ:            {delta_estimates_mean['ucb_pi_tuned']:.3f} ± "
+          f"{delta_estimates_se['ucb_pi_tuned']:.3f}")
+    print()
+    print(f"Avg dominated prices at T (UCB-PI):       {dominated_final_mean['ucb_pi']:.1f} / {K}")
+    print(f"Avg dominated prices at T (UCB-PI-tuned): {dominated_final_mean['ucb_pi_tuned']:.1f} / {K}")
+    print("-" * 65)
+    print()
+
+    # Regret scaling
+    print("Profit Loss Scaling Analysis (Loss / log(t)):")
+    print("-" * 85)
+    checkpoints = [10000, 25000, 50000, 100000, 200000]
+    checkpoint_indices = [(c // sample_interval) - 1 for c in checkpoints]
+    print(f"{'t':>10}  {'UCB-PI-tuned':>14}  {'UCB-PI':>12}  {'UCB1':>12}  {'LTE':>12}  {'Thompson':>12}")
+    print("-" * 85)
+    for t_check, idx in zip(checkpoints, checkpoint_indices):
+        if idx < len(regret['ucb_pi']):
+            print(f"{t_check:>10}  "
+                  f"{regret['ucb_pi_tuned'][idx] / np.log(t_check):>14.1f}  "
+                  f"{regret['ucb_pi'][idx] / np.log(t_check):>12.1f}  "
+                  f"{regret['ucb1'][idx] / np.log(t_check):>12.1f}  "
+                  f"{regret['lte'][idx] / np.log(t_check):>12.1f}  "
+                  f"{regret['thompson'][idx] / np.log(t_check):>12.1f}")
+    print("-" * 85)
+    print()
+
+    # =========================================================================
+    # Generate Figures
+    # =========================================================================
+    print("Generating figures...")
+
+    colors = {'oracle': COLORS['black'], 'ucb1': COLORS['blue'], 'ucb_pi': COLORS['orange'],
+              'ucb_pi_tuned': COLORS['red'], 'lte': COLORS['green'], 'thompson': COLORS['purple']}
+    labels_plot = {'oracle': 'Oracle', 'ucb1': 'UCB1', 'ucb_pi': 'UCB-PI',
+                   'ucb_pi_tuned': 'UCB-PI-tuned', 'lte': 'LTE (5%)', 'thompson': 'Thompson'}
+
+    # Figure 1: Cumulative Profit
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    for name in ['oracle', 'ucb_pi_tuned', 'ucb_pi', 'ucb1', 'lte', 'thompson']:
+        lw = 2 if name == 'oracle' else 1.5
+        ls = '--' if name == 'oracle' else '-'
+        ax.plot(time_points, mean_profits[name], label=labels_plot[name], color=colors[name],
+                linewidth=lw, linestyle=ls)
+        if name != 'oracle':
+            ax.fill_between(time_points, mean_profits[name] - 2*se_profits[name],
+                            mean_profits[name] + 2*se_profits[name], alpha=0.15, color=colors[name])
+
+    ax.set_xlabel('Customers $t$', fontsize=12)
+    ax.set_ylabel('Cumulative Profit', fontsize=12)
+    ax.set_title(f'Dynamic Pricing with Partial Identification (K={K}, S={N_SEGMENTS:,})', fontsize=14)
+    ax.legend(loc='upper left', fontsize=10)
+    ax.grid(True, alpha=0.3)
+    ax.set_xlim(0, T)
+    ax.set_ylim(0, None)
+
+    plt.tight_layout()
+    fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_profit.png',
+                dpi=300, bbox_inches='tight')
+    print("  Saved: structural_pricing_misra_profit.png")
+
+    # Figure 2: Profit Loss (Regret)
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    for name in ['ucb_pi_tuned', 'ucb_pi', 'ucb1', 'lte', 'thompson']:
+        ax.plot(time_points, regret[name], label=labels_plot[name], color=colors[name], linewidth=1.5)
+
+    midpoint = len(time_points) // 2
+    c_log = regret['ucb_pi_tuned'][midpoint] / np.log(time_points[midpoint])
+    ax.plot(time_points, c_log * np.log(time_points), '--', color=COLORS['gray'],
+            label=r'$O(\log T)$ ref', linewidth=1, alpha=0.7)
+
+    ax.set_xlabel('Customers $t$', fontsize=12)
+    ax.set_ylabel('Cumulative Profit Loss vs Oracle', fontsize=12)
+    ax.set_title(f'Cost of Learning (K={K} prices)', fontsize=14)
+    ax.legend(loc='upper left', fontsize=10)
+    ax.grid(True, alpha=0.3)
+    ax.set_xlim(0, T)
+    ax.set_ylim(0, None)
+
+    plt.tight_layout()
+    fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_regret.png',
+                dpi=300, bbox_inches='tight')
+    print("  Saved: structural_pricing_misra_regret.png")
+
+    # Figure 3: Arm Selection Distribution
+    fig, axes = plt.subplots(1, 4, figsize=(16, 4), sharey=True)
+
+    for ax, name in zip(axes, ['oracle', 'ucb_pi_tuned', 'ucb1', 'thompson']):
+        n_bins = 20
+        bin_size = K // n_bins
+        binned_arms = np.array([mean_arms[name][i*bin_size:(i+1)*bin_size].sum()
+                               for i in range(n_bins)]) / T
+        bin_centers = np.array([(i + 0.5) * bin_size for i in range(n_bins)])
+        bin_prices = PRICES[bin_centers.astype(int)]
+
+        ax.bar(range(n_bins), binned_arms, color=colors[name], alpha=0.7,
+               edgecolor=COLORS['black'], linewidth=0.5)
+
+        opt_bin = OPTIMAL_ARM // bin_size
+        ax.axvline(opt_bin, **BENCH_STYLE,
+                   label=f'Opt (p={OPTIMAL_PRICE:.2f})')
+
+        ax.set_xlabel('Price Bin', fontsize=11)
+        ax.set_title(labels_plot[name], fontsize=12)
+        ax.set_xticks(range(0, n_bins, 4))
+        ax.set_xticklabels([f'{bin_prices[i]:.2f}' for i in range(0, n_bins, 4)])
+        ax.legend(loc='upper right', fontsize=8)
+        ax.grid(True, alpha=0.3, axis='y')
+
+    axes[0].set_ylabel('Fraction of Pulls', fontsize=11)
+
+    plt.tight_layout()
+    fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_arms.png',
+                dpi=300, bbox_inches='tight')
+    print("  Saved: structural_pricing_misra_arms.png")
+
+    # Figure 4: Dominated prices over time
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    n_dom_samples = len(dom_ucb_pi)
+
+    ax.plot(dom_time_points, dom_ucb_pi, label='UCB-PI', color=colors['ucb_pi'], linewidth=1.5)
+    ax.plot(dom_time_points, dom_ucb_pi_tuned, label='UCB-PI-tuned', color=colors['ucb_pi_tuned'], linewidth=1.5)
+    ax.axhline(K - 1, color=COLORS['gray'], linestyle='--', alpha=0.5, label=f'Max possible ({K-1})')
+
+    ax.set_xlabel('Round $t$', fontsize=12)
+    ax.set_ylabel('Number of Dominated Prices', fontsize=12)
+    ax.set_title('Partial Identification: Dominated Prices Over Time', fontsize=14)
+    ax.legend(loc='lower right', fontsize=10)
+    ax.grid(True, alpha=0.3)
+    ax.set_xlim(0, T)
+    ax.set_ylim(0, K)
+
+    plt.tight_layout()
+    fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_bounds.png',
+                dpi=300, bbox_inches='tight')
+    print("  Saved: structural_pricing_misra_bounds.png")
+
+    # Figure 5: Delta estimation
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    ax.plot(delta_time_points[:len(delta_history)], delta_history, color=colors['ucb_pi'],
+            linewidth=1.5, label=r'$\hat{\delta}_t$')
+    ax.axhline(DELTA_TRUE, **BENCH_STYLE,
+               label=f'True $\\delta$ = {DELTA_TRUE}')
+
+    ax.set_xlabel('Round $t$', fontsize=12)
+    ax.set_ylabel(r'Estimated $\hat{\delta}$', fontsize=12)
+    ax.set_title('Partial Identification: Heterogeneity Parameter Estimation', fontsize=14)
+    ax.legend(loc='upper right', fontsize=10)
+    ax.grid(True, alpha=0.3)
+    ax.set_xlim(0, T)
+
+    plt.tight_layout()
+    fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_delta.png',
+                dpi=300, bbox_inches='tight')
+    print("  Saved: structural_pricing_misra_delta.png")
+
+    # =========================================================================
+    # NEW VALIDATION FIGURES
+    # =========================================================================
+
+    # Figure 6: Regret Scaling (Log-Log) — validates O(log T) vs O(sqrt(T))
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    for name in ['ucb_pi_tuned', 'ucb_pi', 'ucb1', 'thompson']:
+        ax.loglog(time_points, regret[name] + 1, label=labels_plot[name],
+                  color=colors[name], linewidth=1.5)
+
+    # Reference lines for theoretical rates
+    ax.loglog(time_points, 100 * np.log(time_points), '--', color=COLORS['gray'],
+              alpha=0.7, linewidth=1.5, label=r'$O(\log T)$')
+    ax.loglog(time_points, 0.5 * np.sqrt(time_points), ':', color=COLORS['gray'],
+              alpha=0.7, linewidth=1.5, label=r'$O(\sqrt{T})$')
+
+    ax.set_xlabel('Customers $t$', fontsize=12)
+    ax.set_ylabel('Cumulative Regret', fontsize=12)
+    ax.set_title('Regret Scaling: Log-Log Plot', fontsize=14)
+    ax.legend(loc='upper left', fontsize=10)
+    ax.grid(True, alpha=0.3, which='both')
+    ax.set_xlim(time_points[0], time_points[-1])
+
+    plt.tight_layout()
+    fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_regret_scaling.png',
+                dpi=300, bbox_inches='tight')
+    print("  Saved: structural_pricing_misra_regret_scaling.png")
+
+    # Figure 7: Dominated Arms Over Time with Checkpoints
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    ax.plot(dom_time_points, dom_ucb_pi, label='UCB-PI', color=colors['ucb_pi'], linewidth=1.5)
+    ax.plot(dom_time_points, dom_ucb_pi_tuned, label='UCB-PI-tuned', color=colors['ucb_pi_tuned'], linewidth=1.5)
+
+    # Mark checkpoints with vertical lines and annotations
+    checkpoints_dom = [10000, 50000, 100000, 200000]
+    for t_check in checkpoints_dom:
+        ax.axvline(t_check, color=COLORS['gray'], linestyle=':', alpha=0.5, linewidth=1)
+        # Find dominated count at this checkpoint
+        idx = np.searchsorted(dom_time_points, t_check)
+        if idx < len(dom_ucb_pi_tuned):
+            ax.annotate(f'{dom_ucb_pi_tuned[idx]:.0f}',
+                        xy=(t_check, dom_ucb_pi_tuned[idx] + 3),
+                        fontsize=9, ha='center', color=colors['ucb_pi_tuned'])
+            ax.annotate(f'{dom_ucb_pi[idx]:.0f}',
+                        xy=(t_check, dom_ucb_pi[idx] - 5),
+                        fontsize=9, ha='center', color=colors['ucb_pi'])
+
+    ax.set_xlabel('Round $t$', fontsize=12)
+    ax.set_ylabel('Number of Dominated Prices', fontsize=12)
+    ax.set_title('Partial Identification: Price Elimination Checkpoints', fontsize=14)
+    ax.legend(loc='lower right', fontsize=10)
+    ax.grid(True, alpha=0.3)
+    ax.set_xlim(0, T)
+    ax.set_ylim(0, K)
+
+    plt.tight_layout()
+    fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_dominated_checkpoints.png',
+                dpi=300, bbox_inches='tight')
+    print("  Saved: structural_pricing_misra_dominated_checkpoints.png")
+
+    # Figure 8: Price Selection Frequency (Histogram)
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+    for ax, name in zip(axes.flat, ['ucb_pi_tuned', 'ucb_pi', 'ucb1', 'thompson']):
+        # Direct histogram of arm selections
+        ax.bar(PRICES, mean_arms[name] / T, width=0.008, color=colors[name], alpha=0.7)
+        ax.axvline(OPTIMAL_PRICE, **BENCH_STYLE,
+                   label=f'$p^*$ = {OPTIMAL_PRICE:.2f}')
+        ax.set_xlabel('Price', fontsize=11)
+        ax.set_ylabel('Selection Frequency', fontsize=11)
+        ax.set_title(labels_plot[name], fontsize=12)
+        ax.legend(loc='upper right', fontsize=9)
+        ax.set_xlim(0, 1)
+        ax.grid(True, alpha=0.3, axis='y')
+
+    plt.suptitle(f'Price Selection Distribution (T={T:,})', fontsize=14, y=1.02)
+    plt.tight_layout()
+    fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_price_histogram.png',
+                dpi=300, bbox_inches='tight')
+    print("  Saved: structural_pricing_misra_price_histogram.png")
+
+    # Figure 9: Convergence Trajectory — moving average of selected prices
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    window = 50  # 50 subsampled points = 5000 actual rounds
+    conv_time_points = np.arange(0, T, subsample)
+
+    for name in ['ucb_pi_tuned', 'ucb_pi', 'ucb1', 'thompson']:
+        prices_array = np.array(prices_subsampled[name])
+        # Compute moving average with np.convolve
+        kernel = np.ones(window) / window
+        moving_avg = np.convolve(prices_array, kernel, mode='valid')
+        time_for_avg = conv_time_points[window-1:]
+
+        ax.plot(time_for_avg, moving_avg, label=labels_plot[name], color=colors[name], linewidth=1.5)
+
+    ax.axhline(OPTIMAL_PRICE, **BENCH_STYLE,
+               label=f'$p^*$ = {OPTIMAL_PRICE:.2f}')
+
+    ax.set_xlabel('Round $t$', fontsize=12)
+    ax.set_ylabel('Moving Average of Selected Price', fontsize=12)
+    ax.set_title(f'Price Convergence (window = {window * subsample:,} rounds)', fontsize=14)
+    ax.legend(loc='upper right', fontsize=10)
+    ax.grid(True, alpha=0.3)
+    ax.set_xlim(0, T)
+    ax.set_ylim(0.2, 0.7)
+
+    plt.tight_layout()
+    fig.savefig('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_convergence.png',
+                dpi=300, bbox_inches='tight')
+    print("  Saved: structural_pricing_misra_convergence.png")
+
+    plt.close('all')
+
+    # =========================================================================
+    # Generate LaTeX Table
+    # =========================================================================
+    latex_table = r"""\begin{tabular}{lcccccc}
 \toprule
 Algorithm & Ex Post \%% & Range & Profit & Frac.\ Opt & Dominated \\
 \midrule
@@ -1023,57 +1118,70 @@ Thompson & %.1f\%% & [%.0f-%.0f\%%] & %.0f $\pm$ %.0f & %.3f & -- \\
 \bottomrule
 \end{tabular}
 """ % (
-    final_profits['oracle'], frac_optimal['oracle'],
-    100*ex_post_ratios['ucb_pi_tuned']['mean'],
-    100*ex_post_ratios['ucb_pi_tuned']['min'], 100*ex_post_ratios['ucb_pi_tuned']['max'],
-    final_profits['ucb_pi_tuned'], 2*final_profits_se['ucb_pi_tuned'],
-    frac_optimal['ucb_pi_tuned'], dominated_final_mean['ucb_pi_tuned'],
-    100*ex_post_ratios['ucb_pi']['mean'],
-    100*ex_post_ratios['ucb_pi']['min'], 100*ex_post_ratios['ucb_pi']['max'],
-    final_profits['ucb_pi'], 2*final_profits_se['ucb_pi'],
-    frac_optimal['ucb_pi'], dominated_final_mean['ucb_pi'],
-    100*ex_post_ratios['ucb1']['mean'],
-    100*ex_post_ratios['ucb1']['min'], 100*ex_post_ratios['ucb1']['max'],
-    final_profits['ucb1'], 2*final_profits_se['ucb1'],
-    frac_optimal['ucb1'],
-    100*ex_post_ratios['lte']['mean'],
-    100*ex_post_ratios['lte']['min'], 100*ex_post_ratios['lte']['max'],
-    final_profits['lte'], 2*final_profits_se['lte'],
-    frac_optimal['lte'],
-    100*ex_post_ratios['thompson']['mean'],
-    100*ex_post_ratios['thompson']['min'], 100*ex_post_ratios['thompson']['max'],
-    final_profits['thompson'], 2*final_profits_se['thompson'],
-    frac_optimal['thompson'],
-)
+        final_profits['oracle'], frac_optimal['oracle'],
+        100*ex_post_ratios['ucb_pi_tuned']['mean'],
+        100*ex_post_ratios['ucb_pi_tuned']['min'], 100*ex_post_ratios['ucb_pi_tuned']['max'],
+        final_profits['ucb_pi_tuned'], 2*final_profits_se['ucb_pi_tuned'],
+        frac_optimal['ucb_pi_tuned'], dominated_final_mean['ucb_pi_tuned'],
+        100*ex_post_ratios['ucb_pi']['mean'],
+        100*ex_post_ratios['ucb_pi']['min'], 100*ex_post_ratios['ucb_pi']['max'],
+        final_profits['ucb_pi'], 2*final_profits_se['ucb_pi'],
+        frac_optimal['ucb_pi'], dominated_final_mean['ucb_pi'],
+        100*ex_post_ratios['ucb1']['mean'],
+        100*ex_post_ratios['ucb1']['min'], 100*ex_post_ratios['ucb1']['max'],
+        final_profits['ucb1'], 2*final_profits_se['ucb1'],
+        frac_optimal['ucb1'],
+        100*ex_post_ratios['lte']['mean'],
+        100*ex_post_ratios['lte']['min'], 100*ex_post_ratios['lte']['max'],
+        final_profits['lte'], 2*final_profits_se['lte'],
+        frac_optimal['lte'],
+        100*ex_post_ratios['thompson']['mean'],
+        100*ex_post_ratios['thompson']['min'], 100*ex_post_ratios['thompson']['max'],
+        final_profits['thompson'], 2*final_profits_se['thompson'],
+        frac_optimal['thompson'],
+    )
 
-with open('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_results.tex', 'w') as f:
-    f.write(latex_table)
+    with open('/Users/pranjal/Code/rl/ch07_bandits/sims/structural_pricing_misra_results.tex', 'w') as f:
+        f.write(latex_table)
 
-print("  Saved: structural_pricing_misra_results.tex")
-print()
+    print("  Saved: structural_pricing_misra_results.tex")
+    print()
 
-print("=" * 70)
-print("SIMULATION COMPLETE")
-print("=" * 70)
-print()
-print("Output files:")
-print("  - structural_pricing_misra_profit.png")
-print("  - structural_pricing_misra_regret.png")
-print("  - structural_pricing_misra_arms.png")
-print("  - structural_pricing_misra_bounds.png")
-print("  - structural_pricing_misra_delta.png")
-print("  - structural_pricing_misra_regret_scaling.png")
-print("  - structural_pricing_misra_dominated_checkpoints.png")
-print("  - structural_pricing_misra_price_histogram.png")
-print("  - structural_pricing_misra_convergence.png")
-print("  - structural_pricing_misra_results.tex")
-print()
-print("Summary:")
-print(f"  UCB-PI-tuned achieves {100*ex_post_ratios['ucb_pi_tuned']['mean']:.1f}% of oracle "
-      f"(range {100*ex_post_ratios['ucb_pi_tuned']['min']:.0f}-{100*ex_post_ratios['ucb_pi_tuned']['max']:.0f}%)")
-print(f"  UCB-PI achieves {100*ex_post_ratios['ucb_pi']['mean']:.1f}% of oracle "
-      f"(range {100*ex_post_ratios['ucb_pi']['min']:.0f}-{100*ex_post_ratios['ucb_pi']['max']:.0f}%)")
-print(f"  UCB1 achieves {100*ex_post_ratios['ucb1']['mean']:.1f}% of oracle "
-      f"(range {100*ex_post_ratios['ucb1']['min']:.0f}-{100*ex_post_ratios['ucb1']['max']:.0f}%)")
-print(f"  δ estimation: true={DELTA_TRUE:.2f}, UCB-PI={delta_estimates_mean['ucb_pi']:.3f}")
-print(f"  Dominated prices at T: {dominated_final_mean['ucb_pi']:.0f}/{K}")
+    print("=" * 70)
+    print("SIMULATION COMPLETE")
+    print("=" * 70)
+    print()
+    print("Output files:")
+    print("  - structural_pricing_misra_profit.png")
+    print("  - structural_pricing_misra_regret.png")
+    print("  - structural_pricing_misra_arms.png")
+    print("  - structural_pricing_misra_bounds.png")
+    print("  - structural_pricing_misra_delta.png")
+    print("  - structural_pricing_misra_regret_scaling.png")
+    print("  - structural_pricing_misra_dominated_checkpoints.png")
+    print("  - structural_pricing_misra_price_histogram.png")
+    print("  - structural_pricing_misra_convergence.png")
+    print("  - structural_pricing_misra_results.tex")
+    print()
+    print("Summary:")
+    print(f"  UCB-PI-tuned achieves {100*ex_post_ratios['ucb_pi_tuned']['mean']:.1f}% of oracle "
+          f"(range {100*ex_post_ratios['ucb_pi_tuned']['min']:.0f}-{100*ex_post_ratios['ucb_pi_tuned']['max']:.0f}%)")
+    print(f"  UCB-PI achieves {100*ex_post_ratios['ucb_pi']['mean']:.1f}% of oracle "
+          f"(range {100*ex_post_ratios['ucb_pi']['min']:.0f}-{100*ex_post_ratios['ucb_pi']['max']:.0f}%)")
+    print(f"  UCB1 achieves {100*ex_post_ratios['ucb1']['mean']:.1f}% of oracle "
+          f"(range {100*ex_post_ratios['ucb1']['min']:.0f}-{100*ex_post_ratios['ucb1']['max']:.0f}%)")
+    print(f"  δ estimation: true={DELTA_TRUE:.2f}, UCB-PI={delta_estimates_mean['ucb_pi']:.3f}")
+    print(f"  Dominated prices at T: {dominated_final_mean['ucb_pi']:.0f}/{K}")
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    add_cache_args(parser)
+    args = parser.parse_args()
+    if args.plots_only:
+        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+        assert data is not None, "No cache found. Run without --plots-only first."
+    else:
+        data = compute_data()
+    if not args.data_only:
+        generate_outputs(data)

@@ -1,0 +1,42 @@
+Brock-Mirman Optimal Growth: VI vs PI vs LP
+Parameters: α=0.36, β=0.96, z∈[0.9, 1.1]
+Regimes: [1, 2, 3]
+
+============================================================
+Regime 1: Standard contraction (500 grid × 2 states)
+============================================================
+  Loaded from cache.
+
+============================================================
+Regime 2: LP dual / Manne (20 grid × 2 states)
+============================================================
+  States: 40, Actions: 20, SA pairs: 800
+  VI baseline: 0.005s
+  LP primal: 0.015s
+  ||V_LP - V_VI||_inf = 2.32e-09
+  LP policy matches VI: 100.0%
+  Occupation measures: min=0.0250, max=7.2938, sum=25.0000
+
+============================================================
+Regime 3: PI convergence rate (20 grid × 2 states)
+============================================================
+  VI: 567 iterations
+  PI: 7 iterations
+  VI per-iteration cost: O(40×20) = 800
+  PI per-iteration cost: O(40³+40×20) = 64800
+  VI total operations: 453,600
+  PI total operations: 453,600
+  Ratio (VI/PI): 1.0x
+  Grid 10: VI 567 iters (0.003s), PI 7 iters (0.000s)
+  Grid 20: VI 567 iters (0.005s), PI 7 iters (0.000s)
+  Grid 50: VI 567 iters (0.038s), PI 9 iters (0.001s)
+  Grid 100: VI 567 iters (0.443s), PI 9 iters (0.010s)
+  Grid 200: VI 567 iters (2.152s), PI 10 iters (0.047s)
+
+Saved: /Users/pranjal/Code/rl/ch03_theory/sims/brock_mirman_convergence.png
+
+Saved: /Users/pranjal/Code/rl/ch03_theory/sims/brock_mirman_convergence.pdf
+Saved: /Users/pranjal/Code/rl/ch03_theory/sims/brock_mirman_lp_dual.png
+Saved: /Users/pranjal/Code/rl/ch03_theory/sims/brock_mirman_results.tex
+
+Done.

@@ -1,0 +1,220 @@
+======================================================================
+Bus Engine DP vs DQN: Two Experiments
+======================================================================
+
+--- Experiment 1: Single Engine ---
+Starting DP Value Iteration...
+DP Converged after 180 iterations.
+DP Solving Time: 0.05 seconds
+
+--- DP Results ---
+DP Optimal Value Function (Cost-to-go):
+[ 9975.52929119 10395.3598634  10833.34906242 11282.54877074
+ 11735.65491719 12184.97974586 12622.43247962 13039.48855338
+ 13427.19035055 13776.08783462 14076.22727146 14317.12289478
+ 14487.80983175 14576.69868109 14576.69868109 14576.69868109
+ 14576.69868109 14576.69868109 14576.69868109 14576.69868109
+ 14576.69868109]
+DP Optimal Policy (0=KEEP, 1=REPLACE):
+[0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1]
+DP Replacement Threshold: ~65000 km
+Using device: cpu
+
+Starting DQN Training...
+Episode 50/1000	 Avg Reward: -244781.88	 Avg Loss: 668.1295	 Epsilon: 0.050
+Episode 100/1000	 Avg Reward: -146804.27	 Avg Loss: 206.6393	 Epsilon: 0.050
+Episode 150/1000	 Avg Reward: -134177.02	 Avg Loss: 131.6832	 Epsilon: 0.050
+Episode 200/1000	 Avg Reward: -138144.92	 Avg Loss: 110.7327	 Epsilon: 0.050
+Episode 250/1000	 Avg Reward: -144420.12	 Avg Loss: 94.1330	 Epsilon: 0.050
+Episode 300/1000	 Avg Reward: -150086.38	 Avg Loss: 99.7874	 Epsilon: 0.050
+Episode 350/1000	 Avg Reward: -151044.12	 Avg Loss: 75.9109	 Epsilon: 0.050
+Episode 400/1000	 Avg Reward: -150143.20	 Avg Loss: 78.4440	 Epsilon: 0.050
+Episode 450/1000	 Avg Reward: -149910.92	 Avg Loss: 76.4074	 Epsilon: 0.050
+Episode 500/1000	 Avg Reward: -150784.30	 Avg Loss: 75.7146	 Epsilon: 0.050
+Episode 550/1000	 Avg Reward: -151795.80	 Avg Loss: 74.6534	 Epsilon: 0.050
+Episode 600/1000	 Avg Reward: -149930.70	 Avg Loss: 75.1295	 Epsilon: 0.050
+Episode 650/1000	 Avg Reward: -150253.40	 Avg Loss: 77.4730	 Epsilon: 0.050
+Episode 700/1000	 Avg Reward: -151623.48	 Avg Loss: 74.6695	 Epsilon: 0.050
+Episode 750/1000	 Avg Reward: -153057.48	 Avg Loss: 78.2867	 Epsilon: 0.050
+Episode 800/1000	 Avg Reward: -151186.35	 Avg Loss: 76.0758	 Epsilon: 0.050
+Episode 850/1000	 Avg Reward: -151207.73	 Avg Loss: 74.5792	 Epsilon: 0.050
+Episode 900/1000	 Avg Reward: -151442.60	 Avg Loss: 79.4263	 Epsilon: 0.050
+Episode 950/1000	 Avg Reward: -150742.17	 Avg Loss: 76.9891	 Epsilon: 0.050
+Episode 1000/1000	 Avg Reward: -151621.40	 Avg Loss: 76.4266	 Epsilon: 0.050
+
+DQN Training finished.
+DQN Training Time: 240.44 seconds
+
+--- DQN Results ---
+DQN Learned Policy (0=KEEP, 1=REPLACE):
+[0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1]
+DQN Approx Value Function (Cost-to-go):
+[12005.17578125 12532.71582031 13082.79980469 13651.11816406
+ 14230.85839844 14810.953125   15391.04882812 15971.14453125
+ 16512.72460938 16513.4453125  16514.16992188 16514.89257812
+ 16515.61523438 16516.33984375 16517.06445312 16517.78710938
+ 16518.5078125  16519.23242188 16519.95507812 16653.421875
+ 17212.31835938]
+DQN Replacement Threshold: ~40000 km
+
+--- Comparison ---
+Number of states with different policies: 5 out of 21
+DP Threshold: ~65000 km
+DQN Threshold: ~40000 km
+
+--- Experiment 2: Multi-Engine Scaling ---
+Using device: cpu
+
+===== Running for N = 1 =====
+DP Initialized: N=1, States=6, Actions=2
+Starting DP Value Iteration...
+DP Converged after 226 iterations.
+DP Solving Time: 0.01 seconds
+Extracting DP Policy...
+
+--- Starting DQN Training ---
+  DQN Episode 50/500	Avg Reward: -125.04	Avg Bellman Res: 0.0185	Epsilon: 0.778
+  DQN Episode 100/500	Avg Reward: -106.38	Avg Bellman Res: 0.0141	Epsilon: 0.606
+  DQN Episode 150/500	Avg Reward: -91.46	Avg Bellman Res: 0.0107	Epsilon: 0.471
+  DQN Episode 200/500	Avg Reward: -82.22	Avg Bellman Res: 0.0087	Epsilon: 0.367
+  DQN Episode 250/500	Avg Reward: -76.94	Avg Bellman Res: 0.0073	Epsilon: 0.286
+  DQN Episode 300/500	Avg Reward: -69.16	Avg Bellman Res: 0.0051	Epsilon: 0.222
+  DQN Episode 350/500	Avg Reward: -63.00	Avg Bellman Res: 0.0046	Epsilon: 0.173
+  DQN Episode 400/500	Avg Reward: -60.66	Avg Bellman Res: 0.0037	Epsilon: 0.135
+  DQN Episode 450/500	Avg Reward: -57.44	Avg Bellman Res: 0.0032	Epsilon: 0.105
+  DQN Episode 500/500	Avg Reward: -55.90	Avg Bellman Res: 0.0033	Epsilon: 0.082
+DQN Training Time: 11.83 seconds
+DQN Final Reward (Estimated V(0)): -17.47
+DQN Final Avg Bellman Residual: 0.0037
+
+===== Running for N = 2 =====
+DP Initialized: N=2, States=36, Actions=4
+Starting DP Value Iteration...
+DP Converged after 239 iterations.
+DP Solving Time: 0.08 seconds
+Extracting DP Policy...
+
+--- Starting DQN Training ---
+  DQN Episode 50/500	Avg Reward: -250.90	Avg Bellman Res: 0.0568	Epsilon: 0.778
+  DQN Episode 100/500	Avg Reward: -216.90	Avg Bellman Res: 0.0367	Epsilon: 0.606
+  DQN Episode 150/500	Avg Reward: -191.78	Avg Bellman Res: 0.0294	Epsilon: 0.471
+  DQN Episode 200/500	Avg Reward: -162.54	Avg Bellman Res: 0.0216	Epsilon: 0.367
+  DQN Episode 250/500	Avg Reward: -152.94	Avg Bellman Res: 0.0182	Epsilon: 0.286
+  DQN Episode 300/500	Avg Reward: -137.12	Avg Bellman Res: 0.0159	Epsilon: 0.222
+  DQN Episode 350/500	Avg Reward: -129.20	Avg Bellman Res: 0.0115	Epsilon: 0.173
+  DQN Episode 400/500	Avg Reward: -123.60	Avg Bellman Res: 0.0123	Epsilon: 0.135
+  DQN Episode 450/500	Avg Reward: -116.98	Avg Bellman Res: 0.0100	Epsilon: 0.105
+  DQN Episode 500/500	Avg Reward: -109.60	Avg Bellman Res: 0.0089	Epsilon: 0.082
+DQN Training Time: 12.57 seconds
+DQN Final Reward (Estimated V(0)): -35.06
+DQN Final Avg Bellman Residual: 0.0115
+
+===== Running for N = 3 =====
+DP Initialized: N=3, States=216, Actions=8
+Starting DP Value Iteration...
+DP Converged after 247 iterations.
+DP Solving Time: 1.01 seconds
+Extracting DP Policy...
+
+--- Starting DQN Training ---
+  DQN Episode 50/500	Avg Reward: -377.14	Avg Bellman Res: 0.1411	Epsilon: 0.778
+  DQN Episode 100/500	Avg Reward: -323.14	Avg Bellman Res: 0.0786	Epsilon: 0.606
+  DQN Episode 150/500	Avg Reward: -284.44	Avg Bellman Res: 0.0601	Epsilon: 0.471
+  DQN Episode 200/500	Avg Reward: -247.26	Avg Bellman Res: 0.0530	Epsilon: 0.367
+  DQN Episode 250/500	Avg Reward: -220.84	Avg Bellman Res: 0.0442	Epsilon: 0.286
+  DQN Episode 300/500	Avg Reward: -205.30	Avg Bellman Res: 0.0390	Epsilon: 0.222
+  DQN Episode 350/500	Avg Reward: -194.14	Avg Bellman Res: 0.0325	Epsilon: 0.173
+  DQN Episode 400/500	Avg Reward: -180.68	Avg Bellman Res: 0.0295	Epsilon: 0.135
+  DQN Episode 450/500	Avg Reward: -174.58	Avg Bellman Res: 0.0290	Epsilon: 0.105
+  DQN Episode 500/500	Avg Reward: -167.50	Avg Bellman Res: 0.0338	Epsilon: 0.082
+DQN Training Time: 14.80 seconds
+DQN Final Reward (Estimated V(0)): -52.85
+DQN Final Avg Bellman Residual: 0.0321
+
+===== Running for N = 4 =====
+DP Initialized: N=4, States=1296, Actions=15
+Starting DP Value Iteration...
+DP Converged after 253 iterations.
+DP Solving Time: 14.85 seconds
+Extracting DP Policy...
+
+--- Starting DQN Training ---
+  DQN Episode 50/500	Avg Reward: -485.78	Avg Bellman Res: 0.3194	Epsilon: 0.778
+  DQN Episode 100/500	Avg Reward: -412.88	Avg Bellman Res: 0.1379	Epsilon: 0.606
+  DQN Episode 150/500	Avg Reward: -362.18	Avg Bellman Res: 0.1000	Epsilon: 0.471
+  DQN Episode 200/500	Avg Reward: -329.66	Avg Bellman Res: 0.0905	Epsilon: 0.367
+  DQN Episode 250/500	Avg Reward: -292.04	Avg Bellman Res: 0.0782	Epsilon: 0.286
+  DQN Episode 300/500	Avg Reward: -269.46	Avg Bellman Res: 0.0706	Epsilon: 0.222
+  DQN Episode 350/500	Avg Reward: -261.40	Avg Bellman Res: 0.0706	Epsilon: 0.173
+  DQN Episode 400/500	Avg Reward: -237.88	Avg Bellman Res: 0.0631	Epsilon: 0.135
+  DQN Episode 450/500	Avg Reward: -229.68	Avg Bellman Res: 0.0636	Epsilon: 0.105
+  DQN Episode 500/500	Avg Reward: -223.76	Avg Bellman Res: 0.0586	Epsilon: 0.082
+DQN Training Time: 12.51 seconds
+DQN Final Reward (Estimated V(0)): -70.35
+DQN Final Avg Bellman Residual: 0.0622
+
+===== Running for N = 5 =====
+DP Initialized: N=5, States=7776, Actions=26
+Starting DP Value Iteration...
+DP Converged after 257 iterations.
+DP Solving Time: 178.00 seconds
+Extracting DP Policy...
+
+--- Starting DQN Training ---
+  DQN Episode 50/500	Avg Reward: -560.88	Avg Bellman Res: 0.4816	Epsilon: 0.778
+  DQN Episode 100/500	Avg Reward: -488.68	Avg Bellman Res: 0.3665	Epsilon: 0.606
+  DQN Episode 150/500	Avg Reward: -436.50	Avg Bellman Res: 0.2321	Epsilon: 0.471
+  DQN Episode 200/500	Avg Reward: -382.92	Avg Bellman Res: 0.1676	Epsilon: 0.367
+  DQN Episode 250/500	Avg Reward: -354.86	Avg Bellman Res: 0.1327	Epsilon: 0.286
+  DQN Episode 300/500	Avg Reward: -330.42	Avg Bellman Res: 0.1111	Epsilon: 0.222
+  DQN Episode 350/500	Avg Reward: -310.14	Avg Bellman Res: 0.1013	Epsilon: 0.173
+  DQN Episode 400/500	Avg Reward: -292.90	Avg Bellman Res: 0.1094	Epsilon: 0.135
+  DQN Episode 450/500	Avg Reward: -283.52	Avg Bellman Res: 0.0957	Epsilon: 0.105
+  DQN Episode 500/500	Avg Reward: -274.58	Avg Bellman Res: 0.0875	Epsilon: 0.082
+DQN Training Time: 10.38 seconds
+DQN Final Reward (Estimated V(0)): -87.97
+DQN Final Avg Bellman Residual: 0.0973
+
+===== Running for N = 6 =====
+DP Initialized: N=6, States=46656, Actions=42
+Starting DP Value Iteration...
+  DP Iter 1/10000, Delta: 6.000000, Time: 7.10s
+  DP Iter 11/10000, Delta: 3.592422, Time: 78.46s
+  DP Iter 21/10000, Delta: 2.150916, Time: 153.99s
+  DP Iter 31/10000, Delta: 1.287833, Time: 235.27s
+  DP Iter 41/10000, Delta: 0.771073, Time: 310.88s
+  DP Iter 51/10000, Delta: 0.461670, Time: 387.24s
+  DP Iter 61/10000, Delta: 0.276419, Time: 461.72s
+  DP Iter 71/10000, Delta: 0.165502, Time: 535.84s
+DP Timeout after 602.56 seconds and 80 iterations.
+DP timed out, result not available.
+
+--- Starting DQN Training ---
+  DQN Episode 50/500	Avg Reward: -635.36	Avg Bellman Res: 0.5636	Epsilon: 0.778
+  DQN Episode 100/500	Avg Reward: -554.44	Avg Bellman Res: 0.6015	Epsilon: 0.606
+  DQN Episode 150/500	Avg Reward: -493.08	Avg Bellman Res: 0.4042	Epsilon: 0.471
+  DQN Episode 200/500	Avg Reward: -439.84	Avg Bellman Res: 0.2705	Epsilon: 0.367
+  DQN Episode 250/500	Avg Reward: -412.20	Avg Bellman Res: 0.2087	Epsilon: 0.286
+  DQN Episode 300/500	Avg Reward: -384.78	Avg Bellman Res: 0.1690	Epsilon: 0.222
+  DQN Episode 350/500	Avg Reward: -362.42	Avg Bellman Res: 0.1529	Epsilon: 0.173
+  DQN Episode 400/500	Avg Reward: -349.84	Avg Bellman Res: 0.1517	Epsilon: 0.135
+  DQN Episode 450/500	Avg Reward: -335.86	Avg Bellman Res: 0.1483	Epsilon: 0.105
+  DQN Episode 500/500	Avg Reward: -331.42	Avg Bellman Res: 0.1630	Epsilon: 0.082
+DQN Training Time: 11.34 seconds
+DQN Final Reward (Estimated V(0)): -106.11
+DQN Final Avg Bellman Residual: 0.1515
+
+===== Comparison Results =====
+ N  #States DP Time (s) DP Reward DQN Time (s) DQN Reward DQN Bell Res
+ 1        6        0.01    -19.00        11.83     -17.47       0.0037
+ 2       36        0.08    -38.00        12.57     -35.06       0.0115
+ 3      216        1.01    -57.00        14.80     -52.85       0.0321
+ 4     1296       14.85    -76.00        12.51     -70.35       0.0622
+ 5     7776      178.00    -95.00        10.38     -87.97       0.0973
+ 6    46656      602.56        --        11.34    -106.11       0.1515
+  Cache saved: /Users/pranjal/Code/rl/ch05_econ_models/sims/cache/bus_engine_dp_vs_dqn.pkl
+Experiment 1 figure saved: /Users/pranjal/Code/rl/ch05_econ_models/sims/bus_engine_exp1.png
+
+Output files:
+  /Users/pranjal/Code/rl/ch05_econ_models/sims/bus_engine_exp1.png
+  /Users/pranjal/Code/rl/ch05_econ_models/sims/bus_engine_exp2.png

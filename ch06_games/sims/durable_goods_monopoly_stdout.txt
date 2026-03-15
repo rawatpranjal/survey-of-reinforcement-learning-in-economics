@@ -1,0 +1,22 @@
+
+============================================================
+Generating π-sweep validation outputs...
+============================================================
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/durable_goods_coase.png
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/durable_goods_nashconv.png
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/durable_goods_strategies.png
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/durable_goods_results.tex
+
+============================================================
+Generating δ-sweep validation outputs...
+============================================================
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/durable_goods_delta_sweep.png
+
+======================================================================
+OUTPUT FILES
+======================================================================
+  durable_goods_coase.png        - Phase transition plot (π-sweep)
+  durable_goods_nashconv.png     - Convergence plot
+  durable_goods_strategies.png   - Strategy rationality check
+  durable_goods_delta_sweep.png  - δ-sweep plot
+  durable_goods_results.tex      - LaTeX validation table

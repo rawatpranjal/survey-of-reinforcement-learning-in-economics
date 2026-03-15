@@ -1,0 +1,11 @@
+\begin{tabular}{lrrrr}
+\hline
+Method & Iterations & Error vs $V^*$ & $P$ (recovered) & Key coefficient \\
+\hline
+Exact VI (discrete) & 25 & 1.12e-03 & --- & --- \\
+FVI & 9 & 3.23e-04 & 1.1294 & $\hat\theta_V^{x^2} = -1.1294$ \\
+FQI & 10 & 9.37e-05 & 1.2682 & $\hat\theta_Q^{xu} = -1.0729$ \\
+DQN ($2 \times 64$ ReLU) & 100000 & 5.64e-01 & --- & --- \\
+Analytical ($V^* = -Px^2$) & --- & 0 & 1.1294 & $c_{xu} = -1.0729$ \\
+\hline
+\end{tabular}

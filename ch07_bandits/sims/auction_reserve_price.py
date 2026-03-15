@@ -1,14 +1,22 @@
 # Auction Reserve Price Optimization — Chapter 6, Economic Bandits.
 # Unimodal structure in second-price auction reserve price learning.
 
+import argparse
 import os
+import sys
 import numpy as np
 from scipy import optimize
 from scipy.stats import lognorm
 import matplotlib.pyplot as plt
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.sim_cache import load_results, save_results, add_cache_args
+
 # ─── Configuration ───────────────────────────────────────────────────────────
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_DIR = os.path.join(OUTPUT_DIR, 'cache')
+SCRIPT_NAME = 'auction_reserve_price'
+
 N_BIDDERS = 3
 MU, SIGMA = 0.0, 0.5          # LogNormal parameters (underlying normal)
 K = 25
@@ -16,6 +24,19 @@ reserves = np.linspace(0.2, 5.0, K)
 T = 20_000
 N_SEEDS = 30
 MC_SAMPLES = 100_000
+
+CONFIG = {
+    'N_BIDDERS': N_BIDDERS,
+    'MU': MU,
+    'SIGMA': SIGMA,
+    'K': K,
+    'reserves_min': 0.2,
+    'reserves_max': 5.0,
+    'T': T,
+    'N_SEEDS': N_SEEDS,
+    'MC_SAMPLES': MC_SAMPLES,
+    'version': 1,
+}
 
 # ─── Myerson Optimal Reserve ────────────────────────────────────────────────
 # For LogNormal(mu, sigma), the PDF and CDF use scipy's parameterisation:
@@ -174,137 +195,196 @@ def run_oracle(bid_matrix):
     counts[oracle_arm] = T
     return revs, actions, counts
 
-# ─── Monte Carlo Over Seeds ─────────────────────────────────────────────────
+# ─── Compute ────────────────────────────────────────────────────────────────
+
 oracle_arm_idx = np.argmin(np.abs(reserves - r_star))
 oracle_expected = expected_revenue[oracle_arm_idx]
 
-all_regret_ucb1 = np.zeros((N_SEEDS, T))
-all_regret_uucb = np.zeros((N_SEEDS, T))
-all_total_rev_ucb1 = np.zeros(N_SEEDS)
-all_total_rev_uucb = np.zeros(N_SEEDS)
-all_total_rev_oracle = np.zeros(N_SEEDS)
-all_counts_ucb1 = np.zeros((N_SEEDS, K))
-all_counts_uucb = np.zeros((N_SEEDS, K))
 
-for seed in range(N_SEEDS):
-    np.random.seed(seed)
-    bid_matrix = dist.rvs(size=(T, N_BIDDERS))
+def compute_data():
+    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+    if cached is not None:
+        print("Loaded from cache.")
+        return cached
 
-    # Oracle
-    rev_oracle, _, cnt_oracle = run_oracle(bid_matrix)
+    all_regret_ucb1 = np.zeros((N_SEEDS, T))
+    all_regret_uucb = np.zeros((N_SEEDS, T))
+    all_total_rev_ucb1 = np.zeros(N_SEEDS)
+    all_total_rev_uucb = np.zeros(N_SEEDS)
+    all_total_rev_oracle = np.zeros(N_SEEDS)
+    all_counts_ucb1 = np.zeros((N_SEEDS, K))
+    all_counts_uucb = np.zeros((N_SEEDS, K))
 
-    # UCB1
-    rev_ucb1, _, cnt_ucb1 = run_ucb1(bid_matrix)
+    for seed in range(N_SEEDS):
+        np.random.seed(seed)
+        bid_matrix = dist.rvs(size=(T, N_BIDDERS))
 
-    # UUCB
-    rev_uucb, _, cnt_uucb = run_uucb(bid_matrix)
+        # Oracle
+        rev_oracle, _, cnt_oracle = run_oracle(bid_matrix)
 
-    # Cumulative regret relative to oracle
-    cum_oracle = np.cumsum(rev_oracle)
-    all_regret_ucb1[seed] = cum_oracle - np.cumsum(rev_ucb1)
-    all_regret_uucb[seed] = cum_oracle - np.cumsum(rev_uucb)
+        # UCB1
+        rev_ucb1, _, cnt_ucb1 = run_ucb1(bid_matrix)
 
-    all_total_rev_ucb1[seed] = rev_ucb1.sum()
-    all_total_rev_uucb[seed] = rev_uucb.sum()
-    all_total_rev_oracle[seed] = rev_oracle.sum()
-    all_counts_ucb1[seed] = cnt_ucb1
-    all_counts_uucb[seed] = cnt_uucb
+        # UUCB
+        rev_uucb, _, cnt_uucb = run_uucb(bid_matrix)
 
-    if (seed + 1) % 10 == 0:
-        print(f"  Completed seed {seed + 1}/{N_SEEDS}")
+        # Cumulative regret relative to oracle
+        cum_oracle = np.cumsum(rev_oracle)
+        all_regret_ucb1[seed] = cum_oracle - np.cumsum(rev_ucb1)
+        all_regret_uucb[seed] = cum_oracle - np.cumsum(rev_uucb)
 
-# ─── Aggregate Statistics ────────────────────────────────────────────────────
-mean_regret_ucb1 = all_regret_ucb1.mean(axis=0)
-se_regret_ucb1   = all_regret_ucb1.std(axis=0) / np.sqrt(N_SEEDS)
-mean_regret_uucb = all_regret_uucb.mean(axis=0)
-se_regret_uucb   = all_regret_uucb.std(axis=0) / np.sqrt(N_SEEDS)
+        all_total_rev_ucb1[seed] = rev_ucb1.sum()
+        all_total_rev_uucb[seed] = rev_uucb.sum()
+        all_total_rev_oracle[seed] = rev_oracle.sum()
+        all_counts_ucb1[seed] = cnt_ucb1
+        all_counts_uucb[seed] = cnt_uucb
 
-mean_counts_ucb1 = all_counts_ucb1.mean(axis=0)
-mean_counts_uucb = all_counts_uucb.mean(axis=0)
+        if (seed + 1) % 10 == 0:
+            print(f"  Completed seed {seed + 1}/{N_SEEDS}")
 
-final_regret_ucb1_mean = all_regret_ucb1[:, -1].mean()
-final_regret_ucb1_se   = all_regret_ucb1[:, -1].std() / np.sqrt(N_SEEDS)
-final_regret_uucb_mean = all_regret_uucb[:, -1].mean()
-final_regret_uucb_se   = all_regret_uucb[:, -1].std() / np.sqrt(N_SEEDS)
+    # ─── Aggregate Statistics ────────────────────────────────────────────────
+    mean_regret_ucb1 = all_regret_ucb1.mean(axis=0)
+    se_regret_ucb1   = all_regret_ucb1.std(axis=0) / np.sqrt(N_SEEDS)
+    mean_regret_uucb = all_regret_uucb.mean(axis=0)
+    se_regret_uucb   = all_regret_uucb.std(axis=0) / np.sqrt(N_SEEDS)
 
-pct_ucb1_mean = (all_total_rev_ucb1 / all_total_rev_oracle * 100).mean()
-pct_ucb1_se   = (all_total_rev_ucb1 / all_total_rev_oracle * 100).std() / np.sqrt(N_SEEDS)
-pct_uucb_mean = (all_total_rev_uucb / all_total_rev_oracle * 100).mean()
-pct_uucb_se   = (all_total_rev_uucb / all_total_rev_oracle * 100).std() / np.sqrt(N_SEEDS)
+    mean_counts_ucb1 = all_counts_ucb1.mean(axis=0)
+    mean_counts_uucb = all_counts_uucb.mean(axis=0)
 
-print(f"\nFinal Regret  UCB1: {final_regret_ucb1_mean:.1f} +/- {final_regret_ucb1_se:.1f}")
-print(f"Final Regret  UUCB: {final_regret_uucb_mean:.1f} +/- {final_regret_uucb_se:.1f}")
-print(f"% Myerson Rev UCB1: {pct_ucb1_mean:.2f}% +/- {pct_ucb1_se:.2f}%")
-print(f"% Myerson Rev UUCB: {pct_uucb_mean:.2f}% +/- {pct_uucb_se:.2f}%")
+    final_regret_ucb1_mean = all_regret_ucb1[:, -1].mean()
+    final_regret_ucb1_se   = all_regret_ucb1[:, -1].std() / np.sqrt(N_SEEDS)
+    final_regret_uucb_mean = all_regret_uucb[:, -1].mean()
+    final_regret_uucb_se   = all_regret_uucb[:, -1].std() / np.sqrt(N_SEEDS)
 
-# ─── Theoretical Overlays ───────────────────────────────────────────────────
-t_range = np.arange(1, T + 1)
-c1 = 0.3
-c2 = 15.0
-agnostic_bound   = c1 * np.sqrt(K * t_range)
-structural_bound = c2 * np.log(t_range + 1)
+    pct_ucb1_mean = (all_total_rev_ucb1 / all_total_rev_oracle * 100).mean()
+    pct_ucb1_se   = (all_total_rev_ucb1 / all_total_rev_oracle * 100).std() / np.sqrt(N_SEEDS)
+    pct_uucb_mean = (all_total_rev_uucb / all_total_rev_oracle * 100).mean()
+    pct_uucb_se   = (all_total_rev_uucb / all_total_rev_oracle * 100).std() / np.sqrt(N_SEEDS)
 
-# ─── Figure: 2-Panel Plot ───────────────────────────────────────────────────
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    print(f"\nFinal Regret  UCB1: {final_regret_ucb1_mean:.1f} +/- {final_regret_ucb1_se:.1f}")
+    print(f"Final Regret  UUCB: {final_regret_uucb_mean:.1f} +/- {final_regret_uucb_se:.1f}")
+    print(f"% Myerson Rev UCB1: {pct_ucb1_mean:.2f}% +/- {pct_ucb1_se:.2f}%")
+    print(f"% Myerson Rev UUCB: {pct_uucb_mean:.2f}% +/- {pct_uucb_se:.2f}%")
 
-# Left panel: cumulative regret
-ax1.plot(t_range, mean_regret_ucb1, color='C0', label='UCB1')
-ax1.fill_between(t_range,
-                 mean_regret_ucb1 - se_regret_ucb1,
-                 mean_regret_ucb1 + se_regret_ucb1,
-                 alpha=0.2, color='C0')
-ax1.plot(t_range, mean_regret_uucb, color='C1', label='Unimodal UCB')
-ax1.fill_between(t_range,
-                 mean_regret_uucb - se_regret_uucb,
-                 mean_regret_uucb + se_regret_uucb,
-                 alpha=0.2, color='C1')
-ax1.plot(t_range, agnostic_bound, 'k--', alpha=0.6, label=r'Agnostic $O(\sqrt{Kt})$')
-ax1.plot(t_range, structural_bound, 'k:', alpha=0.6, label=r'Structural $O(\log t)$')
-ax1.set_xlabel('Round $t$')
-ax1.set_ylabel('Cumulative Regret')
-ax1.set_title('Cumulative Regret vs Myerson Optimal')
-ax1.legend(loc='upper left')
-ax1.set_xlim(0, T)
+    data = {
+        'mean_regret_ucb1': mean_regret_ucb1,
+        'se_regret_ucb1': se_regret_ucb1,
+        'mean_regret_uucb': mean_regret_uucb,
+        'se_regret_uucb': se_regret_uucb,
+        'mean_counts_ucb1': mean_counts_ucb1,
+        'mean_counts_uucb': mean_counts_uucb,
+        'final_regret_ucb1_mean': final_regret_ucb1_mean,
+        'final_regret_ucb1_se': final_regret_ucb1_se,
+        'final_regret_uucb_mean': final_regret_uucb_mean,
+        'final_regret_uucb_se': final_regret_uucb_se,
+        'pct_ucb1_mean': pct_ucb1_mean,
+        'pct_ucb1_se': pct_ucb1_se,
+        'pct_uucb_mean': pct_uucb_mean,
+        'pct_uucb_se': pct_uucb_se,
+        'expected_revenue': expected_revenue,
+    }
+    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    return data
 
-# Right panel: revenue curve + exploration distribution
-ax2.plot(reserves, expected_revenue, 'k-', linewidth=2, label='$E[\\mathrm{rev}(r)]$')
-ax2.axvline(r_star, color='red', linestyle='--', linewidth=1.5, label=f'Myerson $r^*={r_star:.2f}$')
 
-# Normalised pull fractions as bars
-bar_width = (reserves[1] - reserves[0]) * 0.35
-pull_frac_ucb1 = mean_counts_ucb1 / mean_counts_ucb1.sum()
-pull_frac_uucb = mean_counts_uucb / mean_counts_uucb.sum()
+def generate_outputs(data):
+    mean_regret_ucb1 = data['mean_regret_ucb1']
+    se_regret_ucb1 = data['se_regret_ucb1']
+    mean_regret_uucb = data['mean_regret_uucb']
+    se_regret_uucb = data['se_regret_uucb']
+    mean_counts_ucb1 = data['mean_counts_ucb1']
+    mean_counts_uucb = data['mean_counts_uucb']
+    final_regret_ucb1_mean = data['final_regret_ucb1_mean']
+    final_regret_ucb1_se = data['final_regret_ucb1_se']
+    final_regret_uucb_mean = data['final_regret_uucb_mean']
+    final_regret_uucb_se = data['final_regret_uucb_se']
+    pct_ucb1_mean = data['pct_ucb1_mean']
+    pct_ucb1_se = data['pct_ucb1_se']
+    pct_uucb_mean = data['pct_uucb_mean']
+    pct_uucb_se = data['pct_uucb_se']
+    exp_revenue = data['expected_revenue']
 
-# Scale pull fractions to fit on the revenue axis
-scale = expected_revenue.max() * 0.8
-ax2.bar(reserves - bar_width / 2, pull_frac_ucb1 * scale / pull_frac_ucb1.max(),
-        width=bar_width, alpha=0.35, color='C0', label='UCB1 pulls')
-ax2.bar(reserves + bar_width / 2, pull_frac_uucb * scale / pull_frac_uucb.max(),
-        width=bar_width, alpha=0.35, color='C1', label='UUCB pulls')
+    # ─── Theoretical Overlays ───────────────────────────────────────────────
+    t_range = np.arange(1, T + 1)
+    c1 = 0.3
+    c2 = 15.0
+    agnostic_bound   = c1 * np.sqrt(K * t_range)
+    structural_bound = c2 * np.log(t_range + 1)
 
-ax2.set_xlabel('Reserve Price')
-ax2.set_ylabel('Expected Revenue / Pull Fraction')
-ax2.set_title('Revenue Curve and Exploration')
-ax2.legend(loc='upper right', fontsize=8)
+    # ─── Figure: 2-Panel Plot ───────────────────────────────────────────────
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
-plt.tight_layout()
-fig_path = os.path.join(OUTPUT_DIR, 'auction_reserve_regret.png')
-fig.savefig(fig_path, dpi=300, bbox_inches='tight')
-plt.close(fig)
-print(f"\nSaved figure: {fig_path}")
+    # Left panel: cumulative regret
+    ax1.plot(t_range, mean_regret_ucb1, color='C0', label='UCB1')
+    ax1.fill_between(t_range,
+                     mean_regret_ucb1 - se_regret_ucb1,
+                     mean_regret_ucb1 + se_regret_ucb1,
+                     alpha=0.2, color='C0')
+    ax1.plot(t_range, mean_regret_uucb, color='C1', label='Unimodal UCB')
+    ax1.fill_between(t_range,
+                     mean_regret_uucb - se_regret_uucb,
+                     mean_regret_uucb + se_regret_uucb,
+                     alpha=0.2, color='C1')
+    ax1.plot(t_range, agnostic_bound, 'k--', alpha=0.6, label=r'Agnostic $O(\sqrt{Kt})$')
+    ax1.plot(t_range, structural_bound, 'k:', alpha=0.6, label=r'Structural $O(\log t)$')
+    ax1.set_xlabel('Round $t$')
+    ax1.set_ylabel('Cumulative Regret')
+    ax1.set_title('Cumulative Regret vs Myerson Optimal')
+    ax1.legend(loc='upper left')
+    ax1.set_xlim(0, T)
 
-# ─── LaTeX Table ─────────────────────────────────────────────────────────────
-tex_path = os.path.join(OUTPUT_DIR, 'auction_reserve_results.tex')
-with open(tex_path, 'w') as f:
-    f.write("\\begin{tabular}{lcc}\n")
-    f.write("\\hline\n")
-    f.write("Algorithm & Final Regret & \\% of Myerson Optimum Revenue \\\\\n")
-    f.write("\\hline\n")
-    f.write(f"UCB1 & ${final_regret_ucb1_mean:.1f} \\pm {final_regret_ucb1_se:.1f}$ "
-            f"& ${pct_ucb1_mean:.2f} \\pm {pct_ucb1_se:.2f}\\%$ \\\\\n")
-    f.write(f"Unimodal UCB & ${final_regret_uucb_mean:.1f} \\pm {final_regret_uucb_se:.1f}$ "
-            f"& ${pct_uucb_mean:.2f} \\pm {pct_uucb_se:.2f}\\%$ \\\\\n")
-    f.write(f"Myerson Oracle & $0.0 \\pm 0.0$ & $100.00 \\pm 0.00\\%$ \\\\\n")
-    f.write("\\hline\n")
-    f.write("\\end{tabular}\n")
-print(f"Saved table:  {tex_path}")
+    # Right panel: revenue curve + exploration distribution
+    ax2.plot(reserves, exp_revenue, 'k-', linewidth=2, label='$E[\\mathrm{rev}(r)]$')
+    ax2.axvline(r_star, color='red', linestyle='--', linewidth=1.5, label=f'Myerson $r^*={r_star:.2f}$')
+
+    # Normalised pull fractions as bars
+    bar_width = (reserves[1] - reserves[0]) * 0.35
+    pull_frac_ucb1 = mean_counts_ucb1 / mean_counts_ucb1.sum()
+    pull_frac_uucb = mean_counts_uucb / mean_counts_uucb.sum()
+
+    # Scale pull fractions to fit on the revenue axis
+    scale = exp_revenue.max() * 0.8
+    ax2.bar(reserves - bar_width / 2, pull_frac_ucb1 * scale / pull_frac_ucb1.max(),
+            width=bar_width, alpha=0.35, color='C0', label='UCB1 pulls')
+    ax2.bar(reserves + bar_width / 2, pull_frac_uucb * scale / pull_frac_uucb.max(),
+            width=bar_width, alpha=0.35, color='C1', label='UUCB pulls')
+
+    ax2.set_xlabel('Reserve Price')
+    ax2.set_ylabel('Expected Revenue / Pull Fraction')
+    ax2.set_title('Revenue Curve and Exploration')
+    ax2.legend(loc='upper right', fontsize=8)
+
+    plt.tight_layout()
+    fig_path = os.path.join(OUTPUT_DIR, 'auction_reserve_regret.png')
+    fig.savefig(fig_path, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    print(f"\nSaved figure: {fig_path}")
+
+    # ─── LaTeX Table ─────────────────────────────────────────────────────────
+    tex_path = os.path.join(OUTPUT_DIR, 'auction_reserve_results.tex')
+    with open(tex_path, 'w') as f:
+        f.write("\\begin{tabular}{lcc}\n")
+        f.write("\\hline\n")
+        f.write("Algorithm & Final Regret & \\% of Myerson Optimum Revenue \\\\\n")
+        f.write("\\hline\n")
+        f.write(f"UCB1 & ${final_regret_ucb1_mean:.1f} \\pm {final_regret_ucb1_se:.1f}$ "
+                f"& ${pct_ucb1_mean:.2f} \\pm {pct_ucb1_se:.2f}\\%$ \\\\\n")
+        f.write(f"Unimodal UCB & ${final_regret_uucb_mean:.1f} \\pm {final_regret_uucb_se:.1f}$ "
+                f"& ${pct_uucb_mean:.2f} \\pm {pct_uucb_se:.2f}\\%$ \\\\\n")
+        f.write(f"Myerson Oracle & $0.0 \\pm 0.0$ & $100.00 \\pm 0.00\\%$ \\\\\n")
+        f.write("\\hline\n")
+        f.write("\\end{tabular}\n")
+    print(f"Saved table:  {tex_path}")
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    add_cache_args(parser)
+    args = parser.parse_args()
+    if args.plots_only:
+        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+        assert data is not None, "No cache found. Run without --plots-only first."
+    else:
+        data = compute_data()
+    if not args.data_only:
+        generate_outputs(data)

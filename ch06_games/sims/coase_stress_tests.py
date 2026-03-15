@@ -7,11 +7,42 @@
 # 3. Grid Shift - Missing optimal action
 # 4. Horizon Extension - 3-period game
 
+import argparse
+import sys, os
 import numpy as np
 from typing import Dict, List, Tuple
 from collections import defaultdict
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.sim_cache import load_results, save_results, add_cache_args
+
 np.random.seed(42)
+
+CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
+SCRIPT_NAME = 'coase_stress_tests'
+CONFIG = {
+    'test1_V_L': 37,
+    'test1_V_H': 83,
+    'test1_delta': 0.6,
+    'test1_pi_high': 0.7,
+    'test1_iterations': 5000,
+    'test2_V_L': 100,
+    'test2_V_H': 200,
+    'test2_delta': 0.5,
+    'test2_pi_high': 0.5,
+    'test2_iterations': 5000,
+    'test3_V_L': 100,
+    'test3_V_H': 200,
+    'test3_delta': 0.5,
+    'test3_pi_high': 0.7,
+    'test3_iterations': 5000,
+    'test4_V_L': 100,
+    'test4_V_H': 200,
+    'test4_delta': 0.8,
+    'test4_pi_high': 0.7,
+    'test4_iterations': 10000,
+    'version': 1,
+}
 
 # =============================================================================
 # TEST 1: AWKWARD PRIMES
@@ -750,7 +781,13 @@ def test_horizon_extension():
 # MAIN
 # =============================================================================
 
-def main():
+def compute_data():
+    """Run all stress tests and return results dict."""
+    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+    if cached is not None:
+        print("Loaded from cache.")
+        return cached
+
     print("\n" + "=" * 70)
     print("COASE CONJECTURE STRESS TESTS")
     print("=" * 70)
@@ -763,6 +800,15 @@ def main():
     results['information_leak'] = test_information_leak()
     results['grid_shift'] = test_grid_shift()
     results['horizon_extension'] = test_horizon_extension()
+
+    data = {'test_results': results}
+    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    return data
+
+
+def generate_outputs(data):
+    """Print summary of stress test results."""
+    results = data['test_results']
 
     print("\n" + "=" * 70)
     print("STRESS TEST SUMMARY")
@@ -782,4 +828,13 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    add_cache_args(parser)
+    args = parser.parse_args()
+    if args.plots_only:
+        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+        assert data is not None, "No cache found. Run without --plots-only first."
+    else:
+        data = compute_data()
+    if not args.data_only:
+        generate_outputs(data)

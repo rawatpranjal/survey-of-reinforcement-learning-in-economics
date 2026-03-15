@@ -1,0 +1,29 @@
+============================================================
+Overestimation Bias: Jensen's Inequality in Q-Learning
+============================================================
+
+Parameters: mu = 2.0, sigma = 1.0
+Number of actions (for plot): n = 2
+
+Verification (n=2 iid normals):
+  Integral of max PDF     = 1.0000000000  (should be 1.0)
+  E[max] analytical       = mu + sigma/sqrt(pi) = 2.564190
+  E[max] numerical (quad) = 2.564190
+  Overestimation bias     = 0.564190
+
+--------------------------------------------------
+Overestimation bias scaling with number of actions
+--------------------------------------------------
+  mu = 2.0, sigma = 1.0
+
+      n     E[max]-mu      E[max]
+  -----  ------------  ----------
+      2      0.564190    2.564190
+      5      1.162964    3.162964
+     10      1.538753    3.538753
+     20      1.867475    3.867475
+     50      2.249074    4.249074
+    100      2.507594    4.507594
+
+Output: /Users/pranjal/Code/rl/ch03b_deeprl_practice/sims/overestimation_bias.png
+============================================================

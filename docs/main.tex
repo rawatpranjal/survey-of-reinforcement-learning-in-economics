@@ -51,6 +51,15 @@
 \definecolor{bg}{rgb}{0.95,0.95,0.95}
 \definecolor{highlight}{rgb}{1,1,0.6}
 
+% Palette colors matching sims/plot_style.py
+\definecolor{rlblue}{HTML}{4878A8}
+\definecolor{rlorange}{HTML}{D4915C}
+\definecolor{rlgreen}{HTML}{6BA368}
+\definecolor{rlred}{HTML}{C25B56}
+\definecolor{rlpurple}{HTML}{8B7BAF}
+\definecolor{rlgray}{HTML}{888888}
+\definecolor{rlblack}{HTML}{2D2D2D}
+
 % TikZ for diagrams
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, positioning, calc, decorations.pathreplacing}
@@ -98,7 +107,8 @@
 \DeclareRobustCommand\iff{\;\Longleftrightarrow\;}
 
 \usepackage{titlesec}
-\newcommand{\sectionbreak}{\clearpage}
+\usepackage[section]{placeins}
+\newcommand{\sectionbreak}{}
 
 %compact lists
 \setlist{noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt}
@@ -129,10 +139,17 @@
 
 \end{titlepage}
 
+\newpage
+\tableofcontents
+\newpage
 
 \section{Introduction}
 \label{section:intro}
 \input{../ch00_introduction/tex/intro}
+
+\section{The Language of Reinforcement Learning}
+\label{section:language}
+\input{../ch00_introduction/tex/language}
 
 \section{A Brief History of Reinforcement Learning}
 \label{section:history}
@@ -143,6 +160,10 @@
 \input{../ch02_rl_algorithms/tex/rl_algorithms}
 
 \input{../ch03_theory/tex/planning_learning_v3}
+
+\section{The Empirics of Deep Reinforcement Learning}
+\label{section:deeprl_practice}
+\input{../ch03b_deeprl_practice/tex/deeprl_practice}
 
 \section{Reinforcement Learning Algorithms: An Illustrated Example}
 \label{section:illustrated_example}
@@ -160,7 +181,7 @@
 \label{section:rl_games}
 \input{../ch06_games/tex/rl_in_games}
 
-\section{Real-Time Reinforcement Learning and Economic Modelling}
+\section{Bandits and Dynamic Pricing}
 \label{section:bandits}
 \input{../ch07_bandits/tex/dynamic_pricing}
 
@@ -168,7 +189,7 @@
 \label{section:rlhf}
 \input{../ch08_rlhf/tex/rlhf}
 
-\section{Offline Reinforcement Learning and Causal Inference}
+\section{Reinforcement Learning and Causal Inference}
 \label{section:causal_rl}
 \input{../ch09_causal/tex/causal_rl}
 

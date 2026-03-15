@@ -1,0 +1,21 @@
+Deadly Triad Geometry — Projection Computations
+=======================================================
+Subspace angle:           20.0 deg
+Oblique direction angle:  0.0 deg  (delta = 20 deg below subspace)
+TV (Cartesian):           [1.7426, 1.0599]
+TV along subspace:        2.0000
+TV perp to subspace:      0.4000
+
+Orthogonal projection:    [1.8794, 0.6840]
+Oblique projection:       [2.9121, 1.0599]
+
+||TV||           = 2.0396
+||Proj_orth TV|| = 2.0000
+||Proj_obl  TV|| = 3.0990
+
+||Proj_orth TV|| < ||TV||:    True  (2.0000 < 2.0396)
+||TV|| < ||Proj_obl  TV||:    True  (2.0396 < 3.0990)
+Expansion ratio (oblique/TV): 1.5194
+
+Output: /Users/pranjal/Code/rl/ch03_theory/sims/deadly_triad_geometry.png
+File exists: True

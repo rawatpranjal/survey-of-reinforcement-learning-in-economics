@@ -1,0 +1,6 @@
+Nash equilibrium prices: [1.18888889 1.18888889]
+Nash equilibrium rho:    1.1889
+Nash equilibrium profits: [0.48637963 0.48637963]
+
+Saved figure: /Users/pranjal/Code/rl/ch07_bandits/sims/strategic_pricing_convergence.png
+Saved table: /Users/pranjal/Code/rl/ch07_bandits/sims/strategic_pricing_results.tex

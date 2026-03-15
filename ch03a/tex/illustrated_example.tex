@@ -27,7 +27,7 @@ Table~\ref{tab:gridworld_results} reports results for all nine algorithms.
 \subsection{Planning Versus Learning}
 \label{sec:illustrated_planning}
 
-VI converges in 9 iterations (0.001 seconds). On this deterministic gridworld, the iteration count matches the MDP diameter: the longest shortest path from any state to the goal is 8 steps, and each Bellman backup propagates value one step outward from the terminal state.\footnote{The $\gamma^k$ contraction bound from Section~\ref{sec:newton_connection} predicts roughly $\log(\epsilon^{-1}) / \log(\gamma^{-1}) \approx 360$ iterations for $\epsilon = 10^{-8}$, making it loose by a factor of 40 on this structured problem.}
+VI converges in 9 iterations (0.001 seconds). On this deterministic gridworld, the iteration count matches the MDP diameter: the longest shortest path from any state to the goal is 8 steps, and each Bellman backup propagates value one step outward from the \textit{terminal state}.\footnote{The $\gamma^k$ contraction bound from Section~\ref{sec:newton_connection} predicts roughly $\log(\epsilon^{-1}) / \log(\gamma^{-1}) \approx 360$ iterations for $\epsilon = 10^{-8}$, making it loose by a factor of 40 on this structured problem.}
 
 PI converges in 9 policy-improvement steps (0.018 seconds). At each step, PI solves the linear system $V^\pi = r^\pi + \gamma P^\pi V^\pi$ and propagates value information across the full state space simultaneously, rather than one step at a time as in VI.
 
@@ -39,11 +39,11 @@ The fastest learning method, Q($\lambda$), needs 20 episodes to reach 99\% of th
 
 All seven learning algorithms achieve the optimal return of 9.30, yet only three converge to $V^*(s)$ for all 25 states (Table~\ref{tab:gridworld_results}). This distinction, invisible in the return metric, is the central finding of this comparison.
 
-Q-learning and Q($\lambda$) are off-policy: they learn $Q^*$ regardless of the behavior policy. Both achieve $\max_s |V(s) - V^*(s)| < 0.1$ by episode 610 and 550 respectively, with final RMSE below 0.01. Q($\lambda$) converges slightly faster due to eligibility traces propagating the terminal reward backward through the full 8-step trajectory within a single episode.
+Q-learning and Q($\lambda$) are off-policy and learn $Q^*$ regardless of the behavior policy. Both achieve $\max_s |V(s) - V^*(s)| < 0.1$ by episode 610 and 550 respectively, with final RMSE below 0.01. Q($\lambda$) converges slightly faster due to eligibility traces propagating the terminal reward backward through the full 8-step trajectory within a single episode.
 
 DQN is also off-policy and converges to $V^*$ at all 25 states by episode 1600, with RMSE 0.006 and $\max_s |V(s) - V^*(s)| = 0.01$. These errors are comparable to the tabular methods. The cost is wall-clock time: DQN requires 2921 seconds versus 25 seconds for tabular Q-learning, a $118\times$ slowdown from neural network training overhead on a problem small enough for exact tabular representation.
 
-SARSA, REINFORCE, NPG, and PPO are on-policy: they learn the value of the exploration policy $\pi_\epsilon$, not $\pi^*$. SARSA leaves 9 of 25 states unconverged at episode 500,000, with a maximum error of 5.53 concentrated at the state farthest from the goal. REINFORCE leaves 15 of 25 states unconverged (max error 5.71), NPG leaves 12 of 25 unconverged (max error 9.72), and PPO leaves 16 of 25 unconverged (max error 5.42).
+SARSA, REINFORCE, NPG, and PPO are on-policy and learn the value of the exploration policy $\pi_\epsilon$, not $\pi^*$. SARSA leaves 9 of 25 states unconverged at episode 500,000, with a maximum error of 5.53 concentrated at the state farthest from the goal. REINFORCE leaves 15 of 25 states unconverged (max error 5.71), NPG leaves 12 of 25 unconverged (max error 9.72), and PPO leaves 16 of 25 unconverged (max error 5.42).
 
 Table~\ref{tab:value_convergence} tracks $\max_s |V(s) - V^*(s)|$ at five episode checkpoints. For Q-learning and Q($\lambda$), the maximum error drops below 0.1 by episode 1,000 and continues falling. DQN follows the same trajectory with a slight delay. The on-policy methods show a different pattern: SARSA's maximum error remains above 5.0 throughout training, and the policy gradient methods plateau at similar levels, confirming that the error is structural rather than a matter of insufficient training.
 
@@ -82,7 +82,7 @@ Figure~\ref{fig:value_heatmaps} makes this visible. At $5\times 5$ resolution, e
 \label{fig:value_heatmaps}
 \end{figure}
 
-Figure~\ref{fig:policy_heatmaps} shows the corresponding policy grids. Q-learning's arrows match $\pi^*$ everywhere by the final checkpoint. NPG and PPO show incorrect arrows concentrated at the same off-path states where value errors are largest: the agent has never needed to act at these states, so its policy there reflects the softmax initialization rather than learned behavior.
+Figure~\ref{fig:policy_heatmaps} shows the corresponding policy grids. Q-learning's arrows match $\pi^*$ everywhere by the final checkpoint. NPG and PPO show incorrect arrows concentrated at the same off-path states where value errors are largest, since the agent has never needed to act at these states, so its policy there reflects the softmax initialization rather than learned behavior.
 
 \begin{figure}[ht]
 \centering

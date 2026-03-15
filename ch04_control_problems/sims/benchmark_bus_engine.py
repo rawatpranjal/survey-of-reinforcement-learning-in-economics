@@ -2,6 +2,7 @@
 # Fleet bus engine replacement problem (inspired by Rust 1987).
 # Scaling sweep across fleet sizes N=1..6, comparing DP, DQN, and heuristics.
 
+import argparse
 import itertools
 import random
 import time
@@ -16,6 +17,7 @@ import torch
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from sims.plot_style import apply_style, ALGO_COLORS, COLORS, FIG_DOUBLE
+from sims.sim_cache import load_results, save_results, add_cache_args
 apply_style()
 
 from econ_benchmark import (
@@ -53,7 +55,24 @@ DQN_CONFIG = {
 }
 
 OUTPUT_DIR = Path(__file__).resolve().parent
+CACHE_DIR = os.path.join(str(OUTPUT_DIR), 'cache')
 SCRIPT_NAME = 'benchmark_bus_engine'
+CONFIG = {
+    'mileage_states': MILEAGE_STATES,
+    'alpha': ALPHA,
+    'beta': BETA,
+    'gamma': GAMMA,
+    'capacity': CAPACITY,
+    'complexity_sweep': COMPLEXITY_SWEEP,
+    'seeds': SEEDS,
+    'train_horizon': TRAIN_HORIZON,
+    'eval_horizon': EVAL_HORIZON,
+    'eval_episodes': EVAL_EPISODES,
+    'dp_feasible_threshold': DP_FEASIBLE_THRESHOLD,
+    'dp_timeout': DP_TIMEOUT,
+    'dqn_config': {str(k): v for k, v in DQN_CONFIG.items()},
+    'version': 1,
+}
 
 
 # ---------------------------------------------------------------------------
@@ -473,6 +492,49 @@ def print_detailed_results(results):
 
 
 # ---------------------------------------------------------------------------
+# compute_data / generate_outputs
+# ---------------------------------------------------------------------------
+def compute_data():
+    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+    if cached is not None:
+        print("Loaded from cache.")
+        return cached
+
+    print("Bus Engine Replacement Benchmark")
+    print(f"Cost function: c(s,a) = {ALPHA} * sum(m_i) + {BETA} * |a|")
+    print(f"Fleet sizes: N in {COMPLEXITY_SWEEP}")
+    print(f"Seeds: {SEEDS}")
+    print(f"Gamma={GAMMA}, Train horizon={TRAIN_HORIZON}, Eval horizon={EVAL_HORIZON}")
+
+    results = run_scaling_sweep()
+
+    # Convert results list to serializable form (it already is, just ensure floats)
+    serializable_results = []
+    for r in results:
+        sr = {}
+        for k, v in r.items():
+            if isinstance(v, (np.floating, np.integer)):
+                sr[k] = float(v) if isinstance(v, np.floating) else int(v)
+            elif isinstance(v, list):
+                sr[k] = [float(x) if isinstance(x, (np.floating, np.integer)) else x for x in v]
+            else:
+                sr[k] = v
+        serializable_results.append(sr)
+
+    data = {'results': serializable_results}
+    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    return data
+
+
+def generate_outputs(data):
+    results = data['results']
+    make_figures(results)
+    make_latex_table(results)
+    print_detailed_results(results)
+    print("\nBenchmark complete.")
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
@@ -480,17 +542,17 @@ if __name__ == "__main__":
     random.seed(42)
     torch.manual_seed(42)
 
+    parser = argparse.ArgumentParser()
+    add_cache_args(parser)
+    args = parser.parse_args()
+
     stdout_path = OUTPUT_DIR / f'{SCRIPT_NAME}_stdout.txt'
     with capture_stdout(stdout_path):
-        print("Bus Engine Replacement Benchmark")
-        print(f"Cost function: c(s,a) = {ALPHA} * sum(m_i) + {BETA} * |a|")
-        print(f"Fleet sizes: N in {COMPLEXITY_SWEEP}")
-        print(f"Seeds: {SEEDS}")
-        print(f"Gamma={GAMMA}, Train horizon={TRAIN_HORIZON}, Eval horizon={EVAL_HORIZON}")
+        if args.plots_only:
+            data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+            assert data is not None, "No cache found. Run without --plots-only first."
+        else:
+            data = compute_data()
 
-        results = run_scaling_sweep()
-        make_figures(results)
-        make_latex_table(results)
-        print_detailed_results(results)
-
-        print("\nBenchmark complete.")
+        if not args.data_only:
+            generate_outputs(data)

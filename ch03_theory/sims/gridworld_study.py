@@ -2,7 +2,12 @@
 # Chapter 3 -- Comprehensive Simulation Study
 # Compares classical RL algorithms on 10x10 gridworld with M=30 Monte Carlo replications.
 
+import argparse
+import os
 import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.sim_cache import load_results, save_results, add_cache_args
+
 import time
 from pathlib import Path
 from dataclasses import dataclass
@@ -12,6 +17,19 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
+CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
+SCRIPT_NAME = 'gridworld_study'
+CONFIG = {
+    'N': 10, 'GAMMA': 0.95,
+    'STEP_PENALTY': -0.1, 'TERMINAL_REWARD': 10.0,
+    'NUM_EPISODES': 5000, 'EPISODE_HORIZON': 100,
+    'EVAL_FREQ': 100, 'EVAL_EPISODES': 100,
+    'ALPHA': 0.1, 'ALPHA_DECAY': 0.999,
+    'EPSILON_START': 1.0, 'EPSILON_END': 0.01, 'EPSILON_DECAY': 0.995,
+    'LAMBDA': 0.9, 'M': 30,
+    'version': 1,
+}
 
 from gridworld_algorithms import (
     GridworldEnv,
@@ -762,7 +780,13 @@ def make_hyperparams_table():
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def main():
+def compute_data():
+    """Run all computation (planning + learning). Returns cached results if available."""
+    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+    if cached is not None:
+        print("Loaded from cache.")
+        return cached
+
     t_start = time.time()
 
     print_header()
@@ -778,6 +802,56 @@ def main():
 
     # Combine results
     all_results = {**planning_results, **learning_results}
+
+    # Print summary table
+    print_results_table(all_results, optimal_return)
+
+    total_time = time.time() - t_start
+    print(f"\nComputation time: {total_time:.1f}s ({total_time/60:.1f} min)")
+
+    # Convert AlgorithmResult dataclass instances to dicts for pickling
+    serialized_results = {}
+    for name, r in all_results.items():
+        serialized_results[name] = {
+            'name': r.name,
+            'return_mean': r.return_mean,
+            'return_std': r.return_std,
+            'steps_mean': r.steps_mean,
+            'steps_std': r.steps_std,
+            'agreement_mean': r.agreement_mean,
+            'agreement_std': r.agreement_std,
+            'value_error_mean': r.value_error_mean,
+            'value_error_std': r.value_error_std,
+            'time_mean': r.time_mean,
+            'time_std': r.time_std,
+            'coverage_mean': r.coverage_mean,
+            'coverage_std': r.coverage_std,
+            'episodes_to_95': r.episodes_to_95,
+            'eval_returns_all': r.eval_returns_all,
+            'value_errors_all': r.value_errors_all,
+            'agreements_all': r.agreements_all,
+            'regrets_all': r.regrets_all,
+        }
+
+    data = {
+        'all_results': serialized_results,
+        'optimal_return': optimal_return,
+    }
+    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    return data
+
+
+def _reconstruct_results(data):
+    """Reconstruct AlgorithmResult objects from cached dict."""
+    all_results = {}
+    for name, d in data['all_results'].items():
+        all_results[name] = AlgorithmResult(**d)
+    return all_results, data['optimal_return']
+
+
+def generate_outputs(data):
+    """Generate all figures, tables, and printed output from cached data."""
+    all_results, optimal_return = _reconstruct_results(data)
 
     # Print summary table
     print_results_table(all_results, optimal_return)
@@ -802,11 +876,9 @@ def main():
     make_hyperparams_table()
 
     # Final summary
-    total_time = time.time() - t_start
     print()
     print("=" * 70)
     print(f"STUDY COMPLETE")
-    print(f"Total wall-clock time: {total_time:.1f}s ({total_time/60:.1f} min)")
     print("=" * 70)
     print()
     print("Output files:")
@@ -820,13 +892,24 @@ def main():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Gridworld Algorithm Comparison Study')
+    add_cache_args(parser)
+    args = parser.parse_args()
+
     # Capture stdout to file
     stdout_path = OUTPUT_DIR / 'gridworld_study_stdout.txt'
     tee = TeeOutput(stdout_path)
     sys.stdout = tee
 
     try:
-        main()
+        if args.plots_only:
+            data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
+            assert data is not None, "No cache found. Run without --plots-only first."
+        else:
+            data = compute_data()
+
+        if not args.data_only:
+            generate_outputs(data)
     finally:
         sys.stdout = sys.__stdout__
         tee.close()

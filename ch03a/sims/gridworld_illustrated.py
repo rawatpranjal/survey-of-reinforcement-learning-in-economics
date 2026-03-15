@@ -10,8 +10,6 @@
 import os
 import sys
 import time
-import pickle
-import hashlib
 import argparse
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -19,7 +17,8 @@ from typing import Dict, List, Optional
 
 # Shared style module lives at repo root sims/
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-from sims.plot_style import apply_style, ALGO_COLORS, FIG_SINGLE, FIG_DOUBLE
+from sims.plot_style import apply_style, ALGO_COLORS, CMAP_SEQ, FIG_SINGLE, FIG_DOUBLE
+from sims.sim_cache import load_results, save_results, add_cache_args
 
 # gridworld_algorithms lives in ch03_theory/sims/
 sys.path.insert(0, str(Path(__file__).resolve().parent / '../../ch03_theory/sims'))
@@ -139,7 +138,7 @@ class TeeOutput:
 
 
 # ---------------------------------------------------------------------------
-# Caching infrastructure
+# Caching infrastructure (via sims.sim_cache)
 # ---------------------------------------------------------------------------
 
 def _algo_config(name):
@@ -167,50 +166,33 @@ def _algo_config(name):
     return configs[name]
 
 
-def compute_config_hash(name):
-    """Hash of algorithm config + shared params to detect stale caches."""
+def _algo_full_config(name):
+    """Full config dict for cache hashing (shared params + algo-specific)."""
     shared = dict(N=N, GAMMA=GAMMA, STEP_PENALTY=STEP_PENALTY,
                   TERMINAL_REWARD=TERMINAL_REWARD, SYMMETRY_BREAK=SYMMETRY_BREAK,
                   NUM_EPISODES=NUM_EPISODES, EPISODE_HORIZON=EPISODE_HORIZON,
                   EVAL_FREQ=ALGO_EVAL_FREQ[name], EVAL_EPISODES=EVAL_EPISODES,
-                  SEEDS=SEEDS, M=M)
-    combined = {**shared, **_algo_config(name)}
-    raw = str(sorted(combined.items()))
-    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+                  SEEDS=SEEDS, M=M, version=1)
+    return {**shared, **_algo_config(name)}
 
 
 def save_algo_cache(name, agg_result, detailed_metric):
-    """Pickle an algorithm's results to cache."""
-    CACHE_DIR.mkdir(exist_ok=True)
+    """Pickle an algorithm's results to cache via sim_cache."""
     cache_key = ALGO_CACHE_KEYS[name]
     data = {
-        'config_hash': compute_config_hash(name),
         'agg_result': agg_result,
         'detailed_metrics': detailed_metric,
     }
-    path = CACHE_DIR / f'{cache_key}_results.pkl'
-    with open(path, 'wb') as f:
-        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
-    print(f"  Cached: {path.name}")
+    save_results(str(CACHE_DIR), cache_key + '_results', _algo_full_config(name), data)
 
 
 def load_algo_cache(name):
     """Load cached results if valid. Returns (agg_result, detailed_metric) or None."""
     cache_key = ALGO_CACHE_KEYS[name]
-    path = CACHE_DIR / f'{cache_key}_results.pkl'
-    if not path.exists():
+    data = load_results(str(CACHE_DIR), cache_key + '_results', _algo_full_config(name))
+    if data is None:
         return None
-    try:
-        with open(path, 'rb') as f:
-            data = pickle.load(f)
-        expected_hash = compute_config_hash(name)
-        if data.get('config_hash') != expected_hash:
-            print(f"  Cache stale for {name} (hash mismatch), will re-run")
-            return None
-        return data['agg_result'], data['detailed_metrics']
-    except Exception as e:
-        print(f"  Cache load failed for {name}: {e}")
-        return None
+    return data['agg_result'], data['detailed_metrics']
 
 
 # ---------------------------------------------------------------------------
@@ -648,8 +630,8 @@ def fig_value_heatmaps(detailed_metrics, V_optimal, env, optimal_return):
     if nrows == 1:
         axes = axes[np.newaxis, :]
 
-    # Unified colormap: all columns use Blues with same scale
-    val_cmap = 'Blues'
+    # Unified colormap: all columns use CMAP_SEQ with same scale
+    val_cmap = CMAP_SEQ
     vmin_v = min(V_optimal.min(), 0)
     vmax_v = V_optimal.max()
 
@@ -1192,8 +1174,7 @@ def parse_args():
     parser.add_argument('--only', type=str, default=None,
                         help='Comma-separated cache keys to force re-run '
                              '(e.g. --only dqn,ppo). Others loaded from cache.')
-    parser.add_argument('--plots-only', action='store_true',
-                        help='Skip computation, regenerate figures/tables from cache.')
+    add_cache_args(parser)
     return parser.parse_args()
 
 
@@ -1214,6 +1195,8 @@ def main():
         print(f"Mode: selective re-run ({', '.join(only_algos)})")
     elif args.plots_only:
         print(f"Mode: plots-only (loading all from cache)")
+    elif args.data_only:
+        print(f"Mode: data-only (compute, skip figures/tables)")
     else:
         print(f"Mode: full run (cache where valid)")
     print()
@@ -1236,29 +1219,30 @@ def main():
             env, V_optimal, policy_optimal, optimal_return,
             only_algos=only_algos)
 
-    # Phase 3: Per-state diagnostics
-    print_per_state_summary(detailed_metrics, V_optimal, policy_optimal, env)
+    if not args.data_only:
+        # Phase 3: Per-state diagnostics
+        print_per_state_summary(detailed_metrics, V_optimal, policy_optimal, env)
 
-    # Phase 4: Figures
-    print("\n" + "=" * 70)
-    print("PHASE 4: GENERATING FIGURES")
-    print("=" * 70)
+        # Phase 4: Figures
+        print("\n" + "=" * 70)
+        print("PHASE 4: GENERATING FIGURES")
+        print("=" * 70)
 
-    fig_learning_curves(agg_results)
-    fig_value_heatmaps(detailed_metrics, V_optimal, env, optimal_return)
-    fig_convergence_fan(detailed_metrics, V_optimal, env)
-    fig_policy_convergence(detailed_metrics, policy_optimal, env)
-    fig_policy_heatmaps(detailed_metrics, policy_optimal, env, V_optimal)
+        fig_learning_curves(agg_results)
+        fig_value_heatmaps(detailed_metrics, V_optimal, env, optimal_return)
+        fig_convergence_fan(detailed_metrics, V_optimal, env)
+        fig_policy_convergence(detailed_metrics, policy_optimal, env)
+        fig_policy_heatmaps(detailed_metrics, policy_optimal, env, V_optimal)
 
-    # Phase 5: Tables
-    print("\n" + "=" * 70)
-    print("PHASE 5: GENERATING TABLES")
-    print("=" * 70)
+        # Phase 5: Tables
+        print("\n" + "=" * 70)
+        print("PHASE 5: GENERATING TABLES")
+        print("=" * 70)
 
-    generate_results_table(agg_results, optimal_return, metrics_vi, metrics_pi)
-    generate_hyperparams_table()
-    generate_value_convergence_table(detailed_metrics, V_optimal, OUTPUT_DIR)
-    generate_policy_convergence_table(detailed_metrics, policy_optimal, OUTPUT_DIR)
+        generate_results_table(agg_results, optimal_return, metrics_vi, metrics_pi)
+        generate_hyperparams_table()
+        generate_value_convergence_table(detailed_metrics, V_optimal, OUTPUT_DIR)
+        generate_policy_convergence_table(detailed_metrics, policy_optimal, OUTPUT_DIR)
 
     # Summary
     print("\n" + "=" * 70)

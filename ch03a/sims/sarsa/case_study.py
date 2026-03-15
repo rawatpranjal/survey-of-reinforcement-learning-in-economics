@@ -9,7 +9,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-from sims.plot_style import apply_style, ALGO_COLORS, FIG_SINGLE, FIG_DOUBLE
+from sims.plot_style import apply_style, ALGO_COLORS, CMAP_SEQ, FIG_SINGLE, FIG_DOUBLE
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'ch03_theory', 'sims'))
 from gridworld_algorithms import (GridworldEnv, run_value_iteration, run_q_learning,
                                    run_sarsa, v_to_array, policy_to_array)
@@ -70,7 +70,7 @@ for ax, m, title in zip(axes, [m_sarsa_01, m_sarsa_glie],
     V_final = m.value_snapshots[last_ep]
     errors = np.abs(V_final - V_optimal).reshape(N, N)
 
-    im = ax.imshow(errors, cmap='Reds', vmin=0, vmax=V_optimal.max(), origin='upper')
+    im = ax.imshow(errors, cmap=CMAP_SEQ, vmin=0, vmax=V_optimal.max(), origin='upper')
     for r in range(N):
         for c in range(N):
             val = errors[r, c]
@@ -83,7 +83,7 @@ for ax, m, title in zip(axes, [m_sarsa_01, m_sarsa_glie],
 fig.suptitle('Final $|V(s) - V^*(s)|$ at episode 500K', fontsize=11)
 fig.tight_layout(rect=[0, 0, 0.92, 0.94])
 cbar_ax = fig.add_axes([0.93, 0.15, 0.02, 0.7])
-fig.colorbar(plt.cm.ScalarMappable(norm=plt.Normalize(0, V_optimal.max()), cmap='Reds'),
+fig.colorbar(plt.cm.ScalarMappable(norm=plt.Normalize(0, V_optimal.max()), cmap=CMAP_SEQ),
              cax=cbar_ax, label='$|V - V^*|$')
 fig.savefig(os.path.join(OUTPUT_DIR, 'sarsa_glie_comparison.png'), bbox_inches='tight')
 plt.close(fig)

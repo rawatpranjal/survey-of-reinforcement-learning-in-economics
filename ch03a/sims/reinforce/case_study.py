@@ -8,7 +8,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-from sims.plot_style import apply_style, ALGO_COLORS, FIG_SINGLE, FIG_DOUBLE
+from sims.plot_style import apply_style, ALGO_COLORS, CMAP_SEQ, FIG_SINGLE, FIG_DOUBLE
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'ch03_theory', 'sims'))
 from gridworld_algorithms import (GridworldEnv, run_value_iteration, run_reinforce,
                                    v_to_array, policy_to_array)
@@ -110,7 +110,7 @@ if show_eps:
     for j, ep in enumerate(show_eps):
         ax = axes[j]
         V_snap = metrics.value_snapshots[ep].reshape(N, N)
-        im = ax.imshow(V_snap, cmap='viridis', vmin=vmin, vmax=vmax, origin='upper')
+        im = ax.imshow(V_snap, cmap=CMAP_SEQ, vmin=vmin, vmax=vmax, origin='upper')
         for r in range(N):
             for c in range(N):
                 val = V_snap[r, c]
@@ -124,7 +124,7 @@ if show_eps:
     fig.suptitle('REINFORCE: Baseline $V(s)$ at selected episodes', fontsize=11)
     fig.tight_layout(rect=[0, 0, 0.92, 0.94])
     cbar_ax = fig.add_axes([0.93, 0.15, 0.02, 0.7])
-    fig.colorbar(plt.cm.ScalarMappable(norm=plt.Normalize(vmin, vmax), cmap='viridis'),
+    fig.colorbar(plt.cm.ScalarMappable(norm=plt.Normalize(vmin, vmax), cmap=CMAP_SEQ),
                  cax=cbar_ax, label='$V(s)$')
     fig.savefig(os.path.join(OUTPUT_DIR, 'reinforce_baseline.png'), bbox_inches='tight')
     plt.close(fig)
