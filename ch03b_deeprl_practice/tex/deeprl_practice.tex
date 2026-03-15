@@ -39,7 +39,7 @@ where the maximum is taken over the estimated Q-values of all actions at the suc
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.85\textwidth]{../ch03b_deeprl_practice/sims/overestimation_bias.png}
+\includegraphics[width=0.7\textwidth]{../ch03b_deeprl_practice/sims/overestimation_bias.png}
 \caption{Overestimation bias from Jensen's inequality with $n=2$ actions. Blue: density of individual $\hat{Q}(s,a_i) \sim \mathcal{N}(\mu,\sigma^2)$. Red: density of $\max_i \hat{Q}(s,a_i)$, shifted right by $\sigma/\sqrt{\pi} \approx 0.56$. The shaded gap is the bias. With $n=100$ actions the bias exceeds $2.5\sigma$.}
 \label{fig:overestimation_bias}
 \end{figure}
