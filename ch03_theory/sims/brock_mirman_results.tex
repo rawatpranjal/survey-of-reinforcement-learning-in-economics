@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\caption{Brock--Mirman Economy: VI vs PI vs LP}
+\label{tab:brock_mirman}
+\begin{tabular}{llrrr}
+\hline
+Regime & Method & Iterations & Time (s) & $\|V - V^*\|_\infty$ \\
+\hline
+1. Contraction & VI & 567 & 32.32 & 9.7e-11 \\
+ & PI & 11 & 0.73 & 0.0e+00 \\
+2. LP dual & VI & --- & 0.005 & --- \\
+ & LP & --- & 0.015 & 2.3e-09 \\
+3. Rate ($n_k$=10) & VI & 567 & 0.003 & --- \\
+ & PI & 7 & 0.000 & --- \\
+3. Rate ($n_k$=200) & VI & 567 & 2.152 & --- \\
+ & PI & 10 & 0.047 & --- \\
+\hline
+\end{tabular}
+\end{table}

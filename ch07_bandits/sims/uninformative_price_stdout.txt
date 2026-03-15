@@ -1,0 +1,20 @@
+Uninformative Optimal Price Diagram
+==================================================
+Optimal price p* = 5.0
+Optimal revenue r* = 25.0
+
+Revenue at p* for each k:
+  k = 0.5:  r(5.0) = 25.0000
+  k = 1.0:  r(5.0) = 25.0000
+  k = 2.0:  r(5.0) = 25.0000
+  k = 3.5:  r(5.0) = 25.0000
+
+Revenue separation at exploration boundaries:
+  p_lo = 4.3,  p_hi = 5.7
+      k     r(p_lo)     r(p_hi)
+    0.5     24.7550     24.7550
+    1.0     24.5100     24.5100
+    2.0     24.0200     24.0200
+    3.5     23.2850     23.2850
+
+Output file: /Users/pranjal/Code/rl/ch07_bandits/sims/uninformative_price.png

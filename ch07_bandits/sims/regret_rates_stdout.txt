@@ -1,0 +1,11 @@
+Saved: ch07_bandits/sims/regret_rates.png
+
+Per 10K (d=5) verification:
+  sqrt(T)        = 100.0   (table: ~100)
+  log(T)         = 9.21   (table: ~9)
+  T^(2/3)        = 464.2  (table: ~464)
+  d*log(T)       = 46.1   (table: ~46)
+  d*sqrt(T)      = 500.0  (table: ~500)
+  T              = 10000  (table: never improves)
+  s0=1 log(d)*log(T) = 14.8
+  s0=5 log(d)*log(T) = 74.1

@@ -1,0 +1,136 @@
+======================================================================
+BROCK-MIRMAN: FITTED VALUE ITERATION vs FITTED Q-ITERATION
+======================================================================
+
+Parameters:
+  alpha (capital share): 0.36
+  beta (discount factor): 0.96
+  z_vals: [0.9, 1.1]
+  PI_TRANS: [[0.8, 0.2], [0.2, 0.8]]
+  N_K=50, N_Z=2, N_S=100, N_A=50
+  Basis (per z): ['1 (const)', 'log(k)', '(k/k_max)^1', '(k/k_max)^2', '(k/k_max)^3']  ->  10 total features
+  Max iterations: FVI=3000, FQI=3000
+  Convergence tolerance (change in V): 1e-06
+
+Building model ...
+  k_grid: [0.0100, 0.3310]
+  Feasible (s,a) pairs: 4860 / 5000
+  Phi shape: (100, 10), rank: 10
+
+Phase 1: Exact Value Iteration (ground truth)
+--------------------------------------------------
+  Converged. Time: 0.043s
+  Policy agreement with closed-form: 98.0%
+  V* range: [-27.7173, -25.0679]
+  Theoretical B = alpha/(1-alpha*beta) = 0.5501
+
+  Best linear approx of V* in span(Phi): ||Phi theta - V*||_inf = 0.000211
+  (zero would mean V* is exactly representable; our log(k)+poly basis
+   captures the dominant log(k) structure of BM value function)
+
+Phase 2: Linear Fitted Value Iteration
+--------------------------------------------------
+  Converged in 341 iterations. Time: 0.008s
+  ||V_FVI - V*||_inf = 0.001045
+  ||V_FVI - V*||_rms = 0.000842
+  Policy agreement with closed-form: 99.0%
+
+  FVI weight vector theta_V (10 components):
+    z=0.9 [1, log(k), k/kmax, (k/kmax)^2, (k/kmax)^3]: [  -25.1796,     0.5512,    -0.0087,     0.0103,    -0.0046]
+    z=1.1 [1, log(k), k/kmax, (k/kmax)^2, (k/kmax)^3]: [  -24.4575,     0.5508,    -0.0062,     0.0075,    -0.0034]
+
+Phase 3: Linear Fitted Q-Iteration
+--------------------------------------------------
+  Converged in 339 iterations. Time: 0.295s
+  ||V_FQI - V*||_inf = 1.652142
+  ||V_FQI - V*||_rms = 1.480486
+  Policy agreement with closed-form: 4.0%
+
+Phase 3b: Oracle-basis FQI (known alpha, log-consumption feature)
+--------------------------------------------------
+  Converged in 341 iterations. Time: 0.236s
+  ||V_Oracle - V*||_inf = 0.000024
+  ||V_Oracle - V*||_rms = 0.000024
+  Policy agreement with closed-form: 98.0%
+
+Phase 3c: NLLS-FQI (estimate alpha via concentrated least squares)
+--------------------------------------------------
+  Converged in 341 iterations. Time: 8.278s
+  ||V_NLLS - V*||_inf = 0.000023
+  ||V_NLLS - V*||_rms = 0.000023
+  Policy agreement with closed-form: 98.0%
+  Recovered alpha: 0.360000 (true: 0.36)
+  Alpha trajectory: 0.5000 -> 0.3600 -> 0.3600 -> 0.3600 -> 0.3600 -> 0.3600...
+
+Phase 4: Value function comparison (FVI vs FQI at optimal action)
+--------------------------------------------------
+  Per-state |V_FVI(s) - Q_FQI(s, a*(s))|:
+    Max  difference: 1.653011
+    Mean difference: 1.479133
+
+  z=0.9: max diff = 1.653011, mean diff = 1.454192
+  z=1.1: max diff = 1.610917, mean diff = 1.504073
+
+  Detailed comparison (first 5 states per z level):
+     s  iz        k |      V*(s)   V_FVI(s)  Q_FQI(s,a*) |   |FVI-V*|   |FQI-V*|  |FVI-FQI|
+  -----------------------------------------------------------------------------------------
+     0   0   0.0100 |   -27.7173   -27.7180     -26.3475 |   0.000672   1.369768   1.370441
+     2   0   0.0166 |   -27.4396   -27.4404     -26.0750 |   0.000839   1.364610   1.365449
+     4   0   0.0231 |   -27.2559   -27.2568     -25.8945 |   0.000950   1.361393   1.362343
+     6   0   0.0297 |   -27.1184   -27.1194     -25.7549 |   0.000969   1.363524   1.364493
+     8   0   0.0362 |   -27.0086   -27.0095     -25.6313 |   0.000885   1.377305   1.378190
+     1   1   0.0100 |   -26.9938   -26.9944     -25.5546 |   0.000593   1.439219   1.439812
+     3   1   0.0166 |   -26.7160   -26.7170     -25.2966 |   0.000966   1.419414   1.420379
+     5   1   0.0231 |   -26.5328   -26.5334     -25.1284 |   0.000644   1.404320   1.404964
+     7   1   0.0297 |   -26.3952   -26.3960     -24.9939 |   0.000848   1.401269   1.402117
+     9   1   0.0362 |   -26.2852   -26.2861     -24.8847 |   0.000929   1.400510   1.401439
+
+Phase 5: Results Summary
+--------------------------------------------------
+  Method         ||V-V*||_inf   ||V-V*||_rms  Pol Agr %   Iters  Time(s)
+  ----------------------------------------------------------------------
+  VI (exact)         0.000000       0.000000      98.0%      --    0.043
+  FVI                0.001045       0.000842      99.0%     341    0.008
+  FQI                1.652142       1.480486       4.0%     339    0.295
+  Oracle-FQI         0.000024       0.000024      98.0%     341    0.236
+  NLLS-FQI           0.000023       0.000023      98.0%     341    8.278  (a=0.360)
+
+  Max |V_FVI - V_FQI| at optimal action: 1.653011
+  Best-representable error in span(Phi): 0.000211
+
+Phase 6: Feature weight table (FVI vs FQI modal-optimal actions)
+--------------------------------------------------
+  z=0.9: modal a* = 40 (k'=0.2720), appears in 19 / 50 states
+  z=1.1: modal a* = 41 (k'=0.2786), appears in 15 / 50 states
+
+  Feature                   FVI theta_V | FQI theta_a* z_low FQI theta_a* z_high
+  -----------------------------------------------------------------------------
+  z=0.9, 1                     -25.1796 |            39.0394              2.2630
+  z=0.9, log(k)                  0.5512 |            17.5316              7.9759
+  z=0.9, k/kmax                 -0.0087 |          -105.1561            -39.5636
+  z=0.9, (k/kmax)^2              0.0103 |           100.4176             34.6760
+  z=0.9, (k/kmax)^3             -0.0046 |           -39.4090            -12.8715
+  z=1.1, 1                     -24.4575 |            -8.4938             -1.7315
+  z=1.1, log(k)                  0.5508 |             4.4731              6.2144
+  z=1.1, k/kmax                 -0.0062 |           -24.5224            -37.0297
+  z=1.1, (k/kmax)^2              0.0075 |            24.0981             37.1908
+  z=1.1, (k/kmax)^3             -0.0034 |            -9.7268            -15.1914
+
+  z=0.9: avg V_FVI = -26.2922, avg phi(s)^T theta_{a*} = -25.9704, diff = 0.3218
+  z=1.1: avg V_FVI = -25.5689, avg phi(s)^T theta_{a*} = -24.4169, diff = 1.1520
+
+Phase 7: Generating convergence figure
+--------------------------------------------------
+  Saved: /Users/pranjal/Code/rl/ch03a_bm/sims/bm_fvi_fqi.png
+Phase 8: Generating LaTeX tables
+--------------------------------------------------
+  Saved: /Users/pranjal/Code/rl/ch03a_bm/sims/bm_fvi_fqi_results.tex
+  Saved: /Users/pranjal/Code/rl/ch03a_bm/sims/bm_fvi_fqi_weights.tex
+
+Output files:
+  /Users/pranjal/Code/rl/ch03a_bm/sims/bm_fvi_fqi.png
+  /Users/pranjal/Code/rl/ch03a_bm/sims/bm_fvi_fqi_results.tex
+  /Users/pranjal/Code/rl/ch03a_bm/sims/bm_fvi_fqi_weights.tex
+  /Users/pranjal/Code/rl/ch03a_bm/sims/bm_fvi_fqi_stdout.txt  (this run)
+
+Done.
