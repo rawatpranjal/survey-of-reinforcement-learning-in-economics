@@ -148,14 +148,14 @@ Figure~\ref{fig:curse_scaling} presents computation times for all methods on a l
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.85\textwidth]{../ch03_theory/papers/curse_of_dimensionality/sims/computation_times.png}
+\includegraphics[width=0.7\textwidth]{../ch03_theory/papers/curse_of_dimensionality/sims/computation_times.png}
 \caption{Computation time versus state dimension for all methods (log scale). Tabular DP exhibits exponential scaling, completing at $d = 3$ (38s) and $d = 4$ (328s) but timing out at $d \geq 5$. RL methods scale polynomially: Bilinear AC (2--5s), Factored RL (18--46s), and DQN (52--131s) all complete within minutes regardless of dimension.}
 \label{fig:curse_scaling}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.85\textwidth]{../ch03_theory/papers/curse_of_dimensionality/sims/performance.png}
+\includegraphics[width=0.7\textwidth]{../ch03_theory/papers/curse_of_dimensionality/sims/performance.png}
 \caption{Policy performance versus state dimension. Tabular DP achieves returns of 1110--1113 where it completes ($d = 3, 4$). DQN and Bilinear AC match DP performance at 1107--1109; Factored RL achieves 1070--1104. All RL methods maintain stable performance at $d = 5, 6$ where DP is intractable.}
 \label{fig:performance}
 \end{figure}

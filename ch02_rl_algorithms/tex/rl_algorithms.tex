@@ -62,7 +62,7 @@ Consider a robot arm that must apply a continuous torque $a \in \mathbb{R}$ to r
 
 \citet{tesauro1994}'s TD-Gammon demonstrated that temporal difference learning with neural network function approximation could achieve expert-level play in a domain with approximately $10^{20}$ legal positions\footnote{The state $\mathbf{x}(s)$ was a 198-dimensional binary encoding of the raw board (four units per board point per player indicating checker counts, plus bar and borne-off counts). The output was a four-component vector estimating probabilities of each game outcome (White/Black $\times$ normal win/gammon), and the move maximizing expected outcome among all legal moves was selected at each step.}. 
 
-Backgammon was far beyond tabular methods, yet TD-Gammon trained a feedforward neural network to estimate the probability of winning from any board position. A hidden layer of 80 sigmoid units fed a single sigmoid output.
+Backgammon was far beyond tabular methods, yet TD-Gammon trained a feedforward neural network to estimate the probability of winning from any board position. A hidden layer\footnote{A feedforward neural network stacks an input layer, one or more hidden layers, and an output layer; each unit in a hidden layer computes a weighted sum of its inputs and applies a nonlinear activation, here the logistic sigmoid $\sigma(x) = 1/(1+e^{-x})$, which maps any real number to $(0,1)$ and is identical to the binary logit link function.} of 80 sigmoid units fed a single sigmoid output.
 \begin{equation}
 \hat{V}(s) = \sigma\!\bigl(\mathbf{w}^\top \sigma(W\mathbf{x}(s) + \mathbf{b}) + c\bigr)
 \end{equation}
@@ -70,7 +70,7 @@ where $\sigma$ is the logistic sigmoid, $W$ is the input-to-hidden weight matrix
 \begin{equation}
 \boldsymbol{\theta} \leftarrow \boldsymbol{\theta} + \alpha \bigl[\hat{V}(s_{t+1}) - \hat{V}(s_t)\bigr] \, \mathbf{e}_t
 \end{equation}
-where the eligibility trace $\mathbf{e}_t = \sum_{k=1}^{t} \lambda^{t-k} \nabla_{\boldsymbol{\theta}} \hat{V}(s_k)$ accumulates exponentially decayed gradients of past predictions.\footnote{In the neural network case, the eligibility trace $\mathbf{e}_t \in \mathbb{R}^{|\boldsymbol{\theta}|}$ is a vector accumulating exponentially-weighted gradients, extending the scalar state-based trace to parameter space.} At game's end, $\hat{V}(s_{t+1})$ is replaced by the outcome $z \in \{0, 1\}$.
+where $\alpha$\footnote{The \emph{learning rate} $\alpha$ controls the step size of each parameter update. TD learning uses a semi-gradient step rather than true gradient descent, but $\alpha$ plays the same role: too large and updates overshoot; too small and convergence is slow.} is the step size, and the eligibility trace $\mathbf{e}_t = \sum_{k=1}^{t} \lambda^{t-k} \nabla_{\boldsymbol{\theta}} \hat{V}(s_k)$ accumulates exponentially decayed gradients of past predictions.\footnote{In the neural network case, the eligibility trace $\mathbf{e}_t \in \mathbb{R}^{|\boldsymbol{\theta}|}$ is a vector accumulating exponentially-weighted gradients, extending the scalar state-based trace to parameter space.} At game's end, $\hat{V}(s_{t+1})$ is replaced by the outcome $z \in \{0, 1\}$.
 
 A single neural network $\hat{V}$ serves as the evaluation function for both players. At each turn, the current player selects the legal move maximizing $\hat{V}(s')$ from its own perspective. As the network improves, it generates stronger play on both sides, producing harder training games that drive further improvement. The dice rolls ensure diverse board positions without requiring an explicit exploration mechanism.\footnote{Version 2.1, trained on 1,500,000 games with 2-ply search, achieved near-parity with former world champion Bill Robertie and discovered novel positional strategies subsequently adopted by the human backgammon community.} 
 
@@ -149,7 +149,7 @@ where $V_{\mathrm{target}}^{(k)}(s) = \max_a \bigl\{ r(s,a) + \gamma \sum_{s'} P
 
 \citet{mnih2015} trained a single convolutional neural network\footnote{A convolutional neural network applies learned spatial filters to detect local patterns in grid-structured data, commonly used for image inputs.} to play 49 Atari 2600 games directly from pixel inputs ($210 \times 160 \times 3$) and a scalar score, using no game-specific features.
 
-The architecture processed four consecutive frames through three convolutional layers and a fully connected layer. The network $Q(s, a; \theta)$ was trained to minimize the squared temporal difference error
+The architecture processed four consecutive frames through three convolutional layers and a fully connected layer.\footnote{A fully connected layer computes $y = Wx + b$ where every input unit is connected to every output unit with learned weights $W$ and biases $b$; it is the affine transformation familiar from linear regression, followed by a nonlinear activation.} The network $Q(s, a; \theta)$ was trained to minimize the squared temporal difference error
 \begin{equation}
 L(\theta) = \mathbb{E}_{(s,a,r,s') \sim \mathcal{D}} \left[ \left( r + \gamma \max_{a'} Q(s', a'; \theta^-) - Q(s, a; \theta) \right)^2 \right]
 \end{equation}
@@ -158,7 +158,7 @@ Two innovations stabilized learning. \textit{Experience replay} \citep{Lin1992} 
 
 %These techniques address the deadly triad identified by Baird. Experience replay creates a more stationary data distribution, partially mitigating off-policy issues. The target network holds the bootstrap target fixed between updates, making the regression problem approximately stationary. Neither technique provides theoretical guarantees, but the empirical success demonstrated that the deadly triad can be managed in practice.
 
-DQN exceeded human-level performance on 29 of 49 games using a single architecture and hyperparameters. Games requiring long-horizon planning or sparse rewards, such as Montezuma's Revenge, remained difficult.
+DQN exceeded human-level performance on 29 of 49 games using a single architecture and hyperparameters.\footnote{\emph{Hyperparameters} are design choices fixed before training begins, such as network depth, learning rate, and replay buffer size; they are not estimated by gradient descent and are analogous to tuning parameters in nonparametric estimation (bandwidth, penalty weights).} Games requiring long-horizon planning or sparse rewards, such as Montezuma's Revenge, remained difficult.
 
 \subsubsection{TRPO and PPO (2015, 2017)}
 

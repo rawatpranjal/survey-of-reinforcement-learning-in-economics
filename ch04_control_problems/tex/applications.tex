@@ -1,7 +1,7 @@
 % Chapter: Reinforcement Learning for Optimal Control
 % Focus on deployed systems and field experiments with one simulation demonstration
 
-Several industries now run reinforcement learning in production, not just in simulation. I focus on systems where RL operates continuously in the field, affecting millions of real decisions, such as ride-hailing dispatch at DiDi, data center cooling at Google, hotel revenue management, and financial order execution. The chapter concludes with a simulation study on the bus engine replacement problem, demonstrating that RL matches and surpasses dynamic programming on a classical benchmark.
+A handful of organizations have deployed reinforcement learning beyond simulation, achieving measurable gains on specific large-scale problems. Each deployment required substantial domain engineering and scientific tuning; these remain exceptional cases rather than standard practice. I review the most prominent field deployments, including ride-hailing dispatch at DiDi, data center cooling at Google, hotel revenue management, and financial order execution, before concluding with a simulation study on the bus engine replacement problem.
 
 \subsection{Ride-Hailing Dispatch}
 \label{sec:ridehailing}
@@ -18,9 +18,9 @@ Each dispatching window (a few seconds), the platform collects open orders and a
 \begin{equation}
 w_{ij} = \hat{r}_i + \gamma^{\hat{\tau}_i} V(s_j') - V(s_j),
 \end{equation}
-where $\hat{r}_i$ is the predicted fare for order $i$, $\hat{\tau}_i$ is the estimated trip duration, and $s_j'$ is the destination state. The value function is learned via temporal-difference methods from historical trip data. DiDi's Cerebellar Value Network \citep[CVNet;][]{Tang2019cvnet} uses hierarchical coarse-coding\footnote{Coarse-coding represents a continuous state using overlapping receptive fields at multiple resolutions. At coarser levels, each tile covers a large region, capturing broad spatial patterns; finer levels capture local detail. The value function is the sum of features activated across all resolution levels.} with a multi-resolution hexagonal grid, enabling transfer learning across cities and robustness to data sparsity in low-traffic zones.
+where $\hat{r}_i$ is the predicted fare for order $i$, $\hat{\tau}_i$ is the estimated trip duration, and $s_j'$ is the destination state. The value function is learned via temporal-difference methods from historical trip data. DiDi's Cerebellar Value Network \citep[CVNet;][]{Tang2019cvnet} uses hierarchical coarse-coding\footnote{\emph{Coarse-coding} represents a value function as a weighted sum over overlapping rectangular or hexagonal tiles that partition the state space \citep{sutton2018}; each state activates the tiles that contain it, and a hierarchical variant stacks tiles at multiple resolutions to allow both coarse and fine generalization simultaneously.} with a multi-resolution hexagonal grid, enabling transfer learning\footnote{\emph{Transfer learning} initializes a model for a new task (a new city) with parameters trained on related tasks (existing cities), on the assumption that learned representations of traffic and demand patterns generalize across contexts and require less data to reach good performance in the new setting.} across cities and robustness to data sparsity in low-traffic zones.
 
-Production deployment across more than 20 Chinese cities demonstrated consistent improvements. Table~\ref{tab:didi_results} summarizes the reported gains from A/B tests using time-slice rotation, where algorithms alternate control of the platform in 3-hour blocks to avoid interference effects.
+Production deployment across more than 20 Chinese cities demonstrated modest but consistent improvements of 0.5--2\% on key metrics, gains that required the full CVNet infrastructure (hierarchical coarse-coding, multi-resolution grids, transfer learning across cities) to achieve. Table~\ref{tab:didi_results} summarizes the reported gains from A/B tests using time-slice rotation, where algorithms alternate control of the platform in 3-hour blocks to avoid interference effects.
 
 \begin{table}[htbp]
 \centering
@@ -39,7 +39,7 @@ Fulfillment rate & +0.5--2.0\% & Platform-wide \\
 
 \citet{Li2019ridesharing} addressed the coordination challenge using mean-field multi-agent RL. With thousands of drivers making simultaneous decisions, the full multi-agent state space is intractable. The mean-field approximation replaces individual driver states with an aggregate distribution, allowing each driver to condition on the density of nearby drivers rather than their exact locations. Experiments on DiDi data showed improved fleet utilization compared to single-agent baselines.
 
-\citet{Han2022lyft} reported complementary results from Lyft, where the dispatching system optimizes driver assignment and repositioning jointly. Their value decomposition architecture\footnote{Value decomposition decomposes the platform's global matching objective into individual driver value functions, each estimable via temporal-difference learning. The global optimum is recovered by optimizing the sum of individual values.} assigns credit to individual driver decisions within the global objective. The production system demonstrated improvements in rider wait times and driver utilization, confirming that the RL dispatch paradigm generalizes across platforms and regulatory environments.
+\citet{Han2022lyft} reported complementary results from Lyft, where the dispatching system optimizes driver assignment and repositioning jointly. Their value decomposition architecture\footnote{Value decomposition decomposes the platform's global matching objective into individual driver value functions, each estimable via temporal-difference learning. The global optimum is recovered by optimizing the sum of individual values.} assigns credit to individual driver decisions within the global objective. The production system demonstrated improvements in rider wait times and driver utilization, providing a second data point suggesting that similar approaches may transfer across platforms.
 
 At DiDi's volume, even 1\% gains represent hundreds of thousands of additional completed rides per day, because dispatching is fundamentally a fleet positioning problem: today's assignments determine tomorrow's driver distribution.
 
@@ -51,7 +51,7 @@ Data centers consume enormous amounts of energy, with cooling systems accounting
 
 \citet{Gao2014} reported initial results from deploying neural network predictions to guide data center operations. The system used over 100 sensor readings, including temperatures at multiple locations, coolant flow rates, power draw, and external weather conditions, to predict Power Usage Effectiveness (PUE).\footnote{PUE is the ratio of total facility energy to IT equipment energy. A PUE of 1.0 means all energy goes to computing; the industry average is approximately 1.6.} Operators used these predictions to adjust equipment setpoints. This assisted approach achieved a 40\% reduction in cooling energy and a 15\% improvement in overall PUE.
 
-\citet{Lazic2018} subsequently deployed a fully autonomous system using model-predictive control with learned dynamics. The state space consists of temperatures, flow rates, and equipment states across multiple zones. Actions are setpoints for chillers, fans, and pumps. The system learns a neural network dynamics model $\hat{f}$ from operational data:
+\citet{Lazic2018} subsequently deployed a fully autonomous system using model-predictive control\footnote{\emph{Model-predictive control} (MPC) solves a finite-horizon optimal control problem at each step using a predictive model of system dynamics, applies the first action, then re-solves at the next step with the updated state; the receding-horizon structure makes it robust to model error because the plan is continually revised.} with learned dynamics. The state space consists of temperatures, flow rates, and equipment states across multiple zones. Actions are setpoints for chillers, fans, and pumps. The system learns a neural network dynamics model $\hat{f}$ from operational data:
 \begin{equation}
 s_{t+1} = \hat{f}(s_t, a_t) + \epsilon_t.
 \end{equation}
@@ -78,7 +78,7 @@ Temperature violations & 0 & Safety constraints \\
 \end{tabular}
 \end{table}
 
-The system operates continuously across multiple data centers, processing millions of sensor readings per day and controlling thousands of setpoints. The learned model adapts online to seasonal variations, equipment degradation, and workload changes.
+The system operates continuously across multiple data centers, processing millions of sensor readings per day and controlling thousands of setpoints. Importantly, this is model-predictive control with learned dynamics models and persistent human oversight, not autonomous model-free RL; the learned model adapts online to seasonal variations, equipment degradation, and workload changes, but operators retain override authority at all times.
 
 
 \subsection{Hotel Revenue Management}
@@ -148,7 +148,7 @@ NVDA & $-$15.8\% & $-$12.1\% & 500 days LOB \\
 \end{tabular}
 \end{table}
 
-The RL agent reduces execution costs by 12--19\% over Almgren-Chriss, and several investment banks have subsequently deployed production execution algorithms built on these ideas.
+The RL agent reduces execution costs by 12--19\% over Almgren-Chriss. These results informed subsequent work on adaptive execution, though independently verified production deployments remain scarce in the public literature.
 
 
 \subsection{Supply Chain Inventory Management}
@@ -180,7 +180,7 @@ Echelons & DRL Cost Gap vs.\ Base-Stock & States & Convergence \\
 \end{tabular}
 \end{table}
 
-Where classical solutions exist, RL underperforms: the base-stock policy remains highly competitive when properly calibrated, and DRL required millions of training transitions to approach performance levels achievable through closed-form calculation. RL struggles particularly with multi-echelon coupling, where upstream orders affect downstream costs many periods later.\footnote{Credit assignment refers to the difficulty of determining which past actions caused a delayed reward or cost. In multi-echelon systems, an upstream ordering decision today may not affect customer-facing costs for many periods, making it difficult for RL to learn the causal connection.} The value proposition for RL lies in problems where analytical solutions are unavailable: non-stationary demand, complex operational constraints, or cost structures that do not admit tractable decomposition.
+Where classical solutions exist, RL underperforms: the base-stock policy remains highly competitive when properly calibrated, and DRL required millions of training transitions to approach performance levels achievable through closed-form calculation. RL struggles particularly with multi-echelon coupling, where upstream orders affect downstream costs many periods later.\footnote{Credit assignment refers to the difficulty of determining which past actions caused a delayed reward or cost. In multi-echelon systems, an upstream ordering decision today may not affect customer-facing costs for many periods, making it difficult for RL to learn the causal connection.} The value proposition for RL lies in problems where analytical solutions are unavailable: non-stationary demand, complex operational constraints, or cost structures that do not admit tractable decomposition. Even in these settings, successful deployment remains rare and requires extensive simulation infrastructure, domain expertise, and careful calibration against classical baselines.
 
 
 \subsection{Real-Time Bidding}

@@ -1,0 +1,29 @@
+======================================================================
+TD(LAMBDA) CREDIT ASSIGNMENT IN A CORRIDOR
+======================================================================
+
+Environment: 20-state corridor (chain MDP)
+  States: 20, Terminal: state 19
+  Reward: +1 at terminal, 0 elsewhere
+  True V*(s) = gamma^(19 - s)
+
+Parameters: gamma=0.99, alpha=0.05
+  Episodes: 200, Seeds: 20
+  Lambda values: [0.0, 0.4, 0.8, 1.0]
+
+Running TD(lambda) corridor experiment
+  States: 20, gamma: 0.99, alpha: 0.05
+  Episodes: 200, Seeds: 20
+  Lambda values: [0.0, 0.4, 0.8, 1.0]
+
+  lambda=0.0: final RMSVE = 0.3944 +/- 0.0056
+  lambda=0.4: final RMSVE = 0.1843 +/- 0.0028
+  lambda=0.8: final RMSVE = 0.0086 +/- 0.0001
+  lambda=1.0: final RMSVE = 0.0091 +/- 0.0000
+  Cache saved: /Users/pranjal/Code/rl/ch03_theory/sims/cache/td_lambda_corridor.pkl
+  Figure saved: /Users/pranjal/Code/rl/ch03_theory/sims/td_lambda_corridor.png
+  Table saved: /Users/pranjal/Code/rl/ch03_theory/sims/td_lambda_corridor.tex
+
+Output files:
+  /Users/pranjal/Code/rl/ch03_theory/sims/td_lambda_corridor.png
+  /Users/pranjal/Code/rl/ch03_theory/sims/td_lambda_corridor.tex
