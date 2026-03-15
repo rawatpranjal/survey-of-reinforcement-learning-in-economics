@@ -55,6 +55,7 @@ FIGURES=(
     "ch02_rl_algorithms/sims/algorithm_architectures.png"
     "ch03_theory/sims/brock_mirman_convergence.png"
     "ch03_theory/sims/lqc_fvi_fqi.png"
+    "ch03_theory/sims/td_lambda_corridor.png"
     "ch03_theory/sims/deadly_triad_geometry.png"
     "ch03_theory/sims/info_geometry_npg.png"
     "ch03_theory/sims/mm_surrogate_trpo.png"
@@ -88,6 +89,7 @@ echo "  Copied ${#FIGURES[@]} figure files"
 # --- 5. Copy table fragments (.tex in sims/) ---
 TABLES=(
     "ch03_theory/sims/brock_mirman_results.tex"
+    "ch03_theory/sims/td_lambda_corridor.tex"
     "ch03_theory/sims/lqc_fvi_fqi_weights.tex"
     "ch03a_bm/sims/bm_fvi_fqi_results.tex"
     "ch03a/sims/gridworld_study_results.tex"

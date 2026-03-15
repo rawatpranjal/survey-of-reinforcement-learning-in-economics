@@ -40,6 +40,7 @@ REGISTRY = [
     ('ch03_theory', 'ch03_theory/sims/qlearning_geometry.py', 'B'),
     ('ch03_theory', 'ch03_theory/sims/info_geometry_npg.py', 'B'),
     ('ch03_theory', 'ch03_theory/sims/mm_surrogate_trpo.py', 'B'),
+    ('ch03_theory', 'ch03_theory/sims/td_lambda_corridor.py', 'A'),
 
     # ch03a
     ('ch03a', 'ch03a/sims/gridworld_illustrated.py', 'A'),
