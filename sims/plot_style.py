@@ -76,9 +76,15 @@ DOMAIN_COLORS = {
     'IQL':        COLORS['blue'],
     'Nash-Q':     COLORS['red'],
     'WoLF-PHC':   COLORS['green'],
-    # RLHF methods (ch08)
+    # RLHF methods (ch09)
     'RLHF':       COLORS['blue'],
     'DPO':        COLORS['orange'],
+    # Offline RL methods (ch08)
+    'FQI':        COLORS['blue'],
+    'CQL':        COLORS['red'],
+    'IQL':        COLORS['green'],
+    'BCQ':        COLORS['purple'],
+    'BC':         COLORS['gray'],
 }
 
 # ---------------------------------------------------------------------------

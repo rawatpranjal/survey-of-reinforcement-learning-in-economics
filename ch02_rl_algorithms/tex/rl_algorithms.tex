@@ -82,7 +82,7 @@ Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \left[ r_{t+1} + \gamma Q(s_{t+1}, a
 \end{equation}
 The key difference from Q-learning is that SARSA bootstraps from the action $a_{t+1}$ actually taken at the next state, rather than the greedy action $\argmax_{a'} Q(s_{t+1}, a')$. This makes the algorithm on-policy, since the target depends on the behavior policy generating the data.
 
-If the agent follows an $\varepsilon$-greedy policy, SARSA converges to $Q^{\varepsilon\text{-greedy}}$, not $Q^*$\footnote{SARSA converges to $Q^*$ under GLIE (greedy in the limit with infinite exploration)A GLIE schedule explores all state-action pairs infinitely often but converges to the greedy policy asymptotically. The standard $\varepsilon$-greedy policy with $\varepsilon_t \to 0$ is one such schedule.} policies and standard step-size conditions (Section~\ref{sec:stochastic_approx}). This distinction matters when exploration is costly. Consider the cliff-walking problem, where an agent must traverse a gridworld with a cliff along one edge. The optimal path runs along the cliff edge (shortest route), but the $\varepsilon$-greedy policy occasionally falls off. Q-learning learns the optimal path because it evaluates the greedy policy; the agent falls off during learning but the Q-values reflect the optimal route. SARSA learns a safer path further from the cliff because it evaluates the actual exploratory policy; it accounts for the fact that exploration sometimes leads to catastrophic states. 
+If the agent follows an $\varepsilon$-greedy policy, SARSA converges to $Q^{\varepsilon\text{-greedy}}$, not $Q^*$\footnote{SARSA converges to $Q^*$ under GLIE (greedy in the limit with infinite exploration). A GLIE schedule explores all state-action pairs infinitely often but converges to the greedy policy asymptotically. The standard $\varepsilon$-greedy policy with $\varepsilon_t \to 0$ is one such schedule.} policies and standard step-size conditions (Section~\ref{sec:stochastic_approx}). This distinction matters when exploration is costly. Consider the cliff-walking problem, where an agent must traverse a gridworld with a cliff along one edge. The optimal path runs along the cliff edge (shortest route), but the $\varepsilon$-greedy policy occasionally falls off. Q-learning learns the optimal path because it evaluates the greedy policy; the agent falls off during learning but the Q-values reflect the optimal route. SARSA learns a safer path further from the cliff because it evaluates the actual exploratory policy; it accounts for the fact that exploration sometimes leads to catastrophic states. 
 
 \subsubsection{Baird (1995)}
 
@@ -199,6 +199,76 @@ SAC is off-policy (using experience replay), handles continuous actions naturall
 \label{fig:algorithm_architectures}
 \end{figure}
 
+\FloatBarrier
+\subsubsection{Control as Probabilistic Inference}
+\label{sec:control_inference}
+
+The \emph{control-as-inference} framework \citep{Todorov2006, Kappen2011, Ziebart2010, Levine2018} recasts the preceding algorithms as instances of probabilistic inference (computation, not statistical inference) in a single graphical model.\footnote{The framework is a mathematical language, much like random utility in econometrics, that reveals structural connections rather than deriving algorithms from first principles.} The payoff is that every advance in approximate inference (variational methods, message passing, amortized inference) becomes a candidate RL algorithm, and the forward problem (finding the optimal policy given rewards) and the inverse problem (recovering rewards from observed behavior) become two queries in the same model. The construction introduces a binary ``optimality'' variable $\mathcal{O}_t \in \{0,1\}$ at each time step, appended to the standard state-action-dynamics chain (Figure~\ref{fig:control_inference_dag}). The distribution over this variable is defined as
+\begin{equation}
+P(\mathcal{O}_t = 1 \mid s_t, a_t) = \exp(r(s_t, a_t)/\tau)
+\label{eq:optimality_variable}
+\end{equation}
+where $\tau > 0$ is a temperature parameter and rewards satisfy $r \leq 0$.\footnote{The non-positive reward assumption ensures $\exp(r/\tau) \in (0,1]$. Any bounded reward can be shifted to satisfy this without changing the optimal policy. Alternatively, the optimality variable can be replaced by an undirected potential $\Phi(s_t, a_t) = \exp(r(s_t,a_t)/\tau)$, yielding a conditional random field formulation that removes this restriction \citep{Ziebart2010}.} This is a modeling assumption, not a derivation from first principles; the exponential form is chosen so the resulting posterior matches entropy-regularized RL.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    state/.style={circle, draw, minimum size=8mm, inner sep=0pt, fill=rlblue!10, draw=rlblue!60, line width=0.5pt, font=\small},
+    action/.style={circle, draw, minimum size=8mm, inner sep=0pt, fill=rlgray!15, line width=0.5pt, font=\small},
+    opt/.style={circle, draw, minimum size=8mm, inner sep=0pt, fill=rlorange!20, draw=rlorange!70, line width=0.5pt, font=\small},
+    arr/.style={-{Stealth[length=2mm]}, line width=0.5pt},
+    dotsty/.style={font=\large, rlgray},
+]
+% States (offset left within each time step)
+\node[state] (s1) at (-0.7, 0) {$s_1$};
+\node[state] (s2) at (2.8, 0) {$s_2$};
+\node[state] (s3) at (6.3, 0) {$s_3$};
+\node[dotsty] at (8.8, 0) {$\cdots$};
+% Actions (offset right within each time step)
+\node[action] (a1) at (0.7, 1.5) {$a_1$};
+\node[action] (a2) at (4.2, 1.5) {$a_2$};
+\node[action] (a3) at (7.7, 1.5) {$a_3$};
+% Optimality variables (centered above each pair)
+\node[opt] (o1) at (0, 3) {$\mathcal{O}_1$};
+\node[opt] (o2) at (3.5, 3) {$\mathcal{O}_2$};
+\node[opt] (o3) at (7.0, 3) {$\mathcal{O}_3$};
+% Dynamics: (s_t, a_t) -> s_{t+1}
+\draw[arr] (s1) -- (s2);
+\draw[arr] (a1) -- (s2);
+\draw[arr] (s2) -- (s3);
+\draw[arr] (a2) -- (s3);
+\draw[arr] (s3) -- (8.3, 0);
+\draw[arr] (a3) -- (8.3, 0);
+% Optimality: (s_t, a_t) -> O_t (no crossing)
+\draw[arr] (s1) -- (o1);
+\draw[arr] (a1) -- (o1);
+\draw[arr] (s2) -- (o2);
+\draw[arr] (a2) -- (o2);
+\draw[arr] (s3) -- (o3);
+\draw[arr] (a3) -- (o3);
+\end{tikzpicture}
+\caption{The control-as-inference graphical model. States $s_t$ and actions $a_t$ jointly determine the next state $s_{t+1}$ (dynamics) and the optimality variable $\mathcal{O}_t$ (reward signal). Optimality nodes $\mathcal{O}_t$ are observed as $\mathcal{O}_t = 1$; the posterior over actions $P(a_t \mid s_t, \mathcal{O}_{t:T} = 1)$ yields the optimal policy.}
+\label{fig:control_inference_dag}
+\end{figure}
+
+The RL problem becomes a probabilistic inference query. Given that all future time steps are optimal ($\mathcal{O}_{t:T} = 1$), what is $P(a_t \mid s_t, \mathcal{O}_{t:T} = 1)$? Define backward messages $\beta_t(s, a) = P(\mathcal{O}_{t:T} = 1 \mid s_t = s,\, a_t = a)$, the probability that everything from $t$ onward is optimal given the agent is in state $s$ taking action $a$. These are computed by backward recursion:
+\begin{align}
+\beta_T(s, a) &= \exp(r(s, a)/\tau) \label{eq:beta_base} \\
+\beta_t(s, a) &= \exp(r(s, a)/\tau) \sum_{s'} P(s'|s,a) \, \beta_{t+1}(s') \quad (t < T) \label{eq:beta_recursion}
+\end{align}
+where $\beta_{t+1}(s') \propto \sum_{a'} \beta_{t+1}(s', a')$ marginalizes over future actions under a uniform prior. By Bayes' rule, the posterior over actions is $P(a_t \mid s_t, \mathcal{O}_{t:T} = 1) = \beta_t(s_t, a_t) \,/\, \sum_{a'} \beta_t(s_t, a')$. Defining $Q(s,a) = \tau \log \beta_t(s,a)$, so that backward messages in log-space correspond to soft value functions, and $V(s) = \tau \log \sum_a \exp(Q(s,a)/\tau)$\footnote{Since $\beta_t(s) \propto \sum_a \beta_t(s,a) = \sum_a \exp(Q(s,a)/\tau)$, we have $V(s) = \tau \log \sum_a \exp(Q(s,a)/\tau)$.}, the posterior becomes $\pi(a \mid s) = \exp\bigl((Q(s,a) - V(s))/\tau\bigr)$, the softmax over Q-values.
+
+Exact inference in this graphical model under stochastic dynamics produces risk-seeking policies. The backup becomes $Q(s,a) = r(s,a) + \tau \log \mathbb{E}_{s'}[\exp(V(s')/\tau)]$, which overweights unlikely favorable transitions because the agent implicitly assumes it can influence the dynamics.\footnote{Under exact inference, the posterior dynamics $P(s'|s,a,\mathcal{O}_{1:T}=1)$ differ from the true dynamics $P(s'|s,a)$, biasing the inferred transitions toward favorable outcomes. The log-expectation-of-exponentials exceeds the expectation by Jensen's inequality. This optimism is an artifact of exact inference in the model, not a feature.} The framework corrects this by applying structured variational inference, restricting the variational family to distributions that match the true dynamics $P(s'|s,a)$. This yields the soft Bellman equations
+\begin{align}
+Q(s,a) &= r(s,a) + \gamma \, \mathbb{E}_{s' \sim P}[V(s')] \label{eq:soft_bellman_q} \\
+V(s) &= \tau \log \sum_{a \in \mathcal{A}} \exp\!\left(\frac{Q(s,a)}{\tau}\right) \label{eq:soft_bellman_v}
+\end{align}
+with the optimal policy given by $\pi(a \mid s) = \exp\bigl((Q(s,a) - V(s))/\tau\bigr)$. The operator $\mathcal{T}^{\mathrm{soft}}$ defined by Equations~\eqref{eq:soft_bellman_q}--\eqref{eq:soft_bellman_v} is a $\gamma$-contraction in $\|\cdot\|_\infty$, with the same convergence rate as the standard Bellman operator.\footnote{The proof follows from the log-sum-exp being 1-Lipschitz in the sup norm; see \citet{Haarnoja2017}, Theorem~1.} As $\tau \to 0$, the log-sum-exp converges to the hard maximum and the soft Bellman equations reduce to the standard Bellman optimality equations. The value function in Equation~\eqref{eq:soft_bellman_v} is identical to McFadden's social surplus function from discrete choice theory \citep{McFadden1978}, completing the connection noted in the preceding subsection.
+
+Classical RL already employs exploration strategies ($\varepsilon$-greedy, UCB), but these are designed separately from the optimization objective. In the probabilistic framework, the objective itself maximizes expected reward and policy entropy simultaneously.\footnote{The max-ent objective is $\max_\pi \sum_t \mathbb{E}[r(s_t,a_t) + \tau \mathcal{H}(\pi(\cdot|s_t))]$. This equals the evidence lower bound (ELBO) of the graphical model, a quantity from variational inference that lower-bounds the log-likelihood of the observed optimality evidence $\log P(\mathcal{O}_{1:T} = 1)$. Maximizing the ELBO with respect to the policy is equivalent to finding the best approximation to the true posterior, measured by KL divergence; see \citet{BleiKucukelbirMcAuliffe2017} for a review of variational inference.} The Q-function, the value function, and the exploration behavior are all derived from a single objective. Different approximation strategies applied to this single model recover familiar algorithms. When the backward messages in Equations~\eqref{eq:beta_base}--\eqref{eq:beta_recursion} are computed exactly in the tabular setting, the result is soft value iteration. Estimating the ELBO gradient via the likelihood ratio trick yields max-ent policy gradients, identical to REINFORCE with $-\tau \log \pi(a_t|s_t)$ added to the reward at each step. Fitting parameterized $Q_\phi$ and $V_\psi$ networks to approximate the backward messages gives Soft Actor-Critic \citep{Haarnoja2018}. Fitting $Q_\phi$ alone and extracting the policy implicitly via the softmax gives soft Q-learning \citep{Haarnoja2017}. Trust-region methods such as TRPO and PPO do not optimize the max-ent objective, but each policy update step solves a max-ent subproblem with the old policy as prior, so the per-step structure mirrors the framework even though the global target remains standard reward maximization \citep{Schulman2015, Schulman2017}. Hard-max algorithms (Q-learning, DQN, standard policy gradient) are not direct instances of the framework; they are recovered in the zero-temperature limit $\tau \to 0$, where the softmax collapses to the argmax. Reading the graphical model in the reverse direction, treating the reward as the unknown and observed behavior as evidence of optimality, yields maximum entropy inverse reinforcement learning \citep{Ziebart2008}, connecting to the structural estimation methods discussed in Section~\ref{section:rl_econ_models}.
+
+The framework has practical limitations. The converged fixed point is $Q^*_{\mathrm{soft}}$, not $Q^*$; at any $\tau > 0$, the policy is suboptimal for the original reward-maximization objective. The entropy bonus produces undirected exploration, spreading probability mass rather than targeting uncertain states. In safety-critical environments, the objective assigns nonzero probability to catastrophic actions. The practical benefits of the probabilistic perspective, including robustness to model perturbations and smooth optimization landscapes, are most apparent in continuous-control and robotics settings. In perfectly simulated environments with exact rewards (Atari, Go), the hard-max algorithms that dominate those domains do not require this probabilistic formulation, as the following subsection illustrates.
+
 \subsubsection{AlphaGo Zero (2017)}
 \label{subsubsec:alphago_zero}
 
@@ -308,6 +378,6 @@ The training loop generates self-play games. At each board position $s_t$ during
 \begin{equation}
 \ell(\theta) = (z - v)^2 - \boldsymbol{\pi}^\top \log \mathbf{p} + c \|\theta\|^2
 \end{equation}
-where the first term is a value prediction loss, the second is a policy cross-entropy loss,\footnote{The cross-entropy loss $-\boldsymbol{\pi}^\top \log \mathbf{p}$ measures how well the predicted distribution $\mathbf{p}$ matches the target $\boldsymbol{\pi}$; it equals zero when the distributions are identical.} and the third is $L_2$ regularization.\footnote{$L_2$ regularization penalizes the squared magnitude of parameters, $c\|\theta\|^2$, analogous to ridge regression in econometrics.} The key mechanism is a virtuous cycle. MCTS serves as a policy improvement operator, since the search probabilities $\boldsymbol{\pi}$ are stronger than the raw network outputs $\mathbf{p}$. Training the network to match $\boldsymbol{\pi}$ distills the search improvements back into the network, and the improved network in turn produces better MCTS. After 72 hours of self-play on 4 TPUs, AlphaGo Zero surpassed all previous versions, including the one that defeated Lee Sedol, and discovered novel strategies not previously seen in human play.
+where the first term is a value prediction loss, the second is a policy cross-entropy loss,\footnote{The cross-entropy loss $-\boldsymbol{\pi}^\top \log \mathbf{p}$ measures how well the predicted distribution $\mathbf{p}$ matches the target $\boldsymbol{\pi}$; it equals zero when the distributions are identical.} and the third is $L_2$ regularization.\footnote{$L_2$ regularization penalizes the squared magnitude of parameters, $c\|\theta\|^2$, analogous to ridge regression in econometrics.} The key mechanism is a virtuous cycle. MCTS serves as a policy improvement operator, since the search probabilities $\boldsymbol{\pi}$ are stronger than the raw network outputs $\mathbf{p}$. Training the network to match $\boldsymbol{\pi}$ distills the search improvements back into the network, and the improved network in turn produces better MCTS. After 72 hours of self-play on 4 TPUs, AlphaGo Zero surpassed all previous versions, including the one that defeated Lee Sedol, and discovered novel strategies not previously seen in human play.\footnote{The system that defeated Lee Sedol in March 2016 used fixed network weights throughout the match; no parameter updates occurred between or during games. This illustrates the training-execution distinction (Section~\ref{section:language}): the months of self-play constituted the training phase, while the five-game match was purely execution.}
 
 Go was well-suited to this architecture. Its fixed $19 \times 19$ board maps naturally to convolutional networks, its perfect information and deterministic transitions make MCTS's tree structure exact, and the binary game outcome provides an unambiguous training signal. \citet{Igami2020} interprets the architecture in econometric terms, where the policy network is a conditional choice probability (CCP) estimator, the value network is a conditional value function (CVF) estimator, and the system performs CCP estimation and forward simulation jointly, connecting to the approach of \citet{HotzMiller1993} in dynamic discrete choice.

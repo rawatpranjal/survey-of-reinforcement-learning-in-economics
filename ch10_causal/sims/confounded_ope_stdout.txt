@@ -1,0 +1,7 @@
+Loaded from cache.
+Figure saved: /Users/pranjal/Code/rl/ch10_causal/sims/confounded_ope_bias.png
+Table saved: /Users/pranjal/Code/rl/ch10_causal/sims/confounded_ope_results.tex
+
+Output files:
+  /Users/pranjal/Code/rl/ch10_causal/sims/confounded_ope_bias.png
+  /Users/pranjal/Code/rl/ch10_causal/sims/confounded_ope_results.tex

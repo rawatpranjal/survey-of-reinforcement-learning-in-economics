@@ -1,141 +1,0 @@
-========================================================================
-Unified Identification: Confounded Retail Pricing MDP
-Chapter 9: Causal Inference and RL
-========================================================================
-
-MDP Parameters:
-  States                    = 5 (0..4, state 4 absorbing)
-  Actions                   = promote (0), hold price (1)
-  Discount gamma            = 0.9
-  Step cost r(s<4,a)        = -1.0
-  Goal reward r(4,a)        = 0.0
-
-Transition probabilities (depend on M and Z only):
-  P(s+1|s, M=0, Z=0) = 0.15
-  P(s+1|s, M=0, Z=1) = 0.4
-  P(s+1|s, M=1, Z=0) = 0.5
-  P(s+1|s, M=1, Z=1) = 0.9
-
-Structural equations:
-  Z_t  ~ Bernoulli(0.5)
-  U_t  | Z=1 ~ Bernoulli(0.9), Z=0 ~ Bernoulli(0.1)
-  IV_t ~ Bernoulli(0.5)
-  M_t  | A=0 ~ Bernoulli(0.8), A=1 ~ Bernoulli(0.2)
-  W1_t | U=1 ~ Bernoulli(0.85), U=0 ~ Bernoulli(0.15)
-  W2_t | U=1 ~ Bernoulli(0.75), U=0 ~ Bernoulli(0.25)
-  mu(promote|s,U,IV;rho) = 0.55 + rho*0.25*(2U-1) + 0.15*(IV-0.5)
-
-Causal Structure:
-  Z -> U -> A, IV -> A            (Z observed, U unobserved, IV independent)
-  A -> M -> S'                     (A affects S' ONLY through M)
-  Z -> S' (through transition)     (market conditions affect transitions)
-  U -> W1, U -> W2                 (proxies of latent confounder)
-
-Experimental Design:
-  rho values                = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-  Seeds per rho             = 20
-  Trajectories per seed     = 2000
-  Max steps per trajectory  = 50
-
-Oracle (analytical):
-  True P(s+1|s,do(promote)) = 0.6150
-  V^pi(s=0) = -4.8538
-  V^pi(s=1) = -3.9240
-  V^pi(s=2) = -2.8263
-  V^pi(s=3) = -1.5302
-  V^pi(s=4) = 0.0000
-
-Population-level transition verification:
---------------------------------------------------
-  rho = 0.0
-    True interventional P(s+1|s,do(promote)) = 0.6150
-    True interventional P(s+1|s,do(hold))    = 0.3600
-    Naive observational P(s+1|s,A=promote)   = 0.6150  (bias = -0.0000)
-
-  rho = 0.5
-    True interventional P(s+1|s,do(promote)) = 0.6150
-    True interventional P(s+1|s,do(hold))    = 0.3600
-    Naive observational P(s+1|s,A=promote)   = 0.6486  (bias = +0.0336)
-
-  rho = 1.0
-    True interventional P(s+1|s,do(promote)) = 0.6150
-    True interventional P(s+1|s,do(hold))    = 0.3600
-    Naive observational P(s+1|s,A=promote)   = 0.6823  (bias = +0.0673)
-
-Running experiments:   0%|          | 0/120 [00:00<?, ?it/s]Running experiments:   1%|          | 1/120 [00:00<00:20,  5.68it/s]Running experiments:   2%|▏         | 2/120 [00:00<00:19,  6.13it/s]Running experiments:   2%|▎         | 3/120 [00:00<00:18,  6.45it/s]Running experiments:   3%|▎         | 4/120 [00:00<00:17,  6.63it/s]Running experiments:   4%|▍         | 5/120 [00:00<00:17,  6.44it/s]Running experiments:   5%|▌         | 6/120 [00:00<00:17,  6.50it/s]Running experiments:   6%|▌         | 7/120 [00:01<00:17,  6.54it/s]Running experiments:   7%|▋         | 8/120 [00:01<00:16,  6.66it/s]Running experiments:   8%|▊         | 9/120 [00:01<00:16,  6.67it/s]Running experiments:   8%|▊         | 10/120 [00:01<00:16,  6.68it/s]Running experiments:   9%|▉         | 11/120 [00:01<00:16,  6.70it/s]Running experiments:  10%|█         | 12/120 [00:01<00:16,  6.71it/s]Running experiments:  11%|█         | 13/120 [00:01<00:15,  6.78it/s]Running experiments:  12%|█▏        | 14/120 [00:02<00:15,  6.67it/s]Running experiments:  12%|█▎        | 15/120 [00:02<00:15,  6.72it/s]Running experiments:  13%|█▎        | 16/120 [00:02<00:15,  6.79it/s]Running experiments:  14%|█▍        | 17/120 [00:02<00:15,  6.86it/s]Running experiments:  15%|█▌        | 18/120 [00:02<00:14,  6.88it/s]Running experiments:  16%|█▌        | 19/120 [00:02<00:14,  6.86it/s]Running experiments:  17%|█▋        | 20/120 [00:02<00:14,  6.86it/s]Running experiments:  18%|█▊        | 21/120 [00:03<00:14,  6.90it/s]Running experiments:  18%|█▊        | 22/120 [00:03<00:14,  6.76it/s]Running experiments:  19%|█▉        | 23/120 [00:03<00:14,  6.78it/s]Running experiments:  20%|██        | 24/120 [00:03<00:14,  6.80it/s]Running experiments:  21%|██        | 25/120 [00:03<00:13,  6.85it/s]Running experiments:  22%|██▏       | 26/120 [00:03<00:13,  6.90it/s]Running experiments:  22%|██▎       | 27/120 [00:04<00:13,  6.94it/s]Running experiments:  23%|██▎       | 28/120 [00:04<00:13,  6.95it/s]Running experiments:  24%|██▍       | 29/120 [00:04<00:13,  6.91it/s]Running experiments:  25%|██▌       | 30/120 [00:04<00:13,  6.85it/s]Running experiments:  26%|██▌       | 31/120 [00:04<00:13,  6.62it/s]Running experiments:  27%|██▋       | 32/120 [00:04<00:13,  6.60it/s]Running experiments:  28%|██▊       | 33/120 [00:04<00:13,  6.59it/s]Running experiments:  28%|██▊       | 34/120 [00:05<00:13,  6.60it/s]Running experiments:  29%|██▉       | 35/120 [00:05<00:12,  6.64it/s]Running experiments:  30%|███       | 36/120 [00:05<00:12,  6.67it/s]Running experiments:  31%|███       | 37/120 [00:05<00:12,  6.76it/s]Running experiments:  32%|███▏      | 38/120 [00:05<00:13,  6.13it/s]Running experiments:  32%|███▎      | 39/120 [00:05<00:13,  5.97it/s]Running experiments:  33%|███▎      | 40/120 [00:06<00:13,  5.99it/s]Running experiments:  34%|███▍      | 41/120 [00:06<00:12,  6.19it/s]Running experiments:  35%|███▌      | 42/120 [00:06<00:12,  6.35it/s]Running experiments:  36%|███▌      | 43/120 [00:06<00:11,  6.43it/s]Running experiments:  37%|███▋      | 44/120 [00:06<00:11,  6.49it/s]Running experiments:  38%|███▊      | 45/120 [00:06<00:11,  6.60it/s]Running experiments:  38%|███▊      | 46/120 [00:06<00:10,  6.74it/s]Running experiments:  39%|███▉      | 47/120 [00:07<00:10,  6.90it/s]Running experiments:  40%|████      | 48/120 [00:07<00:10,  7.13it/s]Running experiments:  41%|████      | 49/120 [00:07<00:09,  7.20it/s]Running experiments:  42%|████▏     | 50/120 [00:07<00:09,  7.36it/s]Running experiments:  42%|████▎     | 51/120 [00:07<00:09,  7.42it/s]Running experiments:  43%|████▎     | 52/120 [00:07<00:09,  7.10it/s]Running experiments:  44%|████▍     | 53/120 [00:07<00:09,  7.28it/s]Running experiments:  45%|████▌     | 54/120 [00:08<00:08,  7.42it/s]Running experiments:  46%|████▌     | 55/120 [00:08<00:08,  7.52it/s]Running experiments:  47%|████▋     | 56/120 [00:08<00:08,  7.60it/s]Running experiments:  48%|████▊     | 57/120 [00:08<00:08,  7.54it/s]Running experiments:  48%|████▊     | 58/120 [00:08<00:08,  7.34it/s]Running experiments:  49%|████▉     | 59/120 [00:08<00:08,  7.09it/s]Running experiments:  50%|█████     | 60/120 [00:08<00:08,  6.93it/s]Running experiments:  51%|█████     | 61/120 [00:09<00:08,  6.83it/s]Running experiments:  52%|█████▏    | 62/120 [00:09<00:08,  6.79it/s]Running experiments:  52%|█████▎    | 63/120 [00:09<00:08,  6.75it/s]Running experiments:  53%|█████▎    | 64/120 [00:09<00:08,  6.69it/s]Running experiments:  54%|█████▍    | 65/120 [00:09<00:08,  6.67it/s]Running experiments:  55%|█████▌    | 66/120 [00:09<00:08,  6.57it/s]Running experiments:  56%|█████▌    | 67/120 [00:09<00:08,  6.57it/s]Running experiments:  57%|█████▋    | 68/120 [00:10<00:07,  6.60it/s]Running experiments:  57%|█████▊    | 69/120 [00:10<00:07,  6.63it/s]Running experiments:  58%|█████▊    | 70/120 [00:10<00:07,  6.63it/s]Running experiments:  59%|█████▉    | 71/120 [00:10<00:07,  6.56it/s]Running experiments:  60%|██████    | 72/120 [00:10<00:07,  6.58it/s]Running experiments:  61%|██████    | 73/120 [00:10<00:07,  6.65it/s]Running experiments:  62%|██████▏   | 74/120 [00:11<00:08,  5.42it/s]Running experiments:  62%|██████▎   | 75/120 [00:11<00:08,  5.53it/s]Running experiments:  63%|██████▎   | 76/120 [00:11<00:07,  5.81it/s]Running experiments:  64%|██████▍   | 77/120 [00:11<00:07,  6.05it/s]Running experiments:  65%|██████▌   | 78/120 [00:11<00:06,  6.21it/s]Running experiments:  66%|██████▌   | 79/120 [00:11<00:06,  6.36it/s]Running experiments:  67%|██████▋   | 80/120 [00:12<00:06,  6.53it/s]Running experiments:  68%|██████▊   | 81/120 [00:12<00:05,  6.53it/s]Running experiments:  68%|██████▊   | 82/120 [00:12<00:05,  6.69it/s]Running experiments:  69%|██████▉   | 83/120 [00:12<00:05,  6.75it/s]Running experiments:  70%|███████   | 84/120 [00:12<00:05,  6.82it/s]Running experiments:  71%|███████   | 85/120 [00:12<00:04,  7.04it/s]Running experiments:  72%|███████▏  | 86/120 [00:12<00:04,  7.21it/s]Running experiments:  72%|███████▎  | 87/120 [00:12<00:04,  7.32it/s]Running experiments:  73%|███████▎  | 88/120 [00:13<00:04,  7.45it/s]Running experiments:  74%|███████▍  | 89/120 [00:13<00:04,  7.55it/s]Running experiments:  75%|███████▌  | 90/120 [00:13<00:03,  7.62it/s]Running experiments:  76%|███████▌  | 91/120 [00:13<00:03,  7.61it/s]Running experiments:  77%|███████▋  | 92/120 [00:13<00:03,  7.56it/s]Running experiments:  78%|███████▊  | 93/120 [00:13<00:03,  7.47it/s]Running experiments:  78%|███████▊  | 94/120 [00:13<00:03,  7.55it/s]Running experiments:  79%|███████▉  | 95/120 [00:14<00:03,  7.56it/s]Running experiments:  80%|████████  | 96/120 [00:14<00:03,  7.36it/s]Running experiments:  81%|████████  | 97/120 [00:14<00:03,  7.20it/s]Running experiments:  82%|████████▏ | 98/120 [00:14<00:03,  7.09it/s]Running experiments:  82%|████████▎ | 99/120 [00:14<00:03,  6.99it/s]Running experiments:  83%|████████▎ | 100/120 [00:14<00:02,  6.97it/s]Running experiments:  84%|████████▍ | 101/120 [00:14<00:02,  6.84it/s]Running experiments:  85%|████████▌ | 102/120 [00:15<00:02,  6.87it/s]Running experiments:  86%|████████▌ | 103/120 [00:15<00:02,  6.84it/s]Running experiments:  87%|████████▋ | 104/120 [00:15<00:02,  6.81it/s]Running experiments:  88%|████████▊ | 105/120 [00:15<00:02,  6.75it/s]Running experiments:  88%|████████▊ | 106/120 [00:15<00:02,  6.71it/s]Running experiments:  89%|████████▉ | 107/120 [00:15<00:01,  6.68it/s]Running experiments:  90%|█████████ | 108/120 [00:15<00:01,  6.71it/s]Running experiments:  91%|█████████ | 109/120 [00:16<00:01,  6.71it/s]Running experiments:  92%|█████████▏| 110/120 [00:16<00:01,  6.60it/s]Running experiments:  92%|█████████▎| 111/120 [00:16<00:01,  6.63it/s]Running experiments:  93%|█████████▎| 112/120 [00:16<00:01,  6.63it/s]Running experiments:  94%|█████████▍| 113/120 [00:16<00:01,  6.68it/s]Running experiments:  95%|█████████▌| 114/120 [00:16<00:00,  6.69it/s]Running experiments:  96%|█████████▌| 115/120 [00:16<00:00,  6.75it/s]Running experiments:  97%|█████████▋| 116/120 [00:17<00:00,  6.81it/s]Running experiments:  98%|█████████▊| 117/120 [00:17<00:00,  6.87it/s]Running experiments:  98%|█████████▊| 118/120 [00:17<00:00,  6.88it/s]Running experiments:  99%|█████████▉| 119/120 [00:17<00:00,  6.72it/s]Running experiments: 100%|██████████| 120/120 [00:17<00:00,  6.76it/s]Running experiments: 100%|██████████| 120/120 [00:17<00:00,  6.77it/s]
-
-========================================================================
-RESULTS: Estimated V^pi(s=0) (mean over seeds)
-========================================================================
-  rho        Oracle         Naive      Backdoor    Front-door            IV      Proximal
------------------------------------------------------------------------------------------
-  0.0       -4.8538       -4.8637       -4.8617       -4.8550       -4.8601       -4.8647
-  0.2       -4.8538       -4.7939       -4.8611       -4.8510       -4.8418       -4.8654
-  0.4       -4.8538       -4.7267       -4.8618       -4.8528       -4.8430       -4.8686
-  0.6       -4.8538       -4.6602       -4.8606       -4.8528       -4.8337       -4.8682
-  0.8       -4.8538       -4.5961       -4.8608       -4.8576       -4.8214       -4.8690
-  1.0       -4.8538       -4.5330       -4.8589       -4.8577       -4.7988       -4.8692
-
-========================================================================
-RESULTS: Bias (Estimator - Oracle), mean +/- SE
-========================================================================
-  rho               Naive            Backdoor          Front-door                  IV            Proximal
----------------------------------------------------------------------------------------------------------
-  0.0   -0.0100 (0.0051)   -0.0079 (0.0053)   -0.0012 (0.0054)   -0.0064 (0.0280)   -0.0109 (0.0059)
-  0.2   +0.0599 (0.0049)   -0.0073 (0.0055)   +0.0028 (0.0058)   +0.0120 (0.0284)   -0.0116 (0.0056)
-  0.4   +0.1271 (0.0047)   -0.0080 (0.0057)   +0.0010 (0.0061)   +0.0107 (0.0291)   -0.0148 (0.0056)
-  0.6   +0.1936 (0.0052)   -0.0068 (0.0063)   +0.0010 (0.0063)   +0.0201 (0.0297)   -0.0144 (0.0067)
-  0.8   +0.2577 (0.0052)   -0.0070 (0.0064)   -0.0038 (0.0068)   +0.0323 (0.0303)   -0.0153 (0.0070)
-  1.0   +0.3208 (0.0051)   -0.0052 (0.0064)   -0.0039 (0.0069)   +0.0550 (0.0252)   -0.0154 (0.0078)
-
-========================================================================
-RESULTS: RMSE relative to Oracle
-========================================================================
-  rho         Naive      Backdoor    Front-door            IV      Proximal
----------------------------------------------------------------------------
-  0.0        0.0245        0.0244        0.0234        0.1223        0.0279
-  0.2        0.0636        0.0251        0.0254        0.1245        0.0271
-  0.4        0.1287        0.0259        0.0268        0.1273        0.0285
-  0.6        0.1950        0.0283        0.0275        0.1312        0.0326
-  0.8        0.2587        0.0287        0.0298        0.1359        0.0341
-  1.0        0.3216        0.0284        0.0303        0.1226        0.0374
-
-========================================================================
-IV STRENGTH EXPERIMENT: Bias distribution vs instrument strength
-  Fixed rho = 1.0 (maximum confounding)
-========================================================================
-
-  IV Coeff   Mean Bias        SE      RMSE   First-Stage
---------------------------------------------------------
-      0.05     -0.4602    0.2954    1.3675       +0.0508
-      0.15     +0.0550    0.0252    0.1226       +0.1515
-      0.30     +0.0498    0.0144    0.0803       +0.3015
-
-  Naive estimator bias at rho=1.0 (reference): +0.3208
-
-Figure saved: /Users/pranjal/Code/rl/ch09_causal/sims/confounded_ope_bias.png
-Table saved: /Users/pranjal/Code/rl/ch09_causal/sims/confounded_ope_results.tex
-
-========================================================================
-SUMMARY
-========================================================================
-Total configurations: 6 rho x 20 seeds = 120 runs
-
-Validation at rho=0.0 (no confounding):
-        Oracle: mean=-4.8538, bias=+0.0000
-         Naive: mean=-4.8637, bias=-0.0100
-      Backdoor: mean=-4.8617, bias=-0.0079
-    Front-door: mean=-4.8550, bias=-0.0012
-            IV: mean=-4.8601, bias=-0.0064
-      Proximal: mean=-4.8647, bias=-0.0109
-
-Bias at rho=1.0 (full confounding):
-         Naive: bias=+0.3208 (SE 0.0051), RMSE=0.3216
-      Backdoor: bias=-0.0052 (SE 0.0064), RMSE=0.0284
-    Front-door: bias=-0.0039 (SE 0.0069), RMSE=0.0303
-            IV: bias=+0.0550 (SE 0.0252), RMSE=0.1226
-      Proximal: bias=-0.0154 (SE 0.0078), RMSE=0.0374
-
-Output files:
-  /Users/pranjal/Code/rl/ch09_causal/sims/confounded_ope_bias.png
-  /Users/pranjal/Code/rl/ch09_causal/sims/confounded_ope_results.tex

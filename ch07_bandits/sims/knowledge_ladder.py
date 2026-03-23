@@ -298,12 +298,12 @@ class UCB_PI_Tuned(UCB_PI):
 # =============================================================================
 alg_names = ['eps_greedy', 'lte', 'ucb1', 'thompson', 'ucb_pi', 'ucb_pi_tuned']
 alg_labels = {
-    'eps_greedy': r'$\varepsilon$-greedy ($\varepsilon=0.1$)',
-    'lte': 'Learn-Then-Earn (5%)',
-    'ucb1': 'UCB1',
-    'thompson': 'Thompson Sampling',
-    'ucb_pi': 'UCB-PI (WARP)',
-    'ucb_pi_tuned': 'UCB-PI-tuned (WARP)',
+    'eps_greedy': r'$\varepsilon$-greedy — $\Theta(T)$',
+    'lte': r'Learn-Then-Earn — $O(T^{2/3})$',
+    'ucb1': r'UCB1 — $O(\sqrt{KT})$',
+    'thompson': r'Thompson — $O(\sqrt{KT})$',
+    'ucb_pi': r'UCB-PI — $O(\log T)$',
+    'ucb_pi_tuned': r'UCB-PI-tuned — $O(\log T)$',
 }
 
 # =============================================================================

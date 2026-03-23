@@ -12,35 +12,10 @@ Q*(x,u) = -1.2682*x^2 + -1.0729*xu + -2.0729*u^2
 Optimal gain K = -0.2588  =>  closed-loop x' = 0.2412*x
 
 Grid invariant: x' in [-4.0000, 4.0000]
-
-Exact VI: 25 iters, vs analytical V*: 1.12e-03
-
-FVI: 9 iters
-  Error vs exact VI:    1.04e-03
-  Error vs analytical:  3.23e-04
-  theta: [x=-0.000000, x^2=-1.129418]
-  Analytical: [0, -1.129398]
-  P recovered = 1.129418  (true P = 1.129398)
-
-FQI: 10 iters
-  Error vs exact VI:    1.03e-03
-  Error vs analytical:  9.37e-05
-  theta: [x=-0.00000, x^2=-1.26824, u=-0.00000, u^2=-2.07295, xu=-1.07293]
-  Analytical: [0, -1.26823, 0, -2.07293, -1.07293]
-
-DQN training (100000 steps)...
-  step  10000, eps=0.762, err vs V*=6.7257
-  step  20000, eps=0.525, err vs V*=3.0022
-  step  30000, eps=0.287, err vs V*=1.7613
-  step  40000, eps=0.050, err vs V*=1.0324
-  step  50000, eps=0.050, err vs V*=0.8853
-  step  60000, eps=0.050, err vs V*=0.9012
-  step  70000, eps=0.050, err vs V*=0.6133
-  step  80000, eps=0.050, err vs V*=0.8942
-  step  90000, eps=0.050, err vs V*=0.7229
-  step 100000, eps=0.050, err vs V*=0.5643
-
-DQN: 100000 steps, error vs analytical V*: 5.64e-01
+  Cache hit: exact_VI
+  Cache hit: FVI
+  Cache hit: FQI
+  Cache hit: DQN
 
 ==============================================================================
 Method              Iters  Err vs VI  Err vs V*    P_recov     c_xx     c_xu     c_uu
@@ -51,7 +26,7 @@ FQI                    10   1.03e-03   9.37e-05     1.2682  -1.2682  -1.0729  -2
 DQN (2x64 ReLU)    100000        ---   5.64e-01        ---      ---      ---      ---
 Analytical            ---        ---          0     1.1294  -1.2682  -1.0729  -2.0729
 ==============================================================================
-
-All verification checks passed.
 Table: /Users/pranjal/Code/rl/ch03_theory/sims/lqc_fvi_fqi_weights.tex
 Figure: /Users/pranjal/Code/rl/ch03_theory/sims/lqc_fvi_fqi.png
+
+Done.

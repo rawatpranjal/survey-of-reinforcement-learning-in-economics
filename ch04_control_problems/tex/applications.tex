@@ -1,7 +1,7 @@
 % Chapter: Reinforcement Learning for Optimal Control
 % Focus on deployed systems and field experiments with one simulation demonstration
 
-A handful of organizations have deployed reinforcement learning beyond simulation, achieving measurable gains on specific large-scale problems. Each deployment required substantial domain engineering and scientific tuning; these remain exceptional cases rather than standard practice. I review the most prominent field deployments, including ride-hailing dispatch at DiDi, data center cooling at Google, hotel revenue management, and financial order execution, before concluding with a simulation study on the bus engine replacement problem.
+A handful of organizations have deployed reinforcement learning beyond simulation, achieving measurable gains on specific large-scale problems. Each deployment required substantial domain engineering and scientific tuning; these remain exceptional cases rather than standard practice. I review the most prominent field deployments, including ride-hailing dispatch at DiDi, data center cooling at Google, hotel revenue management, and financial order execution, before concluding with a simulation study on the bus engine replacement problem. In each case, the RL agent's parameters were updated during a training phase conducted in simulation or on historical data, and the resulting policy was deployed with fixed weights (Section~\ref{section:language}).
 
 \subsection{Ride-Hailing Dispatch}
 \label{sec:ridehailing}
@@ -44,74 +44,100 @@ Fulfillment rate & +0.5--2.0\% & Platform-wide \\
 At DiDi's volume, even 1\% gains represent hundreds of thousands of additional completed rides per day, because dispatching is fundamentally a fleet positioning problem: today's assignments determine tomorrow's driver distribution.
 
 
-\subsection{Data Center Cooling}
-\label{sec:datacenter}
-
-Data centers consume enormous amounts of energy, with cooling systems accounting for 30--40\% of total power usage. Google applied machine learning to autonomous HVAC control, achieving substantial efficiency gains while maintaining temperature safety constraints.
-
-\citet{Gao2014} reported initial results from deploying neural network predictions to guide data center operations. The system used over 100 sensor readings, including temperatures at multiple locations, coolant flow rates, power draw, and external weather conditions, to predict Power Usage Effectiveness (PUE).\footnote{PUE is the ratio of total facility energy to IT equipment energy. A PUE of 1.0 means all energy goes to computing; the industry average is approximately 1.6.} Operators used these predictions to adjust equipment setpoints. This assisted approach achieved a 40\% reduction in cooling energy and a 15\% improvement in overall PUE.
-
-\citet{Lazic2018} subsequently deployed a fully autonomous system using model-predictive control\footnote{\emph{Model-predictive control} (MPC) solves a finite-horizon optimal control problem at each step using a predictive model of system dynamics, applies the first action, then re-solves at the next step with the updated state; the receding-horizon structure makes it robust to model error because the plan is continually revised.} with learned dynamics. The state space consists of temperatures, flow rates, and equipment states across multiple zones. Actions are setpoints for chillers, fans, and pumps. The system learns a neural network dynamics model $\hat{f}$ from operational data:
-\begin{equation}
-s_{t+1} = \hat{f}(s_t, a_t) + \epsilon_t.
-\end{equation}
-At each control interval (5 minutes), the system optimizes over a horizon of future states using the learned model, subject to temperature constraints.
-\begin{equation}
-\min_{a_0, \ldots, a_H} \sum_{h=0}^{H} c_{\text{energy}}(a_h) \quad \text{s.t.} \quad T_{\min} \leq T_{\text{zone},i}(\hat{s}_h) \leq T_{\max} \; \forall i, h.
-\end{equation}
-
-The MPC approach provides interpretability and safety guarantees that pure model-free RL cannot. Actions are projected onto the feasible set defined by temperature constraints, with uncertainty estimates from the learned model used to maintain conservative margins. Human operators can override at any time. Table~\ref{tab:datacenter_results} summarizes the reported performance.
-
-\begin{table}[htbp]
-\centering
-\caption{Google data center cooling results from \citet{Gao2014} and \citet{Lazic2018}.}
-\label{tab:datacenter_results}
-\begin{tabular}{lcc}
-\toprule
-Metric & Improvement & Method \\
-\midrule
-Cooling energy & $-$40\% & Neural network predictions \\
-PUE & $-$15\% & Assisted operation \\
-Additional efficiency & $-$12\% & Autonomous MPC \\
-Temperature violations & 0 & Safety constraints \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The system operates continuously across multiple data centers, processing millions of sensor readings per day and controlling thousands of setpoints. Importantly, this is model-predictive control with learned dynamics models and persistent human oversight, not autonomous model-free RL; the learned model adapts online to seasonal variations, equipment degradation, and workload changes, but operators retain override authority at all times.
+% --- Data Center Cooling subsection retired (MPC, not RL) ---
+% \subsection{Data Center Cooling}
+% \label{sec:datacenter}
+%
+% Data centers consume enormous amounts of energy, with cooling systems accounting for 30--40\% of total power usage. Google applied machine learning to autonomous HVAC control, achieving substantial efficiency gains while maintaining temperature safety constraints.
+%
+% \citet{Gao2014} reported initial results from deploying neural network predictions to guide data center operations. The system used over 100 sensor readings, including temperatures at multiple locations, coolant flow rates, power draw, and external weather conditions, to predict Power Usage Effectiveness (PUE).\footnote{PUE is the ratio of total facility energy to IT equipment energy. A PUE of 1.0 means all energy goes to computing; the industry average is approximately 1.6.} Operators used these predictions to adjust equipment setpoints. This assisted approach achieved a 40\% reduction in cooling energy and a 15\% improvement in overall PUE.
+%
+% \citet{Lazic2018} subsequently deployed a fully autonomous system using model-predictive control\footnote{\emph{Model-predictive control} (MPC) solves a finite-horizon optimal control problem at each step using a predictive model of system dynamics, applies the first action, then re-solves at the next step with the updated state; the receding-horizon structure makes it robust to model error because the plan is continually revised.} with learned dynamics. The state space consists of temperatures, flow rates, and equipment states across multiple zones. Actions are setpoints for chillers, fans, and pumps. The system learns a neural network dynamics model $\hat{f}$ from operational data:
+% \begin{equation}
+% s_{t+1} = \hat{f}(s_t, a_t) + \epsilon_t.
+% \end{equation}
+% At each control interval (5 minutes), the system optimizes over a horizon of future states using the learned model, subject to temperature constraints.
+% \begin{equation}
+% \min_{a_0, \ldots, a_H} \sum_{h=0}^{H} c_{\text{energy}}(a_h) \quad \text{s.t.} \quad T_{\min} \leq T_{\text{zone},i}(\hat{s}_h) \leq T_{\max} \; \forall i, h.
+% \end{equation}
+%
+% The MPC approach provides interpretability and safety guarantees that pure model-free RL cannot. Actions are projected onto the feasible set defined by temperature constraints, with uncertainty estimates from the learned model used to maintain conservative margins. Human operators can override at any time. Table~\ref{tab:datacenter_results} summarizes the reported performance.
+%
+% \begin{table}[htbp]
+% \centering
+% \caption{Google data center cooling results from \citet{Gao2014} and \citet{Lazic2018}.}
+% \label{tab:datacenter_results}
+% \begin{tabular}{lcc}
+% \toprule
+% Metric & Improvement & Method \\
+% \midrule
+% Cooling energy & $-$40\% & Neural network predictions \\
+% PUE & $-$15\% & Assisted operation \\
+% Additional efficiency & $-$12\% & Autonomous MPC \\
+% Temperature violations & 0 & Safety constraints \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+%
+% The system operates continuously across multiple data centers, processing millions of sensor readings per day and controlling thousands of setpoints. Importantly, this is model-predictive control with learned dynamics models and persistent human oversight, not autonomous model-free RL; the learned model adapts online to seasonal variations, equipment degradation, and workload changes, but operators retain override authority at all times.
 
 
 \subsection{Hotel Revenue Management}
 \label{sec:hotel}
 
-Hotels face a dynamic pricing problem with perishable inventory, since rooms unsold by check-in yield zero revenue. The state $(t, I, d)$ consists of days until check-in, remaining rooms, and a demand intensity indicator. Actions are discrete price levels. Booking arrivals follow a Poisson process with intensity depending on demand conditions; each arrival books with probability decreasing in price. The Bellman equation is:
-\begin{equation}
-V_t(I, d) = \max_{p \in \mathcal{A}} \mathbb{E}\left[ p \cdot B + V_{t-1}(I - B, d') \mid I, d, p \right],
-\end{equation}
-where $B$ is the number of bookings at price $p$ and $d'$ is the next-period demand state.
+Budget hotel chains face a capacity allocation problem: how to dynamically distribute rooms across rate segments defined by discount level, with booking channels such as direct platforms and online travel agencies mapped to segments offering discounts ranging from less than 15\% to over 40\%. Demand is uncertain, cancellations are difficult to forecast, and hotel managers resist black-box optimization systems that override their judgment. \citet{Chen2023hotelrl} deployed reinforcement learning at China Lodging Group (CLG), a budget hotel chain operating approximately 2,000 hotels across China, and conducted field experiments measuring the impact of RL-based capacity allocation on actual hotel revenue.
 
-\citet{Gallego1994pricing} established the analytical benchmark for dynamic pricing with Poisson demand. Under their intensity control framework, the optimal price trajectory can be characterized when demand follows specific functional forms. The Gallego-van Ryzin solution provides a theoretical upper bound, and any practical pricing system should approach this performance in settings where the model assumptions hold.
+Their system uses a two-step design. The RL agent observes the state $(t, s)$, where $t$ indexes the booking period within a $T = 10$-period episode and $s$ is the average revenue per room sold to date, and selects an average discount level $a \in \{10\%, 20\%, 30\%\}$. A linear program then converts this scalar recommendation into a feasible capacity allocation across rate segments, accounting for each hotel's channel preferences.\footnote{The RL component uses a modified on-policy Monte Carlo method with $\varepsilon$-greedy exploration, updating Q-values from realized returns after each completed episode. Training on real operational data rather than simulated environments means the method adapts to demand non-stationarity without requiring an explicit demand model.} This decomposition addresses practitioner acceptance, since managers understand a single discount recommendation, and circumvents the need to explicitly model demand arrivals or cancellation rates.
 
-\citet{Chen2023hotelrl} applied deep Q-learning to hotel revenue management, training on simulated booking data under parameterized demand models. The DQN agent uses state features (normalized time, normalized inventory, demand indicators) and outputs Q-values for each price level. Table~\ref{tab:hotel_results} compares performance against baselines on held-out test periods.
+The field experiment randomly assigned five Hanting-brand hotels in Shanghai to the treatment group from ten candidates, with 271 additional Shanghai hotels serving as a donor pool for synthetic control estimation.\footnote{Synthetic control constructs a weighted combination of untreated hotels whose pre-treatment trend matches each treated hotel, avoiding the selection bias of simple before-after comparisons.} Table~\ref{tab:hotel_results} reports the average treatment effects over the pilot period (March--June 2015).
 
 \begin{table}[htbp]
 \centering
-\caption{Hotel revenue management results from \citet{Chen2023hotelrl}.}
+\caption{Field experiment results from \citet{Chen2023hotelrl}, measured via synthetic control.}
 \label{tab:hotel_results}
 \begin{tabular}{lcc}
 \toprule
-Method & Mean Revenue & vs.\ Fixed Price \\
+Metric & Improvement & $p$-value \\
 \midrule
-Fixed price & 2,847 & -- \\
-Myopic pricing & 2,962 & +4.0\% \\
-EMSR-b heuristic & 3,156 & +10.9\% \\
-Exact DP & 3,241 & +13.8\% \\
-DQN & 3,198 & +12.3\% \\
+Occupancy rate (OR) & $+5.15\%$ & 0.1361 \\
+Average daily rate (ADR) & $+5.93\%$ & 0.1160 \\
+Revenue per available room (RevPAR) & $+11.80\%$ & 0.0090 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The DQN agent achieves 98.7\% of the DP optimal revenue while scaling to capacities where exact DP is infeasible.\footnote{EMSR-b (Expected Marginal Seat Revenue, variant b) is the standard heuristic in airline and hotel revenue management. It computes booking limits by comparing the expected marginal revenue of reserving a unit for a higher fare class against selling it now.} Training time is nearly constant in hotel capacity, whereas DP computation grows linearly. The learned policies exhibit interpretable patterns, with prices increasing as inventory depletes and as check-in approaches, with larger adjustments during high-demand periods.
+The RevPAR gain is heterogeneous across treatment hotels; some improved primarily via higher occupancy rates, others via higher average daily rates, and others via both channels simultaneously.
+
+
+\subsection{E-Commerce Dynamic Pricing}
+\label{sec:ecommerce_pricing}
+
+E-commerce platforms face a pricing problem at a scale that defeats human specialists. Alibaba's Tmall.com lists millions of SKUs across thousands of product categories, each requiring daily price adjustments that account for demand elasticity, competitor behavior, inventory levels, and promotional calendars. \citet{Liu2019} deployed deep reinforcement learning agents for automated pricing on Tmall.com beginning July 2018, conducting field experiments on thousands of SKUs over several months.
+
+The pricing MDP for product $i$ has state $s_{i,t} \in \mathbb{R}^m$ comprising four feature groups: price features (current and historical prices, price-to-cost ratio), sales features (units sold, conversion rate), customer traffic features (unique visitors $\text{uv}_{i,t}$, page views), and competitiveness features (price rank among similar products). The pricing period is $d = 1$ day. Actions are either discrete, $a_{i,t} \in \{1, \ldots, K\}$ indexing price bins uniformly spaced between product-specific bounds $[P_{i,\min}, P_{i,\max}]$, or continuous, $a_{i,t} \in \mathbb{R}$. The reward is the difference of revenue conversion rates (DRCR):
+\begin{equation}
+r_{i,t} = \frac{\text{revenue}_{i,t}}{\text{uv}_{i,t}} - \frac{\text{revenue}_{i,t-\tau}}{\text{uv}_{i,t-\tau}},
+\end{equation}
+where $\text{uv}_{i,t}$ is unique visitors in period $t$ and $\tau$ is a reference lag.\footnote{DRCR normalizes revenue by traffic to remove demand fluctuations unrelated to pricing. The differencing further removes product-specific level effects, yielding a reward signal that is more concave than raw revenue and improves convergence stability.}
+
+Two algorithms are deployed: DQN for the discrete action formulation and DDPG for continuous actions. Both are pre-trained from demonstrations using historical specialist pricing actions (DQfD, DDPGfD) to address cold-start.\footnote{Pre-populating replay buffers with rollouts from heuristic or scripted policies is a general technique for reducing exploration burden in deep RL. In robotic grasping, \citet{Kalashnikov2018qtopt} collected 200,000 scripted grasping attempts at 15--30\% success rate, sufficient to bootstrap a vision-based policy to 96\% success; see \citet{Ibarz2021robot} for a survey of these and related warm-start strategies.}\footnote{Standard A/B testing is infeasible because Chinese e-commerce regulations prohibit displaying different prices to different customers for the same product simultaneously. \citet{Liu2019} instead evaluate using difference-in-differences against ``simi-products'' (similar products not subject to algorithmic pricing) as controls.}
+
+\begin{table}[htbp]
+\centering
+\caption{Field experiment results from \citet{Liu2019} on Tmall.com. DRCR improvement is relative to the simi-product control group.}
+\label{tab:ecommerce_pricing_results}
+\begin{tabular}{llcr}
+\toprule
+Experiment & Method & DRCR Improvement & Duration \\
+\midrule
+Markdown (500 luxury SKUs) & DQN ($K=9$) & $+37.5\%$ & 15 days \\
+Daily (1000 FMCGs) & DQN ($K=100$) & $5.10\times$ & 30 days \\
+Daily (1000 FMCGs) & DDPG (continuous) & $6.07\times$ & 30 days \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+DDPG with continuous action space outperformed DQN with discrete bins across all daily pricing experiments, and both substantially outperformed manual expert pricing.
 
 
 \subsection{Financial Order Execution}
@@ -180,7 +206,7 @@ Echelons & DRL Cost Gap vs.\ Base-Stock & States & Convergence \\
 \end{tabular}
 \end{table}
 
-Where classical solutions exist, RL underperforms: the base-stock policy remains highly competitive when properly calibrated, and DRL required millions of training transitions to approach performance levels achievable through closed-form calculation. RL struggles particularly with multi-echelon coupling, where upstream orders affect downstream costs many periods later.\footnote{Credit assignment refers to the difficulty of determining which past actions caused a delayed reward or cost. In multi-echelon systems, an upstream ordering decision today may not affect customer-facing costs for many periods, making it difficult for RL to learn the causal connection.} The value proposition for RL lies in problems where analytical solutions are unavailable: non-stationary demand, complex operational constraints, or cost structures that do not admit tractable decomposition. Even in these settings, successful deployment remains rare and requires extensive simulation infrastructure, domain expertise, and careful calibration against classical baselines.
+Where classical solutions exist, RL underperforms: the base-stock policy remains highly competitive when properly calibrated, and DRL required millions of training transitions to approach performance levels achievable through closed-form calculation. RL struggles particularly with multi-echelon coupling, where upstream orders affect downstream costs many periods later.\footnote{Credit assignment refers to the difficulty of determining which past actions caused a delayed reward or cost. In multi-echelon systems, an upstream ordering decision today may not affect customer-facing costs for many periods, making it difficult for RL to learn the causal connection.} The value proposition for RL lies in problems where analytical solutions are unavailable: non-stationary demand, complex operational constraints, or cost structures that do not admit tractable decomposition.\footnote{Residual RL \citep{Silver2018residual} offers a middle ground: rather than replacing classical policies, learn a correction $\pi_{\mathrm{final}}(s) = \pi_{\mathrm{classical}}(s) + \pi_{\mathrm{learned}}(s)$, preserving the classical solution's performance while allowing RL to handle constraints or non-stationarity the analytical method cannot. This connects to perturbation methods in economics, where one linearizes around a known solution and solves for deviations. See \citet{Ibarz2021robot} for a survey of residual and demonstration-augmented RL in robotics.} Even in these settings, successful deployment remains rare and requires extensive simulation infrastructure, domain expertise, and careful calibration against classical baselines.
 
 
 \subsection{Real-Time Bidding}
@@ -220,20 +246,13 @@ I conclude with a simulation demonstrating that RL matches dynamic programming o
 
 I extend the single-engine problem to a fleet of $N$ engines with a capacity constraint limiting replacements per period. The state $s = (m_1, \ldots, m_N)$ records discretized mileage for each engine. Actions are subsets of engines to replace, subject to the capacity constraint. The per-period cost is $c(s, a) = \alpha \sum_{i} m_i + \beta |a|$, where $\alpha$ is the operating cost per unit mileage and $\beta$ is the replacement cost.\footnote{The mileage-dependent operating cost $\alpha \sum_i m_i$ follows Rust's original specification $c(x, \theta_1) = \theta_{11} x$, creating a non-trivial threshold replacement policy. The fleet extension uses deterministic mileage increments to isolate the combinatorial scaling challenge that arises from the joint state of multiple engines.} Mileage evolves deterministically; replaced engines reset to $m = 0$; others increment by one bin.\footnote{With $M = 6$ mileage bins, the state space is $6^N$: 1,296 states at $N = 4$, 7,776 at $N = 5$, 46,656 at $N = 6$. Value iteration is feasible for $N \leq 5$.}
 
-Table~\ref{tab:bus_engine_results} compares dynamic programming, DQN, and heuristic baselines across fleet sizes.
+Figure~\ref{fig:bus_engine_scaling} compares dynamic programming, DQN, and heuristic baselines across fleet sizes.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../ch04_control_problems/sims/bus_engine_scaling.png}
-\caption{Bus engine replacement benchmark. Left: computation time vs.\ fleet size (log scale). Right: discounted return vs.\ fleet size for DP, DQN, and heuristic baselines.}
+\caption{Bus engine replacement benchmark. Left: computation time vs.\ fleet size (log scale). Right: discounted return vs.\ fleet size for DP, DQN, and heuristic baselines. At $N = 6$ (46,656 states), DP is infeasible (no data point).}
 \label{fig:bus_engine_scaling}
 \end{figure}
-
-\begin{table}[htbp]
-\centering
-\caption{Bus engine replacement results across fleet sizes.}
-\label{tab:bus_engine_results}
-\resizebox{\textwidth}{!}{\input{../ch04_control_problems/sims/bus_engine_results.tex}}
-\end{table}
 
 For $N = 1$ through $5$ where both methods are computable, DQN matches DP within 1\% of the optimal discounted return. At $N = 6$ (46,656 states), DP is infeasible but DQN produces a policy. The threshold heuristic, which replaces engines above a mileage cutoff, provides a reasonable baseline but cannot account for capacity constraints or the joint state of multiple engines. The never-replace heuristic performs poorly due to accumulated mileage costs, confirming that the cost structure creates a non-trivial replacement decision.

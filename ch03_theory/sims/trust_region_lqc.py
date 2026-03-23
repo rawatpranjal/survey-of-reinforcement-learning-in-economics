@@ -6,7 +6,7 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from sims.plot_style import apply_style, CMAP_SEQ
-from sims.sim_cache import load_results, save_results, add_cache_args
+from sims.sim_cache import compute_or_load, add_component_args, parse_force_set
 apply_style()
 
 import argparse
@@ -42,7 +42,7 @@ TH1, TH2 = np.meshgrid(theta1_vals, theta2_vals)  # shape (N_GRID, N_GRID)
 CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
 SCRIPT_NAME = 'trust_region_lqc'
 CONFIG = {
-    'version': 1,
+    'version': 2,
     'A': A.tolist(), 'B': B.tolist(), 'Q': Q.tolist(),
     'R': R, 'gamma': gamma,
     'sigma2_w': sigma2_w, 'sigma2_a': sigma2_a,
@@ -227,15 +227,8 @@ def compute_ppo_step(theta_old, g, ppo_mask, theta1_vals, theta2_vals):
 
 # ── compute_data ──────────────────────────────────────────────────────────────
 
-def compute_data():
-    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
-    if cached is not None:
-        print("Loaded from cache.")
-        return cached
-
-    print("=" * 60)
-    print("TRUST REGION LQC MONETARY POLICY")
-    print("=" * 60)
+def _run_trust_region_analysis():
+    """Compute J grid, Fisher matrix, TRPO/PPO steps."""
     print("\nParameters:")
     print(f"  A = {A.tolist()}")
     print(f"  B = {B.ravel().tolist()}")
@@ -341,8 +334,13 @@ def compute_data():
         'kl_bad': kl_bad,
         'residual_norm': float(np.linalg.norm(residual)),
     }
-    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
     return data
+
+
+def compute_data(force=None):
+    force = force or set()
+    return compute_or_load(CACHE_DIR, SCRIPT_NAME, 'trust_region', CONFIG,
+                            _run_trust_region_analysis, force=('trust_region' in force))
 
 
 # ── generate_outputs ──────────────────────────────────────────────────────────
@@ -573,15 +571,31 @@ Quantity & Symbol & Value \\
     print(f"  {os.path.join(OUTDIR, 'trust_region_lqc_stdout.txt')}")
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    add_cache_args(parser)
+def main():
+    parser = argparse.ArgumentParser(description='Trust Region LQC Monetary Policy')
+    add_component_args(parser)
     args = parser.parse_args()
 
+    force = parse_force_set(args)
+
+    print("=" * 60)
+    print("TRUST REGION LQC MONETARY POLICY")
+    print("=" * 60)
+
+    if force:
+        print(f"Force recompute: {sorted(force)}")
+
     if args.plots_only:
-        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
-        assert data is not None, "No cache found. Run without --plots-only first."
-    else:
-        data = compute_data()
-    if not args.data_only:
+        data = compute_data()  # cache hit
         generate_outputs(data)
+    elif args.data_only:
+        compute_data(force=force)
+    else:
+        data = compute_data(force=force)
+        generate_outputs(data)
+
+    print("\nDone.")
+
+
+if __name__ == '__main__':
+    main()

@@ -2,16 +2,18 @@
 Brock-Mirman Optimal Growth: VI vs PI vs LP Dual
 Chapter 3 — Demonstrates PI = Newton's method on the Bellman equation.
 
-Three regimes:
-  1. Standard contraction (500 grid × 2 states): VI convergence at rate β^n, PI in 3-6 iters
-  2. LP dual / Manne (20 grid × 2 states): primal LP = value function, dual = occupation measures
-  3. PI convergence rate (20 grid × 2 states): Howard PI iteration count vs VI
+Five cached components:
+  shared_r1     — grid, reward/transition matrices, closed-form policy (500 grid × 2 states)
+  VI_r1         — value iteration on shared_r1
+  PI_r1         — policy iteration on shared_r1
+  lp_r2         — LP primal/dual (self-contained, 20 grid × 2 states)
+  timing_sweep  — wall-clock VI vs PI across grid sizes 10..200
 """
 
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from sims.plot_style import apply_style, ALGO_COLORS, COLORS, CMAP_SEQ, FIG_SINGLE, FIG_DOUBLE
-from sims.sim_cache import load_results, save_results, add_cache_args
+from sims.sim_cache import compute_or_load, add_component_args, parse_force_set
 apply_style()
 
 import argparse
@@ -38,6 +40,30 @@ MAX_ITER_PI = 50
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__))
 CACHE_DIR = os.path.join(OUTPUT_DIR, 'cache')
+SCRIPT_NAME = 'brock_mirman'
+
+# ============================================================================
+# Per-component config dicts
+# ============================================================================
+
+ENV_PARAMS = {
+    'alpha': ALPHA, 'beta': BETA,
+    'z': Z_VALS.tolist(), 'pi': PI_TRANS.tolist(),
+    'seed': SEED, 'tol': TOL, 'version': 3,
+}
+
+SHARED_R1_CONFIG = {**ENV_PARAMS, 'n_k': 500}
+VI_R1_CONFIG     = {**SHARED_R1_CONFIG, 'max_iter_vi': MAX_ITER_VI}
+PI_R1_CONFIG     = {**SHARED_R1_CONFIG, 'max_iter_pi': MAX_ITER_PI}
+LP_R2_CONFIG     = {**ENV_PARAMS, 'n_k': 20}
+TIMING_CONFIG    = {**ENV_PARAMS, 'grid_sizes': [10, 20, 50, 100, 200]}
+
+# Regime shorthand mapping for --algo r1, r2, r3
+REGIME_COMPONENTS = {
+    'r1': {'shared_r1', 'VI_r1', 'PI_r1'},
+    'r2': {'lp_r2'},
+    'r3': {'timing_sweep'},
+}
 
 # ============================================================================
 # Model helpers
@@ -238,103 +264,69 @@ def lp_primal(R, P, gamma):
 
 
 # ============================================================================
-# Per-regime config dicts for sim_cache
+# Per-component compute functions
 # ============================================================================
 
-_BASE_CONFIG = {
-    'alpha': ALPHA, 'beta': BETA,
-    'z': Z_VALS.tolist(), 'pi': PI_TRANS.tolist(),
-    'seed': SEED, 'tol': TOL, 'version': 2,
-}
-
-def _regime_config(regime, **kwargs):
-    """Build a config dict for a specific regime."""
-    return {**_BASE_CONFIG, 'regime': regime, **kwargs}
-
-
-# ============================================================================
-# Regime runners
-# ============================================================================
-
-def run_regime1(n_k=500):
-    """Standard contraction: VI vs PI convergence."""
-    print(f"\n{'='*60}")
-    print(f"Regime 1: Standard contraction ({n_k} grid × {len(Z_VALS)} states)")
-    print(f"{'='*60}")
-
-    cfg = _regime_config(1, n_k=n_k)
-    cached = load_results(CACHE_DIR, 'brock_mirman_regime1', cfg)
-    if cached is not None:
-        print("  Loaded from cache.")
-        return cached
-
+def compute_shared_r1():
+    """Grid, R, P, closed-form policy for Regime 1 (500 grid × 2 states)."""
+    n_k = SHARED_R1_CONFIG['n_k']
     np.random.seed(SEED)
     k_grid = build_grid(n_k)
     R, P = build_reward_and_transitions(k_grid, Z_VALS, PI_TRANS)
+    cf_pol = closed_form_policy(k_grid, Z_VALS)
     n_s = n_k * len(Z_VALS)
 
     print(f"  States: {n_s}, Actions: {n_k}")
     print(f"  Parameters: α={ALPHA}, β={BETA}")
 
+    return {
+        'k_grid': k_grid, 'R': R, 'P': P,
+        'cf_pol': cf_pol, 'n_k': n_k, 'n_s': n_s,
+    }
+
+
+def compute_vi_r1(shared):
+    """Value iteration on Regime 1 MDP."""
+    R, P = shared['R'], shared['P']
     t0 = time.perf_counter()
     V_vi, pol_vi, errs_vi_succ, V_history_vi = value_iteration(R, P, BETA)
     t_vi = time.perf_counter() - t0
-    print(f"  VI: {len(errs_vi_succ)} iterations, {t_vi:.2f}s, final error={errs_vi_succ[-1]:.2e}")
 
+    vi_cf_match = np.mean(pol_vi == shared['cf_pol']) * 100
+    print(f"  VI: {len(errs_vi_succ)} iterations, {t_vi:.2f}s, final error={errs_vi_succ[-1]:.2e}")
+    print(f"  VI policy matches closed-form: {vi_cf_match:.1f}%")
+
+    return {
+        'V_vi': V_vi, 'pol_vi': pol_vi,
+        'errs_vi': errs_vi_succ, 'V_history': V_history_vi,
+        't_vi': t_vi, 'n_iters_vi': len(errs_vi_succ),
+        'vi_cf_match': vi_cf_match,
+    }
+
+
+def compute_pi_r1(shared):
+    """Policy iteration on Regime 1 MDP."""
+    R, P = shared['R'], shared['P']
     t0 = time.perf_counter()
     V_pi, pol_pi, errs_pi, timings_pi, bellman_resids_pi = policy_iteration(R, P, BETA)
     t_pi = time.perf_counter() - t0
+
+    pi_cf_match = np.mean(pol_pi == shared['cf_pol']) * 100
     print(f"  PI: {len(errs_pi)} iterations, {t_pi:.2f}s")
-
-    # Compute absolute VI errors using PI's V* as reference
-    V_star = V_pi
-    errs_vi_abs = [np.max(np.abs(Vh - V_star)) for Vh in V_history_vi]
-
-    # Verify against closed form
-    cf_pol = closed_form_policy(k_grid, Z_VALS)
-    vi_cf_match = np.mean(pol_vi == cf_pol) * 100
-    pi_cf_match = np.mean(pol_pi == cf_pol) * 100
-    print(f"  VI policy matches closed-form: {vi_cf_match:.1f}%")
     print(f"  PI policy matches closed-form: {pi_cf_match:.1f}%")
 
-    # V agreement
-    v_diff = np.max(np.abs(V_vi - V_pi))
-    print(f"  ||V_VI - V_PI||_inf = {v_diff:.2e}")
-
-    # Theoretical VI rate (absolute error bound)
-    theory_errors = [errs_vi_abs[0] * BETA**k for k in range(len(errs_vi_abs))]
-
-    data = {
-        'V_vi': V_vi, 'V_pi': V_pi,
-        'pol_vi': pol_vi, 'pol_pi': pol_pi, 'cf_pol': cf_pol,
-        'errs_vi': errs_vi_succ, 'errs_pi': errs_pi,
-        'errs_vi_abs': errs_vi_abs,
-        'bellman_resids_vi': errs_vi_succ,  # For VI: ||TV_k - V_k|| = successive diff
+    return {
+        'V_pi': V_pi, 'pol_pi': pol_pi,
+        'errs_pi': errs_pi, 'timings_pi': timings_pi,
         'bellman_resids_pi': bellman_resids_pi,
-        'theory_errors': theory_errors,
-        'timings_pi': timings_pi,
-        't_vi': t_vi, 't_pi': t_pi,
-        'n_iters_vi': len(errs_vi_succ), 'n_iters_pi': len(errs_pi),
-        'vi_cf_match': vi_cf_match, 'pi_cf_match': pi_cf_match,
-        'v_diff': v_diff,
-        'k_grid': k_grid,
+        't_pi': t_pi, 'n_iters_pi': len(errs_pi),
+        'pi_cf_match': pi_cf_match,
     }
-    save_results(CACHE_DIR, 'brock_mirman_regime1', cfg, data)
-    return data
 
 
-def run_regime2(n_k=20):
-    """LP dual: Manne (1960) formulation."""
-    print(f"\n{'='*60}")
-    print(f"Regime 2: LP dual / Manne ({n_k} grid × {len(Z_VALS)} states)")
-    print(f"{'='*60}")
-
-    cfg = _regime_config(2, n_k=n_k)
-    cached = load_results(CACHE_DIR, 'brock_mirman_regime2', cfg)
-    if cached is not None:
-        print("  Loaded from cache.")
-        return cached
-
+def compute_lp_r2():
+    """Self-contained LP primal/dual regime (20 grid × 2 states)."""
+    n_k = LP_R2_CONFIG['n_k']
     np.random.seed(SEED)
     k_grid = build_grid(n_k)
     R, P = build_reward_and_transitions(k_grid, Z_VALS, PI_TRANS)
@@ -359,11 +351,10 @@ def run_regime2(n_k=20):
     print(f"  ||V_LP - V_VI||_inf = {lp_vi_diff:.2e}")
     print(f"  LP policy matches VI: {pol_match:.1f}%")
 
-    # Occupation measure summary
     mu_s = mu.sum(axis=1)
     print(f"  Occupation measures: min={mu_s.min():.4f}, max={mu_s.max():.4f}, sum={mu_s.sum():.4f}")
 
-    data = {
+    return {
         'V_vi': V_vi, 'V_lp': V_lp,
         'pol_vi': pol_vi, 'pol_lp': pol_lp,
         'mu': mu, 'mu_s': mu_s,
@@ -373,52 +364,13 @@ def run_regime2(n_k=20):
         'k_grid': k_grid,
         'n_s': n_s, 'n_a': n_k,
     }
-    save_results(CACHE_DIR, 'brock_mirman_regime2', cfg, data)
-    return data
 
 
-def run_regime3(n_k=20):
-    """PI convergence rate vs VI."""
-    print(f"\n{'='*60}")
-    print(f"Regime 3: PI convergence rate ({n_k} grid × {len(Z_VALS)} states)")
-    print(f"{'='*60}")
-
-    cfg = _regime_config(3, n_k=n_k)
-    cached = load_results(CACHE_DIR, 'brock_mirman_regime3', cfg)
-    if cached is not None:
-        print("  Loaded from cache.")
-        return cached
-
+def compute_timing_sweep():
+    """Wall-clock VI vs PI across grid sizes 10..200."""
+    grid_sizes = TIMING_CONFIG['grid_sizes']
     np.random.seed(SEED)
-    k_grid = build_grid(n_k)
-    R, P = build_reward_and_transitions(k_grid, Z_VALS, PI_TRANS)
-    n_s = n_k * len(Z_VALS)
-    n_a = n_k
 
-    # VI
-    V_vi, pol_vi, errs_vi, _ = value_iteration(R, P, BETA)
-    print(f"  VI: {len(errs_vi)} iterations")
-
-    # PI
-    V_pi, pol_pi, errs_pi, timings_pi, _ = policy_iteration(R, P, BETA)
-    print(f"  PI: {len(errs_pi)} iterations")
-
-    # Cost per iteration
-    # VI: O(n_s * n_a) per iteration
-    # PI: O(n_s^3) for policy eval + O(n_s * n_a) for improvement
-    vi_cost = n_s * n_a
-    pi_cost = n_s**3 + n_s * n_a
-    vi_total = len(errs_vi) * vi_cost
-    pi_total = len(errs_pi) * pi_cost
-
-    print(f"  VI per-iteration cost: O({n_s}x{n_a}) = {vi_cost}")
-    print(f"  PI per-iteration cost: O({n_s}^3+{n_s}x{n_a}) = {pi_cost}")
-    print(f"  VI total operations: {vi_total:,}")
-    print(f"  PI total operations: {pi_total:,}")
-    print(f"  Ratio (VI/PI): {vi_total/pi_total:.1f}x")
-
-    # Wall-clock timing for multiple grid sizes
-    grid_sizes = [10, 20, 50, 100, 200]
     timing_results = []
     for nk in grid_sizes:
         kg = build_grid(nk)
@@ -439,16 +391,78 @@ def run_regime3(n_k=20):
         })
         print(f"  Grid {nk}: VI {len(errs)} iters ({t_v:.3f}s), PI {len(errs_p)} iters ({t_p:.3f}s)")
 
-    data = {
-        'errs_vi': errs_vi, 'errs_pi': errs_pi,
-        'timings_pi': timings_pi,
+    # Cost summary from the n_k=20 entry
+    r20 = next(r for r in timing_results if r['n_k'] == 20)
+    n_s, n_a = r20['n_s'], 20
+    vi_cost = n_s * n_a
+    pi_cost = n_s**3 + n_s * n_a
+    vi_total = r20['vi_iters'] * vi_cost
+    pi_total = r20['pi_iters'] * pi_cost
+
+    print(f"  VI per-iteration cost: O({n_s}x{n_a}) = {vi_cost}")
+    print(f"  PI per-iteration cost: O({n_s}^3+{n_s}x{n_a}) = {pi_cost}")
+    print(f"  VI total operations: {vi_total:,}")
+    print(f"  PI total operations: {pi_total:,}")
+    print(f"  Ratio (VI/PI): {vi_total/pi_total:.1f}x")
+
+    return {
+        'timing_results': timing_results,
         'vi_cost': vi_cost, 'pi_cost': pi_cost,
         'vi_total': vi_total, 'pi_total': pi_total,
-        'timing_results': timing_results,
         'n_s': n_s, 'n_a': n_a,
     }
-    save_results(CACHE_DIR, 'brock_mirman_regime3', cfg, data)
-    return data
+
+
+# ============================================================================
+# Cross-comparison assembly (not cached; fast arithmetic on cached data)
+# ============================================================================
+
+def assemble_regime1(vi_r1, pi_r1):
+    """Compute cross-comparison metrics between VI and PI results."""
+    V_star = pi_r1['V_pi']
+    V_history = vi_r1['V_history']
+    errs_vi_abs = [np.max(np.abs(Vh - V_star)) for Vh in V_history]
+    theory_errors = [errs_vi_abs[0] * BETA**k for k in range(len(errs_vi_abs))]
+    v_diff = np.max(np.abs(vi_r1['V_vi'] - pi_r1['V_pi']))
+
+    print(f"  ||V_VI - V_PI||_inf = {v_diff:.2e}")
+
+    return {
+        'errs_vi_abs': errs_vi_abs,
+        'theory_errors': theory_errors,
+        'v_diff': v_diff,
+    }
+
+
+# ============================================================================
+# Orchestration
+# ============================================================================
+
+def compute_data(force=None):
+    force = force or set()
+    # Expand regime shorthands
+    expanded = set()
+    for f in force:
+        expanded |= REGIME_COMPONENTS.get(f, {f})
+    force = expanded
+
+    shared_r1 = compute_or_load(CACHE_DIR, SCRIPT_NAME, 'shared_r1', SHARED_R1_CONFIG,
+                                 compute_shared_r1, force=('shared_r1' in force))
+    vi_r1 = compute_or_load(CACHE_DIR, SCRIPT_NAME, 'VI_r1', VI_R1_CONFIG,
+                             compute_vi_r1, shared_r1,
+                             force=('VI_r1' in force or 'shared_r1' in force))
+    pi_r1 = compute_or_load(CACHE_DIR, SCRIPT_NAME, 'PI_r1', PI_R1_CONFIG,
+                             compute_pi_r1, shared_r1,
+                             force=('PI_r1' in force or 'shared_r1' in force))
+    lp_r2 = compute_or_load(CACHE_DIR, SCRIPT_NAME, 'lp_r2', LP_R2_CONFIG,
+                             compute_lp_r2, force=('lp_r2' in force))
+    timing = compute_or_load(CACHE_DIR, SCRIPT_NAME, 'timing_sweep', TIMING_CONFIG,
+                              compute_timing_sweep, force=('timing_sweep' in force))
+
+    return {
+        'shared_r1': shared_r1, 'VI_r1': vi_r1, 'PI_r1': pi_r1,
+        'lp_r2': lp_r2, 'timing_sweep': timing,
+    }
 
 
 # ============================================================================
@@ -490,7 +504,7 @@ def _draw_operator_background(ax):
     return r_vals, slopes
 
 
-def plot_convergence(data1):
+def plot_convergence(vi_r1, pi_r1, r1_cross):
     """1x3 panel: (a) VI in V,TV space, (b) PI in V,TV space, (c) convergence."""
     VI_COLOR = ALGO_COLORS['VI']
     PI_COLOR = ALGO_COLORS['PI']
@@ -531,11 +545,11 @@ def plot_convergence(data1):
     ax_b.set_title('(b)', loc='left', fontsize=10)
 
     # ---- Panel (c): Sup-norm error convergence ----
-    errs_vi_abs = data1['errs_vi_abs']
-    errs_pi = data1['errs_pi']
-    theory = data1['theory_errors']
-    n_vi = data1['n_iters_vi']
-    n_pi = data1['n_iters_pi']
+    errs_vi_abs = r1_cross['errs_vi_abs']
+    errs_pi = pi_r1['errs_pi']
+    theory = r1_cross['theory_errors']
+    n_vi = vi_r1['n_iters_vi']
+    n_pi = pi_r1['n_iters_pi']
 
     ax_c.semilogy(range(len(errs_vi_abs)), errs_vi_abs, color=VI_COLOR,
                   linewidth=1.5, label=f'VI ({n_vi} iters)', zorder=3)
@@ -561,52 +575,13 @@ def plot_convergence(data1):
     plt.close(fig)
 
 
-def plot_lp_dual(data2):
-    """Regime 2: LP primal vs VI + occupation measures."""
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=FIG_DOUBLE)
+def generate_table(data):
+    """Consolidated results table from all components."""
+    vi_r1 = data['VI_r1']
+    pi_r1 = data['PI_r1']
+    lp_r2 = data['lp_r2']
+    timing = data['timing_sweep']
 
-    k_grid = data2['k_grid']
-    V_vi = data2['V_vi']
-    V_lp = data2['V_lp']
-    mu = data2['mu']
-    n_z = len(Z_VALS)
-    n_k = len(k_grid)
-
-    # Left: V_LP vs V_VI for each z state
-    for iz, z_label in enumerate(['z=0.9 (low)', 'z=1.1 (high)']):
-        idx = np.arange(iz, n_k * n_z, n_z)
-        color = COLORS['blue'] if iz == 0 else COLORS['orange']
-        ax1.plot(k_grid, V_vi[idx], color=color, linewidth=2, label=f'VI, {z_label}')
-        ax1.plot(k_grid, V_lp[idx], color=color, linestyle='--', marker='x',
-                 markersize=5, label=f'LP, {z_label}')
-
-    ax1.set_xlabel('Capital $k$')
-    ax1.set_ylabel('$V(k,z)$')
-    ax1.set_title('LP Primal vs VI Value Functions')
-    ax1.legend(fontsize=8)
-
-    # Right: Occupation measures (marginal over actions)
-    mu_s = data2['mu_s']
-    for iz, z_label in enumerate(['z=0.9', 'z=1.1']):
-        idx = np.arange(iz, n_k * n_z, n_z)
-        color = COLORS['blue'] if iz == 0 else COLORS['orange']
-        ax2.bar(k_grid + (iz - 0.5) * 0.01, mu_s[idx], width=0.015,
-                color=color, alpha=0.7, label=f'μ(k,{z_label})')
-
-    ax2.set_xlabel('Capital $k$')
-    ax2.set_ylabel('Occupation measure $\\mu(s)$')
-    ax2.set_title('Dual: State Occupation Measures')
-    ax2.legend(fontsize=8)
-
-    fig.tight_layout()
-    path = os.path.join(OUTPUT_DIR, 'brock_mirman_lp_dual.png')
-    fig.savefig(path, bbox_inches='tight')
-    plt.close(fig)
-    print(f"Saved: {path}")
-
-
-def generate_table(data1, data2, data3):
-    """Consolidated results table."""
     lines = []
     lines.append(r'\begin{table}[t]')
     lines.append(r'\centering')
@@ -618,15 +593,15 @@ def generate_table(data1, data2, data3):
     lines.append(r'\hline')
 
     # Regime 1
-    lines.append(f'1. Contraction & VI & {data1["n_iters_vi"]} & {data1["t_vi"]:.2f} & {data1["errs_vi"][-1]:.1e} \\\\')
-    lines.append(f' & PI & {data1["n_iters_pi"]} & {data1["t_pi"]:.2f} & {data1["errs_pi"][-1]:.1e} \\\\')
+    lines.append(f'1. Contraction & VI & {vi_r1["n_iters_vi"]} & {vi_r1["t_vi"]:.2f} & {vi_r1["errs_vi"][-1]:.1e} \\\\')
+    lines.append(f' & PI & {pi_r1["n_iters_pi"]} & {pi_r1["t_pi"]:.2f} & {pi_r1["errs_pi"][-1]:.1e} \\\\')
 
     # Regime 2
-    lines.append(f'2. LP dual & VI & --- & {data2["t_vi"]:.3f} & --- \\\\')
-    lines.append(f' & LP & --- & {data2["t_lp"]:.3f} & {data2["lp_vi_diff"]:.1e} \\\\')
+    lines.append(f'2. LP dual & VI & --- & {lp_r2["t_vi"]:.3f} & --- \\\\')
+    lines.append(f' & LP & --- & {lp_r2["t_lp"]:.3f} & {lp_r2["lp_vi_diff"]:.1e} \\\\')
 
     # Regime 3: timing across grid sizes
-    tr = data3['timing_results']
+    tr = timing['timing_results']
     r3_small = tr[0]  # n_k=10
     r3_large = tr[-1]  # n_k=200
     lines.append(f'3. Rate ($n_k$=10) & VI & {r3_small["vi_iters"]} & {r3_small["t_vi"]:.3f} & --- \\\\')
@@ -644,83 +619,40 @@ def generate_table(data1, data2, data3):
     print(f"Saved: {path}")
 
 
+def generate_outputs(data):
+    """Generate all plots and tables from cached component data."""
+    vi_r1 = data['VI_r1']
+    pi_r1 = data['PI_r1']
+
+    r1_cross = assemble_regime1(vi_r1, pi_r1)
+    plot_convergence(vi_r1, pi_r1, r1_cross)
+    generate_table(data)
+
+
 # ============================================================================
 # Main
 # ============================================================================
 
-def compute_all_regimes(regimes_to_run):
-    """Run specified regimes, load others from cache. Returns (data1, data2, data3)."""
-    data1, data2, data3 = None, None, None
-
-    if 1 in regimes_to_run:
-        data1 = run_regime1(n_k=500)
-    else:
-        cfg1 = _regime_config(1, n_k=500)
-        data1 = load_results(CACHE_DIR, 'brock_mirman_regime1', cfg1)
-        if data1:
-            print("\nRegime 1: loaded from cache")
-
-    if 2 in regimes_to_run:
-        data2 = run_regime2(n_k=20)
-    else:
-        cfg2 = _regime_config(2, n_k=20)
-        data2 = load_results(CACHE_DIR, 'brock_mirman_regime2', cfg2)
-        if data2:
-            print("\nRegime 2: loaded from cache")
-
-    if 3 in regimes_to_run:
-        data3 = run_regime3(n_k=20)
-    else:
-        cfg3 = _regime_config(3, n_k=20)
-        data3 = load_results(CACHE_DIR, 'brock_mirman_regime3', cfg3)
-        if data3:
-            print("\nRegime 3: loaded from cache")
-
-    return data1, data2, data3
-
-
-def generate_all_outputs(data1, data2, data3):
-    """Generate all plots and tables from regime data."""
-    if data1:
-        plot_convergence(data1)
-    if data2:
-        plot_lp_dual(data2)
-    if data1 and data2 and data3:
-        generate_table(data1, data2, data3)
-
-
 def main():
     parser = argparse.ArgumentParser(description='Brock-Mirman VI vs PI vs LP')
-    parser.add_argument('--only', type=str, default=None,
-                        help='Comma-separated regimes to run (e.g., "1,2")')
-    add_cache_args(parser)
+    add_component_args(parser)
     args = parser.parse_args()
 
-    regimes_to_run = set()
-    if args.only:
-        regimes_to_run = {int(x.strip()) for x in args.only.split(',')}
-    else:
-        regimes_to_run = {1, 2, 3}
+    force = parse_force_set(args)
 
     print("Brock-Mirman Optimal Growth: VI vs PI vs LP")
-    print(f"Parameters: \u03b1={ALPHA}, \u03b2={BETA}, z\u2208{Z_VALS.tolist()}")
-    print(f"Regimes: {sorted(regimes_to_run)}")
+    print(f"Parameters: α={ALPHA}, β={BETA}, z∈{Z_VALS.tolist()}")
+    if force:
+        print(f"Force recompute: {sorted(force)}")
 
     if args.plots_only:
-        # Load all regimes from cache, skip computation
-        cfg1 = _regime_config(1, n_k=500)
-        cfg2 = _regime_config(2, n_k=20)
-        cfg3 = _regime_config(3, n_k=20)
-        data1 = load_results(CACHE_DIR, 'brock_mirman_regime1', cfg1)
-        data2 = load_results(CACHE_DIR, 'brock_mirman_regime2', cfg2)
-        data3 = load_results(CACHE_DIR, 'brock_mirman_regime3', cfg3)
-        assert data1 is not None or data2 is not None or data3 is not None, \
-            "No cache found. Run without --plots-only first."
-        generate_all_outputs(data1, data2, data3)
+        data = compute_data()  # all cache hits
+        generate_outputs(data)
+    elif args.data_only:
+        compute_data(force=force)
     else:
-        data1, data2, data3 = compute_all_regimes(regimes_to_run)
-        if not args.data_only:
-            generate_all_outputs(data1, data2, data3)
+        data = compute_data(force=force)
+        generate_outputs(data)
 
     print("\nDone.")
 
