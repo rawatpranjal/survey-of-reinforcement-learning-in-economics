@@ -133,7 +133,27 @@ else
 fi
 
 # Remove build artifacts (keep .bbl for arXiv)
-rm -f main.aux main.log main.out main.blg main.pdf main.luabridge.lua
+rm -f main.aux main.log main.out main.blg main.pdf main.luabridge.lua main.toc
+
+# --- Create 00README.XXX to prevent arXiv from deleting input'ed files ---
+cat > 00README.XXX <<'READMEEOF'
+noop main.bbl
+noop ch04_control_problems/sims/bus_engine_results.tex
+noop ch05_econ_models/sims/nfxp_ccp_td_results.tex
+noop ch06_games/sims/cournot_bertrand_results.tex
+noop ch06_games/sims/durable_goods_results.tex
+noop ch07_bandits/sims/knowledge_ladder_results.tex
+noop ch08_offline_rl/sims/offline_rl_pricing_results.tex
+noop ch09_rlhf/sims/job_search_results.tex
+noop ch09_rlhf/sims/job_search_diagnostics.tex
+noop ch09_rlhf/sims/job_search_horizon.tex
+noop ch10_causal/sims/confounded_ope_results.tex
+noop ch03_theory/sims/brock_mirman_results.tex
+noop ch03_theory/sims/td_lambda_corridor.tex
+noop ch03_theory/sims/lqc_fvi_fqi_weights.tex
+noop ch03a_bm/sims/bm_fvi_fqi_results.tex
+READMEEOF
+echo "  Created 00README.XXX (prevents arXiv file deletion)"
 
 # --- 7. Create tarball ---
 cd "$REPO_ROOT"
