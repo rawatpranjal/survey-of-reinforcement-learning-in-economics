@@ -1,4 +1,4 @@
-Several recent papers have used RL training loops, namely Q-learning, temporal-difference learning, policy gradient, and actor-critic methods, to solve structural economic models at scales where conventional dynamic programming fails.\footnote{I exclude papers that use neural network function approximation without an RL training mechanism. Inverse reinforcement learning is treated in the sister survey \citep{RustRawat2026}.} Throughout this chapter I adopt a unified notation. An MDP is a tuple $(\mathcal{S}, \mathcal{A}, P, r, \gamma)$ where $\mathcal{S}$ is the state space, $\mathcal{A}$ is the action space, $P(s' | s, a)$ is the transition kernel, $r(s,a)$ is the per-period reward, and $\gamma \in [0,1)$ is the discount factor.\footnote{Several of the papers reviewed here use $\beta$ for the discount factor, following economics convention. I translate all results to $\gamma$ for consistency with the RL literature and the rest of this survey.} A policy $\pi: \mathcal{S} \to \Delta(\mathcal{A})$ maps states to distributions over actions. The value function under $\pi$ is $V^\pi(s) = \mathbb{E}_\pi\left[\sum_{t=0}^\infty \gamma^t r(s_t, a_t) \mid s_0 = s\right]$, and the action-value function is $Q^\pi(s,a) = r(s,a) + \gamma \mathbb{E}_{s' \sim P(\cdot|s,a)}[V^\pi(s')]$. The optimal value function satisfies $V^*(s) = \max_{a \in \mathcal{A}} Q^*(s,a)$.
+Several recent papers have used RL training loops,\footnote{Throughout this chapter, the RL training loop runs entirely inside the econometrician's computational model; the agent never interacts with real economic agents or markets but serves as a numerical method for solving the Bellman equation within a structural estimation procedure (Section~\ref{section:language}). There is no execution phase in the usual sense.} namely Q-learning, temporal-difference learning, policy gradient, and actor-critic methods, to solve structural economic models at scales where conventional dynamic programming fails.\footnote{I exclude papers that use neural network function approximation without an RL training mechanism. Inverse reinforcement learning is treated in the sister survey \citep{RustRawat2026}.} Throughout this chapter I adopt a unified notation. An MDP is a tuple $(\mathcal{S}, \mathcal{A}, P, r, \gamma)$ where $\mathcal{S}$ is the state space, $\mathcal{A}$ is the action space, $P(s' | s, a)$ is the transition kernel, $r(s,a)$ is the per-period reward, and $\gamma \in [0,1)$ is the discount factor.\footnote{Several of the papers reviewed here use $\beta$ for the discount factor, following economics convention. I translate all results to $\gamma$ for consistency with the RL literature and the rest of this survey.} A policy $\pi: \mathcal{S} \to \Delta(\mathcal{A})$ maps states to distributions over actions. The value function under $\pi$ is $V^\pi(s) = \mathbb{E}_\pi\left[\sum_{t=0}^\infty \gamma^t r(s_t, a_t) \mid s_0 = s\right]$, and the action-value function is $Q^\pi(s,a) = r(s,a) + \gamma \mathbb{E}_{s' \sim P(\cdot|s,a)}[V^\pi(s')]$. The optimal value function satisfies $V^*(s) = \max_{a \in \mathcal{A}} Q^*(s,a)$.
 
 The canonical structural estimation framework for MDPs was formulated by \citet{rust1994structural}, whose nested fixed-point (NFXP) algorithm embeds the Bellman equation inside a maximum likelihood estimator. The methods reviewed in this chapter replace the inner fixed-point computation with RL-based approximations.
 
@@ -21,7 +21,9 @@ The canonical structural estimation framework for MDPs was formulated by \citet{
 \label{fig:estimation_flowcharts}
 \end{figure}
 
-\subsubsection{Adusumilli and Eckardt (2022): TD Learning for CCP Estimation}
+\subsection{Single-Agent Structural Estimation}
+
+\subsubsection{TD Learning for CCP Estimation}
 
 \citet{AdusumilliEckardt2022} adapt temporal-difference (TD) learning to estimate the recursive terms that arise in CCP-based estimation, entirely avoiding specification or estimation of transition densities.
 
@@ -68,7 +70,7 @@ Monte Carlo experiments on a dynamic firm entry model with seven structural para
 For dynamic discrete games, the method extends naturally. Standard CCP-based estimation of games requires integrating out other players' actions, which becomes intractable with many players or continuous states. TD learning avoids this entirely, since it works directly with the joint empirical distribution of states and their successors. The ``integrating out'' is done implicitly within sample expectations.
 
 
-\subsubsection{Hu and Yang (2025): Policy Gradient for DDC Estimation}
+\subsubsection{Policy Gradient for DDC Estimation}
 
 \citet{HuYang2025} combine policy gradient methods with the Simulated Method of Moments (SMM) to estimate DDCs, with particular focus on models with unobserved state variables.
 
@@ -102,7 +104,7 @@ On an extended Rust bus engine model with a continuous unobserved bus condition 
 Dynamic oligopoly models combine game theory and dynamic programming: firms choose actions strategically while anticipating competitors' strategies, and the state space grows combinatorially in the number of firms.
 
 
-\subsubsection{Asker, Fershtman, Jeon, and Pakes (2020): Q-Learning in Dynamic Procurement Auctions}
+\subsubsection{Q-Learning in Dynamic Procurement Auctions}
 
 \citet{AskerEtAl2020} develop a computational framework for analyzing dynamic procurement auctions with serially correlated asymmetric information. Their approach builds on the Experience-Based Equilibrium (EBE) concept of \citet{FershtmanPakes2012}, which computes equilibria by simulating industry trajectories and updating strategies toward best responses. EBE evaluates values only on recurrently visited states rather than the full state space, making it feasible for large state spaces. While \citet{FershtmanPakes2012} use a stochastic approximation algorithm to update continuation values from simulated industry trajectories, \citet{AskerEtAl2020} add explicit value-function updates via stochastic approximation.
 
@@ -125,7 +127,7 @@ where $h_k(s,a)$ is the number of times state-action pair $(s,a)$ has been visit
 The limitation of this approach is the tabular representation; the Q-function is stored as a lookup table over discretized states and actions, restricting applicability to models with moderate state-space dimension.
 
 
-\subsubsection{Hollenbeck (2019): TD Learning for Merger Analysis with Innovation}
+\subsubsection{TD Learning for Merger Analysis with Innovation}
 
 \citet{Hollenbeck2019} uses RL to solve a dynamic oligopoly model with endogenous mergers, entry, exit, and quality investment. The model extends the Ericson-Pakes framework to study how horizontal mergers affect innovation incentives.
 
@@ -151,7 +153,7 @@ Two related papers merit brief mention. \citet{LomysMagnolfi2024} develop struct
 Closed-form equilibrium bidding strategies exist only for narrow families of valuation distributions and auction formats, and numerical methods scale poorly with the number of bidders and items.
 
 
-\subsubsection{Brero, Eden, Gerstgrasser, Parkes, and Rheingans-Yoo (2021): RL for Sequential Price Mechanisms}
+\subsubsection{RL for Sequential Price Mechanisms}
 
 \citet{BreroEtAl2021} use RL to design optimal sequential price mechanisms (SPMs), a class of indirect auction mechanisms where agents are approached in sequence and offered menus of items at posted prices. SPMs generalize both serial dictatorship and posted-price mechanisms and essentially characterize all strongly obviously strategyproof (SOSP) mechanisms \citep{PyciaAndTroyan2019}.\footnote{A mechanism is strategyproof if truthful reporting is a dominant strategy. It is obviously strategyproof if this dominance is apparent even to boundedly rational agents; strongly obviously strategyproof (SOSP) adds that dominance holds at every information set \citep{PyciaAndTroyan2019}.}
 
@@ -174,7 +176,7 @@ Experimental results show that the learned SPMs achieve near-optimal welfare acr
 The limitation is that the POMDP formulation requires knowledge of the prior distribution over valuations, which in practice must be estimated from data. The method also does not scale easily to very large numbers of items due to the combinatorial action space.
 
 
-\subsubsection{Ravindranath, Feng, Wang, Zaheer, Mehta, and Parkes (2024): Fitted Policy Iteration for Combinatorial Auctions}
+\subsubsection{Fitted Policy Iteration for Combinatorial Auctions}
 
 \citet{RavindranathEtAl2024} address revenue-maximizing mechanism design for combinatorial auctions with multiple items and strategic bidders. Their innovation is integrating differentiable auction structure into a fitted policy iteration framework, enabling analytical gradient computation where standard RL methods struggle with high variance.
 
@@ -189,9 +191,34 @@ Experiments on settings with additive and combinatorial valuations show that the
 
 \subsection{Macroeconomic Models}
 
-Reinforcement learning and deep learning are increasingly used to solve high-dimensional macroeconomic models where grid-based dynamic programming is infeasible. Heterogeneous agent models, in which a distribution of agents with different wealth levels, productivities, or beliefs interact through markets, generate state spaces that grow with the number of agent types and asset positions. \citet{MaliarMaliarWinant2021} demonstrate that deep neural networks can approximate policy and value functions in dynamic economic models, achieving accuracy comparable to established projection methods while scaling to problems with dozens of state variables. \citet{FernandezVillaverdeHurtadoNuno2023} solve a model with financial frictions and an endogenous wealth distribution using deep learning, obtaining global solutions to a problem where perturbation methods fail due to strong nonlinearities. \citet{FernandezVillaverdeNunoPerla2024} provide a systematic treatment of deep learning methods for high-dimensional dynamic programming problems in economics, covering both single-agent and equilibrium settings. \citet{AtashbarShi2023} apply deep deterministic policy gradient (DDPG)\footnote{DDPG extends Q-learning to continuous action spaces by learning a deterministic policy network alongside a Q-function critic.} to a real business cycle model, demonstrating that model-free RL can recover near-optimal consumption and investment policies without deriving optimality conditions such as the Euler equation. This is a rapidly growing area; readers seeking a comprehensive methodological treatment are directed to the cited papers and the references therein.
+Reinforcement learning and deep learning are increasingly used to solve high-dimensional macroeconomic models where grid-based dynamic programming is infeasible. Heterogeneous agent models, in which a distribution of agents with different wealth levels, productivities, or beliefs interact through markets, generate state spaces that grow with the number of agent types and asset positions. \citet{MaliarMaliarWinant2021} demonstrate that deep neural networks can approximate policy and value functions in dynamic economic models, achieving accuracy comparable to established projection methods while scaling to problems with dozens of state variables. \citet{FernandezVillaverdeHurtadoNuno2023} solve a model with financial frictions and an endogenous wealth distribution using deep learning, obtaining global solutions to a problem where perturbation methods fail due to strong nonlinearities. \citet{FernandezVillaverdeNunoPerla2024} provide a systematic treatment of deep learning methods for high-dimensional dynamic programming problems in economics, covering both single-agent and equilibrium settings. \citet{AtashbarShi2023} apply deep deterministic policy gradient (DDPG)\footnote{DDPG extends Q-learning to continuous action spaces by learning a deterministic policy network alongside a Q-function critic.} to a real business cycle model, demonstrating that model-free RL can recover near-optimal consumption and investment policies without deriving optimality conditions such as the Euler equation. \citet{Moll2025} argues that rational expectations equilibria in heterogeneous agent models are computationally intractable and proposes reinforcement learning as a more tractable alternative for modeling how agents form beliefs and make decisions; see also the textbook treatment in \citet{Zhao2025}. This is a rapidly growing area; readers seeking a comprehensive methodological treatment are directed to the cited papers and the references therein.
 
 
 \subsection{Optimal Policy Design}
 
 \citet{Zheng2021} introduce the AI Economist, a two-level multi-agent reinforcement learning framework for automated tax policy design. In their environment, a population of AI worker agents learn to work, trade, and build in a spatial-economic simulation, while a government RL agent simultaneously learns tax brackets that optimize a social welfare objective. The worker agents are trained with PPO to maximize individual post-tax utility, and the government agent is trained with PPO to maximize a weighted combination of equality (measured by the Gini index) and productivity (total output). The two-level structure produces a Stackelberg game between the government (leader) and the workers (followers), where the government must anticipate how tax policy changes affect worker behavior. The learned tax policies achieve equality-productivity tradeoffs that Pareto-dominate several analytical baselines, including the Saez tax formula. This framework extends the mechanism design perspective of the preceding subsection from auctions to fiscal policy, using multi-agent RL to jointly solve for optimal mechanisms and equilibrium responses.
+
+
+\subsection{Simulation Study: DDC Estimation at Scale}
+\label{sec:ddc_estimation_sim}
+
+The test bed is a multi-component extension of the \citet{Rust1987} bus engine replacement model. In the original formulation a maintenance superintendent observes discretized mileage $m\in\{0,\ldots,M{-}1\}$ and makes a binary keep-or-replace decision, facing running cost $c(s;\theta)=\theta_1 x+\theta_2 x^2$ with $x=m/M$, replacement cost $RC$, and Type~I extreme value additive errors that yield logit conditional choice probabilities. We extend the model to $K$ independent wear components, each evolving in $\{0,\ldots,M{-}1\}$, with aggregate normalized wear $x(s)=\sum_k m_k/M$ entering the same cost function. The state space is $|\mathcal{S}|=M^K$, so increasing $K$ produces a controlled scaling experiment in which the data-generating process is identical across scales but the computational burden grows exponentially.
+
+We compare four estimation methods on a multi-component bus engine replacement problem \citep{Rust1987} with $K \in \{1,2,3,4\}$ independent wear components, producing state spaces from 20 to 160,000 states. Panel data consist of $N=500$ agents observed for $T=100$ periods. The four methods are NFXP (nested fixed-point MLE), CCP (Hotz-Miller inversion), TD-CCP Linear (semi-gradient TD with polynomial basis), and TD-CCP Neural (approximate value iteration with a two-layer MLP), where the two TD-CCP variants follow \citet{AdusumilliEckardt2022}. Each configuration is replicated across 5 seeds; Table~\ref{tab:ddc_estimation} and Figure~\ref{fig:ddc_scaling_time} report means.
+
+\begin{table}[t]
+\centering
+\caption{DDC estimation results across state-space scales. Rows show method, number of components $K$, state-space size $|\mathcal{S}|$, mean wall-clock time (seconds), RC bias, and root mean squared error for each structural parameter. Averages over 5 seeds; dashes indicate method failure (sparse state coverage).}
+\label{tab:ddc_estimation}
+\small
+\input{../ch05_econ_models/sims/nfxp_ccp_td_results.tex}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\textwidth]{../ch05_econ_models/sims/nfxp_ccp_td_scaling_time.png}
+\caption{Wall-clock estimation time versus state-space scale for the four DDC estimators. Vertical axis is log-scaled. Each point is the mean over 5 seeds.}
+\label{fig:ddc_scaling_time}
+\end{figure}
+
+NFXP scales from 0.2s at $K{=}1$ ($|\mathcal{S}|{=}20$) to 179s at $K{=}4$ ($|\mathcal{S}|{=}160{,}000$), reflecting the cost of repeated value iteration inside each likelihood evaluation. CCP becomes infeasible beyond $K{=}2$ due to sparse state coverage in the panel data. TD-CCP Neural maintains near-constant runtime (${\sim}28$--$44$s) across all $K$ levels with competitive accuracy (RC RMSE 0.077 at $K{=}4$), validating the AVI approach of \citet{AdusumilliEckardt2022}. TD-CCP Linear runs in under 0.3s at all scales but suffers from basis misspecification at higher $K$ (RC RMSE 0.337 at $K{=}4$); see Table~\ref{tab:ddc_estimation} and Figure~\ref{fig:ddc_scaling_time}.

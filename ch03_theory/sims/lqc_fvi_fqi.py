@@ -11,12 +11,18 @@ Riccati: V*(x) = -P*x^2, Q*(x,u) = c_xx*x^2 + c_xu*xu + c_uu*u^2 with
   P solves gamma*b^2*P^2 + P*(1 - gamma*(a^2+b^2)) - 1 = 0  =>  P ~ 1.129
 Both V* in span{x,x^2} and Q* in span{x,x^2,u,u^2,xu}, so both FVI and FQI converge.
 Features exclude the constant: V*(0)=Q*(0,0)=0 by symmetry, no intercept needed.
+
+Four cached components:
+  exact_VI  — tabular value iteration on the discretized LQC
+  FVI       — fitted value iteration with polynomial features [x, x^2]
+  FQI       — fitted Q-iteration with polynomial features [x, x^2, u, u^2, xu]
+  DQN       — deep Q-network with 2x64 ReLU
 """
 
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from sims.plot_style import apply_style, COLORS, ALGO_COLORS, CMAP_SEQ
-from sims.sim_cache import load_results, save_results, add_cache_args
+from sims.sim_cache import compute_or_load, add_component_args, parse_force_set
 apply_style()
 
 import argparse
@@ -42,8 +48,6 @@ N_X   = 301     # state grid on [-4, 4], step ~ 0.0267
 N_U   = 201     # action grid on [-2, 2], step = 0.02
 X     = np.linspace(-4.0, 4.0, N_X)
 U     = np.linspace(-2.0, 2.0, N_U)
-MAX_ITER = 500
-TOL      = 1e-9
 OUTDIR   = os.path.dirname(os.path.abspath(__file__))
 
 h_X = X[1] - X[0]
@@ -65,11 +69,17 @@ REWARD_SCALE  = 20.0      # scale rewards to [-1, 0] range; Q-targets in [-1.85,
 # ── Caching ───────────────────────────────────────────────────────────────────
 CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
 SCRIPT_NAME = 'lqc_fvi_fqi'
-CONFIG = {
-    'version': 1,
+
+# ── Per-component config dicts ─────────────────────────────────────────────────
+ENV_PARAMS = {
     'a': a, 'b': b, 'gamma': gamma,
-    'N_X': N_X, 'N_U': N_U,
-    'MAX_ITER': MAX_ITER, 'TOL': TOL,
+    'N_X': N_X, 'N_U': N_U, 'version': 2,
+}
+EXACT_VI_CONFIG = {**ENV_PARAMS, 'MAX_ITER_VI': 20000, 'TOL_VI': 1e-10}
+FVI_CONFIG      = {**EXACT_VI_CONFIG, 'MAX_ITER_FVI': 500, 'TOL_FVI': 1e-9}
+FQI_CONFIG      = {**EXACT_VI_CONFIG, 'MAX_ITER_FQI': 500, 'TOL_FQI': 1e-9}
+DQN_CONFIG      = {
+    **ENV_PARAMS,
     'DQN_HIDDEN': DQN_HIDDEN, 'DQN_LR': DQN_LR,
     'DQN_BUFFER': DQN_BUFFER, 'DQN_BATCH': DQN_BATCH,
     'DQN_TARGET_UP': DQN_TARGET_UP, 'DQN_STEPS': DQN_STEPS,
@@ -135,47 +145,37 @@ class ReplayBuffer:
         return len(self.buf)
 
 
-# ── compute_data ──────────────────────────────────────────────────────────────
+# ── Per-component compute functions ───────────────────────────────────────────
 
-def compute_data():
-    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
-    if cached is not None:
-        print("Loaded from cache.")
-        return cached
-
-    print("=" * 60)
-    print("LQC Fitted Value Iteration vs Fitted Q-Iteration vs DQN")
-    print(f"  a={a}, b={b}, gamma={gamma}")
-    print(f"  State grid: {N_X} pts, step={h_X:.4f}")
-    print(f"  Action grid: {N_U} pts, step={h_U:.4f}")
-    print(f"  DQN: {DQN_STEPS} steps, hidden={DQN_HIDDEN}, lr={DQN_LR}, reward_scale={REWARD_SCALE}")
-    print("=" * 60)
-
-    print(f"\nRiccati P = {P:.6f}")
-    print(f"V*(x)   = {-P:.4f}*x^2")
-    print(f"Q*(x,u) = {c_xx:.4f}*x^2 + {c_xu:.4f}*xu + {c_uu:.4f}*u^2")
-    print(f"Optimal gain K = {K_opt:.4f}  =>  closed-loop x' = {a+b*K_opt:.4f}*x")
-
-    assert Xnext.min() >= X[0] - 1e-10 and Xnext.max() <= X[-1] + 1e-10, \
-        f"Grid not invariant: [{Xnext.min():.3f}, {Xnext.max():.3f}]"
-    print(f"\nGrid invariant: x' in [{Xnext.min():.4f}, {Xnext.max():.4f}]")
-
-    # ── Exact VI ───────────────────────────────────────────────────────────────
+def compute_exact_vi():
+    """Tabular value iteration on the discretized LQC."""
     V_exact  = np.zeros(N_X)
     vi_iters = 0
-    for _ in range(20000):
+    for _ in range(EXACT_VI_CONFIG['MAX_ITER_VI']):
         Vnext   = np.interp(Xnext, X, V_exact)
         V_new   = (R + gamma * Vnext).max(axis=1)
         delta   = np.max(np.abs(V_new - V_exact))
         V_exact = V_new
         vi_iters += 1
-        if delta < TOL / 10.0:
+        if delta < EXACT_VI_CONFIG['TOL_VI']:
             break
 
     vi_vs_analytical = np.max(np.abs(V_exact - V_star))
     print(f"\nExact VI: {vi_iters} iters, vs analytical V*: {vi_vs_analytical:.2e}")
 
-    # ── FVI ────────────────────────────────────────────────────────────────────
+    return {
+        'V_exact': V_exact,
+        'vi_iters': vi_iters,
+        'vi_vs_analytical': vi_vs_analytical,
+    }
+
+
+def compute_fvi(exact_vi_data):
+    """Fitted Value Iteration with polynomial features phi_V(x) = [x, x^2]."""
+    V_exact = np.array(exact_vi_data['V_exact'])
+    MAX_ITER = FVI_CONFIG['MAX_ITER_FVI']
+    TOL      = FVI_CONFIG['TOL_FVI']
+
     # Features: phi_V(x) = [x, x^2] -- no intercept, since V*(0)=0 by symmetry.
     Phi_V    = np.column_stack([X, X**2])   # (N_X, 2)
     theta_V  = np.zeros(2)
@@ -203,7 +203,27 @@ def compute_data():
     print(f"  Analytical: [0, {-P:.6f}]")
     print(f"  P recovered = {-theta_V[1]:.6f}  (true P = {P:.6f})")
 
-    # ── FQI ────────────────────────────────────────────────────────────────────
+    # Verification
+    assert fvi_err_an < 0.001, f"FVI vs analytical: {fvi_err_an:.6f} exceeds 0.001"
+    assert abs(-theta_V[1] - P) < 0.001, \
+        f"FVI P recovery: {-theta_V[1]:.6f} vs {P:.6f}"
+
+    return {
+        'fvi_errs': fvi_errs,
+        'fvi_error': fvi_error,
+        'fvi_err_an': fvi_err_an,
+        'fvi_iters': fvi_iters,
+        'theta_V': theta_V,
+        'V_fvi': V_fvi,
+    }
+
+
+def compute_fqi(exact_vi_data):
+    """Fitted Q-Iteration with polynomial features phi_Q(x,u) = [x, x^2, u, u^2, xu]."""
+    V_exact = np.array(exact_vi_data['V_exact'])
+    MAX_ITER = FQI_CONFIG['MAX_ITER_FQI']
+    TOL      = FQI_CONFIG['TOL_FQI']
+
     # Features: phi_Q(x,u) = [x, x^2, u, u^2, xu] -- no intercept (Q*(0,0)=0).
     XX_flat  = XX.ravel()
     UU_flat  = UU.ravel()
@@ -269,7 +289,28 @@ def compute_data():
           f"u={theta_Q[2]:.5f}, u^2={theta_Q[3]:.5f}, xu={theta_Q[4]:.5f}]")
     print(f"  Analytical: [0, {c_xx:.5f}, 0, {c_uu:.5f}, {c_xu:.5f}]")
 
-    # ── DQN ────────────────────────────────────────────────────────────────────
+    # Verification
+    assert fqi_err_an < 0.001, f"FQI vs analytical: {fqi_err_an:.6f} exceeds 0.001"
+    assert abs(theta_Q[1] - c_xx) < 0.002, \
+        f"FQI c_xx recovery: {theta_Q[1]:.5f} vs {c_xx:.5f}"
+    assert abs(theta_Q[4] - c_xu) < 0.002, \
+        f"FQI c_xu recovery: {theta_Q[4]:.5f} vs {c_xu:.5f}"
+    assert abs(theta_Q[3] - c_uu) < 0.002, \
+        f"FQI c_uu recovery: {theta_Q[3]:.5f} vs {c_uu:.5f}"
+
+    return {
+        'fqi_errs': fqi_errs,
+        'fqi_error': fqi_error,
+        'fqi_err_an': fqi_err_an,
+        'fqi_iters': fqi_iters,
+        'theta_Q': theta_Q,
+        'V_fqi': V_fqi,
+    }
+
+
+def compute_dqn():
+    """DQN with 2x64 ReLU network."""
+    np.random.seed(42)
     torch.manual_seed(42)
     random.seed(42)
 
@@ -349,7 +390,59 @@ def compute_data():
     dqn_err_an = np.max(np.abs(V_dqn - V_star))
     print(f"\nDQN: {DQN_STEPS} steps, error vs analytical V*: {dqn_err_an:.2e}")
 
-    # ── Summary ────────────────────────────────────────────────────────────────
+    # Verification
+    assert dqn_err_an < 1.0, f"DQN error {dqn_err_an:.4f} exceeds 1.0"
+
+    return {
+        'dqn_step_log': dqn_step_log,
+        'dqn_err_log': dqn_err_log,
+        'dqn_err_an': dqn_err_an,
+        'V_dqn': V_dqn,
+    }
+
+
+# ── Orchestration ─────────────────────────────────────────────────────────────
+
+def compute_data(force=None):
+    force = force or set()
+
+    exact_vi = compute_or_load(CACHE_DIR, SCRIPT_NAME, 'exact_VI', EXACT_VI_CONFIG,
+                                compute_exact_vi, force=('exact_VI' in force))
+    fvi = compute_or_load(CACHE_DIR, SCRIPT_NAME, 'FVI', FVI_CONFIG,
+                           compute_fvi, exact_vi,
+                           force=('FVI' in force or 'exact_VI' in force))
+    fqi = compute_or_load(CACHE_DIR, SCRIPT_NAME, 'FQI', FQI_CONFIG,
+                           compute_fqi, exact_vi,
+                           force=('FQI' in force or 'exact_VI' in force))
+    dqn = compute_or_load(CACHE_DIR, SCRIPT_NAME, 'DQN', DQN_CONFIG,
+                           compute_dqn, force=('DQN' in force))
+
+    return {'exact_VI': exact_vi, 'FVI': fvi, 'FQI': fqi, 'DQN': dqn}
+
+
+# ── generate_outputs ──────────────────────────────────────────────────────────
+
+def generate_outputs(data):
+    vi_iters       = data['exact_VI']['vi_iters']
+    vi_vs_analytical = data['exact_VI']['vi_vs_analytical']
+    fvi_errs       = data['FVI']['fvi_errs']
+    fvi_error      = data['FVI']['fvi_error']
+    fvi_err_an     = data['FVI']['fvi_err_an']
+    fvi_iters      = data['FVI']['fvi_iters']
+    theta_V        = np.array(data['FVI']['theta_V'])
+    V_fvi          = np.array(data['FVI']['V_fvi'])
+    fqi_errs       = data['FQI']['fqi_errs']
+    fqi_error      = data['FQI']['fqi_error']
+    fqi_err_an     = data['FQI']['fqi_err_an']
+    fqi_iters      = data['FQI']['fqi_iters']
+    theta_Q        = np.array(data['FQI']['theta_Q'])
+    V_fqi          = np.array(data['FQI']['V_fqi'])
+    dqn_step_log   = data['DQN']['dqn_step_log']
+    dqn_err_log    = data['DQN']['dqn_err_log']
+    dqn_err_an     = data['DQN']['dqn_err_an']
+    V_dqn          = np.array(data['DQN']['V_dqn'])
+
+    # ── Summary table (stdout) ────────────────────────────────────────────────
     print(f"\n{'='*78}")
     print(f"{'Method':<18} {'Iters':>6} {'Err vs VI':>10} {'Err vs V*':>10} "
           f"{'P_recov':>10} {'c_xx':>8} {'c_xu':>8} {'c_uu':>8}")
@@ -365,68 +458,6 @@ def compute_data():
     print(f"{'Analytical':<18} {'---':>6} {'---':>10} {'0':>10} "
           f"{P:>10.4f} {c_xx:>8.4f} {c_xu:>8.4f} {c_uu:>8.4f}")
     print(f"{'='*78}")
-
-    # ── Verification ───────────────────────────────────────────────────────────
-    # Primary check: error vs analytical V* (measures regression quality, not VI grid error)
-    assert fvi_err_an < 0.001, f"FVI vs analytical: {fvi_err_an:.6f} exceeds 0.001"
-    assert fqi_err_an < 0.001, f"FQI vs analytical: {fqi_err_an:.6f} exceeds 0.001"
-    assert dqn_err_an < 1.0,   f"DQN error {dqn_err_an:.4f} exceeds 1.0"
-    # Secondary check: coefficient recovery
-    assert abs(-theta_V[1] - P) < 0.001, \
-        f"FVI P recovery: {-theta_V[1]:.6f} vs {P:.6f}"
-    assert abs(theta_Q[1] - c_xx) < 0.002, \
-        f"FQI c_xx recovery: {theta_Q[1]:.5f} vs {c_xx:.5f}"
-    assert abs(theta_Q[4] - c_xu) < 0.002, \
-        f"FQI c_xu recovery: {theta_Q[4]:.5f} vs {c_xu:.5f}"
-    assert abs(theta_Q[3] - c_uu) < 0.002, \
-        f"FQI c_uu recovery: {theta_Q[3]:.5f} vs {c_uu:.5f}"
-    print("\nAll verification checks passed.")
-
-    data = {
-        'vi_iters': vi_iters,
-        'vi_vs_analytical': vi_vs_analytical,
-        'fvi_errs': fvi_errs,
-        'fvi_error': fvi_error,
-        'fvi_err_an': fvi_err_an,
-        'fvi_iters': fvi_iters,
-        'theta_V': theta_V.tolist(),
-        'V_fvi': V_fvi.tolist(),
-        'fqi_errs': fqi_errs,
-        'fqi_error': fqi_error,
-        'fqi_err_an': fqi_err_an,
-        'fqi_iters': fqi_iters,
-        'theta_Q': theta_Q.tolist(),
-        'V_fqi': V_fqi.tolist(),
-        'dqn_step_log': dqn_step_log,
-        'dqn_err_log': dqn_err_log,
-        'dqn_err_an': dqn_err_an,
-        'V_dqn': V_dqn.tolist(),
-    }
-    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
-    return data
-
-
-# ── generate_outputs ──────────────────────────────────────────────────────────
-
-def generate_outputs(data):
-    vi_iters = data['vi_iters']
-    vi_vs_analytical = data['vi_vs_analytical']
-    fvi_errs = data['fvi_errs']
-    fvi_error = data['fvi_error']
-    fvi_err_an = data['fvi_err_an']
-    fvi_iters = data['fvi_iters']
-    theta_V = np.array(data['theta_V'])
-    V_fvi = np.array(data['V_fvi'])
-    fqi_errs = data['fqi_errs']
-    fqi_error = data['fqi_error']
-    fqi_err_an = data['fqi_err_an']
-    fqi_iters = data['fqi_iters']
-    theta_Q = np.array(data['theta_Q'])
-    V_fqi = np.array(data['V_fqi'])
-    dqn_step_log = data['dqn_step_log']
-    dqn_err_log = data['dqn_err_log']
-    dqn_err_an = data['dqn_err_an']
-    V_dqn = np.array(data['V_dqn'])
 
     # ── LaTeX table ────────────────────────────────────────────────────────────
     lines = [
@@ -496,15 +527,47 @@ def generate_outputs(data):
     print(f"Figure: {fig_path}")
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    add_cache_args(parser)
+# ── Main ──────────────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='LQC: Fitted Value Iteration vs Fitted Q-Iteration vs DQN')
+    add_component_args(parser)
     args = parser.parse_args()
 
+    force = parse_force_set(args)
+
+    print("=" * 60)
+    print("LQC Fitted Value Iteration vs Fitted Q-Iteration vs DQN")
+    print(f"  a={a}, b={b}, gamma={gamma}")
+    print(f"  State grid: {N_X} pts, step={h_X:.4f}")
+    print(f"  Action grid: {N_U} pts, step={h_U:.4f}")
+    print(f"  DQN: {DQN_STEPS} steps, hidden={DQN_HIDDEN}, lr={DQN_LR}, reward_scale={REWARD_SCALE}")
+    print("=" * 60)
+
+    print(f"\nRiccati P = {P:.6f}")
+    print(f"V*(x)   = {-P:.4f}*x^2")
+    print(f"Q*(x,u) = {c_xx:.4f}*x^2 + {c_xu:.4f}*xu + {c_uu:.4f}*u^2")
+    print(f"Optimal gain K = {K_opt:.4f}  =>  closed-loop x' = {a+b*K_opt:.4f}*x")
+
+    assert Xnext.min() >= X[0] - 1e-10 and Xnext.max() <= X[-1] + 1e-10, \
+        f"Grid not invariant: [{Xnext.min():.3f}, {Xnext.max():.3f}]"
+    print(f"\nGrid invariant: x' in [{Xnext.min():.4f}, {Xnext.max():.4f}]")
+
+    if force:
+        print(f"Force recompute: {sorted(force)}")
+
     if args.plots_only:
-        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
-        assert data is not None, "No cache found. Run without --plots-only first."
-    else:
-        data = compute_data()
-    if not args.data_only:
+        data = compute_data()  # all cache hits
         generate_outputs(data)
+    elif args.data_only:
+        compute_data(force=force)
+    else:
+        data = compute_data(force=force)
+        generate_outputs(data)
+
+    print("\nDone.")
+
+
+if __name__ == '__main__':
+    main()

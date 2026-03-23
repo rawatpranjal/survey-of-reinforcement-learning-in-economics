@@ -8,6 +8,7 @@ Usage:
     python3 scripts/run_all_sims.py --chapter ch07     # one chapter (partial match)
     python3 scripts/run_all_sims.py --script bandit    # one script (partial name match)
     python3 scripts/run_all_sims.py --list             # show registry
+    python3 scripts/run_all_sims.py --script offline_rl --algo CQL  # recompute one component
 """
 
 import argparse
@@ -60,6 +61,7 @@ REGISTRY = [
 
     # ch05
     ('ch05', 'ch05_econ_models/sims/bus_engine_dp_vs_dqn.py', 'A'),
+    ('ch05', 'ch05_econ_models/sims/nfxp_ccp_td.py', 'A'),
     ('ch05', 'ch05_econ_models/sims/estimation_flowcharts.py', 'B'),
 
     # ch06
@@ -77,18 +79,21 @@ REGISTRY = [
     ('ch07', 'ch07_bandits/sims/regret_rates.py', 'B'),
     ('ch07', 'ch07_bandits/sims/uninformative_price.py', 'B'),
 
-    # ch08 (RLHF)
-    ('ch08', 'ch08_rlhf/sims/job_search_rlhf.py', 'A'),
-    ('ch08', 'ch08_rlhf/sims/job_search_dpo.py', 'A'),
-    ('ch08', 'ch08_rlhf/sims/job_search_preference_learning.py', 'A'),
-    ('ch08', 'ch08_rlhf/sims/preference_learning.py', 'A'),
-    ('ch08', 'ch08_rlhf/sims/nfxp_vs_rlhf.py', 'A'),
-    ('ch08', 'ch08_rlhf/sims/gridworld_rlhf.py', 'A'),
-    ('ch08', 'ch08_rlhf/sims/rlhf_dpo_pipeline.py', 'B'),
+    # ch08 (Offline RL)
+    ('ch08_offline', 'ch08_offline_rl/sims/offline_rl_pricing.py', 'A'),
 
-    # ch09
-    ('ch09', 'ch09_causal/sims/confounded_ope.py', 'A'),
-    ('ch09', 'ch09_causal/sims/identification_dags.py', 'B'),
+    # ch09 (RLHF)
+    ('ch09', 'ch09_rlhf/sims/job_search_rlhf.py', 'A'),
+    ('ch09', 'ch09_rlhf/sims/job_search_dpo.py', 'A'),
+    ('ch09', 'ch09_rlhf/sims/job_search_preference_learning.py', 'A'),
+    ('ch09', 'ch09_rlhf/sims/preference_learning.py', 'A'),
+    ('ch09', 'ch09_rlhf/sims/nfxp_vs_rlhf.py', 'A'),
+    ('ch09', 'ch09_rlhf/sims/gridworld_rlhf.py', 'A'),
+    ('ch09', 'ch09_rlhf/sims/rlhf_dpo_pipeline.py', 'B'),
+
+    # ch10
+    ('ch10', 'ch10_causal/sims/confounded_ope.py', 'A'),
+    ('ch10', 'ch10_causal/sims/identification_dags.py', 'B'),
 ]
 
 
@@ -158,6 +163,9 @@ def main():
                         help='Pass --data-only to all scripts')
     parser.add_argument('--plots-only', action='store_true',
                         help='Pass --plots-only to all scripts')
+    parser.add_argument('--algo', type=str, action='append', default=None,
+                        help='Pass --algo to scripts (force-recompute component). '
+                             'Repeat for multiple: --algo CQL --algo FQI')
     args = parser.parse_args()
 
     if args.list:
@@ -170,6 +178,9 @@ def main():
         flags.append('--data-only')
     if args.plots_only:
         flags.append('--plots-only')
+    if args.algo:
+        for a in args.algo:
+            flags.extend(['--algo', a])
 
     # Filter registry
     scripts = REGISTRY

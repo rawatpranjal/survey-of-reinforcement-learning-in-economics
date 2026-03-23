@@ -6,7 +6,7 @@ import argparse
 import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-from sims.sim_cache import load_results, save_results, add_cache_args
+from sims.sim_cache import compute_or_load, add_component_args, parse_force_set
 from sims.plot_style import apply_style, COLORS, FIG_SINGLE
 
 import numpy as np
@@ -30,7 +30,7 @@ CONFIG = {
     'n_seeds': 20,
     'lambdas': [0.0, 0.4, 0.8, 1.0],
     'rmsve_threshold': 0.05,
-    'version': 2,
+    'version': 3,
 }
 
 OUTPUT_DIR = os.path.dirname(__file__)
@@ -93,13 +93,8 @@ def run_td_lambda(n_states, gamma, alpha, lam, n_episodes, seed):
 # Computation
 # ---------------------------------------------------------------------------
 
-def compute_data():
+def _run_td_lambda_experiment():
     """Run TD(lambda) for all lambda values and seeds."""
-    cached = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
-    if cached is not None:
-        print("  Using cached results.")
-        return cached
-
     n_states = CONFIG['n_states']
     gamma = CONFIG['gamma']
     alpha = CONFIG['alpha']
@@ -150,9 +145,13 @@ def compute_data():
 
         print(f"  lambda={lam:.1f}: final RMSVE = {final_mean:.4f} +/- {final_se:.4f}")
 
-    data = {'results': results, 'config': CONFIG}
-    save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
-    return data
+    return {'results': results, 'config': CONFIG}
+
+
+def compute_data(force=None):
+    force = force or set()
+    return compute_or_load(CACHE_DIR, SCRIPT_NAME, 'td_lambda', CONFIG,
+                            _run_td_lambda_experiment, force=('td_lambda' in force))
 
 
 # ---------------------------------------------------------------------------
@@ -231,10 +230,12 @@ def generate_outputs(data):
 # Main
 # ---------------------------------------------------------------------------
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='TD(lambda) Credit Assignment in a Corridor')
-    add_cache_args(parser)
+    add_component_args(parser)
     args = parser.parse_args()
+
+    force = parse_force_set(args)
 
     print("=" * 70)
     print("TD(LAMBDA) CREDIT ASSIGNMENT IN A CORRIDOR")
@@ -250,16 +251,20 @@ if __name__ == "__main__":
     print(f"  Lambda values: {CONFIG['lambdas']}")
     print()
 
-    if args.plots_only:
-        data = load_results(CACHE_DIR, SCRIPT_NAME, CONFIG)
-        assert data is not None, "No cache found. Run without --plots-only first."
-    else:
-        data = compute_data()
+    if force:
+        print(f"Force recompute: {sorted(force)}")
 
-    if not args.data_only:
+    if args.plots_only:
+        data = compute_data()  # cache hit
+        generate_outputs(data)
+    elif args.data_only:
+        compute_data(force=force)
+    else:
+        data = compute_data(force=force)
         generate_outputs(data)
 
-    print()
-    print("Output files:")
-    print(f"  {os.path.join(OUTPUT_DIR, 'td_lambda_corridor.png')}")
-    print(f"  {os.path.join(OUTPUT_DIR, 'td_lambda_corridor.tex')}")
+    print("\nDone.")
+
+
+if __name__ == "__main__":
+    main()
