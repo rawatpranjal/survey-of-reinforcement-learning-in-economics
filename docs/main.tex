@@ -120,7 +120,7 @@
 \begin{titlepage}
 \title{\textsc{A Survey of Reinforcement Learning For Economics}}
 \author{
-\textsc{Pranjal Rawat, Georgetown University}\\
+\textsc{Pranjal Rawat, Georgetown University}\thanks{I am grateful to John Rust for encouraging me to undertake this survey. I also thank Nathan Miller and Harry Paarsch for their support.}\\
 }
 \date{\textsc{March 2026}}
 
@@ -147,7 +147,7 @@
 \label{section:intro}
 \input{../ch00_introduction/tex/intro}
 
-\section{The Language of Reinforcement Learning}
+\section{Two Cultures of Sequential Decision-Making}
 \label{section:language}
 \input{../ch00_introduction/tex/language}
 
@@ -165,9 +165,9 @@
 \label{section:deeprl_practice}
 \input{../ch03b_deeprl_practice/tex/deeprl_practice}
 
-\section{Reinforcement Learning Algorithms: An Illustrated Example}
-\label{section:illustrated_example}
-\input{../ch03a/tex/illustrated_example}
+% \section{Reinforcement Learning Algorithms: An Illustrated Example}
+% \label{section:illustrated_example}
+% \input{../ch03a/tex/illustrated_example}
 
 \section{Reinforcement Learning for Optimal Control}
 \label{section:applications}
@@ -185,22 +185,27 @@
 \label{section:bandits}
 \input{../ch07_bandits/tex/dynamic_pricing}
 
-\section{Reinforcement Learning from Human Feedback}
-\label{section:rlhf}
-\input{../ch08_rlhf/tex/rlhf}
+\section{Offline Reinforcement Learning and Human Feedback}
+\label{section:offline_rl}
+\input{../ch08_offline_rl/tex/offline_rl}
 
 \section{Reinforcement Learning and Causal Inference}
 \label{section:causal_rl}
-\input{../ch09_causal/tex/causal_rl}
+\input{../ch10_causal/tex/causal_rl}
 
-\section{Conclusion}
+\section{Discussion}
 \label{section:conclusion}
-\input{../ch10_conclusion/tex/conclusion}
+\input{../ch11_conclusion/tex/conclusion}
 
 % REFERENCES
 \bibliographystyle{plainnat}
 \setcitestyle{maxcitenames=2}
 
 \bibliography{refs}
+
+\appendix
+\section{Glossary of Acronyms and Terms}
+\label{appendix:glossary}
+\input{glossary}
 
 \end{document}

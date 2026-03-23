@@ -1,53 +1,11 @@
 ============================================================
 TRUST REGION LQC MONETARY POLICY
 ============================================================
-
-Parameters:
-  A = [[0.5, 0.2], [0.0, 0.8]]
-  B = [0.5, 1.0]
-  Q = [[2.0, 0.0], [0.0, 1.0]]
-  R = 0.5, gamma = 0.95
-  sigma2_w = 0.5, sigma2_a = 1.0
-  delta = 0.1, eps = 0.2
-  theta_old = [0. 0.]
-
-Optimal policy (Riccati):
-  theta* = [0.249012, 0.517120]
-  Lyapunov residual norm at theta*: 2.78e-17
-
-Computing J on 100x100 grid...
-  Stable grid points: 6064 / 10000
-  J(theta_old) = -5.739917
-  J(theta*)    = -3.683748
-  J(theta*) > J(theta_old): True
-
-Computing Fisher information matrix...
-  Sigma_x = [[0.8395061728395063, 0.37037037037037057], [0.37037037037037057, 1.3888888888888893]]
-  M = Sigma_x / sigma2_a = [[0.8395061728395063, 0.37037037037037057], [0.37037037037037057, 1.3888888888888893]]
-  Eigenvalues: lambda1=0.653080, lambda2=1.575315
-  KL ellipse semi-axes: sqrt(delta/lambda1)=0.391306, sqrt(delta/lambda2)=0.251951
-
-Computing gradient and steps...
-  grad J at theta_old = [ 6.91499985 21.78112229]
-  theta_trpo = [0.025502, 0.260881]
-  theta_bad  = [0.076505, 0.782642]
-
-Verification:
-  (theta_trpo - theta_old)^T M (theta_trpo - theta_old) = 0.10000000 (should be 0.1)
-  Diff from delta: 1.39e-17
-  (theta_bad - theta_old)^T M (theta_bad - theta_old) = 0.90000000 (should be 0.9)
-  theta_bad stable: True
-  theta_trpo stable: True
-
-Computing PPO feasible region...
-  PPO frac_threshold=0.5: feasible grid points = 1259 / 10000 (12.6%)
-  theta_ppo = [0.134687, 0.424242]
-  ||theta_trpo - theta_old|| = 0.262124
-  ||theta_ppo  - theta_old|| = 0.445109
+  Cache hit: trust_region
 
 Generating figure...
-  Saved: ch03_theory/sims/trust_region_lqc.png
-  Saved: ch03_theory/sims/trust_region_lqc_results.tex
+  Saved: /Users/pranjal/Code/rl/ch03_theory/sims/trust_region_lqc.png
+  Saved: /Users/pranjal/Code/rl/ch03_theory/sims/trust_region_lqc_results.tex
 
 Verification summary:
   [1] Script ran without error: YES
@@ -61,6 +19,8 @@ Verification summary:
   [9] LaTeX compile: run separately
 
 Output files:
-  ch03_theory/sims/trust_region_lqc.png
-  ch03_theory/sims/trust_region_lqc_results.tex
-  ch03_theory/sims/trust_region_lqc_stdout.txt
+  /Users/pranjal/Code/rl/ch03_theory/sims/trust_region_lqc.png
+  /Users/pranjal/Code/rl/ch03_theory/sims/trust_region_lqc_results.tex
+  /Users/pranjal/Code/rl/ch03_theory/sims/trust_region_lqc_stdout.txt
+
+Done.
