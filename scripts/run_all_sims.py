@@ -94,6 +94,11 @@ REGISTRY = [
     # ch10
     ('ch10', 'ch10_causal/sims/confounded_ope.py', 'A'),
     ('ch10', 'ch10_causal/sims/identification_dags.py', 'B'),
+
+    # ch11 (Quantile, Robust, Constrained)
+    ('ch11', 'ch11_dist_robust_constrained/sims/risk_sensitive_inventory.py', 'A'),
+    ('ch11', 'ch11_dist_robust_constrained/sims/robust_consumption_savings.py', 'A'),
+    ('ch11', 'ch11_dist_robust_constrained/sims/carbon_constrained_production.py', 'A'),
 ]
 
 

@@ -123,7 +123,7 @@ The computational bottleneck is inverting $F(\theta) \in \mathbb{R}^{d \times d}
 \subsubsection{Fitted Value Iteration and Fitted Q-Iteration (2005)}
 \label{sec:fvi_fqi_algorithms}
 
-Tabular Q-learning maintains a separate entry for every state-action pair. When $|\mathcal{S}|$ is large or the state space is continuous, as in most economic applications, this is infeasible. \emph{Fitted Q-Iteration} (FQI) \citep{Ernst2005} replaces the tabular update with a supervised regression step: given a batch of transitions, fit a function approximator to the Bellman targets.
+Tabular Q-learning maintains a separate entry for every state-action pair. When $|\mathcal{S}|$ is large or the state space is continuous, as in most applied problems, this is infeasible. \emph{Fitted Q-Iteration} (FQI) \citep{Ernst2005} replaces the tabular update with a supervised regression step: given a batch of transitions, fit a function approximator to the Bellman targets.
 
 Let $\mathcal{F}$ be a function class mapping $\mathcal{S} \times \mathcal{A} \to \mathbb{R}$.\label{def:fqi} Initialize $Q_0 \equiv 0$. At each iteration $k = 0, 1, \ldots, K-1$: (i) draw $N$ transitions $(s_i, a_i, r_i, s_i')$ from a generative model; (ii) construct regression targets $y_i^{(k)} = r_i + \gamma \max_{a'} Q_k(s_i', a')$; (iii) set $Q_{k+1} \leftarrow \arg\min_{f \in \mathcal{F}} \frac{1}{N} \sum_{i=1}^N \bigl( f(s_i, a_i) - y_i^{(k)} \bigr)^2$. The output is the greedy policy $\pi_K(s) = \arg\max_a Q_K(s,a)$.
 
@@ -158,7 +158,7 @@ Two innovations stabilized learning. \textit{Experience replay} \citep{Lin1992} 
 
 %These techniques address the deadly triad identified by Baird. Experience replay creates a more stationary data distribution, partially mitigating off-policy issues. The target network holds the bootstrap target fixed between updates, making the regression problem approximately stationary. Neither technique provides theoretical guarantees, but the empirical success demonstrated that the deadly triad can be managed in practice.
 
-DQN exceeded human-level performance on 29 of 49 games using a single architecture and hyperparameters.\footnote{\emph{Hyperparameters} are design choices fixed before training begins, such as network depth, learning rate, and replay buffer size; they are not estimated by gradient descent and are analogous to tuning parameters in nonparametric estimation (bandwidth, penalty weights).} Games requiring long-horizon planning or sparse rewards, such as Montezuma's Revenge, remained difficult.
+DQN exceeded human-level performance on 29 of 49 games using a single architecture and hyperparameters.\footnote{\emph{Hyperparameters} are design choices fixed before training begins, such as network depth, learning rate, and replay buffer size; they are not estimated by gradient descent.} Games requiring long-horizon planning or sparse rewards, such as Montezuma's Revenge, remained difficult.
 
 \subsubsection{TRPO and PPO (2015, 2017)}
 
@@ -381,3 +381,40 @@ The training loop generates self-play games. At each board position $s_t$ during
 where the first term is a value prediction loss, the second is a policy cross-entropy loss,\footnote{The cross-entropy loss $-\boldsymbol{\pi}^\top \log \mathbf{p}$ measures how well the predicted distribution $\mathbf{p}$ matches the target $\boldsymbol{\pi}$; it equals zero when the distributions are identical.} and the third is $L_2$ regularization.\footnote{$L_2$ regularization penalizes the squared magnitude of parameters, $c\|\theta\|^2$, analogous to ridge regression in econometrics.} The key mechanism is a virtuous cycle. MCTS serves as a policy improvement operator, since the search probabilities $\boldsymbol{\pi}$ are stronger than the raw network outputs $\mathbf{p}$. Training the network to match $\boldsymbol{\pi}$ distills the search improvements back into the network, and the improved network in turn produces better MCTS. After 72 hours of self-play on 4 TPUs, AlphaGo Zero surpassed all previous versions, including the one that defeated Lee Sedol, and discovered novel strategies not previously seen in human play.\footnote{The system that defeated Lee Sedol in March 2016 used fixed network weights throughout the match; no parameter updates occurred between or during games. This illustrates the training-execution distinction (Section~\ref{section:language}): the months of self-play constituted the training phase, while the five-game match was purely execution.}
 
 Go was well-suited to this architecture. Its fixed $19 \times 19$ board maps naturally to convolutional networks, its perfect information and deterministic transitions make MCTS's tree structure exact, and the binary game outcome provides an unambiguous training signal. \citet{Igami2020} interprets the architecture in econometric terms, where the policy network is a conditional choice probability (CCP) estimator, the value network is a conditional value function (CVF) estimator, and the system performs CCP estimation and forward simulation jointly, connecting to the approach of \citet{HotzMiller1993} in dynamic discrete choice.
+
+
+\subsubsection{Decision Transformers (2021)}
+\label{subsubsec:decision_transformers}
+
+\citet{Chen2021DT} proposed replacing Bellman backups with autoregressive
+sequence modeling. The Decision Transformer conditions a causal GPT-style
+Transformer on trajectories $\tau = (\hat{R}_1, s_1, a_1, \hat{R}_2, s_2,
+a_2, \ldots)$, where $\hat{R}_t$ is the \emph{return-to-go} (desired future
+cumulative reward). At test time, conditioning on a high target return
+extracts a high-performing policy without any temporal-difference learning.
+\citet{Janner2021TT} extended this to the Trajectory Transformer, modeling
+entire trajectories as flat token sequences with continuous dimensions
+discretized into bins, enabling planning via beam search over trajectories.
+
+The approach has fundamental limitations that Bellman-based methods do not
+share. \citet{Brandfonbrener2022} proved that return-conditioned supervised
+learning (RCSL) recovers optimal policies only under assumptions strictly
+stronger than those needed for dynamic programming: near-deterministic
+dynamics, expert data coverage, and a unique mapping from returns to optimal
+actions. In stochastic environments, high returns may reflect environmental
+luck rather than good decisions, causing RCSL to imitate lucky-but-suboptimal
+trajectories. \citet{Paster2022} demonstrated this concretely: in a simple
+gambling MDP, the Decision Transformer conditioned on high returns selects
+risky gambles over the optimal safe action, even with infinite
+data.\footnote{\citet{Emmons2022} showed that a simple two-layer MLP matches
+the Transformer architecture on D4RL benchmarks, suggesting the
+autoregressive structure provides conditional density estimation rather than
+temporal reasoning. The essential element is conditioning on the right outcome
+variable, not the architecture.}
+
+A second limitation is that RCSL cannot \emph{stitch} suboptimal trajectory
+segments. If the dataset contains two trajectories that each visit a useful
+intermediate state but from different starting points, Bellman-based methods
+can compose the better segments by propagating values backward through the
+shared state. Sequence models, which predict forward autoregressively, cannot
+perform this backward composition.
