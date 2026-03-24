@@ -12,7 +12,7 @@
 % "reward or state transition" for the reader-facing version of this convention.
 
 Reinforcement learning algorithms solve Markov decision processes by estimating value functions or optimizing policies from sampled transitions. Two assumptions underlie the standard formulation. First, the agent's action at time $t$ is determined solely by the observed state $s_t$ and the agent's policy $\pi(a \mid s_t)$; there is no unobserved variable (confounder) simultaneously influencing both the action and the reward or state transition.\footnote{See Section~\ref{section:language} for the terminological mapping between ``outcome'' in causal inference and the corresponding RL quantities. Throughout this chapter, I reserve ``outcome'' for its causal inference meaning and use the specific RL quantity (reward, state, return, value) elsewhere.}
-Second, the observed state $s_t$ is sufficient for prediction, so that conditioning on $s_t$ renders future states independent of past history. Both assumptions are the Markov property restated in causal language. Both fail routinely in economic applications.
+Second, the observed state $s_t$ is sufficient for prediction, so that conditioning on $s_t$ renders future states independent of past history. Both assumptions are the Markov property restated in causal language. Both fail routinely in applied settings.
 
 The preceding chapters operated under a third assumption that was so natural it required no mention: the analyst controls data collection. In the tabular algorithms of Section~\ref{section:rl_algorithms} and the gridworld study of Section~\ref{section:deeprl_practice}, each method generated its own trajectories by executing actions in a simulator and observing the consequences. The bandit algorithms of Section~\ref{section:bandits} chose arms and observed payoffs in real time. Even when exploration was limited, the data-generating process was known because the agent's own policy produced it. This chapter drops that assumption entirely. The analyst receives a fixed log of decisions made by someone else, a \textit{behavioral policy} $\mu$ whose functional form may be unknown and whose action choices may depend on variables the analyst cannot observe. The data are observational in the econometric sense: the analyst had no role in generating them and cannot rerun the experiment under a different policy. Identification, not optimization, becomes the central problem.
 
@@ -116,7 +116,7 @@ Theorem~\ref{thm:backdoor_mdp} yields a concrete estimation procedure. Given log
 \end{equation}
 \item Solve the causal Bellman equation (Definition~\ref{def:causal_bellman}) using the estimated interventional transitions to obtain $\hat{V}^\pi$.
 \end{enumerate}
-The doubly robust variant combines the fitted action-value function $\hat{Q}(s,a)$ (the RL analogue of the econometric outcome model) with backdoor-adjusted propensities, achieving consistency if either $\hat{Q}$ or the propensity model is correctly specified.
+The doubly robust variant combines the fitted action-value function $\hat{Q}(s,a)$ with backdoor-adjusted propensities, achieving consistency if either $\hat{Q}$ or the propensity model is correctly specified.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Alternative Identification Strategies}

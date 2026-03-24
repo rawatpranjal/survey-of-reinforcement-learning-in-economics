@@ -143,7 +143,7 @@ During play, agents follow $\bar{\pi}_\phi$ with probability $1-\eta$ and $Q_\th
 
 \subsubsection{Poker Results}
 
-These methods achieved superhuman performance in poker. Deep CFR attained \emph{exploitability} of 37 mbb/g\footnote{Exploitability measures how far a strategy is from Nash equilibrium, defined as the maximum expected gain an adversary could achieve by best-responding. Zero exploitability means the strategy is unexploitable (Nash). In poker, exploitability is measured in milli-big-blinds per game (mbb/g).} in heads-up flop hold'em \citep{Brown2019}. Libratus defeated top human professionals in heads-up no-limit hold'em using nested subgame solving with CFR \citep{brown2017superhuman}. Pluribus extended to six-player no-limit hold'em \citep{brown2019superhuman}. The game tree of heads-up no-limit hold'em contains $\sim 10^{161}$ states; these results demonstrate that CFR-based methods scale to economically relevant game sizes.
+These methods achieved superhuman performance in poker. Deep CFR attained \emph{exploitability} of 37 mbb/g\footnote{Exploitability measures how far a strategy is from Nash equilibrium, defined as the maximum expected gain an adversary could achieve by best-responding. Zero exploitability means the strategy is unexploitable (Nash). In poker, exploitability is measured in milli-big-blinds per game (mbb/g).} in heads-up flop hold'em \citep{Brown2019}. Libratus defeated top human professionals in heads-up no-limit hold'em using nested subgame solving with CFR \citep{brown2017superhuman}. Pluribus extended to six-player no-limit hold'em \citep{brown2019superhuman}. The game tree of heads-up no-limit hold'em contains $\sim 10^{161}$ states; these results demonstrate that CFR-based methods scale to practically relevant game sizes.
 
 \subsection{The Coase Conjecture}
 
@@ -186,4 +186,4 @@ Table~\ref{tab:coase} reports results from varying $\pi$ at fixed $\delta = 0.5$
 
 \subsection{Discussion}
 
-Stochastic-game Q-learning and CFR target complementary game classes: simultaneous-move games with observable payoffs and extensive-form games with private information, respectively. The simulations confirm convergence to known equilibria in both settings without encoding economic structure into the algorithms.
+Stochastic-game Q-learning and CFR target complementary game classes: simultaneous-move games with observable payoffs and extensive-form games with private information, respectively. The simulations confirm convergence to known equilibria in both settings without encoding domain structure into the algorithms.

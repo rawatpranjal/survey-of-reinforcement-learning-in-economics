@@ -1,0 +1,35 @@
+States: 18, Actions: 8
+
+--- Unconstrained Value Iteration ---
+  Return: 273.00, Cost: 104.51
+  Carbon budget d = 31.35
+
+--- Constrained LP Oracle ---
+  LP return: 186.40, LP cost: 31.35
+  lambda*:   1.2000
+
+--- Unconstrained Q-Learning ---
+    QL ep  10000: ret=259.4, cost=102.24
+    QL ep  20000: ret=265.7, cost=102.47
+    QL ep  30000: ret=253.9, cost=95.61
+  Final return: 255.21, cost: 95.83
+
+--- Lagrangian Q-Learning ---
+    QL-Lag ep  10000: ret=247.1, cost=88.27, lam=0.963
+    QL-Lag ep  20000: ret=157.6, cost=17.03, lam=1.381
+    QL-Lag ep  30000: ret=179.0, cost=26.96, lam=1.397
+  Final return: 180.27, cost: 26.88
+  Final lambda: 1.3972
+  Cache saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/cache/carbon_constrained_production.pkl
+
+Figure saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/carbon_constrained_production_convergence.png
+Table saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/carbon_constrained_production_table.tex
+
+============================================================
+Carbon budget d = 31.35
+Method                       Return     Cost  Budget   lambda
+------------------------------------------------------------
+LP Oracle                     186.4    31.35       Y     1.20
+Unconstrained Q-learning      255.2    95.83       N       --
+Lagrangian Q-learning         180.3    26.88       Y     1.40
+============================================================

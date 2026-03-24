@@ -1,0 +1,51 @@
+  Computing: shared
+============================================================
+Consumption-Savings Under Model Mismatch
+============================================================
+
+W_MAX=30, R=1.02, gamma=0.95, sigma=2.0
+Nominal:   [0.05 0.1  0.2  0.3  0.35]
+Perturbed: [0.3 0.3 0.2 0.1 0.1]
+Eval: 5000 episodes x 100 steps
+
+--- DP Policies ---
+Standard DP:        425 iters, V(15)=-4.9715
+Robust (th=5.0 ):    426 iters, V(15)=-5.0022
+Robust (th=2.0 ):    426 iters, V(15)=-5.0460
+Oracle DP:          435 iters, V(15)=-7.6545
+
+  w   Std  th=5  th=2   Orc
+  0     0     0     0     0
+  5     4     4     3     3
+ 10     5     4     4     3
+ 15     5     5     5     3
+ 20     5     5     5     4
+ 25     6     6     6     4
+ 30     5     5     5     4
+
+--- DP Evaluation ---
+  Standard DP               nom=-4.938  pert=-8.693  delta=-76.0%
+  Robust DP (th=5.0)        nom=-4.940  pert=-8.671  delta=-75.5%
+  Robust DP (th=2.0)        nom=-4.946  pert=-8.488  delta=-71.6%
+  Oracle                    nom=-5.464  pert=-7.602  delta=-39.1%
+  Cache saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/cache/robust_consumption_savings__shared.pkl
+  Computing: Q-learning
+
+--- Q-Learning (1 seeds, 100000 episodes) ---
+  Seed 0: nom=-4.945, pert=-8.701, delta=-76.0%
+  Max policy deviation from Standard DP: 2
+  Cache saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/cache/robust_consumption_savings__Q-learning.pkl
+  Computing: Robust-QL-5
+
+--- Robust Q-Learning theta=5 (1 seeds, 100000 episodes) ---
+  Seed 0: nom=-4.945, pert=-8.679, delta=-75.5%
+  Max policy deviation from Robust DP (th=5): 0
+  Cache saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/cache/robust_consumption_savings__Robust-QL-5.pkl
+  Computing: Robust-QL-2
+
+--- Robust Q-Learning theta=2 (1 seeds, 100000 episodes) ---
+  Seed 0: nom=-4.952, pert=-8.493, delta=-71.5%
+  Max policy deviation from Robust DP (th=2): 0
+  Cache saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/cache/robust_consumption_savings__Robust-QL-2.pkl
+Figure: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/robust_consumption_savings_policy.png
+Table: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/robust_consumption_savings_table.tex
