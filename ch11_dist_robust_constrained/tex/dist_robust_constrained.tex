@@ -169,9 +169,7 @@ CVaR$_{95}$. Table~\ref{tab:risk_inventory} reports results over
 
 \begin{table}[h]
 \centering
-\caption{Risk-sensitive inventory management. The CVaR$_{95}$ policy
-sacrifices mean return for improved worst-case performance by ordering
-more safety stock.}
+\caption{Risk-sensitive inventory management.}
 \label{tab:risk_inventory}
 \begin{tabular}{lcccc}
 \hline
@@ -197,12 +195,6 @@ ordering more safety stock (3.30 versus 2.44 units per period).
 \subsection{Constrained Markov Decision Processes}
 \label{subsec:constrained_mdps}
 
-Many decision problems involve optimizing a primary objective
-subject to constraints on secondary costs. A firm maximizes profit subject
-to a budget; a regulator maximizes welfare subject to safety thresholds; an
-advertiser maximizes conversions subject to a spending limit. The theory of
-constrained MDPs (CMDPs) provides a unified framework for these problems.
-
 A constrained MDP augments the standard MDP
 $(\mathcal{S}, \mathcal{A}, P, r, \gamma)$ with $K$ auxiliary cost
 functions $c_k: \mathcal{S} \times \mathcal{A} \to \mathbb{R}$ and
@@ -216,7 +208,7 @@ subject to
   \label{eq:cmdp}
 \end{equation}
 
-The key insight of \citet{Altman1999} is that this problem becomes a linear
+\citet{Altman1999} showed that this problem becomes a linear
 program when reformulated over \emph{occupation measures} (the discounted fraction of
 time spent in each state-action pair). The occupation measure of policy
 $\pi$ is
@@ -240,12 +232,10 @@ set (polytope) defined by non-negativity, the Bellman flow conservation
 equations, and the $K$ linear constraint inequalities.} the CMDP becomes a
 standard LP. By Carath\'eodory's theorem,\footnote{Carath\'eodory's theorem
 states that any point in the convex hull of a set in $\mathbb{R}^d$ can be
-written as a convex combination of at most $d+1$ extreme points. The
-unconstrained MDP polytope has deterministic policies as its vertices, and
-the optimal LP solution sits at a vertex, which is why unconstrained optimal
-policies are deterministic. Adding $K$ constraint inequalities introduces up
-to $K$ additional dimensions along which the optimum may lie in the interior,
-so the optimal solution is a convex combination of at most $K+1$ vertices.}
+written as a convex combination of at most $d+1$ extreme points. Adding $K$
+constraint inequalities introduces up to $K$ additional dimensions along
+which the optimum may lie in the interior, so the optimal solution is a
+convex combination of at most $K+1$ vertices.}
 optimal CMDP policies mix at most $K+1$ deterministic policies for $K$
 constraints.
 
@@ -276,12 +266,6 @@ set and applies a minimax theorem. This means the CMDP can be solved
 exactly via dual ascent on the Lagrange multipliers, even when using
 parametric policy classes, with an approximation error bounded by the
 expressiveness of the parametrization.
-
-
-Zero duality gap means the CMDP can be solved by iterating between two
-steps: for fixed multiplier $\lambda$, solve the unconstrained MDP with
-reward $r(s,a) - \sum_k \lambda_k c_k(s,a)$; then update $\lambda$ by
-gradient ascent on the dual~\eqref{eq:cmdp_lagrangian}.
 
 \citet{Achiam2017} gave the foundational trust-region instantiation.
 At iteration $k$, the policy update solves
@@ -367,9 +351,7 @@ unconstrained optimum's discounted emissions, and the LP dual
 yields an analytical shadow price $\lambda^* = 1.20$.\footnote{The
 constrained LP over occupation measures (18 states $\times$ 8
 actions = 144 variables) is solved exactly with HiGHS. The shadow
-price $\lambda^*$ is the dual variable on the carbon constraint,
-interpretable as the Pigouvian tax that internalizes the emissions
-externality.}
+price $\lambda^*$ is the dual variable on the carbon constraint.}
 The CMDP is
 \begin{equation}
   \max_\pi \; \mathbb{E}^\pi\Bigl[\sum_{t=0}^\infty \gamma^t
@@ -432,14 +414,6 @@ Q-learning, with the constrained LP optimum as the dashed reference.}
 \subsection{Robust MDPs and Ambiguity Aversion}
 \label{subsec:robust_mdps}
 
-When the transition kernel $P(s'|s,a)$ is known imprecisely, standard
-dynamic programming may produce policies that perform well under the
-nominal model\footnote{The nominal model $p_0(\cdot|s,a)$ is the agent's
-best estimate of the transition kernel, typically estimated from data or
-specified by a simulator.} but fail under plausible alternatives. Robust
-MDPs address this by optimizing against worst-case transitions within an
-uncertainty set around the nominal model.
-
 \citet{Iyengar2005} defined the robust Bellman operator
 \begin{equation}
   (TV)(s) = \max_a \min_{p \in \mathcal{P}(s,a)}
@@ -448,7 +422,9 @@ uncertainty set around the nominal model.
 \end{equation}
 where $\mathcal{P}(s,a)$ is an uncertainty set of transition
 distributions for each state-action pair and $p_0(\cdot|s,a)$ is the
-nominal transition kernel. Under the rectangularity assumption (the uncertainty sets are independent
+nominal transition kernel.\footnote{The nominal model $p_0(\cdot|s,a)$ is
+the agent's best estimate of the transition kernel, typically estimated
+from data or specified by a simulator.} Under the rectangularity assumption (the uncertainty sets are independent
 across state-action pairs, so the joint set is a Cartesian product),
 $T$ is a $\gamma$-contraction in
 the sup-norm, so robust value iteration and policy iteration converge
@@ -473,17 +449,15 @@ has the closed-form solution
 $q^*(s') \propto p_0(s'|s,a) \exp(-\gamma V(s')/\theta)$, an
 exponential tilting of nominal transitions toward low-value states,
 where $\theta$ is the Lagrange multiplier on the KL
-constraint \citep{Nilim2005}.\footnote{\citet{HansenSargent2001}
+constraint \citep{Nilim2005}. \citet{HansenSargent2001}
 independently derived the same operator from decision theory as
 ``multiplier preferences,'' in which the agent maximizes expected utility
-penalized by the cost of distorting beliefs away from the reference model:
-$\sup_c \inf_Q \{\mathbb{E}_Q[U(c)] + \theta \cdot
-\text{KL}(Q\|P)\}$, where $\theta$ is the price of model uncertainty.
-\citet{Petersen2000} proved that KL-robust MDPs, multiplier preferences,
-and risk-sensitive control with exponential utility
+penalized by the KL cost of distorting beliefs away from a reference
+model. \citet{Petersen2000} proved that KL-robust MDPs, multiplier
+preferences, and risk-sensitive control with exponential utility
 $\mathbb{E}_P[\exp(-\text{cost}/\theta)]$ are three descriptions of the
-same problem; see also \citet{Whittle1981}, \citet{Jacobson1973},
-\citet{Fleming1992}.}\textsuperscript{,}\footnote{\citet{Maccheroni2006}
+same problem.\footnote{See also \citet{Whittle1981}, \citet{Jacobson1973},
+\citet{Fleming1992}. \citet{Maccheroni2006}
 axiomatized variational preferences, in which the agent evaluates each
 act under the worst-case belief penalized by a divergence cost:
 $V(f) = \min_p \{\int u(f)\,dp + c(p)\}$, nesting maxmin EU
@@ -550,8 +524,7 @@ combines policy regularization (reward robustness) with value
 regularization (transition robustness). Standard SAC training already
 implements the reward-robust component; transition robustness requires an
 additional penalty on the divergence between learned and nominal dynamics
-models.} Standard SAC training therefore already implements reward-robust
-RL; the robustness radius is controlled by $\tau$.
+models.}
 
 These three approaches offer different trade-offs. Robust Q-learning
 requires an explicit uncertainty set but provides exact minimax guarantees
@@ -617,7 +590,6 @@ nominal model.}
 \centering
 \includegraphics[width=0.85\textwidth]{../ch11_dist_robust_constrained/sims/robust_consumption_savings_policy.png}
 \caption{Consumption policy $c(w)$ for each method. Dashed lines show
-Q-learning policies; solid lines show DP. Robust agents consume less (save
-more) than the nominal-model optimum.}
+Q-learning policies; solid lines show DP.}
 \label{fig:robust_consumption}
 \end{figure}
