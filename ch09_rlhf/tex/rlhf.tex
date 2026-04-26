@@ -44,7 +44,7 @@ This objective is optimized on $\phi$ using standard supervised learning with a 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\textwidth]{../ch09_rlhf/sims/rlhf_dpo_pipeline.png}
-\caption{RLHF versus DPO pipelines. Top row: the three-stage RLHF pipeline trains a reward model from human preferences, then uses PPO to fine-tune the policy with a KL penalty. Bottom row: DPO collapses the pipeline into a single supervised learning objective over preference pairs, eliminating the explicit reward model (ghosted box).}
+\caption[RLHF versus DPO pipelines]{\textbf{RLHF versus DPO pipelines.} Top row: the three-stage RLHF pipeline trains a reward model from human preferences, then uses PPO to fine-tune the policy with a KL penalty. Bottom row: DPO collapses the pipeline into a single supervised learning objective over preference pairs, eliminating the explicit reward model (ghosted box).}
 \label{fig:rlhf_dpo_pipeline}
 \end{figure}
 
@@ -61,7 +61,7 @@ A worker searches for jobs in a labor market with compensating differentials, fo
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.85\textwidth]{../ch09_rlhf/sims/job_search_env.png}
-\caption{Left: the optimal accept/reject boundary for searching states in wage-amenity space. Right: the optimal stay/quit boundary for employed states. Both boundaries cut diagonally, reflecting the tradeoff between wage and amenity quality under compensating differentials.}
+\caption[Optimal accept/reject and stay/quit boundaries in wage-amenity space]{\textbf{Optimal accept/reject and stay/quit boundaries in wage-amenity space.} Left: the optimal accept/reject boundary for searching states. Right: the optimal stay/quit boundary for employed states. Both boundaries cut diagonally, reflecting the tradeoff between wage and amenity quality under compensating differentials.}
 \label{fig:search_env}
 \end{figure}
 
@@ -70,7 +70,7 @@ Six methods are compared across $K \in \{25, 50, 100, 200, 500, 1{,}000, 2{,}000
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.7\textwidth]{../ch09_rlhf/sims/job_search_sample_complexity.png}
-\caption{Policy value $V^\pi(s_0)$ versus number of preference comparisons $K$ for all six methods (30 seeds, $L = 15$). The right axis shows the percentage of DP-optimal value.}
+\caption[Policy value versus number of preference comparisons $K$ for all six methods]{\textbf{Policy value $V^\pi(s_0)$ versus number of preference comparisons $K$ for all six methods (30 seeds, $L = 15$).} The right axis shows the percentage of DP-optimal value.}
 \label{fig:preference_sample}
 \end{figure}
 
@@ -78,7 +78,7 @@ Figure~\ref{fig:preference_sample} reports the main results. Three findings stan
 
 \begin{table}[htbp]
 \centering
-\caption{Diagnostics at $K = 5{,}000$ (single seed): policy agreement with $\pi^*$, value-function correlation, and mean accepted wage and amenity for each method.}
+\caption[Diagnostics at $K = 5{,}000$: policy agreement with $\pi^*$, value-function correlation, and mean accepted wage and amenity for each method]{\textbf{Diagnostics at $K = 5{,}000$ (single seed): policy agreement with $\pi^*$, value-function correlation, and mean accepted wage and amenity for each method.}}
 \label{tab:preference_diagnostics}
 \input{../ch09_rlhf/sims/job_search_diagnostics.tex}
 \end{table}
@@ -88,7 +88,7 @@ Table~\ref{tab:preference_diagnostics} provides state-level diagnostics at $K = 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.7\textwidth]{../ch09_rlhf/sims/job_search_horizon.png}
-\caption{Policy value $V^\pi(s_0)$ versus segment length $L$ at $K = 2{,}000$ for the neural network and DPO (20 seeds). The right axis shows the percentage of DP-optimal value.}
+\caption[Policy value versus segment length $L$ at $K = 2{,}000$ for the neural network and DPO]{\textbf{Policy value $V^\pi(s_0)$ versus segment length $L$ at $K = 2{,}000$ for the neural network and DPO (20 seeds).} The right axis shows the percentage of DP-optimal value.}
 \label{fig:preference_horizon}
 \end{figure}
 
