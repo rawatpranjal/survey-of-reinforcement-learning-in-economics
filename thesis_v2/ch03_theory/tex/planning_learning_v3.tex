@@ -133,9 +133,9 @@ Table~\ref{tab:bm_fvi_fqi} confirms the diagnosis: basis representability, not a
 \begin{table}[h]
 \centering
 \small
-\input{../ch03a_bm/sims/bm_fvi_fqi_results.tex}
 \caption[Convergence metrics for five methods on the Brock--Mirman economy.]{\textbf{Convergence metrics for five methods on the Brock--Mirman economy.} ($N_K = 50$, $N_Z = 2$, $\gamma = 0.96$). Policy agreement is measured against the closed-form optimal policy $k' = \alpha \beta z k^\alpha$.}
 \label{tab:bm_fvi_fqi}
+\input{../ch03a_bm/sims/bm_fvi_fqi_results.tex}
 \end{table}
 
 
@@ -162,6 +162,8 @@ Recall the AlphaGo Zero system from Section~\ref{subsubsec:alphago_zero}, where 
 \begin{table}[h]
 \centering
 \small
+\caption[Policy iteration and AlphaZero follow the same evaluate-improve loop]{\textbf{Policy iteration and AlphaZero follow the same evaluate-improve loop.} The network provides approximate policy evaluation; MCTS provides approximate policy improvement via selective tree search.}
+\label{tab:pi_alphazero}
 \begin{tabular}{lll}
 \hline
 Step & Policy Iteration & AlphaZero \\
@@ -172,8 +174,6 @@ Improve & $\pi_{k+1} = \argmax_a \{r + \gamma P V^{\pi_k}\}$ & MCTS simulations 
 Iterate & Repeat until $\pi$ is stationary & Retrain $f_\theta$ on self-play outcomes \\
 \hline
 \end{tabular}
-\caption[Policy iteration and AlphaZero follow the same evaluate-improve loop]{\textbf{Policy iteration and AlphaZero follow the same evaluate-improve loop.} The network provides approximate policy evaluation; MCTS provides approximate policy improvement via selective tree search.}
-\label{tab:pi_alphazero}
 \end{table}
 
 The gap between network-only play and network-plus-search is the contraction factor $\gamma^H$, where $H$ is the effective search depth.\footnote{MCTS adds UCB exploration and selective tree expansion beyond the literal lookahead framework. The Newton interpretation explains why lookahead helps (the final greedy selection is a policy improvement step) but does not explain the specific mechanisms that make MCTS computationally efficient.}
