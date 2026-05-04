@@ -111,7 +111,7 @@ The computational bottleneck is inverting $F(\theta) \in \mathbb{R}^{d \times d}
 \subsubsection{Fitted Value Iteration and Fitted Q-Iteration (2005)}
 \label{sec:fvi_fqi_algorithms}
 
-Tabular Q-learning maintains a separate entry for every state-action pair. When $|\mathcal{S}|$ is large or the state space is continuous, as in most applied problems, this is infeasible. \emph{Fitted Q-Iteration} (FQI) \citep{Ernst2005} replaces the tabular update with a supervised regression step: given a batch of transitions, fit a function approximator to the Bellman targets.
+Tabular Q-learning maintains a separate entry for every state-action pair. When $|\mathcal{S}|$ is large or the state space is continuous, as in most applied problems, this is infeasible. \emph{Fitted Q-Iteration} (FQI) \citep{Ernst2005} replaces the tabular update with a supervised regression step. Given a batch of transitions, fit a function approximator to the Bellman targets.
 
 Let $\mathcal{F}$ be a function class mapping $\mathcal{S} \times \mathcal{A} \to \mathbb{R}$.\label{def:fqi} Initialize $Q_0 \equiv 0$. At each iteration $k = 0, 1, \ldots, K-1$: (i) draw $N$ transitions $(s_i, a_i, r_i, s_i')$ from a generative model; (ii) construct regression targets $y_i^{(k)} = r_i + \gamma \max_{a'} Q_k(s_i', a')$; (iii) set $Q_{k+1} \leftarrow \arg\min_{f \in \mathcal{F}} \frac{1}{N} \sum_{i=1}^N \bigl( f(s_i, a_i) - y_i^{(k)} \bigr)^2$. The output is the greedy policy $\pi_K(s) = \arg\max_a Q_K(s,a)$.
 
@@ -150,7 +150,7 @@ DQN exceeded human-level performance on 29 of 49 games using a single architectu
 
 \subsubsection{TRPO and PPO (2015, 2017)}
 
-Policy gradient methods suffer from a practical instability: a single large gradient step can move the policy into a region where performance collapses and recovery is slow.
+Policy gradient methods suffer from a practical instability. A single large gradient step can move the policy into a region where performance collapses and recovery is slow.
 
 \citet{Schulman2015} addressed this with Trust Region Policy Optimization (TRPO). TRPO solves the constrained optimization problem
 \begin{equation}
