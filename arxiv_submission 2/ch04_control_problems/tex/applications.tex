@@ -1,0 +1,258 @@
+% Chapter: Reinforcement Learning for Optimal Control
+% Focus on deployed systems and field experiments with one simulation demonstration
+
+A handful of organizations have deployed reinforcement learning beyond simulation, achieving measurable gains on specific large-scale problems. Each deployment required substantial domain engineering and scientific tuning; these remain exceptional cases rather than standard practice. I review the most prominent field deployments, including ride-hailing dispatch at DiDi, data center cooling at Google, hotel revenue management, and financial order execution, before concluding with a simulation study on the bus engine replacement problem. In each case, the RL agent's parameters were updated during a training phase conducted in simulation or on historical data, and the resulting policy was deployed with fixed weights (Section~\ref{section:language}), with the exception of the hotel revenue management system, which learned in-field.
+
+\subsection{Ride-Hailing Dispatch}
+\label{sec:ridehailing}
+
+Each driver-passenger assignment changes the spatial distribution of available drivers, making ride-hailing dispatch a sequential optimization problem at a scale (tens of millions of daily rides at DiDi) where exact dynamic programming is intractable.
+
+\citet{Qin2021dispatch} formalized DiDi's order dispatching as a semi-Markov decision process\footnote{A semi-Markov decision process generalizes the standard MDP by allowing variable time between decisions. The discount factor $\gamma^{\tau_k}$ depends on the actual time elapsed $\tau_k$ rather than applying a fixed per-step discount.} where each driver is an independent agent. The state of a driver consists of location (discretized into hexagonal zones) and time (bucketed into intervals). The action is the order assigned to the driver, with the option to remain idle. The reward is the trip fare. State transitions are determined by trip destinations, as completing an order transports the driver from origin to destination, changing their spatial state. The stochasticity arises from future demand, which determines the available actions at each state. The per-driver value function $V^{\pi}(s)$ represents the expected cumulative fare a driver can earn from state $s$ under dispatching policy $\pi$:
+\begin{equation}
+V^{\pi}(s) = \mathbb{E}\left[ \sum_{k=0}^{\infty} \gamma^{\tau_k} r_k \mid s_0 = s, \pi \right],
+\end{equation}
+where $\tau_k$ is the time to complete the $k$-th trip and $r_k$ is the corresponding fare. The platform's objective is to maximize total driver income across the fleet, which decomposes into the sum of individual driver value functions.
+
+Each dispatching window (a few seconds), the platform collects open orders and available drivers, constructs a bipartite graph, and solves a linear assignment problem. The edge weights are computed as the advantage of each driver-order match relative to the driver's current state value.
+\begin{equation}
+w_{ij} = \hat{r}_i + \gamma^{\hat{\tau}_i} V(s_j') - V(s_j),
+\end{equation}
+where $\hat{r}_i$ is the predicted fare for order $i$, $\hat{\tau}_i$ is the estimated trip duration, and $s_j'$ is the destination state. The value function is learned via temporal-difference methods from historical trip data. DiDi's Cerebellar Value Network \citep[CVNet;][]{Tang2019cvnet} uses hierarchical coarse-coding\footnote{\emph{Coarse-coding} represents a value function as a weighted sum over overlapping rectangular or hexagonal tiles that partition the state space \citep{sutton2018}; each state activates the tiles that contain it, and a hierarchical variant stacks tiles at multiple resolutions to allow both coarse and fine generalization simultaneously.} with a multi-resolution hexagonal grid, enabling transfer learning\footnote{\emph{Transfer learning} initializes a model for a new task (a new city) with parameters trained on related tasks (existing cities), on the assumption that learned representations of traffic and demand patterns generalize across contexts and require less data to reach good performance in the new setting.} across cities and robustness to data sparsity in low-traffic zones.
+
+Production deployment across more than 20 Chinese cities demonstrated modest but consistent improvements of 0.5--2\% on key metrics, gains that required the full CVNet infrastructure (hierarchical coarse-coding, multi-resolution grids, transfer learning across cities) to achieve. Table~\ref{tab:didi_results} summarizes the reported gains from A/B tests using time-slice rotation, where algorithms alternate control of the platform in 3-hour blocks to avoid interference effects.
+
+\begin{table}[htbp]
+\centering
+\caption{DiDi dispatch deployment results from \citet{Qin2021dispatch} and \citet{Tang2019cvnet}.}
+\label{tab:didi_results}
+\begin{tabular}{lcc}
+\toprule
+Metric & Improvement vs.\ Baseline & Scale \\
+\midrule
+Total driver income & +0.5--2.0\% & Tens of millions daily rides \\
+Order response rate & +0.5--2.0\% & Platform-wide \\
+Fulfillment rate & +0.5--2.0\% & Platform-wide \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\citet{Li2019ridesharing} addressed the coordination challenge using mean-field multi-agent RL. With thousands of drivers making simultaneous decisions, the full multi-agent state space is intractable. The mean-field approximation replaces individual driver states with an aggregate distribution, allowing each driver to condition on the density of nearby drivers rather than their exact locations. Experiments on DiDi data showed improved fleet utilization compared to single-agent baselines.
+
+\citet{Han2022lyft} reported complementary results from Lyft, where the dispatching system optimizes driver assignment and repositioning jointly. Their value decomposition architecture\footnote{Value decomposition decomposes the platform's global matching objective into individual driver value functions, each estimable via temporal-difference learning. The global optimum is recovered by optimizing the sum of individual values.} assigns credit to individual driver decisions within the global objective. The production system demonstrated improvements in rider wait times and driver utilization, providing a second data point suggesting that similar approaches may transfer across platforms.
+
+At DiDi's volume, even 1\% gains represent hundreds of thousands of additional completed rides per day, because dispatching is fundamentally a fleet positioning problem: today's assignments determine tomorrow's driver distribution.
+
+
+% --- Data Center Cooling subsection retired (MPC, not RL) ---
+% \subsection{Data Center Cooling}
+% \label{sec:datacenter}
+%
+% Data centers consume enormous amounts of energy, with cooling systems accounting for 30--40\% of total power usage. Google applied machine learning to autonomous HVAC control, achieving substantial efficiency gains while maintaining temperature safety constraints.
+%
+% \citet{Gao2014} reported initial results from deploying neural network predictions to guide data center operations. The system used over 100 sensor readings, including temperatures at multiple locations, coolant flow rates, power draw, and external weather conditions, to predict Power Usage Effectiveness (PUE).\footnote{PUE is the ratio of total facility energy to IT equipment energy. A PUE of 1.0 means all energy goes to computing; the industry average is approximately 1.6.} Operators used these predictions to adjust equipment setpoints. This assisted approach achieved a 40\% reduction in cooling energy and a 15\% improvement in overall PUE.
+%
+% \citet{Lazic2018} subsequently deployed a fully autonomous system using model-predictive control\footnote{\emph{Model-predictive control} (MPC) solves a finite-horizon optimal control problem at each step using a predictive model of system dynamics, applies the first action, then re-solves at the next step with the updated state; the receding-horizon structure makes it robust to model error because the plan is continually revised.} with learned dynamics. The state space consists of temperatures, flow rates, and equipment states across multiple zones. Actions are setpoints for chillers, fans, and pumps. The system learns a neural network dynamics model $\hat{f}$ from operational data:
+% \begin{equation}
+% s_{t+1} = \hat{f}(s_t, a_t) + \epsilon_t.
+% \end{equation}
+% At each control interval (5 minutes), the system optimizes over a horizon of future states using the learned model, subject to temperature constraints.
+% \begin{equation}
+% \min_{a_0, \ldots, a_H} \sum_{h=0}^{H} c_{\text{energy}}(a_h) \quad \text{s.t.} \quad T_{\min} \leq T_{\text{zone},i}(\hat{s}_h) \leq T_{\max} \; \forall i, h.
+% \end{equation}
+%
+% The MPC approach provides interpretability and safety guarantees that pure model-free RL cannot. Actions are projected onto the feasible set defined by temperature constraints, with uncertainty estimates from the learned model used to maintain conservative margins. Human operators can override at any time. Table~\ref{tab:datacenter_results} summarizes the reported performance.
+%
+% \begin{table}[htbp]
+% \centering
+% \caption{Google data center cooling results from \citet{Gao2014} and \citet{Lazic2018}.}
+% \label{tab:datacenter_results}
+% \begin{tabular}{lcc}
+% \toprule
+% Metric & Improvement & Method \\
+% \midrule
+% Cooling energy & $-$40\% & Neural network predictions \\
+% PUE & $-$15\% & Assisted operation \\
+% Additional efficiency & $-$12\% & Autonomous MPC \\
+% Temperature violations & 0 & Safety constraints \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+%
+% The system operates continuously across multiple data centers, processing millions of sensor readings per day and controlling thousands of setpoints. Importantly, this is model-predictive control with learned dynamics models and persistent human oversight, not autonomous model-free RL; the learned model adapts online to seasonal variations, equipment degradation, and workload changes, but operators retain override authority at all times.
+
+
+\subsection{Hotel Revenue Management}
+\label{sec:hotel}
+
+Budget hotel chains face a capacity allocation problem: how to dynamically distribute rooms across rate segments defined by discount level, with booking channels such as direct platforms and online travel agencies mapped to segments offering discounts ranging from less than 15\% to over 40\%. Demand is uncertain, cancellations are difficult to forecast, and hotel managers resist black-box optimization systems that override their judgment. \citet{Chen2023hotelrl} deployed reinforcement learning at China Lodging Group (CLG), a budget hotel chain operating approximately 2,000 hotels across China, and conducted field experiments measuring the impact of RL-based capacity allocation on actual hotel revenue.
+
+Their system uses a two-step design. The RL agent observes the state $(t, s)$, where $t$ indexes the booking period within a $T = 10$-period episode and $s$ is the average revenue per room sold to date, and selects an average discount level $a \in \{10\%, 20\%, 30\%\}$. A linear program then converts this scalar recommendation into a feasible capacity allocation across rate segments, accounting for each hotel's channel preferences.\footnote{The RL component uses a modified on-policy Monte Carlo method with $\varepsilon$-greedy exploration, updating Q-values from realized returns after each completed episode, making it an in-field learner in the terminology of Section~\ref{section:language}.} This decomposition addresses practitioner acceptance, since managers understand a single discount recommendation, and circumvents the need to explicitly model demand arrivals or cancellation rates.
+
+The field experiment randomly assigned five Hanting-brand hotels in Shanghai to the treatment group from ten candidates, with 271 additional Shanghai hotels serving as a donor pool for synthetic control estimation.\footnote{Synthetic control constructs a weighted combination of untreated hotels whose pre-treatment trend matches each treated hotel, avoiding the selection bias of simple before-after comparisons.} Table~\ref{tab:hotel_results} reports the average treatment effects over the pilot period (March--June 2015).
+
+\begin{table}[htbp]
+\centering
+\caption{Field experiment results from \citet{Chen2023hotelrl}, measured via synthetic control.}
+\label{tab:hotel_results}
+\begin{tabular}{lcc}
+\toprule
+Metric & Improvement & $p$-value \\
+\midrule
+Occupancy rate (OR) & $+5.15\%$ & 0.1361 \\
+Average daily rate (ADR) & $+5.93\%$ & 0.1160 \\
+Revenue per available room (RevPAR) & $+11.80\%$ & 0.0090 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The RevPAR gain is heterogeneous across treatment hotels; some improved primarily via higher occupancy rates, others via higher average daily rates, and others via both channels simultaneously.
+
+
+\subsection{E-Commerce Dynamic Pricing}
+\label{sec:ecommerce_pricing}
+
+E-commerce platforms face a pricing problem at a scale that defeats human specialists. Alibaba's Tmall.com lists millions of SKUs across thousands of product categories, each requiring daily price adjustments that account for demand elasticity, competitor behavior, inventory levels, and promotional calendars. \citet{Liu2019} deployed deep reinforcement learning agents for automated pricing on Tmall.com beginning July 2018, conducting field experiments on thousands of SKUs over several months.
+
+The pricing MDP for product $i$ has state $s_{i,t} \in \mathbb{R}^m$ comprising four feature groups: price features (current and historical prices, price-to-cost ratio), sales features (units sold, conversion rate), customer traffic features (unique visitors $\text{uv}_{i,t}$, page views), and competitiveness features (price rank among similar products). The pricing period is $d = 1$ day. Actions are either discrete, $a_{i,t} \in \{1, \ldots, K\}$ indexing price bins uniformly spaced between product-specific bounds $[P_{i,\min}, P_{i,\max}]$, or continuous, $a_{i,t} \in \mathbb{R}$. The reward is the difference of revenue conversion rates (DRCR):
+\begin{equation}
+r_{i,t} = \frac{\text{revenue}_{i,t}}{\text{uv}_{i,t}} - \frac{\text{revenue}_{i,t-\tau}}{\text{uv}_{i,t-\tau}},
+\end{equation}
+where $\text{uv}_{i,t}$ is unique visitors in period $t$ and $\tau$ is a reference lag.\footnote{DRCR normalizes revenue by traffic to remove demand fluctuations unrelated to pricing. The differencing further removes product-specific level effects, yielding a reward signal that is more concave than raw revenue and improves convergence stability.}
+
+Two algorithms are deployed: DQN for the discrete action formulation and DDPG for continuous actions. Both are pre-trained from demonstrations using historical specialist pricing actions (DQfD, DDPGfD) to address cold-start.\footnote{Pre-populating replay buffers with rollouts from heuristic or scripted policies is a general technique for reducing exploration burden in deep RL. In robotic grasping, \citet{Kalashnikov2018qtopt} collected 200,000 scripted grasping attempts at 15--30\% success rate, sufficient to bootstrap a vision-based policy to 96\% success; see \citet{Ibarz2021robot} for a survey of these and related warm-start strategies.}\footnote{Standard A/B testing is infeasible because Chinese e-commerce regulations prohibit displaying different prices to different customers for the same product simultaneously. \citet{Liu2019} instead evaluate using difference-in-differences against ``simi-products'' (similar products not subject to algorithmic pricing) as controls.}
+
+\begin{table}[htbp]
+\centering
+\caption{Field experiment results from \citet{Liu2019} on Tmall.com. DRCR improvement is relative to the simi-product control group.}
+\label{tab:ecommerce_pricing_results}
+\begin{tabular}{llcr}
+\toprule
+Experiment & Method & DRCR Improvement & Duration \\
+\midrule
+Markdown (500 luxury SKUs) & DQN ($K=9$) & $+37.5\%$ & 15 days \\
+Daily (1000 FMCGs) & DQN ($K=100$) & $5.10\times$ & 30 days \\
+Daily (1000 FMCGs) & DDPG (continuous) & $6.07\times$ & 30 days \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+DDPG with continuous action space outperformed DQN with discrete bins across all daily pricing experiments, and both substantially outperformed manual expert pricing.
+
+
+\subsection{Financial Order Execution}
+\label{sec:execution}
+
+The theoretical benchmark for optimal execution is the Almgren-Chriss framework \citep{Almgren2001execution}, which derives optimal deterministic schedules under linear impact assumptions. A trader liquidating $Q$ shares over $T$ periods faces a tradeoff between timing risk and market impact. With risk-aversion parameter $\lambda$, price volatility $\sigma$, and temporary impact coefficient $\eta$, the optimal remaining inventory at time $t$ follows the hyperbolic sine schedule:
+\begin{equation}
+x^*(t) = Q \cdot \frac{\sinh\!\bigl(\kappa(T-t)\bigr)}{\sinh(\kappa T)}, \quad \kappa = \sqrt{\frac{\lambda \sigma^2}{\eta}}.
+\end{equation}
+This deterministic trajectory is the benchmark any adaptive method must beat. It prescribes front-loading or back-loading depending on the risk-impact balance, but cannot respond to realized order flow or spread dynamics.
+
+\citet{Nevmyvaka2006execution} applied tabular Q-learning to execution on real limit order book data from NASDAQ stocks.\footnote{The dataset covers 500 trading days of millisecond-level limit order book snapshots for AMZN, QCOM, and NVDA. The state space contains approximately 10,000 states; the horizon is $T = 60$ seconds with discount $\gamma = 1$.} The state at time $t$ is $s_t = (t, q_t, \psi_t, \Delta_t)$, where $t \in \{1,\ldots,T\}$ is time remaining, $q_t \in \{0,1,\ldots,Q\}$ is inventory remaining, $\psi_t$ is the discretized bid-ask spread, and $\Delta_t$ is the discretized signed volume imbalance.\footnote{Signed volume imbalance is the difference between buy and sell order volume near the best prices, normalized by total volume; positive imbalance typically predicts short-term price increases.} Actions $a_t \in \{0, \delta, 2\delta, \ldots, q_t\}$ specify shares to execute in the current interval. The reward is the negative per-period slippage contribution:
+\begin{equation}
+r_t = -a_t \bigl(p_t^{\text{exec}} - p_0\bigr),
+\end{equation}
+where $p_0$ is the mid-quote at order arrival and $p_t^{\text{exec}}$ is the average execution price. Total implementation shortfall is $IS = -\sum_{t=1}^T r_t / Q$.\footnote{Implementation shortfall measures the total cost of executing a trade relative to the benchmark mid-quote at arrival. It captures market impact, timing cost, and opportunity cost of unexecuted shares.} Because the objective is cost minimization, the Q-learning update uses $\min$ over next-period actions:
+\begin{equation}
+Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha\Bigl[r_t + \gamma \min_{a'} Q(s_{t+1}, a') - Q(s_t, a_t)\Bigr].
+\end{equation}
+The agent learns to condition on market microstructure signals: trading aggressively when spreads are narrow, waiting when order flow predicts favorable price movement, and accelerating near the deadline.
+
+\begin{table}[htbp]
+\centering
+\caption{Execution results from \citet{Nevmyvaka2006execution} on NASDAQ stocks. TWAP is the time-weighted average price baseline (equal-sized trades at uniform intervals).}
+\label{tab:execution_results}
+\begin{tabular}{lccc}
+\toprule
+Stock & RL vs.\ TWAP & RL vs.\ Almgren-Chriss & Data \\
+\midrule
+AMZN & $-$18.2\% & $-$14.6\% & 500 days LOB \\
+QCOM & $-$22.1\% & $-$19.3\% & 500 days LOB \\
+NVDA & $-$15.8\% & $-$12.1\% & 500 days LOB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The RL agent reduces execution costs by 12--19\% over Almgren-Chriss. These results informed subsequent work on adaptive execution, though independently verified production deployments remain scarce in the public literature.
+
+
+\subsection{Supply Chain Inventory Management}
+\label{sec:inventory}
+
+Multi-echelon inventory systems coordinate ordering decisions across supply chain stages, where each stage's order becomes the next stage's incoming shipment. A retailer orders from a warehouse, which orders from a distribution center, which orders from a factory. The sequential nature creates complex dependencies, since an order placed upstream today affects downstream availability many periods later. The state space grows exponentially in the number of echelons, with $K$ stages each having $M$ possible inventory levels yielding $M^K$ states. Classical inventory theory provides closed-form solutions for special cases, most notably the echelon base-stock policy of \citet{ClarkScarf1960inventory}.
+
+The state $s = (I_1, \ldots, I_K)$ records on-hand inventory at each stage, where stage 1 faces customer demand and stage $K$ is the most upstream. The action $q \in \{0, 1, \ldots, Q_{\max}\}$ is the order quantity placed at stage $K$. Demand $D_t \sim F_D$ arrives at stage 1 each period; unfilled demand is backordered. Shipments flow downstream, with stage $k$ receiving what stage $k+1$ shipped in the previous period. The per-period cost combines holding, backorder, and ordering components.
+\begin{equation}
+c_t = h \sum_{k=1}^{K} I_k^+ + b \cdot (D_t - I_1)^+ + c_o \cdot q_t,
+\end{equation}
+where $I_k^+ = \max(0, I_k)$ is on-hand inventory, $(x)^+ = \max(0, x)$, $h$ is holding cost per unit, $b$ is backorder cost per unit, and $c_o$ is ordering cost. The objective is to minimize expected discounted total cost.
+
+\citet{Gijsbrechts2022inventory} conducted a systematic evaluation of deep RL against classical base-stock policies across lost sales, dual sourcing, and multi-echelon configurations. The classical benchmark is the echelon base-stock policy, in which each stage $k$ maintains an echelon inventory position and orders to bring this position to a target level $S_k$.\footnote{Formally, the echelon inventory position at stage $k$ equals on-hand inventory at $k$ plus all inventory at downstream stages $1, \ldots, k-1$ plus in-transit inventory, minus backorders. The echelon base-stock policy of \citet{ClarkScarf1960inventory} is optimal for serial systems with linear costs and backorders.} For single-echelon systems with backorders, the optimal base-stock level is given by the newsvendor critical fractile $S^* = F_D^{-1}(b/(b+h))$. Table~\ref{tab:inventory_results} summarizes results from their multi-echelon experiments.
+
+\begin{table}[htbp]
+\centering
+\caption{Multi-echelon inventory results from \citet{Gijsbrechts2022inventory}.}
+\label{tab:inventory_results}
+\begin{tabular}{lccc}
+\toprule
+Echelons & DRL Cost Gap vs.\ Base-Stock & States & Convergence \\
+\midrule
+2 & +1.2\% & $\sim 10^2$ & Achieved \\
+3 & +6.8\% & $\sim 10^3$ & Achieved \\
+4 & +12.3\% & $\sim 10^5$ & Partial \\
+6 & --- & $\sim 10^8$ & Failed \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Where classical solutions exist, RL underperforms: the base-stock policy remains highly competitive when properly calibrated, and DRL required millions of training transitions to approach performance levels achievable through closed-form calculation. RL struggles particularly with multi-echelon coupling, where upstream orders affect downstream costs many periods later.\footnote{Credit assignment refers to the difficulty of determining which past actions caused a delayed reward or cost. In multi-echelon systems, an upstream ordering decision today may not affect customer-facing costs for many periods, making it difficult for RL to learn the causal connection.} The value proposition for RL lies in problems where analytical solutions are unavailable: non-stationary demand, complex operational constraints, or cost structures that do not admit tractable decomposition.\footnote{Residual RL \citep{Silver2018residual} offers a middle ground: rather than replacing classical policies, learn a correction $\pi_{\mathrm{final}}(s) = \pi_{\mathrm{classical}}(s) + \pi_{\mathrm{learned}}(s)$, preserving the classical solution's performance while allowing RL to handle constraints or non-stationarity the analytical method cannot. This connects to perturbation methods in applied mathematics, where one linearizes around a known solution and solves for deviations. See \citet{Ibarz2021robot} for a survey of residual and demonstration-augmented RL in robotics.} Even in these settings, successful deployment remains rare and requires extensive simulation infrastructure, domain expertise, and careful calibration against classical baselines.
+
+
+\subsection{Real-Time Bidding}
+\label{sec:rtb}
+
+Real-time bidding for display advertising presents a budget pacing problem: an advertiser must allocate a fixed budget $B_0$ across a campaign of $T$ auctions to maximize total conversions. Each impression is a second-price auction; the advertiser submits a bid and pays the second-highest bid if they win. The challenge is that bidding aggressively depletes budget early, while conservative bidding leaves value on the table.
+
+\citet{Wu2018rtb} formalized this as an MDP with state $s_t = (B_t, t, w_t)$, where $B_t$ is remaining budget, $t$ is auctions remaining, and $w_t$ is the recent win rate. The action is a bid multiplier $\lambda_t \in [\lambda_{\min}, \lambda_{\max}]$, so the actual bid is $b_t = \lambda_t \cdot \bar{b}$, where $\bar{b}$ is a base bid calibrated to the estimated value-per-impression. The clearing price $c_t$ is drawn from a distribution $F_c$ estimated from historical data; the advertiser wins if $b_t \geq c_t$. The per-auction reward is:
+\begin{equation}
+r_t = \mathbbm{1}\{b_t \geq c_t\} \cdot \mathrm{cvr}_t,
+\end{equation}
+where $\mathrm{cvr}_t \in \{0,1\}$ is the conversion indicator. Budget evolves as $B_{t+1} = B_t - \mathbbm{1}\{b_t \geq c_t\} \cdot c_t$, and the episode terminates when $B_t \leq 0$ or $t = 0$.\footnote{The state space is discretized into budget bins and time bins. \citet{Wu2018rtb} augment the state with bid landscape features derived from historical clearing price distributions, giving the agent information about current market competitiveness.}
+
+The agent is a deep Q-network trained on a simulator calibrated to production RTB data. Table~\ref{tab:rtb_results} reports performance relative to rule-based pacing baselines. The DQN agent improves total conversions by conserving budget during high-competition periods and bidding aggressively when clearing prices are low, a pattern the rule-based approaches cannot learn.
+
+\begin{table}[htbp]
+\centering
+\caption{Real-time bidding results from \citet{Wu2018rtb}. Performance is relative to linear pacing on a simulator calibrated to production data.}
+\label{tab:rtb_results}
+\begin{tabular}{lcc}
+\toprule
+Method & Conversions vs.\ Linear Pacing & Budget Utilization \\
+\midrule
+Linear pacing & baseline & 98\% \\
+Hard threshold & $-$8.3\% & 91\% \\
+Proportional (ECPC) & $+$4.1\% & 97\% \\
+DQN \citep{Wu2018rtb} & $+$11.7\% & 99\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsection{Simulation Study: Bus Engine Replacement}
+\label{sec:bus_engine}
+
+I conclude with a simulation demonstrating that RL matches dynamic programming on a classical benchmark. The bus engine replacement problem, introduced by \citet{Rust1987}, models a fleet manager's monthly decision whether to replace engines based on accumulated mileage. Replacement incurs a fixed cost but resets mileage to zero; continued operation incurs maintenance costs increasing in mileage.
+
+I extend the single-engine problem to a fleet of $N$ engines with a capacity constraint limiting replacements per period. The state $s = (m_1, \ldots, m_N)$ records discretized mileage for each engine. Actions are subsets of engines to replace, subject to the capacity constraint. The per-period cost is $c(s, a) = \alpha \sum_{i} m_i + \beta |a|$, where $\alpha$ is the operating cost per unit mileage and $\beta$ is the replacement cost.\footnote{The mileage-dependent operating cost $\alpha \sum_i m_i$ follows Rust's original specification $c(x, \theta_1) = \theta_{11} x$, creating a non-trivial threshold replacement policy. The fleet extension uses deterministic mileage increments to isolate the combinatorial scaling challenge that arises from the joint state of multiple engines.} Mileage evolves deterministically; replaced engines reset to $m = 0$; others increment by one bin.\footnote{With $M = 6$ mileage bins, the state space is $6^N$: 1,296 states at $N = 4$, 7,776 at $N = 5$, 46,656 at $N = 6$. Value iteration is feasible for $N \leq 5$.}
+
+Figure~\ref{fig:bus_engine_scaling} compares dynamic programming, DQN, and heuristic baselines across fleet sizes.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{ch04_control_problems/sims/bus_engine_scaling.png}
+\caption{Bus engine replacement benchmark. Left: computation time vs.\ fleet size (log scale). Right: discounted return vs.\ fleet size for DP, DQN, and heuristic baselines. At $N = 6$ (46,656 states), DP is infeasible (no data point).}
+\label{fig:bus_engine_scaling}
+\end{figure}
+
+For $N = 1$ through $5$ where both methods are computable, DQN matches DP within 1\% of the optimal discounted return. At $N = 6$ (46,656 states), DP is infeasible but DQN produces a policy. The threshold heuristic, which replaces engines above a mileage cutoff, provides a reasonable baseline but cannot account for capacity constraints or the joint state of multiple engines. The never-replace heuristic performs poorly due to accumulated mileage costs, confirming that the cost structure creates a non-trivial replacement decision.
