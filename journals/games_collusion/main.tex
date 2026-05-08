@@ -1,0 +1,48 @@
+% Version: games_collusion
+% Source:  ch06_games (multi-agent RL, equilibrium learning, algorithmic collusion)
+% Target:  JEP (primary), JES, ACM CSUR (CS-first alt)
+% Build:   ../build.sh games_collusion
+%
+% Anchor citation: Calvano, Calzolari, Denicolò, & Pastorello (2020),
+% "Artificial Intelligence, Algorithmic Pricing, and Collusion,"
+% American Economic Review 110(10): 3267-97. DOI: 10.1257/aer.20190623.
+
+\input{preamble}
+
+\begin{document}
+
+\title{\textsc{Multi-Agent Reinforcement Learning, Equilibrium Selection,\\ and Algorithmic Collusion}}
+\author{Pranjal Rawat \\ Georgetown University}
+\date{\today}
+
+\maketitle
+
+\begin{abstract}
+\noindent
+% TODO: standalone abstract.
+% Pitch: independent learning algorithms, deployed by competing firms,
+% can converge to supracompetitive prices without communication
+% (Calvano et al. 2020). Survey the multi-agent RL methods that
+% underlie this finding, the equilibrium-selection problem, and the
+% antitrust implications.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}\label{section:intro}
+% TODO: motivate algorithmic collusion as the policy-relevant anchor;
+% contrast with cooperative MARL and competitive equilibrium learning.
+
+\section{Reinforcement Learning in Games}\label{section:rl_games}
+\input{../../ch06_games/tex/rl_in_games}
+
+\section{Discussion}\label{section:conclusion}
+% TODO: practical limitations of independent learners, antitrust framing,
+% open problems in equilibrium selection under function approximation.
+
+\bibliographystyle{plainnat}
+\setcitestyle{maxcitenames=2}
+\bibliography{refs}
+
+\end{document}

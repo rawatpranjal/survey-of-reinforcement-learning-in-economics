@@ -1,0 +1,47 @@
+% Version: bandits_economics
+% Source:  ch07_bandits (economic bandits, dynamic pricing)
+% Target:  JEP (primary, broad-audience), FnT in Microeconomics (technical), JES (backup)
+% Build:   ../build.sh bandits_economics
+%
+% NOTE: JEP version targets ~25-35 pp, broad-audience prose with minimal
+% formal apparatus. FnT-Micro version expands to ~80-120 pp with full
+% technical content. Maintain a single source here; cuts toggled via
+% per-journal cover letter notes for now. Fork to a local copy if/when
+% the prose actually diverges.
+
+\input{preamble}
+
+\begin{document}
+
+\title{\textsc{Imposing Economic Structure on Bandits:\\ Demand, Dynamic Pricing, and Strategic Learning}}
+\author{Pranjal Rawat \\ Georgetown University}
+\date{\today}
+
+\maketitle
+
+\begin{abstract}
+\noindent
+% TODO: standalone abstract.
+% Pitch: economic structure (rationality axioms, demand systems, McFadden,
+% incentive compatibility) shapes how bandit algorithms should behave in
+% pricing, recommendation, and matching applications.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}\label{section:intro}
+% TODO: broad-audience intro to economic bandits; motivate dynamic pricing
+% as the central application; foreshadow strategic and structural extensions.
+
+\section{Bandits and Dynamic Pricing}\label{section:bandits}
+\input{../../ch07_bandits/tex/dynamic_pricing}
+
+\section{Discussion}\label{section:conclusion}
+% TODO: open problems; connection to RLHF and incentive design.
+
+\bibliographystyle{plainnat}
+\setcitestyle{maxcitenames=2}
+\bibliography{refs}
+
+\end{document}

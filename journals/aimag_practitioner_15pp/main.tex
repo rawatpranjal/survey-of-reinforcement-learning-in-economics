@@ -1,0 +1,58 @@
+% Version: aimag_practitioner_15pp
+% Target:  AI Magazine (~10-15 pp practitioner-facing)
+% Build:   ../build.sh aimag_practitioner_15pp
+%
+% AI Magazine is a fall-back per journal_target.md. Practitioner-facing,
+% OA, no APC (AAAI sponsorship covers the $2,400 APC).
+%
+% Per the memo: "the right move is a shorter (~10-15 page) practitioner-
+% facing version with the simulation code as the central artefact."
+% Anchor on algorithmic collusion (Calvano et al. 2020 AER) for topical
+% relevance.
+
+\input{preamble}
+
+\begin{document}
+
+\title{\textsc{Reinforcement Learning Meets Economics:\\ A Practitioner's Map}}
+\author{Pranjal Rawat \\ Georgetown University}
+\date{\today}
+
+\maketitle
+
+\begin{abstract}
+\noindent
+% TODO: ~150 words. Practitioner-facing summary. Foreground simulation
+% code (link to GitHub repo) as the central artefact.
+\end{abstract}
+
+% TODO: heavy-cut version of the master. Suggested 4-5 sections totalling
+% ~10-15 pp. Lead with one motivating example (algorithmic collusion or
+% RLHF), then a brief tour of three or four other applied carve-outs,
+% then references.
+
+\section{Introduction}\label{section:intro}
+% TODO: 2-3 pp practitioner-facing intro; lead with algorithmic collusion as
+% the policy-relevant motivating example.
+
+\section{Algorithmic Pricing and Collusion}\label{section:games}
+% TODO: ~3 pp summary of ch06_games + Calvano et al. 2020.
+
+\section{Bandits and Dynamic Pricing}\label{section:bandits}
+% TODO: ~2-3 pp summary of ch07_bandits.
+
+\section{RLHF and Preference Alignment}\label{section:rlhf}
+% TODO: ~2-3 pp summary of ch09_rlhf.
+
+\section{Causal RL and Off-Policy Evaluation}\label{section:causal}
+% TODO: ~2 pp summary of ch10_causal.
+
+\section{Discussion}\label{section:conclusion}
+% TODO: 1-2 pp pointing readers to the full survey on arXiv and the
+% simulation repository.
+
+\bibliographystyle{plainnat}
+\setcitestyle{maxcitenames=2}
+\bibliography{refs}
+
+\end{document}

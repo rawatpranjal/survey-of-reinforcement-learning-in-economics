@@ -1,0 +1,47 @@
+% Version: causal_rl
+% Source:  ch10_causal (causal RL, off-policy evaluation, confounded MDPs)
+% Target:  Statistical Science (primary), JES (backup)
+% Build:   ../build.sh causal_rl
+
+\input{preamble}
+
+\begin{document}
+
+\title{\textsc{Causal Reinforcement Learning:\\ Off-Policy Evaluation, Instruments, and Dynamic Policies\\ from Observational Data}}
+\author{Pranjal Rawat \\ Georgetown University}
+\date{\today}
+
+\maketitle
+
+\begin{abstract}
+\noindent
+% TODO: standalone abstract for the causal-RL carve-out.
+% Pitch as a methodology survey at the intersection of RL, causal inference,
+% and econometrics: identification under unobserved confounding, IV/proxy
+% methods for off-policy evaluation, observational dynamic policies.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}\label{section:intro}
+% TODO: shortened intro framed for a statistics/econometrics audience.
+% Establish the off-policy evaluation problem; situate it relative to
+% potential outcomes, IV, and dynamic treatment regimes.
+
+\section{Background: MDPs and Off-Policy Evaluation}\label{section:rl_background}
+% TODO: 4-6 pp on MDPs, behavior vs target policies, importance sampling,
+% and the curse of horizon. Reference the master draft's Sec.~3 in a
+% parenthetical rather than re-derive.
+
+\section{Reinforcement Learning and Causal Inference}\label{section:causal_rl}
+\input{../../ch10_causal/tex/causal_rl}
+
+\section{Discussion}\label{section:conclusion}
+% TODO: standalone discussion; note open problems in panel-data dynamic policies.
+
+\bibliographystyle{plainnat}
+\setcitestyle{maxcitenames=2}
+\bibliography{refs}
+
+\end{document}

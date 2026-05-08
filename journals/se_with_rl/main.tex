@@ -1,0 +1,46 @@
+% Version: se_with_rl
+% Source:  ch05_econ_models (structural estimation with RL)
+% Target:  Foundations and Trends in Econometrics (primary), JES (backup)
+% Build:   ../build.sh se_with_rl
+
+\input{preamble}
+
+\begin{document}
+
+\title{\textsc{Structural Estimation with Reinforcement Learning:\\ A Survey}}
+\author{Pranjal Rawat \\ Georgetown University}
+\date{\today}
+
+\maketitle
+
+\begin{abstract}
+\noindent
+% TODO: standalone abstract for SE-with-RL.
+% Emphasize the RL-side framing (function approximation, deep methods)
+% to avoid duplication with sister survey ORE_main (Rust & Rawat 2026),
+% which covers DDC and IRL formal content. Reference ORE_main rather
+% than re-derive.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}\label{section:intro}
+% TODO: shortened intro tailored to SE-with-RL audience (econometricians).
+% A few paragraphs of motivation; defer the broader RL-econ landscape to a parenthetical.
+
+\section{Reinforcement Learning Background}\label{section:rl_background}
+% TODO: condense ch02 to ~6 pp covering only the algorithms used downstream.
+\input{../../ch02_rl_algorithms/tex/rl_algorithms}
+
+\section{Structural Estimation with Reinforcement Learning}\label{section:rl_econ_models}
+\input{../../ch05_econ_models/tex/rl_in_se}
+
+\section{Discussion}\label{section:conclusion}
+% TODO: standalone discussion specific to SE-with-RL.
+
+\bibliographystyle{plainnat}
+\setcitestyle{maxcitenames=2}
+\bibliography{refs}
+
+\end{document}
