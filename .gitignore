@@ -23,6 +23,12 @@ __pycache__/
 
 # Downloaded reference PDFs (large, copyrighted)
 **/papers/
+!ch09_rlhf/papers/
+ch09_rlhf/papers/*
+!ch09_rlhf/papers/source_manifest.md
+!ch09_rlhf/papers/summaries/
+ch09_rlhf/papers/summaries/*
+!ch09_rlhf/papers/summaries/ai_alignment_economics_sources.md
 
 # Sister survey (separate repo)
 ORE_main/
