@@ -39,7 +39,8 @@ ch04_control_problems/       # Optimal control applications + simulations
 ch05_econ_models/            # Structural estimation + simulations
 ch06_games/                  # RL in games + simulations
 ch07_bandits/                # Bandits and dynamic pricing + simulations
-ch08_rlhf/                   # RLHF and preference learning + simulations
+ch08_offline_rl/             # Offline RL chapter + simulations
+ch09_rlhf/                   # RLHF, preference learning, and AI alignment
 ch09_causal/                 # Causal inference and RL + simulations
 ch10_conclusion/             # Conclusion
 sims/                        # Shared utilities (plot_style.py)
@@ -132,7 +133,7 @@ Each chapter's `sims/` directory contains standalone Python scripts that produce
 | `regret_rates.py` | Regret rate comparison across bandit algorithms |
 | `uninformative_price.py` | Why the optimal price reveals nothing about demand |
 
-### RLHF and Preference Learning (`ch08_rlhf/sims/`)
+### RLHF and Preference Learning (`ch09_rlhf/sims/`)
 
 | Script | Description |
 |--------|-------------|
