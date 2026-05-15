@@ -1,0 +1,27 @@
+Computing data...
+  Cache hit: shared
+  Cache hit: KPR
+  Cache hit: VFI
+  Computing: PPO
+PPO seeds:   0%|          | 0/10 [00:00<?, ?it/s]PPO seeds:  10%|█         | 1/10 [00:21<03:17, 21.94s/it]PPO seeds:  20%|██        | 2/10 [00:46<03:05, 23.21s/it]PPO seeds:  30%|███       | 3/10 [01:08<02:40, 22.93s/it]PPO seeds:  40%|████      | 4/10 [01:30<02:14, 22.42s/it]PPO seeds:  50%|█████     | 5/10 [01:51<01:50, 22.09s/it]PPO seeds:  60%|██████    | 6/10 [02:12<01:26, 21.55s/it]PPO seeds:  70%|███████   | 7/10 [02:32<01:03, 21.02s/it]PPO seeds:  80%|████████  | 8/10 [02:52<00:41, 20.66s/it]PPO seeds:  90%|█████████ | 9/10 [03:12<00:20, 20.44s/it]PPO seeds: 100%|██████████| 10/10 [03:32<00:00, 20.59s/it]PPO seeds: 100%|██████████| 10/10 [03:32<00:00, 21.30s/it]
+  Cache saved: /Users/pranjal/Code/rl/ch_macro_rl/sims/cache/rbc_dp_vs_drl__PPO.pkl
+  Computing: DDPG
+DDPG seeds:   0%|          | 0/10 [00:00<?, ?it/s]DDPG seeds:  10%|█         | 1/10 [00:54<08:10, 54.52s/it]DDPG seeds:  20%|██        | 2/10 [01:45<07:01, 52.70s/it]DDPG seeds:  30%|███       | 3/10 [02:37<06:04, 52.09s/it]DDPG seeds:  40%|████      | 4/10 [03:26<05:06, 51.11s/it]DDPG seeds:  50%|█████     | 5/10 [04:17<04:14, 50.89s/it]DDPG seeds:  60%|██████    | 6/10 [05:08<03:24, 51.03s/it]DDPG seeds:  70%|███████   | 7/10 [06:00<02:33, 51.19s/it]DDPG seeds:  80%|████████  | 8/10 [06:51<01:42, 51.30s/it]DDPG seeds:  90%|█████████ | 9/10 [07:42<00:50, 50.97s/it]DDPG seeds: 100%|██████████| 10/10 [08:34<00:00, 51.58s/it]DDPG seeds: 100%|██████████| 10/10 [08:34<00:00, 51.50s/it]
+  Cache saved: /Users/pranjal/Code/rl/ch_macro_rl/sims/cache/rbc_dp_vs_drl__DDPG.pkl
+  Saved figure: /Users/pranjal/Code/rl/ch_macro_rl/sims/rbc_dp_vs_drl_learning_curves.png
+  Saved table: /Users/pranjal/Code/rl/ch_macro_rl/sims/rbc_dp_vs_drl_results.tex
+
+============================================================
+Results summary
+============================================================
+  Steady state: K* = 4.294, C* = 1.260
+  Seeds per algorithm: 10
+  Evaluation episodes per seed: 30
+  Evaluation horizon: 200
+
+  Method     Mean return        SE     Policy MSE vs VFI
+  KPR             45.883     0.587                0.0004
+  VFI             45.861     0.589                0.0000
+  PPO             45.821     0.843                0.0087
+  DDPG            45.173     1.476                0.0365
+

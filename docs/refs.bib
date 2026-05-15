@@ -1455,6 +1455,17 @@
   pages = {226-252}
 }
 
+@article{Weaver2025,
+  author  = {Weaver, Ian N. and Kumar, Vineet and Jain, Lalit},
+  title   = {Nonparametric Pricing Bandits Leveraging Informational Externalities to Learn the Demand Curve},
+  journal = {Marketing Science},
+  year    = {2025},
+  volume  = {44},
+  number  = {6},
+  pages   = {1299--1320},
+  doi     = {10.1287/mksc.2022.0247}
+}
+
 @article{mnih2015,
   title={Human-level control through deep reinforcement learning},
   author={Mnih, Volodymyr and Kavukcuoglu, Koray and Silver, David and Rusu, Andrei A. and Veness, Joel and Bellemare, Marc G. and Graves, Alex and Riedmiller, Martin and Fidjeland, Andreas K. and Ostrovski, Georg and Petersen, Stig and Beattie, Charles and Sadik, Amir and Antonoglou, Ioannis and King, Helen and Kumaran, Dharshan and Wierstra, Daan and Legg, Shane and Hassabis, Demis},
@@ -5564,4 +5575,1248 @@
   title     = {{RvS}: What is Essential for Offline {RL} via Supervised Learning?},
   booktitle = {International Conference on Learning Representations (ICLR)},
   year      = {2022}
+}
+
+%======================================================================
+% ch06_macro chapter (RL for Macroeconomic Models) -- added 2026-05-10
+%======================================================================
+
+% Foundational HA-macro references (cited across chapter)
+
+@article{Aiyagari1994,
+  author  = {Aiyagari, S. Rao},
+  title   = {Uninsured Idiosyncratic Risk and Aggregate Saving},
+  journal = {The Quarterly Journal of Economics},
+  volume  = {109},
+  number  = {3},
+  pages   = {659--684},
+  year    = {1994},
+  doi     = {10.2307/2118417}
+}
+
+@article{Huggett1993,
+  author  = {Huggett, Mark},
+  title   = {The risk-free rate in heterogeneous-agent incomplete-insurance economies},
+  journal = {Journal of Economic Dynamics and Control},
+  volume  = {17},
+  number  = {5--6},
+  pages   = {953--969},
+  year    = {1993},
+  doi     = {10.1016/0165-1889(93)90024-M}
+}
+
+@article{KrusellSmith1998,
+  author  = {Krusell, Per and Smith, Anthony A.},
+  title   = {Income and Wealth Heterogeneity in the Macroeconomy},
+  journal = {Journal of Political Economy},
+  volume  = {106},
+  number  = {5},
+  pages   = {867--896},
+  year    = {1998},
+  doi     = {10.1086/250034}
+}
+
+@article{KaplanMollViolante2018,
+  author  = {Kaplan, Greg and Moll, Benjamin and Violante, Giovanni L.},
+  title   = {Monetary Policy According to {HANK}},
+  journal = {American Economic Review},
+  volume  = {108},
+  number  = {3},
+  pages   = {697--743},
+  year    = {2018},
+  doi     = {10.1257/aer.20160042}
+}
+
+@article{Reiter2009,
+  author  = {Reiter, Michael},
+  title   = {Solving heterogeneous-agent models by projection and perturbation},
+  journal = {Journal of Economic Dynamics and Control},
+  volume  = {33},
+  number  = {3},
+  pages   = {649--665},
+  year    = {2009},
+  doi     = {10.1016/j.jedc.2008.08.010}
+}
+
+@article{Auclert2021,
+  author  = {Auclert, Adrien and Bard\'oczy, Bence and Rognlie, Matthew and Straub, Ludwig},
+  title   = {Using the Sequence-Space {Jacobian} to Solve and Estimate Heterogeneous-Agent Models},
+  journal = {Econometrica},
+  volume  = {89},
+  number  = {5},
+  pages   = {2375--2408},
+  year    = {2021},
+  doi     = {10.3982/ECTA17434}
+}
+
+@book{EvansHonkapohja2001,
+  author    = {Evans, George W. and Honkapohja, Seppo},
+  title     = {Learning and Expectations in Macroeconomics},
+  publisher = {Princeton University Press},
+  year      = {2001}
+}
+
+@article{Benhabib2001,
+  author  = {Benhabib, Jess and Schmitt-Groh{\'e}, Stephanie and Uribe, Mart{\'i}n},
+  title   = {The Perils of Taylor Rules},
+  journal = {Journal of Economic Theory},
+  volume  = {96},
+  number  = {1--2},
+  pages   = {40--69},
+  year    = {2001},
+  doi     = {10.1006/jeth.1999.2585}
+}
+
+@article{EvansHonkapohja2005,
+  author  = {Evans, George W. and Honkapohja, Seppo},
+  title   = {Policy Interaction, Expectations and the Liquidity Trap},
+  journal = {Review of Economic Dynamics},
+  volume  = {8},
+  number  = {2},
+  pages   = {303--323},
+  year    = {2005},
+  doi     = {10.1016/j.red.2005.01.002}
+}
+
+@article{Saez2001,
+  author  = {Saez, Emmanuel},
+  title   = {Using Elasticities to Derive Optimal Income Tax Rates},
+  journal = {The Review of Economic Studies},
+  volume  = {68},
+  number  = {1},
+  pages   = {205--229},
+  year    = {2001},
+  doi     = {10.1111/1467-937X.00166}
+}
+
+@book{Cardaliaguet2019,
+  author    = {Cardaliaguet, Pierre and Delarue, Fran\c{c}ois and Lasry, Jean-Michel and Lions, Pierre-Louis},
+  title     = {The Master Equation and the Convergence Problem in Mean Field Games},
+  publisher = {Princeton University Press},
+  series    = {Annals of Mathematics Studies},
+  number    = {201},
+  year      = {2019}
+}
+
+% Tier S anchors
+
+@article{Yang2025srl,
+  author  = {Yang, Yucheng and Wang, Chiyuan and Schaab, Andreas and Moll, Benjamin},
+  title   = {Structural Reinforcement Learning for Heterogeneous Agent Macroeconomics},
+  journal = {Working paper, University of Zurich and London School of Economics},
+  year    = {2025},
+  note    = {Preliminary, December 2025}
+}
+
+@article{Wibault2026rspg,
+  author  = {Wibault, Clarisse and Forkel, Johannes and Towers, Sebastian and Wibault, Tiphaine and Duque, Juan and Whittle, George and Schaab, Andreas and Yang, Yucheng and Wang, Chiyuan and Osborne, Michael and Moll, Benjamin and Foerster, Jakob},
+  title   = {Recurrent Structural Policy Gradient for Partially Observable Mean Field Games},
+  journal = {arXiv preprint arXiv:2602.20141},
+  year    = {2026}
+}
+
+@article{Chen2021drl,
+  author  = {Chen, Mingli and Joseph, Andreas and Kumhof, Michael and Pan, Xinlei and Zhou, Xuan},
+  title   = {Deep Reinforcement Learning in a Monetary Model},
+  journal = {arXiv preprint arXiv:2104.09368},
+  year    = {2023},
+  note    = {Bank of England Staff Working Paper, January 2023; first arXiv version April 2021}
+}
+
+@article{Zheng2022aie,
+  author  = {Zheng, Stephan and Trott, Alexander and Srinivasa, Sunil and Parkes, David C. and Socher, Richard},
+  title   = {The {AI} Economist: Optimal Economic Policy Design via Two-level Deep Reinforcement Learning},
+  journal = {Science Advances},
+  volume  = {8},
+  number  = {18},
+  pages   = {eabk2607},
+  year    = {2022},
+  doi     = {10.1126/sciadv.abk2607}
+}
+
+% Tier A supporting
+
+@article{Han2022deepham,
+  author  = {Han, Jiequn and Yang, Yucheng and E, Weinan},
+  title   = {{DeepHAM}: A Global Solution Method for Heterogeneous Agent Models with Aggregate Shocks},
+  journal = {arXiv preprint arXiv:2112.14377},
+  year    = {2022}
+}
+
+@inproceedings{Curry2022marl,
+  author    = {Curry, Michael and Trott, Alexander and Phade, Soham and Bai, Yu and Zheng, Stephan},
+  title     = {Analyzing Micro-founded General Equilibrium Models with Many Agents Using Deep Reinforcement Learning},
+  booktitle = {arXiv preprint arXiv:2201.01163},
+  year      = {2022}
+}
+
+@inproceedings{Gabriele2026marlbc,
+  author    = {Gabriele, Federico and Glielmo, Aldo and Taboga, Marco},
+  title     = {Heterogeneous {RBCs} via Deep Multi-Agent Reinforcement Learning},
+  booktitle = {Proceedings of the 25th International Conference on Autonomous Agents and Multiagent Systems (AAMAS)},
+  year      = {2026},
+  doi       = {10.65109/VZHC1838}
+}
+
+@inproceedings{Brusatin2024rmabm,
+  author    = {Brusatin, Simone and Padoan, Tommaso and {Delli Gatti}, Domenico and Coletta, Andrea and Glielmo, Aldo},
+  title     = {Simulating the Economic Impact of Rationality through Reinforcement Learning and Agent-Based Modelling},
+  booktitle = {Proceedings of the 5th ACM International Conference on AI in Finance (ICAIF)},
+  year      = {2024},
+  doi       = {10.1145/3677052.3698621}
+}
+
+% Tier B (one paragraph each in chapter, clustered per 80:20 rule)
+
+@article{Azinovic2026sequence,
+  author  = {Azinovic-Yang, Marlon and {\v Z}emli{\v c}ka, Jan},
+  title   = {Deep Learning in the Sequence Space},
+  journal = {arXiv preprint arXiv:2509.13623},
+  year    = {2026}
+}
+
+@incollection{Carmona2021mfg,
+  author    = {Carmona, Ren\'e and Lauri\`ere, Mathieu},
+  title     = {Deep Learning for Mean Field Games and Mean Field Control with Applications to Finance},
+  booktitle = {Machine Learning and Data Sciences for Financial Markets: A Guide to Contemporary Practices},
+  editor    = {Capponi, Agostino and Lehalle, Charles-Albert},
+  publisher = {Cambridge University Press},
+  year      = {2023},
+  note      = {arXiv:2107.04568}
+}
+
+@article{Brunnbauer2024offmmd,
+  author  = {Brunnbauer, Axel and Lemmel, Julian and Neubauer, Sophie and Babaiee, Zahra and Grosu, Radu},
+  title   = {Scalable Offline Reinforcement Learning for Mean Field Games},
+  journal = {arXiv preprint arXiv:2410.17898},
+  year    = {2024}
+}
+
+@article{Wang2025mpu,
+  author  = {Wang, Tony and Feinstein, Kyle and Chen, Sheryl},
+  title   = {Reinforcement Learning for Monetary Policy Under Macroeconomic Uncertainty: Analyzing Tabular and Function Approximation Methods},
+  journal = {arXiv preprint arXiv:2512.17929},
+  year    = {2025},
+  note    = {Stanford CS course paper; preliminary}
+}
+
+@article{Fang2026dpi,
+  author  = {Fang, Shuixin and Wang, Shupeng and Wu, Zhen and Zhang, Hui and Zhou, Tao},
+  title   = {Deep Policy Iteration for High-Dimensional Mean-Field Games with Regenerative Reformulation},
+  journal = {arXiv preprint arXiv:2604.26782},
+  year    = {2026}
+}
+
+@article{YangShan2026tmf,
+  author  = {Yang, Shan},
+  title   = {Mean-Field Reinforcement Learning without Synchrony},
+  journal = {arXiv preprint arXiv:2602.18026},
+  year    = {2026},
+  note    = {National University of Singapore}
+}
+
+@inproceedings{Magnino2025nonstationary,
+  author    = {Magnino, Lorenzo and Wu, Zida and Shao, Kai and Shen, Jiacheng and Lauri\`ere, Mathieu},
+  title     = {Solving Continuous Mean Field Games: Deep Reinforcement Learning for Non-Stationary Dynamics},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2025}
+}
+
+@article{Tacchetti2025dmd,
+  author  = {Tacchetti, Andrea and Koster, Raphael and Balaguer, Jan and Leqi, Liu and Pislar, M\^iruna and Botvinick, Matthew M. and Tuyls, Karl and Parkes, David C. and Summerfield, Christopher},
+  title   = {Deep Mechanism Design: Learning Social and Economic Policies for Human Benefit},
+  journal = {Proceedings of the National Academy of Sciences},
+  year    = {2025}
+}
+
+% Tier C (footnote / single-cite only)
+
+@article{HallHoffarth2023constraints,
+  author  = {Hall-Hoffarth, Emmet},
+  title   = {Non-linear approximations of {DSGE} models with neural-networks and hard-constraints},
+  journal = {Working paper, University of Oxford},
+  year    = {2023}
+}
+
+@article{Peng2025mfcg,
+  author  = {Peng, Nianli and Wang, Yilin},
+  title   = {Efficient and Scalable Deep Reinforcement Learning for Mean Field Control Games},
+  journal = {arXiv preprint arXiv:2501.00052},
+  year    = {2025},
+  note    = {Harvard course 6.S890 paper}
+}
+
+@article{Thoeni2026nmfg,
+  author  = {Th\"oni, Anna C. M. and Bachrach, Yoram and Kachman, Tal},
+  title   = {Neural Mean-Field Games: Extending Mean-Field Game Theory with Neural Stochastic Differential Equations},
+  journal = {arXiv preprint arXiv:2504.13228},
+  year    = {2025}
+}
+
+@techreport{Kase2025hank,
+  author      = {Kase, Hanno and Melosi, Leonardo and Rottner, Matthias},
+  title       = {Estimating Nonlinear Heterogeneous Agent Models with Neural Networks},
+  institution = {Bank for International Settlements},
+  number      = {1241},
+  type        = {{BIS} Working Paper},
+  year        = {2025}
+}
+
+@techreport{Kase2025gem,
+  author      = {Kase, Hanno and Rottner, Matthias and Stohler, Fabio},
+  title       = {Generative Economic Modeling},
+  institution = {Bank for International Settlements},
+  number      = {1312},
+  type        = {{BIS} Working Paper},
+  year        = {2025}
+}
+
+@techreport{Fernandez2024dl,
+  author      = {Fern\'andez-Villaverde, Jes\'us and Nu\~no, Galo and Perla, Jesse},
+  title       = {Taming the Curse of Dimensionality: Quantitative Economics with Deep Learning},
+  institution = {National Bureau of Economic Research},
+  number      = {33117},
+  type        = {{NBER} Working Paper},
+  year        = {2024}
+}
+
+@article{Maliar2021dl,
+  author  = {Maliar, Lilia and Maliar, Serguei and Winant, Pablo},
+  title   = {Deep learning for solving dynamic economic models},
+  journal = {Journal of Monetary Economics},
+  volume  = {122},
+  pages   = {76--101},
+  year    = {2021},
+  doi     = {10.1016/j.jmoneco.2021.07.004}
+}
+
+@article{Azinovic2022den,
+  author  = {Azinovic, Marlon and Gaegauf, Luca and Scheidegger, Simon},
+  title   = {Deep Equilibrium Nets},
+  journal = {International Economic Review},
+  volume  = {63},
+  number  = {4},
+  pages   = {1471--1525},
+  month   = nov,
+  year    = {2022},
+  doi     = {10.1111/iere.12575}
+}
+
+% =============================================================================
+% ch12_forecasting_rl additions
+% =============================================================================
+
+@article{GrangerPesaran2000,
+  author  = {Granger, Clive W. J. and Pesaran, M. Hashem},
+  title   = {Economic and Statistical Measures of Forecast Accuracy},
+  journal = {Journal of Forecasting},
+  volume  = {19},
+  number  = {7},
+  pages   = {537--560},
+  year    = {2000},
+  doi     = {10.1002/1099-131X(200012)19:7<537::AID-FOR769>3.0.CO;2-G}
+}
+
+@article{GneitingRaftery2007,
+  author  = {Gneiting, Tilmann and Raftery, Adrian E.},
+  title   = {Strictly Proper Scoring Rules, Prediction, and Estimation},
+  journal = {Journal of the American Statistical Association},
+  volume  = {102},
+  number  = {477},
+  pages   = {359--378},
+  year    = {2007},
+  doi     = {10.1198/016214506000001437}
+}
+
+@inproceedings{Fu2022,
+  author    = {Fu, Yuwei and Wu, Di and Boulet, Benoit},
+  title     = {Reinforcement Learning Based Dynamic Model Combination for Time Series Forecasting},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume    = {36},
+  number    = {6},
+  pages     = {6639--6647},
+  year      = {2022},
+  doi       = {10.1609/aaai.v36i6.20618}
+}
+
+@article{Turtel2025,
+  author  = {Turtel, Benjamin and Franklin, Danny and Hewitt, Luke and Schoenegger, Philipp},
+  title   = {Reinforcement Learning with Verifiable Rewards for Forecasting on Polymarket},
+  journal = {Transactions on Machine Learning Research},
+  year    = {2025},
+  note    = {arXiv:2505.17989}
+}
+
+@article{BertsekasRollout2022,
+  author  = {Bertsekas, Dimitri P.},
+  title   = {Rollout Algorithms and Approximate Dynamic Programming for {Bayesian} Optimization and Sequential Estimation},
+  journal = {arXiv preprint arXiv:2212.07998},
+  year    = {2022}
+}
+
+@article{Fernandes2024,
+  author  = {Fernandes, Pedro Afonso},
+  title   = {Forecasting with Neuro-Dynamic Programming},
+  journal = {arXiv preprint arXiv:2404.03737},
+  year    = {2024}
+}
+
+@article{Capitaine2025,
+  author  = {Capitaine, Aymeric and Haddouche, Maxime and Moulines, Eric and Jordan, Michael I. and Boursier, Etienne and Durmus, Alain},
+  title   = {Online Decision-Focused Learning},
+  journal = {arXiv preprint arXiv:2505.13564},
+  year    = {2025},
+  note    = {ICLR 2026}
+}
+
+@article{Mammen1999,
+  author  = {Mammen, Enno and Tsybakov, Alexandre B.},
+  title   = {Smooth Discrimination Analysis},
+  journal = {The Annals of Statistics},
+  volume  = {27},
+  number  = {6},
+  pages   = {1808--1829},
+  year    = {1999},
+  doi     = {10.1214/aos/1017939240}
+}
+
+@article{Tsybakov2004,
+  author  = {Tsybakov, Alexandre B.},
+  title   = {Optimal Aggregation of Classifiers in Statistical Learning},
+  journal = {The Annals of Statistics},
+  volume  = {32},
+  number  = {1},
+  pages   = {135--166},
+  year    = {2004},
+  doi     = {10.1214/aos/1079120131}
+}
+
+@article{ElmachtoubGrigas2022,
+  author  = {Elmachtoub, Adam N. and Grigas, Paul},
+  title   = {Smart ``Predict, Then Optimize''},
+  journal = {Management Science},
+  volume  = {68},
+  number  = {1},
+  pages   = {9--26},
+  year    = {2022},
+  doi     = {10.1287/mnsc.2020.3922}
+}
+
+@inproceedings{LiuGrigas2021,
+  author    = {Liu, Heyuan and Grigas, Paul},
+  title     = {Risk Bounds and Calibration for a Smart Predict-then-Optimize Method},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {34},
+  year      = {2021},
+  note      = {arXiv:2108.08887}
+}
+
+@inproceedings{DontiAmosKolter2017,
+  author    = {Donti, Priya L. and Amos, Brandon and Kolter, J. Zico},
+  title     = {Task-based End-to-end Model Learning in Stochastic Optimization},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {30},
+  year      = {2017},
+  note      = {arXiv:1703.04529}
+}
+
+@article{HuKallus2020,
+  author  = {Hu, Yichun and Kallus, Nathan and Mao, Xiaojie},
+  title   = {Fast Rates for Contextual Linear Optimization},
+  journal = {arXiv preprint arXiv:2011.03030},
+  year    = {2020}
+}
+
+@inproceedings{HuangGupta2024,
+  author    = {Huang, Michael and Gupta, Vishal},
+  title     = {Decision-Focused Learning with Directional Gradients},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {37},
+  year      = {2024},
+  note      = {arXiv:2402.03256}
+}
+
+@article{Mandi2024,
+  author  = {Mandi, Jayanta and Kotary, James and Berden, Senne and Mulamba, Maxime and Bucarey, Victor and Guns, Tias and Fioretto, Ferdinando},
+  title   = {Decision-Focused Learning: Foundations, State of the Art, Benchmark and Future Opportunities},
+  journal = {Journal of Artificial Intelligence Research},
+  volume  = {80},
+  pages   = {1623--1701},
+  year    = {2024},
+  note    = {arXiv:2307.13565}
+}
+
+@inproceedings{HaSchmidhuber2018,
+  author    = {Ha, David and Schmidhuber, J\"urgen},
+  title     = {World Models},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {31},
+  year      = {2018},
+  note      = {arXiv:1803.10122}
+}
+
+@article{Hafner2025,
+  author  = {Hafner, Danijar and Pasukonis, Jurgis and Ba, Jimmy and Lillicrap, Timothy},
+  title   = {Mastering Diverse Control Tasks through World Models},
+  journal = {Nature},
+  year    = {2025},
+  doi     = {10.1038/s41586-025-08744-2},
+  note    = {arXiv:2301.04104}
+}
+
+% (Chen2021DT and Janner2021TT already present at lines 5541, 5550 above.)
+
+@inproceedings{Janner2022diffuser,
+  author    = {Janner, Michael and Du, Yilun and Tenenbaum, Joshua B. and Levine, Sergey},
+  title     = {Planning with Diffusion for Flexible Behavior Synthesis},
+  booktitle = {International Conference on Machine Learning},
+  year      = {2022},
+  note      = {arXiv:2205.09991}
+}
+
+@inproceedings{Ajay2023,
+  author    = {Ajay, Anurag and Du, Yilun and Gupta, Abhishek and Tenenbaum, Joshua B. and Jaakkola, Tommi S. and Agrawal, Pulkit},
+  title     = {Is Conditional Generative Modeling All You Need for Decision-Making?},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2023},
+  note      = {arXiv:2211.15657}
+}
+
+@inproceedings{Buesing2019,
+  author    = {Buesing, Lars and Weber, Theophane and Zwols, Yori and Racaniere, Sebastien and Guez, Arthur and Lespiau, Jean-Baptiste and Heess, Nicolas},
+  title     = {Woulda, Coulda, Shoulda: Counterfactually-Guided Policy Search},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2019},
+  note      = {arXiv:1811.06272}
+}
+
+@inproceedings{Oberst2019,
+  author    = {Oberst, Michael and Sontag, David},
+  title     = {Counterfactual Off-Policy Evaluation with {Gumbel}-Max Structural Causal Models},
+  booktitle = {International Conference on Machine Learning},
+  year      = {2019},
+  note      = {arXiv:1905.05824}
+}
+
+@article{TangWiens2023,
+  author  = {Tang, Shengpu and Wiens, Jenna},
+  title   = {Counterfactually-Augmented Importance Sampling for Semi-Offline Policy Evaluation},
+  journal = {Transactions on Machine Learning Research},
+  year    = {2023},
+  note    = {arXiv:2310.17146}
+}
+
+@article{Ansari2024,
+  author  = {Ansari, Abdul Fatir and Stella, Lorenzo and Turkmen, Caner and Zhang, Xiyuan and Mercado, Pedro and Shen, Huibin and Shchur, Oleksandr and Rangapuram, Syama Sundar and Pineda Arango, Sebastian and Kapoor, Shubham and Zschiegner, Jasper and Maddix, Danielle C. and Wang, Hao and Mahoney, Michael W. and Torkkola, Kari and Wilson, Andrew Gordon and Bohlke-Schneider, Michael and Wang, Yuyang},
+  title   = {Chronos: Learning the Language of Time Series},
+  journal = {Transactions on Machine Learning Research},
+  year    = {2024},
+  note    = {arXiv:2403.07815}
+}
+
+@inproceedings{Das2024,
+  author    = {Das, Abhimanyu and Kong, Weihao and Sen, Rajat and Zhou, Yichen},
+  title     = {A Decoder-only Foundation Model for Time-Series Forecasting},
+  booktitle = {International Conference on Machine Learning},
+  year      = {2024},
+  note      = {arXiv:2310.10688}
+}
+
+@article{Rasul2023,
+  author  = {Rasul, Kashif and Ashok, Arjun and Williams, Andrew Robert and Khorasani, Arian and Adamopoulos, George and Bhagwatkar, Rishika and Bilo\v{s}, Marin and Ghonia, Hena and Hassen, Nadhir Vincent and Schneider, Anderson and Garg, Sahil and Drouin, Alexandre and Chapados, Nicolas and Nevmyvaka, Yuriy and Rish, Irina},
+  title   = {Lag-Llama: Towards Foundation Models for Probabilistic Time Series Forecasting},
+  journal = {arXiv preprint arXiv:2310.08278},
+  year    = {2023}
+}
+
+@article{PerezDiaz2025,
+  author  = {Perez-Diaz, Ricardo and others},
+  title   = {Foundation Model Forecasts: Form and Function},
+  journal = {arXiv preprint arXiv:2510.19345},
+  year    = {2025}
+}
+
+@article{Rahimikia2025,
+  author  = {Rahimikia, Eghbal and others},
+  title   = {{Re(Visiting)} Time Series Foundation Models in Finance},
+  journal = {arXiv preprint arXiv:2511.18578},
+  year    = {2025}
+}
+
+@article{Jetwiriyanon2025,
+  author  = {Jetwiriyanon, Thanawat and Susnjak, Teo and Ranathunga, Sapna},
+  title   = {Generalisation Bounds of Zero-Shot Economic Forecasting using Time Series Foundation Models},
+  journal = {arXiv preprint arXiv:2506.15705},
+  year    = {2025}
+}
+
+@inproceedings{Ada2025,
+  author    = {Ada, Suzan Ece and Martius, Georg and Ugur, Emre and Oztop, Erhan},
+  title     = {Forecasting in Offline Reinforcement Learning for Non-Stationary Environments},
+  booktitle = {Advances in Neural Information Processing Systems},
+  year      = {2025},
+  note      = {arXiv:2512.01987}
+}
+
+@article{BanRudin2019,
+  author  = {Ban, Gah-Yi and Rudin, Cynthia},
+  title   = {The Big Data Newsvendor: Practical Insights from Machine Learning},
+  journal = {Operations Research},
+  volume  = {67},
+  number  = {1},
+  pages   = {90--108},
+  year    = {2019},
+  doi     = {10.1287/opre.2018.1757}
+}
+
+@article{Levi2007,
+  author  = {Levi, Retsef and Roundy, Robin O. and Shmoys, David B.},
+  title   = {Provably Near-Optimal Sampling-Based Policies for Stochastic Inventory Control Models},
+  journal = {Mathematics of Operations Research},
+  volume  = {32},
+  number  = {4},
+  pages   = {821--839},
+  year    = {2007},
+  doi     = {10.1287/moor.1070.0272}
+}
+
+@article{Oroojlooyjadid2020,
+  author  = {Oroojlooyjadid, Afshin and Snyder, Lawrence V. and Tak\'a\v{c}, Martin},
+  title   = {Applying Deep Learning to the Newsvendor Problem},
+  journal = {IISE Transactions},
+  volume  = {52},
+  number  = {4},
+  pages   = {444--463},
+  year    = {2020},
+  doi     = {10.1080/24725854.2019.1632502}
+}
+
+@article{HanZhengMisra2024,
+  author  = {Han, Bin and Zheng, Renyu (Philip) and Misra, Kanishka},
+  title   = {Deep Generative Demand Learning for Newsvendor and Pricing},
+  journal = {arXiv preprint arXiv:2411.08631},
+  year    = {2024}
+}
+
+@article{Amazon2025,
+  author  = {Anonymous},
+  title   = {Outbound Modeling for Inventory Management},
+  journal = {arXiv preprint arXiv:2507.10890},
+  year    = {2025},
+  note    = {Amazon technical report}
+}
+
+@article{CaoXu2025,
+  author  = {Cao, Junlin and Xu, Xiaoyuan},
+  title   = {Decision-Focused Probabilistic Forecasting for Two-Stage Robust Microgrid Operation},
+  journal = {arXiv preprint arXiv:2512.12755},
+  year    = {2025}
+}
+
+@article{MicheliMonod2024,
+  author  = {Micheli, Andrea and Monod, Mathieu},
+  title   = {Reinforcement Learning for Optimal Execution under Transient Price Impact},
+  journal = {arXiv preprint arXiv:2410.13493},
+  year    = {2024}
+}
+
+@article{Briola2023,
+  author  = {Briola, Antonio and Turiel, Jeremy and Marcaccioli, Riccardo and Cauderan, Alvaro and Aste, Tomaso},
+  title   = {Deep Reinforcement Learning for Active High Frequency Trading},
+  journal = {arXiv preprint arXiv:2301.08688},
+  year    = {2023}
+}
+
+% --- Chapter 11 RL for CI: §1 g-methods bridge anchors (added 2026-05-11) ---
+
+@article{murphy2003dtr,
+  author = {Murphy, S. A.},
+  title = {Optimal Dynamic Treatment Regimes},
+  journal = {Journal of the Royal Statistical Society, Series B},
+  year = {2003},
+  volume = {65},
+  number = {2},
+  pages = {331--355}
+}
+
+@article{robins2000msm,
+  author = {Robins, James M. and Hern{\'a}n, Miguel {\'A}. and Brumback, Babette},
+  title = {Marginal Structural Models and Causal Inference in Epidemiology},
+  journal = {Epidemiology},
+  year = {2000},
+  volume = {11},
+  number = {5},
+  pages = {550--560}
+}
+
+@article{schulte2014qlearning,
+  author = {Schulte, Phillip J. and Tsiatis, Anastasios A. and Laber, Eric B. and Davidian, Marie},
+  title = {{Q}- and {A}-Learning Methods for Estimating Optimal Dynamic Treatment Regimes},
+  journal = {Statistical Science},
+  year = {2014},
+  volume = {29},
+  number = {4},
+  pages = {640--661}
+}
+
+@article{robins1986,
+  author = {Robins, James M.},
+  title = {A New Approach to Causal Inference in Mortality Studies with a Sustained Exposure Period --- Application to Control of the Healthy Worker Survivor Effect},
+  journal = {Mathematical Modelling},
+  year = {1986},
+  volume = {7},
+  number = {9-12},
+  pages = {1393--1512}
+}
+
+@article{rubin1978,
+  author = {Rubin, Donald B.},
+  title = {Bayesian Inference for Causal Effects: The Role of Randomization},
+  journal = {The Annals of Statistics},
+  year = {1978},
+  volume = {6},
+  number = {1},
+  pages = {34--58}
+}
+
+@inproceedings{precup2000,
+  author = {Precup, Doina and Sutton, Richard S. and Singh, Satinder P.},
+  title = {Eligibility Traces for Off-Policy Policy Evaluation},
+  booktitle = {Proceedings of the 17th International Conference on Machine Learning (ICML)},
+  year = {2000},
+  pages = {759--766}
+}
+
+% ch12 §1 intro additions (cited via Granger-Pesaran / Gneiting-Raftery framing)
+@article{Brier1950,
+  author  = {Brier, Glenn W.},
+  title   = {Verification of Forecasts Expressed in Terms of Probability},
+  journal = {Monthly Weather Review},
+  volume  = {78},
+  number  = {1},
+  pages   = {1--3},
+  year    = {1950},
+  doi     = {10.1175/1520-0493(1950)078<0001:VOFEIT>2.0.CO;2}
+}
+
+@article{Murphy1973,
+  author  = {Murphy, Allan H.},
+  title   = {A New Vector Partition of the Probability Score},
+  journal = {Journal of Applied Meteorology},
+  volume  = {12},
+  number  = {4},
+  pages   = {595--600},
+  year    = {1973},
+  doi     = {10.1175/1520-0450(1973)012<0595:ANVPOT>2.0.CO;2}
+}
+
+@article{PesaranTimmermann1992,
+  author  = {Pesaran, M. Hashem and Timmermann, Allan},
+  title   = {A Simple Nonparametric Test of Predictive Performance},
+  journal = {Journal of Business \& Economic Statistics},
+  volume  = {10},
+  number  = {4},
+  pages   = {461--465},
+  year    = {1992},
+  doi     = {10.1080/07350015.1992.10509922}
+}
+
+@article{Dawid1998,
+  author  = {Dawid, A. Philip},
+  title   = {Coherent Measures of Discrepancy, Uncertainty and Dependence, with Applications to {B}ayesian Predictive Experimental Design},
+  journal = {Research Report 139, Department of Statistical Science, University College London},
+  year    = {1998}
+}
+
+@inproceedings{LillicrapDDPG2016,
+  author    = {Lillicrap, Timothy P. and Hunt, Jonathan J. and Pritzel, Alexander and Heess, Nicolas and Erez, Tom and Tassa, Yuval and Silver, David and Wierstra, Daan},
+  title     = {Continuous Control with Deep Reinforcement Learning},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2016},
+  note      = {arXiv:1509.02971}
+}
+
+% --- Chapter 11 RL for CI: §1 verification revisions (added 2026-05-11) ---
+
+@incollection{robins2004snmm,
+  author    = {Robins, James M.},
+  title     = {Optimal Structural Nested Models for Optimal Sequential Decisions},
+  booktitle = {Proceedings of the Second Seattle Symposium in Biostatistics},
+  editor    = {Lin, D. Y. and Heagerty, P. J.},
+  series    = {Lecture Notes in Statistics},
+  volume    = {179},
+  pages     = {189--326},
+  publisher = {Springer},
+  address   = {New York},
+  year      = {2004}
+}
+
+@techreport{Baird1993advantage,
+  author      = {Baird, Leemon C.},
+  title       = {Advantage Updating},
+  institution = {Wright Laboratory, Wright-Patterson AFB},
+  number      = {WL-TR-93-1146},
+  year        = {1993}
+}
+
+% ch12 §2.2 additions (cited via Turtel2025)
+@article{Shao2024deepseek,
+  author  = {Shao, Zhihong and Wang, Peiyi and Zhu, Qihao and Xu, Runxin and Song, Junxiao and Bi, Xiao and Zhang, Haowei and Zhang, Mingchuan and Li, Y. K. and Wu, Y. and others},
+  title   = {{DeepSeekMath}: Pushing the Limits of Mathematical Reasoning in Open Language Models},
+  journal = {arXiv preprint arXiv:2402.03300},
+  year    = {2024}
+}
+
+@article{Liu2025DrGRPO,
+  author  = {Liu, Zichen and Chen, Changyu and Li, Wenjun and Qi, Penghui and Pang, Tianyu and Du, Chao and Lee, Wee Sun and Lin, Min},
+  title   = {Understanding {R1-Zero}-Like Training: A Critical Perspective},
+  journal = {arXiv preprint arXiv:2503.20783},
+  year    = {2025}
+}
+
+@article{LiReMax2023,
+  author  = {Li, Ziniu and Xu, Tian and Zhang, Yushun and Lin, Zhihang and Yu, Yang and Sun, Ruoyu and Luo, Zhi-Quan},
+  title   = {{ReMax}: A Simple, Effective, and Efficient Reinforcement Learning Method for Aligning Large Language Models},
+  journal = {arXiv preprint arXiv:2310.10505},
+  year    = {2023}
+}
+
+@article{Chernozhukov2018,
+  author  = {Chernozhukov, Victor and Chetverikov, Denis and Demirer, Mert and Duflo, Esther and Hansen, Christian and Newey, Whitney and Robins, James},
+  title   = {Double/Debiased Machine Learning for Treatment and Structural Parameters},
+  journal = {The Econometrics Journal},
+  volume  = {21},
+  number  = {1},
+  pages   = {C1--C68},
+  year    = {2018},
+  doi     = {10.1111/ectj.12097}
+}
+
+@incollection{RotembergWoodford1997,
+  author    = {Rotemberg, Julio J. and Woodford, Michael},
+  title     = {An Optimization-Based Econometric Framework for the Evaluation of Monetary Policy},
+  booktitle = {NBER Macroeconomics Annual},
+  volume    = {12},
+  pages     = {297--346},
+  publisher = {MIT Press},
+  year      = {1997}
+}
+
+@article{Taylor1993,
+  author  = {Taylor, John B.},
+  title   = {Discretion versus Policy Rules in Practice},
+  journal = {Carnegie-Rochester Conference Series on Public Policy},
+  volume  = {39},
+  pages   = {195--214},
+  year    = {1993},
+  doi     = {10.1016/0167-2231(93)90009-L}
+}
+
+@incollection{TaylorWilliams2010,
+  author    = {Taylor, John B. and Williams, John C.},
+  title     = {Simple and Robust Rules for Monetary Policy},
+  booktitle = {Handbook of Monetary Economics},
+  editor    = {Friedman, Benjamin M. and Woodford, Michael},
+  volume    = {3B},
+  pages     = {829--859},
+  publisher = {North-Holland},
+  year      = {2010}
+}
+
+@article{Obizhaeva2013,
+  author  = {Obizhaeva, Anna A. and Wang, Jiang},
+  title   = {Optimal Trading Strategy and Supply/Demand Dynamics},
+  journal = {Journal of Financial Markets},
+  volume  = {16},
+  number  = {1},
+  pages   = {1--32},
+  year    = {2013},
+  doi     = {10.1016/j.finmar.2012.09.001}
+}
+
+@article{Alfonsi2012,
+  author  = {Alfonsi, Aur\'elien and Schied, Alexander and Slynko, Alla},
+  title   = {Order Book Resilience, Price Manipulation, and the Positive Portfolio Problem},
+  journal = {SIAM Journal on Financial Mathematics},
+  volume  = {3},
+  number  = {1},
+  pages   = {511--533},
+  year    = {2012},
+  doi     = {10.1137/110822098}
+}
+
+@article{Horgan2018Apex,
+  author  = {Horgan, Dan and Quan, John and Budden, David and Barth-Maron, Gabriel and Hessel, Matteo and van Hasselt, Hado and Silver, David},
+  title   = {Distributed Prioritized Experience Replay},
+  journal = {arXiv preprint arXiv:1803.00933},
+  year    = {2018},
+  note    = {ICLR 2018}
+}
+
+% --- Chapter 11 RL for CI: §2 DML for dynamic treatment effects (added 2026-05-11) ---
+
+@article{chernozhukov2023automatic,
+  author  = {Chernozhukov, Victor and Newey, Whitney and Singh, Rahul and Syrgkanis, Vasilis},
+  title   = {Automatic Debiased Machine Learning for Dynamic Treatment Effects and General Nested Functionals},
+  journal = {arXiv preprint arXiv:2203.13887},
+  year    = {2023}
+}
+
+@article{fosterSyrgkanis2023orthogonal,
+  author  = {Foster, Dylan J. and Syrgkanis, Vasilis},
+  title   = {Orthogonal Statistical Learning},
+  journal = {Annals of Statistics},
+  year    = {2023},
+  volume  = {51},
+  number  = {3},
+  pages   = {879--908}
+}
+
+% --- Chapter 11 RL for CI: §3 dynamic offline policy learning (added 2026-05-11) ---
+
+@article{sakaguchi2024dynamicpolicy,
+  author  = {Sakaguchi, Shosei},
+  title   = {Policy Learning for Optimal Dynamic Treatment Regimes with Observational Data},
+  journal = {arXiv preprint arXiv:2404.00221},
+  year    = {2024},
+  note    = {Revise-and-resubmit at \emph{Journal of Econometrics}}
+}
+
+@article{athey2021policy,
+  author  = {Athey, Susan and Wager, Stefan},
+  title   = {Policy Learning with Observational Data},
+  journal = {Econometrica},
+  year    = {2021},
+  volume  = {89},
+  number  = {1},
+  pages   = {133--161}
+}
+
+@article{kitagawa2018who,
+  author  = {Kitagawa, Toru and Tetenov, Aleksey},
+  title   = {Who Should Be Treated? {E}mpirical Welfare Maximization Methods for Treatment Choice},
+  journal = {Econometrica},
+  year    = {2018},
+  volume  = {86},
+  number  = {2},
+  pages   = {591--616}
+}
+
+@article{zhou2023offline,
+  author  = {Zhou, Zhengyuan and Athey, Susan and Wager, Stefan},
+  title   = {Offline Multi-Action Policy Learning: Generalization and Optimization},
+  journal = {Operations Research},
+  year    = {2023},
+  volume  = {71},
+  number  = {1},
+  pages   = {148--183}
+}
+
+@article{nie2021whentotreat,
+  author  = {Nie, Xinkun and Brunskill, Emma and Wager, Stefan},
+  title   = {Learning When-to-Treat Policies},
+  journal = {Journal of the American Statistical Association},
+  year    = {2021},
+  volume  = {116},
+  number  = {533},
+  pages   = {392--409}
+}
+
+@article{shi2024seal,
+  author  = {Shi, Chengchun and Luo, Shikai and Le, Yuan and Zhu, Hongtu and Song, Rui},
+  title   = {Statistically Efficient Advantage Learning for Offline Reinforcement Learning in Infinite Horizons},
+  journal = {Journal of the Royal Statistical Society, Series B},
+  year    = {2024},
+  note    = {Accepted; arXiv:2202.13163}
+}
+
+@article{luckett2020vlearning,
+  author  = {Luckett, Daniel J. and Laber, Eric B. and Kahkoska, Anna R. and Maahs, David M. and Mayer-Davis, Elizabeth and Kosorok, Michael R.},
+  title   = {Estimating Dynamic Treatment Regimes in Mobile Health Using {V}-Learning},
+  journal = {Journal of the American Statistical Association},
+  year    = {2020},
+  volume  = {115},
+  number  = {530},
+  pages   = {692--706}
+}
+
+@techreport{idaIshiharaItoEtAl2024energyrebate,
+  author      = {Ida, Takanori and Ishihara, Takunori and Ito, Koichiro and Kido, Daido and Kitagawa, Toru and Sakaguchi, Shosei and Sasaki, Shusaku},
+  title       = {Choosing Who Chooses: Selection-Driven Targeting in Energy Rebate Programs},
+  institution = {National Bureau of Economic Research},
+  number      = {32561},
+  year        = {2024}
+}
+
+% --- Chapter 11 RL for CI: §4a causal bandits (added 2026-05-11) ---
+
+@inproceedings{lattimore2016causal,
+  author    = {Lattimore, Finnian and Lattimore, Tor and Reid, Mark D.},
+  title     = {Causal Bandits: Learning Good Interventions via Causal Inference},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {29},
+  year      = {2016},
+  pages     = {1181--1189}
+}
+
+@inproceedings{bareinboim2015mabuc,
+  author    = {Bareinboim, Elias and Forney, Andrew and Pearl, Judea},
+  title     = {Bandits with Unobserved Confounders: A Causal Approach},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {28},
+  year      = {2015},
+  pages     = {1342--1350}
+}
+
+% --- Chapter 11 RL for CI: §4b adaptive experimentation (added 2026-05-11) ---
+
+@article{kasy2021adaptive,
+  author  = {Kasy, Maximilian and Sautmann, Anja},
+  title   = {Adaptive Treatment Assignment in Experiments for Policy Choice},
+  journal = {Econometrica},
+  year    = {2021},
+  volume  = {89},
+  number  = {1},
+  pages   = {113--132}
+}
+
+@article{hadad2021adaptive,
+  author  = {Hadad, Vitor and Hirshberg, David A. and Zhan, Ruohan and Wager, Stefan and Athey, Susan},
+  title   = {Confidence Intervals for Policy Evaluation in Adaptive Experiments},
+  journal = {Proceedings of the National Academy of Sciences},
+  year    = {2021},
+  volume  = {118},
+  number  = {15},
+  pages   = {e2014602118}
+}
+
+@inproceedings{bibaut2021post,
+  author    = {Bibaut, Aur{\'e}lien and Chambaz, Antoine and Dimakopoulou, Maria and Kallus, Nathan and van der Laan, Mark},
+  title     = {Post-Contextual-Bandit Inference},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {34},
+  year      = {2021}
+}
+
+%%% ch10b_rl_for_ci §1 deployment paragraph
+
+@article{kaushik2022sepsiscql,
+  author  = {Kaushik, Pramod and Kummetha, Sneha and Moodley, Perusha and Bapi, Raju S.},
+  title   = {A Conservative {Q}-Learning Approach for Handling Distribution Shift in Sepsis Treatment Strategies},
+  journal = {arXiv preprint arXiv:2203.13884},
+  year    = {2022}
+}
+
+@inproceedings{kondrup2023deepvent,
+  author    = {Kondrup, Flemming and Jiralerspong, Thomas and Lau, Elaine and de Lara, Nathan and Shkrob, Jacob and Tran, My Duc and Precup, Doina and Basu, Sumana},
+  title     = {Towards Safe Mechanical Ventilation Treatment Using Deep Offline Reinforcement Learning},
+  booktitle = {AAAI Conference on Artificial Intelligence (Innovative Applications)},
+  year      = {2023}
+}
+
+@inproceedings{killian2022cftransfer,
+  author    = {Killian, Taylor W. and Ghassemi, Marzyeh and Joshi, Shalmali},
+  title     = {Counterfactually Guided Off-policy Transfer in Clinical Settings},
+  booktitle = {Conference on Health, Inference, and Learning (CHIL)},
+  year      = {2022}
+}
+
+@article{roggeveen2024icmrl,
+  author  = {Roggeveen, Luca F. and {el Hassouni}, Ali and de Grooth, Harm-Jan and Girbes, Armand R. J. and Hoogendoorn, Mark and Elbers, Paul W. G.},
+  title   = {Reinforcement Learning for Intensive Care Medicine: Actionable Clinical Insights from Novel Approaches to Reward Shaping and Off-Policy Model Evaluation},
+  journal = {Intensive Care Medicine Experimental},
+  year    = {2024},
+  volume  = {12},
+  number  = {1},
+  pages   = {32},
+  doi     = {10.1186/s40635-024-00614-x}
+}
+
+@article{luo2024dtrbench,
+  author  = {Luo, Zhiyao and Zhu, Mingcheng and Liu, Fenglin and Li, Jiali and Pan, Yangchen and Zhou, Jiandong and Zhu, Tingting},
+  title   = {{DTR-Bench}: An in silico Environment and Benchmark Platform for Reinforcement Learning Based Dynamic Treatment Regime},
+  journal = {arXiv preprint arXiv:2405.18610},
+  year    = {2024},
+  note    = {Under review}
+}
+
+@article{liu2024oicrl,
+  author  = {Fang, Nan and Gong, Wei and Liu, Guiliang},
+  title   = {Offline Inverse Constrained Reinforcement Learning for Safe-Critical Decision Making in Healthcare},
+  journal = {arXiv preprint arXiv:2410.07525},
+  year    = {2024}
+}
+
+@inproceedings{yin2022deconfoundingac,
+  author    = {Yin, Changchang and Liu, Ruoqi and Caterino, Jeffrey and Zhang, Ping},
+  title     = {Deconfounding Actor-Critic Network with Policy Adaptation for Dynamic Treatment Regimes},
+  booktitle = {Proceedings of the 28th {ACM} {SIGKDD} Conference on Knowledge Discovery and Data Mining},
+  year      = {2022}
+}
+
+@article{Nordhaus1992dice,
+  author  = {Nordhaus, William D.},
+  title   = {An Optimal Transition Path for Controlling Greenhouse Gases},
+  journal = {Science},
+  volume  = {258},
+  number  = {5086},
+  pages   = {1315--1319},
+  year    = {1992},
+  doi     = {10.1126/science.258.5086.1315}
+}
+
+@article{Nordhaus2015climateclubs,
+  author  = {Nordhaus, William D.},
+  title   = {Climate Clubs: Overcoming Free-Riding in International Climate Policy},
+  journal = {American Economic Review},
+  volume  = {105},
+  number  = {4},
+  pages   = {1339--1370},
+  year    = {2015},
+  doi     = {10.1257/aer.15000001}
+}
+
+@inproceedings{Zhang2025ricen,
+  author    = {Zhang, Tianyu and Williams, Andrew and Phade, Soham and Srinivasa, Sunil and Zhang, Yang and Gupta, Prateek and Bengio, Yoshua and Zheng, Stephan},
+  title     = {{RICE-N}: A Multi-Region Integrated Assessment Model for Negotiation Among Strategic Regions},
+  booktitle = {Proceedings of the 42nd International Conference on Machine Learning},
+  year      = {2025}
+}
+
+@inproceedings{Zhang2022ricen,
+  author    = {Zhang, Tianyu and Williams, Andrew and Phade, Soham and Srinivasa, Sunil and Zhang, Yang and Gupta, Prateek and Bengio, Yoshua and Zheng, Stephan},
+  title     = {{RICE-N}: A Climate-Economy Modeling Framework for Negotiation},
+  booktitle = {AAAI 2022 Workshop on AI for Climate Change},
+  year      = {2022}
+}
+
+@inproceedings{Heitzig2023ccf,
+  author    = {Heitzig, Jobst and others},
+  title     = {Conditional Commitments for Stable Climate Cooperation},
+  booktitle = {AAAI Workshop on AI for Climate Change},
+  year      = {2023}
+}
+
+@inproceedings{Biswas2025justice,
+  author    = {Biswas, Palok and others},
+  title     = {{JUSTICE}: Multi-Objective Multi-Agent Reinforcement Learning for Equitable Climate Policy},
+  booktitle = {Proceedings of the 42nd International Conference on Machine Learning},
+  year      = {2025}
+}
+
+@inproceedings{FarahmandVAML2017,
+  author    = {Farahmand, Amir-massoud and Barreto, Andr{\'e} M. S. and Nikovski, Daniel},
+  title     = {Value-Aware Loss Function for Model-based Reinforcement Learning},
+  booktitle = {AISTATS},
+  series    = {PMLR},
+  volume    = {54},
+  pages     = {1486--1494},
+  year      = {2017}
+}
+
+@inproceedings{FarahmandIterVAML2018,
+  author    = {Farahmand, Amir-massoud},
+  title     = {Iterative Value-Aware Model Learning},
+  booktitle = {NeurIPS},
+  volume    = {31},
+  year      = {2018}
+}
+
+@inproceedings{GrimmVALEQ2020,
+  author    = {Grimm, Christopher and Barreto, Andr{\'e} and Singh, Satinder and Silver, David},
+  title     = {The Value Equivalence Principle for Model-Based Reinforcement Learning},
+  booktitle = {NeurIPS},
+  volume    = {33},
+  year      = {2020}
+}
+
+@inproceedings{GrimmPVE2021,
+  author    = {Grimm, Christopher and Barreto, Andr{\'e} and Farquhar, Gregory and Silver, David and Singh, Satinder},
+  title     = {Proper Value Equivalence},
+  booktitle = {NeurIPS},
+  volume    = {34},
+  year      = {2021}
+}
+
+@inproceedings{AyoubVTR2020,
+  author    = {Ayoub, Alex and Jia, Zeyu and Szepesv{\'a}ri, Csaba and Wang, Mengdi and Yang, Lin F.},
+  title     = {Model-Based Reinforcement Learning with Value-Targeted Regression},
+  booktitle = {ICML},
+  series    = {PMLR},
+  volume    = {119},
+  pages     = {463--474},
+  year      = {2020}
+}
+
+@misc{AsadiWasserstein2018,
+  author       = {Asadi, Kavosh and Cater, Evan and Misra, Dipendra and Littman, Michael L.},
+  title        = {Equivalence Between {Wasserstein} and Value-Aware Loss for Model-based Reinforcement Learning},
+  howpublished = {arXiv:1806.01265},
+  year         = {2018}
+}
+
+@inproceedings{VoelckerCalib2025,
+  author    = {Voelcker, Claas and Pedan, Anastasiia and Ahmadian, Arash and Abachi, Romina and Gilitschenski, Igor and Farahmand, Amir-massoud},
+  title     = {Calibrated Value-Aware Model Learning with Probabilistic Environment Models},
+  booktitle = {ICML},
+  series    = {PMLR},
+  volume    = {267},
+  pages     = {61745--61768},
+  year      = {2025}
+}
+
+@article{Schrittwieser2020MuZero,
+  author  = {Schrittwieser, Julian and Antonoglou, Ioannis and Hubert, Thomas and Simonyan, Karen and Sifre, Laurent and Schmitt, Simon and Guez, Arthur and Lockhart, Edward and Hassabis, Demis and Graepel, Thore and Lillicrap, Timothy and Silver, David},
+  title   = {Mastering {Atari}, {Go}, Chess and Shogi by Planning with a Learned Model},
+  journal = {Nature},
+  volume  = {588},
+  number  = {7839},
+  pages   = {604--609},
+  year    = {2020},
+  doi     = {10.1038/s41586-020-03051-4}
+}
+
+@inproceedings{Antonoglou2022StochMuZero,
+  author    = {Antonoglou, Ioannis and Schrittwieser, Julian and Ozair, Sherjil and Hubert, Thomas K. and Silver, David},
+  title     = {Planning in Stochastic Environments with a Learned Model},
+  booktitle = {ICLR},
+  year      = {2022}
+}
+
+@inproceedings{HafnerDreamer2020,
+  author    = {Hafner, Danijar and Lillicrap, Timothy and Ba, Jimmy and Norouzi, Mohammad},
+  title     = {Dream to Control: Learning Behaviors by Latent Imagination},
+  booktitle = {ICLR},
+  year      = {2020}
+}
+
+@article{HafnerDreamerV3_2025,
+  author  = {Hafner, Danijar and Pasukonis, Jurgis and Ba, Jimmy and Lillicrap, Timothy},
+  title   = {Mastering Diverse Control Tasks through World Models},
+  journal = {Nature},
+  year    = {2025},
+  note    = {arXiv:2301.04104}
+}
+
+@inproceedings{Chua2018PETS,
+  author    = {Chua, Kurtland and Calandra, Roberto and McAllister, Rowan and Levine, Sergey},
+  title     = {Deep Reinforcement Learning in a Handful of Trials Using Probabilistic Dynamics Models},
+  booktitle = {NeurIPS},
+  volume    = {31},
+  year      = {2018}
+}
+
+@misc{Madeka2022DeepInventory,
+  author       = {Madeka, Dhruv and Torkkola, Kari and Eisenach, Carson and Luo, Anna and Foster, Dean P. and Kakade, Sham M.},
+  title        = {Deep Inventory Management},
+  howpublished = {arXiv:2210.03137},
+  year         = {2022}
+}
+
+@book{DurbinKoopman2012,
+  author    = {Durbin, James and Koopman, Siem Jan},
+  title     = {Time Series Analysis by State Space Methods},
+  edition   = {2nd},
+  publisher = {Oxford University Press},
+  year      = {2012}
 }
