@@ -56,9 +56,13 @@ restating the machinery.
 \subsubsection{The agent's MDP}
 
 A Markov decision process (MDP) is a tuple $(\mathcal S, \mathcal A,
-P, r, \beta)$ with state space $\mathcal S$, action space
-$\mathcal A$, transition kernel $P(s' \mid s, a)$, reward function
-$r(s, a) \in \mathbb R$, and discount factor $\beta \in (0, 1)$. A
+P, r, \beta)$ collecting state space, action space, transition rule,
+reward, and discount. Concretely, the state space is $\mathcal S$,
+the action space is $\mathcal A$, the transition kernel
+$P(s' \mid s, a)$ gives the probability of moving to state $s'$ after
+taking action $a$ in state $s$, the reward function is
+$r(s, a) \in \mathbb R$, and the discount factor is
+$\beta \in (0, 1)$. A
 policy $\pi(a \mid s)$ maps states to action distributions. The
 return is $G_t = \sum_{k \ge 0} \beta^k r_{t+k}$, the value is
 $V^\pi(s) = \mathbb E^\pi[G_t \mid s_t = s]$, and the Q-function is
@@ -83,9 +87,15 @@ A partially observed MDP (POMDP) supplements the MDP with an
 observation space $\mathcal O$ and an emission distribution
 $U(o \mid s)$. The agent does not see the state $s$ directly; it
 conditions its policy on the observation history $o_{0:t}$, typically
-through a recurrent network or a sufficient statistic. POMDPs arise
-in macro whenever a household sees only prices or summary statistics
-rather than the full cross-sectional distribution.
+through a recurrent network or a sufficient statistic (a function of
+the history that preserves all decision-relevant information).
+POMDPs arise in macro whenever a household sees only prices or
+summary statistics rather than the full cross-sectional distribution,
+that is, the population-wide distribution of individual states such
+as wealth and productivity. The cross-sectional distribution matters
+to the household because equilibrium prices, and therefore its own
+budget constraint, depend on what the rest of the population is
+doing.
 
 A Markov game extends the MDP to $n$ agents who share the state but
 choose actions independently. Each agent $i \in \{1, \ldots, n\}$ has
@@ -122,15 +132,15 @@ agent's policy is a best response to the cross-sectional distribution
 it induces. A restricted perceptions equilibrium is a best response
 within a restricted policy class, for example policies that condition
 on prices but not on the full distribution; it is weaker than
-rational expectations and is the natural equilibrium concept for the
-SRL approach in Section~\ref{sec:macro:solver}. An
+rational expectations and is the equilibrium concept SRL targets in
+Section~\ref{sec:macro:solver}. An
 $\varepsilon$-equilibrium weakens Nash by an $\varepsilon$ slack on
 each player's incentive. Exploitability, $\sup_{\pi'} V^{\pi'} -
-V^\pi$ evaluated at the current mean field, is the natural
-convergence metric in MFG-RL because it upper-bounds the gap to a
-mean-field Nash equilibrium.
+V^\pi$ evaluated at the current mean field (the gap between the best
+response and the current policy), is the convergence metric used in
+MFG-RL; it upper-bounds the gap to a mean-field Nash equilibrium.
 
-\subsubsection{Notation summary and reading guide}
+\subsubsection{Notation summary}
 
 Throughout the chapter we use $s$ for state, $a$ for action, $r$ for
 reward, $\pi$ for policy, $V$ and $Q$ for values, $\beta$ for the
@@ -237,16 +247,18 @@ and idiosyncratic shock process exactly. The only unknown part of
 the environment from the household's point of view is the joint
 process for equilibrium prices and aggregate shocks. SRL trains the
 policy by simulating the full economy and treating prices as
-exogenous to the agent through a stop-gradient. The Wold
-representation theorem justifies dropping $\mu$ from the agent's
-state in favour of the price history; under rational expectations
-the price history is a sufficient statistic for whatever a
-forward-looking household needs from $\mu$. \citet{Han2022deepham},
-the immediate predecessor of SRL, kept the full cross-sectional
-distribution $\mu$ in the agent state via a deep-network policy that
-conditions on $\mu$ directly; SRL replaces $\mu$ with prices.
+exogenous to the agent through a stop-gradient. The sequence-space
+view of \citet{Auclert2021} justifies replacing $\mu$ in the agent
+state with the equilibrium price sequence: under rational
+expectations the price path is itself a sufficient statistic for the
+part of $\mu$ that affects forward-looking household decisions,
+because the household's budget constraint depends on $\mu$ only
+through equilibrium prices. \citet{Han2022deepham}, the immediate
+predecessor of SRL, kept the full cross-sectional distribution $\mu$
+in the agent state via a deep-network policy that conditions on
+$\mu$ directly; SRL replaces $\mu$ with prices.
 
-In the chapter's MDP notation the SRL household's state is
+The SRL household's state is
 $s_t = (b_t, y_t, z_t, p_t)$, with $b_t$ wealth, $y_t$ the
 idiosyncratic productivity shock, $z_t$ the aggregate shock, and
 $p_t$ the equilibrium price vector. The action is $a_t = c_t$,
@@ -267,18 +279,17 @@ the equilibrium path, and the equilibrium is a fixed point in policy
 space rather than in the perceived-law-of-motion regression of
 Krusell-Smith.
 
-Training uses the structural policy gradient (SPG) algorithm of
-Algorithm~\ref{alg:macro:spg}.\footnote{The cross-sectional
+The policy is parameterised as a tabular vector
+$\theta \in \mathbb R^{J \times K \times L}$ on the discretised
+$(s, z, p)$ grid, and training uses the structural policy gradient
+algorithm of Algorithm~\ref{alg:macro:spg}. The cross-sectional
 distribution rolls forward to compute prices while a separate
 value-computation distribution rolls forward to score the policy.
-The policy is parameterised as a tabular vector $\theta \in \mathbb
-R^{J \times K \times L}$ on the discretised $(s, z, p)$ grid. The
-Monte Carlo value is differentiated analytically by backpropagating
-through the known one-step transition matrix $A_\pi(z, p)$, the
-discrete instantiation of the chapter-general transition kernel
-restricted to the policy and grid. Convergence is monitored by the
-$\ell_\infty$ distance between successive policy iterates and is
-declared at a tolerance $\varepsilon$.}
+The Monte Carlo value is differentiated analytically by
+backpropagating through the known one-step transition matrix
+$A_\pi(z, p)$, the grid-restricted version of the transition kernel.
+Convergence is declared when the $\ell_\infty$ distance between
+successive policy iterates falls below a tolerance $\varepsilon$.
 
 \begin{algorithm}[t]
 \caption{Structural Policy Gradient (SPG) for HA macro models}
@@ -316,15 +327,13 @@ curve and sticky prices converges in roughly three
 minutes. Allowing agents to condition on a short price history rather
 than only the current price does not change the solution materially,
 which suggests that current prices encode most of the information
-relevant for behaviour in these calibrations. The three benchmark
-numbers are within-paper and have not been replicated independently
-at the time of writing.
+relevant for behaviour in these calibrations.
 
 \subsection{Simulation: representative-agent RBC under DP and DRL}
 \label{sec:macro:simulation}
 
-Before scaling to harder models, we check that RL matches dynamic
-programming on a problem for which DP is the right tool. The
+We check that RL matches dynamic programming on a problem for which
+DP is the right tool. The
 environment is a standard representative-agent stochastic RBC. The
 household chooses consumption $C_t$ and saves the residual, with
 capital evolving as $K_{t+1} = (1-\delta) K_t + A_t K_t^\alpha - C_t$
@@ -335,7 +344,7 @@ as $\beta = 0.96$, $\alpha = 0.36$, $\delta = 0.10$, $\rho = 0.95$,
 $\sigma = 0.007$, with horizon $T = 200$. The deterministic steady
 state is $K^\star = 4.29$, $C^\star = 1.26$.
 
-In the chapter's MDP notation the state is $s = (K, A)$, the action
+The state is $s = (K, A)$, the action
 is $a = C$, the reward is $r = \log C$, and the transition is the
 capital accumulation equation together with the AR(1) for TFP. Four
 methods are compared: a Blanchard-Kahn log-linearisation around the
@@ -396,6 +405,15 @@ The RL problem is to find a policy that is a best response to the
 distribution it induces under the noise process. Convergence to a
 mean-field Nash equilibrium is monitored by exploitability.
 
+The Krusell-Smith environment appears here under a different lens
+than in Section~\ref{sec:macro:solver}. SRL conditions agents on the
+current price vector and treats it as a Markovian sufficient
+statistic; RSPG instead lets agents carry a recurrent memory of past
+observations, relaxing the Markov assumption and replacing restricted
+perceptions with a partially observable mean-field Nash equilibrium.
+The two are alternative solution concepts for the same underlying
+household problem, not competing claims about the same equilibrium.
+
 \subsubsection{Recurrent Structural Policy Gradient}
 \label{sec:macro:rspg}
 
@@ -413,7 +431,10 @@ RL, which would sample both.
 
 In chapter notation the POMFG with common noise is a tuple
 $(p_{\mu_0}, p_{z_0}, \mathcal S, \mathcal Z, \mathcal A, T, \Xi, R,
-\beta, U, \mathcal O)$, combining the MFG primitives of
+\beta, U, \mathcal O)$, collecting initial distributions for the
+individual state and common noise, individual and aggregate state
+and action spaces, individual and common-noise transitions, reward,
+discount, and observation map. It combines the MFG primitives of
 Section~\ref{sec:macro:setup} with the POMDP observation pair
 $(U, \mathcal O)$ and a common-noise transition $\Xi(\cdot \mid z)$.
 The mean field evolves under the analytic operator
@@ -473,8 +494,7 @@ before episode end, pushing interest rates up and wages down.
 Memoryless variants of SPG and IPPO do not show this pattern. The
 paper positions RSPG as the first method to solve a partially
 observable Krusell-Smith model in which agents observe prices but
-not the cross-sectional distribution; the comparison set is small
-and the result is within-paper.
+not the cross-sectional distribution.
 
 \subsubsection{Hierarchical Stackelberg mean-field RL}
 \label{sec:macro:dsmfg}
@@ -486,10 +506,11 @@ first and a continuum of heterogeneous individual followers
 optimises against the announced policy. The framework formalises a
 Dynamic Stackelberg Mean Field Game (DSMFG) as the tuple
 $(\mathcal S^l, \mathcal S^f, \mathcal A^l, \mathcal A^f, P, r^l,
-r^f, T)$ with separate state and action spaces for the leader and
-the representative follower, a horizon $T$, and a mean field
-$L_t \in \Delta(\mathcal S^f \times \mathcal A^f)$ that summarises
-the population state-action distribution.
+r^f, T)$ collecting leader state space, follower state space, leader
+action space, follower action space, joint transition, leader
+reward, follower reward, and horizon. A mean field
+$L_t \in \Delta(\mathcal S^f \times \mathcal A^f)$ summarises the
+population state-action distribution.
 
 The follower's best response to a leader policy $\pi^l$ is the
 representative-agent policy
@@ -564,6 +585,87 @@ advantage estimation and target networks to mean-field control
 games, a hybrid that combines internal coordination as in mean-field
 control with external competition as in MFGs.}
 
+\subsection{Simulation: a partially observable linear-quadratic mean field game}
+\label{sec:macro:mfg_sim}
+
+To make the RSPG mechanism concrete, we use a compact version of the
+partially observable Linear-Quadratic environment in
+\citet{Wibault2026rspg}. The individual state is
+$s \in \{0,\ldots,98\}$ in the public MFAX implementation, the action
+is $a \in \{-3,\ldots,3\}$, the common noise is
+$z \in \{-1,1\}$, and the horizon is $T = 30$. The common noise is
+persistent within an episode. It shifts the whole population down
+early in the episode, is neutral in the middle, and shifts it in the
+opposite direction late in the episode. Let
+$\bar{s}_t = \sum_{s'} \mu_t(s')s'$ denote the population mean. The
+agent observes its own state and $o_t = \bar{s}_t$, but not the full
+distribution, the common-noise realisation, or the calendar time. The
+mean field evolves by the analytic population transition operator
+$\mu_{t+1} = \Phi^{\pi}(\mu_t,z_t)$.
+
+The step reward follows the paper's quadratic form,
+\begin{equation}
+R_t(s,a,\mu,z)
+= -c_a a^2 + q a(\bar{s}_{t+1} - s)
+  - \frac{\kappa}{2}(\bar{s}_{t+1} - s)^2,
+\label{eq:macro:lqmfg-reward}
+\end{equation}
+with terminal reward
+$R_T(s,\mu,z) = -c_{\mathrm{term}}(\bar{s}_T - s)^2/2$.
+The implementation follows MFAX in evaluating the reward after the
+population transition, using $\bar{s}_{t+1}$, and using the terminal
+reward on the final transition. The reward encourages agents to
+coordinate with the moving population while paying an action cost.
+
+The reported results come from the public MFAX implementation of the
+paper's two structural policy-gradient algorithms on this environment.
+SPG uses the analytic mean-field update and a memoryless categorical
+policy that conditions on current state and current mean observation.
+RSPG uses the same analytic update, but encodes the sequence of shared
+mean-state observations with a GRU; the recurrent hidden state is
+independent of the individual state, as in the paper. Both methods are
+evaluated with the analytic mean-field path induced by the final
+policy. Approximate exploitability is computed by backward induction
+against that path, so lower values mean a smaller gain from deviating
+to a best response. We do not include the paper's sampled recurrent PPO
+grid in the table, because that baseline is a much heavier finite-agent
+RL experiment rather than the structural mean-field update studied here.
+
+Table~\ref{tab:macro:lqmfg-results} reports exploitability, expected
+return, and training time across ten training seeds after sweeping the
+official learning-rate grid. RSPG has lower exploitability than SPG,
+which is the partial-observation lesson of the paper's LQ example:
+history helps infer where the common-noise episode is headed. Expected
+returns are reported for completeness but should not be read as a
+welfare ranking across methods, since each method induces a different
+mean-field path. Figure~\ref{fig:macro:lqmfg-curves} plots
+exploitability over training and the final exploitability sensitivity
+to the learning rate.
+
+\begin{table}[ht]
+\centering
+\input{../ch06_macro/sims/lq_mfg_results.tex}
+\caption{Partially observable Linear-Quadratic mean field game. Approximate
+exploitability is computed by a best-response dynamic program on the
+analytic mean-field path induced by the final policy. Expected return and
+training time are averaged over 10 training seeds, with standard errors
+across seeds. Learning rates are selected from the official MFAX grid
+$\{10^{-4},10^{-3},10^{-2}\}$ by mean final exploitability for each
+method.}
+\label{tab:macro:lqmfg-results}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.80\linewidth]{../ch06_macro/sims/lq_mfg.png}
+\caption{Official MFAX Linear-Quadratic grid. The left panel shows
+approximate exploitability over policy-gradient updates for the selected
+SPG and RSPG learning rates, shaded by cross-seed standard error across
+ten training seeds. The right panel shows final exploitability across
+the swept learning rates.}
+\label{fig:macro:lqmfg-curves}
+\end{figure}
+
 \subsection{RL as a model of bounded rationality}
 \label{sec:macro:behavioral}
 
@@ -616,13 +718,11 @@ beliefs about $P_{yy'}$ after each unemployment spell, can produce
 the scarring effect but force consumption levels and MPCs to co-move
 in a way the data do not show.
 
-Two predecessor and complementary papers anchor the lineage.
-\citet{Shi2022consumption} (cited above in
-Section~\ref{sec:macro:solver_single_agent}) shows that a single-agent
-actor-critic on stochastic optimal growth converges to the
-rational-expectations optimal saving rule asymptotically; KAP's
-contribution is the non-asymptotic regime in which the agent has not
-yet converged. \citet{Kuriksha2021} embeds heterogeneous
+\citet{Shi2022consumption} (Section~\ref{sec:macro:solver_single_agent})
+shows that a single-agent actor-critic on stochastic optimal growth
+converges to the rational-expectations optimal saving rule
+asymptotically; KAP's contribution is the non-asymptotic regime in
+which the agent has not yet converged. \citet{Kuriksha2021} embeds heterogeneous
 neural-network learners in an Aiyagari-class economy. Each household
 updates its saving rule from its own realised consumption history,
 and the resulting wealth distribution is fat-tailed and exhibits the
@@ -714,7 +814,7 @@ original ABM follow a hand-coded trend-following rule for setting
 prices and target quantities. The authors replace $N$ of these $100$
 firms with tabular Q-learners.
 
-In the chapter's MDP notation, each RL firm $i$ has state $s_{i,t}$
+Each RL firm $i$ has state $s_{i,t}$
 consisting of its log price-delta and log stock-delta relative to
 market averages, both binned on a finite grid; the action $a_{i,t}$
 is a discrete multiplicative adjustment to next-period price and
@@ -1001,7 +1101,7 @@ is locally explosive. \citet{EvansHonkapohja2005} show that
 recursive-least-squares adaptive learning reaches only the
 determinate regimes.}
 
-In the chapter's MDP notation, the household's state is
+The household's state is
 $s_t = (m_{t-1}, b_{t-1}, \pi_{t-1}, c_{t-1}, n_{t-1},
 \varepsilon^\tau_t, \varepsilon^R_t, \varepsilon^y_t)$, the action
 $a_t = (c_t, b_t, n_t)$ is a continuous tuple of consumption, bond
@@ -1034,9 +1134,7 @@ which a household can converge to a stationary policy is strictly
 larger under deep RL than under the recursive-least-squares
 adaptive-learning benchmark of \citet{EvansHonkapohja2005}. RL extends
 learnability to the indeterminate and explosive regimes that adaptive
-learning cannot reach. The result is within-paper on a single
-calibration; an independent replication on the Benhabib environment
-has not been published.
+learning cannot reach.
 
 \subsubsection{Benchmarking RL on monetary policy}
 \label{sec:macro:mpu}
@@ -1095,6 +1193,8 @@ emerge as a learned component of the joint fiscal-monetary policy.
 \subsection{Discussion}
 \label{sec:macro:discussion}
 
+\subsubsection{Four roles, one toolbox}
+
 Reinforcement learning enters macroeconomics in four distinct roles
 covered above. As a global solver, structural policy gradient methods
 solve heterogeneous-agent models on timescales that classical
@@ -1107,7 +1207,115 @@ As a planner, RL discovers tax schedules, climate-cooperation
 mechanisms, and monetary-fiscal reaction functions that closed-form
 optimisation does not. The four roles share an algorithmic toolbox
 but answer different questions, and the empirical and theoretical
-literatures around each are at different stages of maturity. Most
-results surveyed are within-paper claims published in the past few
-years and have not been independently replicated. The current state
-is best read as early progress rather than as a settled methodology.
+literatures around each are at different stages of maturity. The
+current state is best read as early progress rather than as a
+settled methodology.
+
+\subsubsection{Common methodological issues}
+\label{sec:macro:common_issues}
+
+Reading across the lenses surfaces issues that no single section
+makes explicit. The first concerns convergence theory. Of the
+algorithms surveyed in this chapter, only the temporal mean-field
+construction of \citet{YangShan2026tmf} carries a classical
+guarantee, with existence and uniqueness of the equilibrium under a
+discrete monotonicity condition, finite-population
+$O(1/\sqrt{N})$ Nash approximation regardless of the per-step batch
+size, and provable convergence of the policy-gradient iterate (the
+sequence of policy updates produced by the algorithm). The
+remaining methods, including \citet{Yang2025srl},
+\citet{Wibault2026rspg}, \citet{Kaplowitz2025},
+\citet{Zheng2022aie}, \citet{Chen2021drl}, \citet{Mi2025dsmfg},
+\citet{Han2022deepham}, \citet{Brunnbauer2024offmmd}, and
+\citet{Magnino2025nonstationary}, monitor convergence empirically by
+exploitability, $L^{\infty}$ norms of policy updates, or Bellman
+residuals against application-specific tolerances. This is not a
+failure of rigour. The macro equilibrium concepts these algorithms
+target, including restricted perceptions equilibrium, mean-field
+Nash, Stackelberg mean-field, and co-adaptation (joint training of
+planner and agents against each other's current policy), live in
+spaces where classical fixed-point theorems (existence results such
+as Brouwer or Kakutani) either do not apply or do not
+yield computable bounds. The honest reading of the literature is
+that convergence here means training stopped changing the policy,
+not that the iterate provably reaches a model equilibrium.
+
+The four lenses also target four different equilibrium concepts,
+and papers within a lens diverge further
+(Section~\ref{sec:macro:setup}). The restricted perceptions
+equilibrium of \citet{Yang2025srl} assumes agents condition on the
+current price vector as if it were Markov, which is not satisfied by
+true Krusell-Smith equilibrium prices but is what makes structural
+policy gradient tractable. \citet{Wibault2026rspg} extends this to a
+partially observable mean-field Nash with a shared observation and
+recurrent memory. \citet{Mi2025dsmfg} targets a Stackelberg
+mean-field with a single leader and a continuum of homogeneous
+followers. \citet{Zheng2022aie} trains planner and citizens by PPO
+against each other's current policy without naming the equilibrium
+the joint iterate is supposed to reach. \citet{Chen2021drl} accept
+whichever DSGE steady state the SAC iterate stabilises at, including
+the indeterminate and explosive regimes that adaptive learning
+cannot reach. \citet{Kaplowitz2025} abandons equilibrium altogether
+in favour of single-agent Q-learning calibrated to micro-panel
+moments. A claim that RL solves Krusell-Smith therefore means
+different things under \citet{Yang2025srl} than under
+\citet{Han2022deepham}, where the same model is solved as a
+recursive equilibrium in which $\mu$ is summarised by a finite set
+of moments (moment closure), with neural-network value and policy
+functions.
+
+Several recurring pitfalls follow from these design choices.
+Multiplicity is acknowledged but resolved silently by initialisation,
+through the warm-up phase of \citet{Yang2025srl}, the two-phase
+entropy schedule of \citet{Zheng2022aie}, and the regime-by-regime
+training of \citet{Chen2021drl}; none of these papers tests
+initialisation robustness. Curriculum learning is empirically
+necessary but theoretically unmotivated, with \citet{Curry2022marl}
+showing independent multi-agent RL fails to recover non-trivial
+behaviour without one and \citet{Zheng2022aie} confirming the same
+pattern in two-level policy design. Hyperparameter sensitivity is
+severe and unevenly characterised, with \citet{Wibault2026rspg}
+reporting that off-the-shelf IPPO and recurrent-IPPO require 81 to
+243 configurations on partially observable Krusell-Smith while
+structural policy gradient methods converge with three; no paper
+offers transferable tuning guidance. Discount-factor sensitivity is
+essentially unexamined, with \citet{Atashbar2023imf} flagging
+instability at high $\beta$ but no paper sweeping $\beta$ over the
+macro-realistic range. The single-agent to equilibrium gap is open,
+since the household learning rule of \citet{Kaplowitz2025}
+reproduces marginal propensity to consume heterogeneity and
+scarring at the household level but has not been tested for
+consistency once embedded in an Aiyagari-style equilibrium where
+its policy would shift the cross-sectional distribution.
+
+Three cross-cutting findings deserve to be surfaced separately from
+their parent sections. The first is that tabular and grid-based RL
+competes with or beats deep RL on macro problems.
+\citet{Wang2025mpu} benchmarks nine algorithms on US Federal
+Reserve quarterly data and finds tabular Q-learning beats DQN, soft
+actor-critic, and Bayesian variants on a quadratic-loss monetary
+objective, and \citet{Yang2025srl} reports grid policies training
+faster than deep networks on Krusell-Smith. The ordering familiar
+from robotics and games does not transfer mechanically to macro,
+whose state spaces are low-dimensional once correctly compressed.
+The second finding is that RL reaches equilibrium regions adaptive
+learning cannot. \citet{Chen2021drl} shows deep RL stabilises in
+indeterminate and explosive DSGE regimes that least-squares
+learning rules out by E-stability (the expectational-stability
+condition under which a perceived law of motion is learnable by
+least-squares updating), suggesting the same toolbox
+extends the equilibrium set under bounded rationality rather than
+merely reproducing it. The third is sociological. The three
+methodological clusters covered in this chapter, structural solvers
+\citep{Yang2025srl,Wibault2026rspg,Han2022deepham,Azinovic2026sequence},
+behavioural single-agent learners
+\citep{Kaplowitz2025,Kuriksha2021,Shi2022consumption}, and policy
+designers
+\citep{Zheng2022aie,Mi2024taxai,Chen2021drl,HinterlangTaenzer2024,Khundadze2025,Wang2025mpu},
+have evolved in parallel with limited cross-citation. The solver
+papers do not engage the behavioural ones, the behavioural paper of
+\citet{Kaplowitz2025} cites no RL-macro work, and the two monetary
+policy papers \citep{HinterlangTaenzer2024,Wang2025mpu} appear
+unaware of each other. The risk is that solver-driven equilibrium
+claims, behavioural calibration evidence, and policy-design
+exercises drift apart without methodological reconciliation.

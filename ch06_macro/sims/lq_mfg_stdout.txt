@@ -1,0 +1,26 @@
+Official MFAX LQ-POMFG artifact: lq_mfg
+========================================================================
+Source:
+  repo       = https://github.com/CWibault/mfax.git
+  commit     = 9acc1eb
+  scripts    = hsm/algos/spg.py, hsm/algos/rspg.py
+
+Environment and training:
+  task       = linear_quadratic
+  state      = indices, public MFAX num_states=99
+  gamma      = 0.99
+  num_envs   = 8
+  iterations = 200
+  eval_every = 20
+  seeds      = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  LR grid    = [0.0001, 0.001, 0.01]
+
+Method         LR         Exploitability             Return       Train time
+SPG          1e-2     86.64 +/- 16.29     -1021.3 +/- 22.3      24.39 +/- 0.06 
+RSPG         1e-3     60.37 +/- 4.11      -1186.9 +/- 10.1      28.79 +/- 0.58 
+
+Final exploitability by LR:
+  SPG: 1e-4=1824.33, 1e-3=153.44, 1e-2=86.64
+  RSPG: 1e-4=1316.78, 1e-3=60.37, 1e-2=796.72
+  Table saved: /Users/pranjal/Code/rl/ch06_macro/sims/lq_mfg_results.tex
+  Figure saved: /Users/pranjal/Code/rl/ch06_macro/sims/lq_mfg.png
