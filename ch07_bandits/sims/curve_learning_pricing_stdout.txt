@@ -1,0 +1,36 @@
+Loaded from cache.
+========================================================================
+WEAVER-STYLE CURVE-LEARNING PRICING REPLICATION
+========================================================================
+K=10, T=2,500, seeds=1000, batch=10, workers=8
+Algorithms: TS, GP-UCB, GP-TS, GP-UCB-M, GP-TS-M
+
+Scenario: $B(2,9)$ (Low optimal price)
+  Price-set optimum: 0.20
+  TS         final profit   83.6% of grid oracle
+  GP-UCB     final profit   84.0% of grid oracle
+  GP-TS      final profit   77.2% of grid oracle
+  GP-UCB-M   final profit   98.3% of grid oracle
+  GP-TS-M    final profit   97.5% of grid oracle
+
+Scenario: $B(2,2)$ (Middle optimal price)
+  Price-set optimum: 0.40
+  TS         final profit   93.5% of grid oracle
+  GP-UCB     final profit   96.9% of grid oracle
+  GP-TS      final profit   94.8% of grid oracle
+  GP-UCB-M   final profit   97.5% of grid oracle
+  GP-TS-M    final profit   97.0% of grid oracle
+
+Scenario: $B(9,2)$ (High optimal price)
+  Price-set optimum: 0.70
+  TS         final profit   98.2% of grid oracle
+  GP-UCB     final profit   99.1% of grid oracle
+  GP-TS      final profit   98.2% of grid oracle
+  GP-UCB-M   final profit   96.1% of grid oracle
+  GP-TS-M    final profit   95.8% of grid oracle
+
+Generating Weaver-style curve-learning figure...
+  Saved: curve_learning_pricing_regret.png
+Generating Weaver-style curve-learning tables...
+  Saved: /Users/pranjal/Code/rl/ch07_bandits/sims/curve_learning_pricing_results.tex
+  Saved: /Users/pranjal/Code/rl/ch07_bandits/sims/curve_learning_pricing_summary.tex
