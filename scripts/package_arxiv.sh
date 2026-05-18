@@ -40,7 +40,7 @@ CHAPTERS=(
     "ch07_bandits/tex/dynamic_pricing.tex"
     "ch08_offline_rl/tex/offline_rl.tex"
     "ch10_causal/tex/causal_rl.tex"
-    "ch11_conclusion/tex/conclusion.tex"
+    "ch99_conclusion/tex/conclusion.tex"
 )
 
 for f in "${CHAPTERS[@]}"; do
