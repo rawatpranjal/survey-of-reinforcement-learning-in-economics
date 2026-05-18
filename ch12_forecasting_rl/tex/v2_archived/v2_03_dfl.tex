@@ -1,0 +1,140 @@
+% Section 3: Decision-focused learning
+\subsection{Decision-focused learning}
+\label{sec:dfl}
+
+\citet{ElmachtoubGrigas2022} formalise the decision-focused programme for
+the class of problems in which the downstream optimisation has a linear
+objective. Consider a generic problem in which the decision maker observes
+features $x$, forms a forecast $\hat c = f_\theta(x)$ of an unknown cost
+vector $c \in \mathbb R^d$, and solves
+$z^\star(\hat c) = \arg\min_{z \in \mathcal Z} \hat c^\top z$ over a known
+feasible region $\mathcal Z$. A shipping firm picks the cheapest route
+through a graph after predicting edge travel times. A portfolio manager
+picks asset weights after predicting expected returns. Our newsvendor is
+the special case $d = 1$, $\mathcal Z = \mathbb R_+$,
+$c = c_o - (c_u + c_o)\, \mathbf 1\{y > a\}$, although the textbook
+treatment writes it directly as a quantile problem rather than as a linear
+optimisation.
+
+The realised cost of using a predicted $\hat c$ in place of the true $c$
+is the suboptimality gap of the induced decision under the true cost,
+\begin{equation}
+\ell_{\mathrm{SPO}}(\hat c, c)
+= c^\top z^\star(\hat c) - \min_{z \in \mathcal Z} c^\top z.
+\label{eq:spo_loss}
+\end{equation}
+This is the SPO loss. It is zero when $z^\star(\hat c) = z^\star(c)$, that
+is, when the predicted cost induces the same decision as the true cost,
+and is non-negative otherwise. The SPO loss is discontinuous in $\hat c$
+because the argmin operator jumps when the predicted cost crosses a face
+of $\mathcal Z$, so empirical risk minimisation against $\ell_{\mathrm{SPO}}$
+is intractable in general.
+
+\citet{ElmachtoubGrigas2022} derive a convex surrogate via Lagrangian
+duality. The SPO$^+$ loss is
+\begin{equation}
+\ell_{\mathrm{SPO}^+}(\hat c, c)
+= \max_{z \in \mathcal Z}\bigl\{ c^\top z - 2 \hat c^\top z \bigr\}
+  + 2 \hat c^\top z^\star(c) - \min_{z \in \mathcal Z} c^\top z.
+\label{eq:spo_plus_loss}
+\end{equation}
+The function $\ell_{\mathrm{SPO}^+}$ is convex in $\hat c$, upper-bounds
+$\ell_{\mathrm{SPO}}$, and admits the explicit subgradient
+$2\bigl(z^\star(c) - z^\star(2 \hat c - c)\bigr) \in
+\partial \ell_{\mathrm{SPO}^+}(\hat c, c)$. SPO$^+$ ERM on a linear
+hypothesis class reduces to a linear or conic programme and to stochastic
+gradient descent for large datasets.
+
+The justification for SPO$^+$ as a stand-in for SPO is Fisher consistency.
+
+\begin{theorem}[\citealp{ElmachtoubGrigas2022}, Theorem 1]
+\label{thm:spo_fisher}
+Suppose, conditional on $x$, that $\arg\min_{z \in \mathcal Z} \mathbb
+E[c \mid x]^\top z$ is a singleton almost surely, that the distribution of
+$c \mid x$ is continuous and centrally symmetric about its mean, and that
+the interior of $\mathcal Z$ is nonempty. Then any minimiser of the SPO$^+$
+population risk over the unrestricted hypothesis class equals the
+conditional mean $\mathbb E[c \mid x]$ almost surely, and also minimises
+the SPO population risk.
+\end{theorem}
+
+The central symmetry assumption is non-trivial. Squared-error regression
+is Fisher consistent under the same conditions, so SPO$^+$ and least
+squares share the asymptotic-optimality property under
+well-specification. The case for SPO$^+$ over least squares is therefore
+an argument about finite samples and about robustness to misspecification,
+not about asymptotics.\footnote{\citet{LiuGrigas2021} convert Fisher
+consistency into a finite-sample calibration bound at rate $n^{-1/4}$ on
+polyhedral feasible regions and $n^{-1/2}$ on strongly convex level sets.
+\citet{HuKallus2020} show that for contextual linear optimisation under a
+margin condition, naive plug-in via least squares attains $n^{-1}$ while
+the integrated SPO$^+$ ERM attains only $n^{-2/3}$, so the case for
+SPO$^+$ is precisely the misspecified regime. \citet{HuangGupta2024}
+construct a perturbation-gradient surrogate whose excess regret is
+$\widetilde O((dp/n)^{1/4})$ against the best-in-class policy and remains
+valid under misspecification, the modern state of the art. The
+\citet{Mandi2024} survey benchmarks eleven DFL techniques on seven
+canonical problems and confirms that the empirical advantage of DFL over
+predict-then-optimise is largest under misspecification.}
+
+The SPO$^+$ recipe handles linear objectives and convex feasible regions.
+\citet{DontiAmosKolter2017} extend the decision-focused programme to
+neural-network predictors and to nonlinear stochastic programmes. Given a
+parametric forecaster $p(y \mid x; \theta)$ and a downstream optimisation
+$z^\star(x; \theta) = \arg\min_z \mathbb E_{y \sim p(y \mid x; \theta)}
+[f(x, y, z)]$ subject to convex constraints, they construct the task loss
+$L(\theta) = \mathbb E_{(x, y)}[f(x, y, z^\star(x; \theta))]$ and minimise
+it by stochastic gradient descent. The technical step is differentiating
+the optimal-solution map $z^\star(x; \theta)$ with respect to $\theta$,
+which they accomplish by differentiating the Karush-Kuhn-Tucker conditions
+of the inner programme and applying the implicit function theorem. The
+resulting Jacobian $\partial z^\star / \partial \theta$ flows the gradient
+of the task loss back through a learned-prediction layer to the network
+weights, and the routine is fast enough at the per-batch level that the
+forecaster can be trained end-to-end. On a 24-hour generator-scheduling
+task fitted to seven years of PJM electrical-load data,
+\citet{DontiAmosKolter2017} report a $38.6\%$ realised-cost reduction
+relative to the same Gaussian load model trained on RMSE and plugged into
+the same optimisation routine. The implicit-KKT pathway has since become
+the standard mechanism for decision-focused training of deep predictors.
+
+The cleanest applied case in the contextual newsvendor family is
+\citet{BanRudin2019}. Given $n$ historical observations $(x_i, d_i)$ of
+features and realised demand, they solve the single-period newsvendor
+loss directly,
+\begin{equation}
+\hat\beta_n = \arg\min_{\beta \in \mathbb R^p}\frac{1}{n} \sum_{i=1}^n
+\Bigl[ c_u (d_i - \beta^\top x_i)^+ + c_o (\beta^\top x_i - d_i)^+ \Bigr]
++ \lambda\, \Omega(\beta),
+\label{eq:banrudin_erm}
+\end{equation}
+with $\Omega$ an $\ell_1$ or $\ell_2$ regulariser. The minimisation
+identifies a feature-linear order quantity $q(x) = \hat\beta_n^\top x$
+directly, without an intermediate step that estimates a conditional
+distribution. Their Theorem 4 derives a finite-sample regret bound that
+generalises \citet{Levi2007} to high-dimensional features.\footnote{The bound
+scales as $\sqrt{p/n}$ for the $\ell_1$-regularised variant under standard
+sub-Gaussian assumptions. A no-feature SAA baseline has a constant $O(1)$
+bias that does not shrink in $n$ whenever the conditional mean truly
+depends on the features.} On UK hospital emergency-room nurse-staffing
+data, the $\ell_1$-regularised ERM saves $23\%$ ($\pounds 44{,}219$ per
+ward per year) over a day-of-week-clustered SAA benchmark, and a
+kernel-weighted variant attains $24\%$ ($\pounds 46{,}555$). Both
+improvements are significant at the $5\%$ level, and the kernel variant
+runs in $0.05$ seconds versus the two-orders-of-magnitude slower
+benchmark.\footnote{Deep-learning generalisations of the same recipe
+parametrise $q(x)$ by a feed-forward network instead of a linear model
+\citep{Oroojlooyjadid2020}, and a recent extension uses conditional deep
+generative models to handle joint pricing-and-inventory decisions under
+decision-dependent uncertainty \citep{HanZhengMisra2024}. The Amazon
+Outbound Modeling system \citep{Amazon2025} embeds a probabilistic drain
+forecaster as a differentiable simulator inside an off-policy RL ordering
+loop, which is the production-scale analogue of the
+\citet{DontiAmosKolter2017} task-based training architecture.}
+
+The chapter's thesis line for the single-period case is
+\citet{BanRudin2019}'s. ``Rather than a two-step process of first
+estimating a demand distribution then optimizing for the optimal order
+quantity, we propose solving the Big Data newsvendor problem via
+single-step machine learning algorithms.'' The next section asks what
+changes when the decision is sequential rather than one-shot.

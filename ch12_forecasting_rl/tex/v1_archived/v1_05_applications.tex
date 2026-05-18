@@ -1,0 +1,392 @@
+% Section 5: Applications
+\subsection{Applications}
+\label{sec:forecasting_rl_applications}
+
+We outline four application domains where the prediction-and-decision interaction
+is the active research question. The unifying claim across them is that joint or
+decision-aware estimation outperforms two-step pipelines whenever the forecast
+distribution is misspecified or the decision is asymmetric, and the unifying
+methodological move is to identify the structural reason why the integrated
+approach should work and to put a finite-sample or asymptotic guarantee under
+it.
+
+\subsubsection{Inventory and the contextual newsvendor}
+\label{sec:app_inventory}
+
+The contextual newsvendor is the canonical decision-under-uncertainty problem
+and the cleanest empirical case for decision-focused learning. Given an
+unknown future demand $D$, an order quantity $q$, and asymmetric per-unit
+costs $b$ for backorders and $h$ for holding, the realised cost
+$C(q, D) = b (D - q)^+ + h (q - D)^+$ is minimised at the
+$b / (b + h)$ quantile of the demand distribution. \citet{BanRudin2019}
+re-cast the problem when the decision-maker has access to a high-dimensional
+feature vector $x \in \mathbb R^p$ that may include weather, seasonality,
+economic indicators, and customer demographics. They propose two single-step
+data-driven estimators that compute the order quantity directly from
+$(x, d)$-pairs without an intermediate demand-distribution estimation step.
+The Empirical Risk Minimisation procedure with a linear decision rule
+$q(x) = \beta^\top x$ solves
+\begin{equation}
+\hat\beta_n = \arg\min_{\beta \in \mathbb R^p}
+  \frac{1}{n} \sum_{i=1}^n
+    \bigl[ b (d_i - \beta^\top x_i)^+ + h (\beta^\top x_i - d_i)^+ \bigr]
+  + \lambda\, \Omega(\beta),
+\label{eq:banrudin_erm}
+\end{equation}
+where $\Omega$ is an $\ell_0$, $\ell_1$, or $\ell_2$ regulariser yielding a
+mixed-integer, linear, or quadratic programme respectively. The Kernel-weights
+Optimisation procedure uses Nadaraya-Watson weights $w_i(x) \propto K((x_i - x)
+/ h)$ and returns the empirical $b / (b + h)$ quantile of the weighted demand
+distribution via a simple sorting algorithm.
+
+\citet{BanRudin2019} prove finite-sample performance bounds on the
+out-of-sample cost of both estimators. Their Theorem~4 establishes that the
+Sample Average Approximation procedure without features has a constant
+$O(1)$ bias that does not shrink in $n$, while the feature-based ERM
+procedure attains a regret that scales with $\sqrt{p / n}$, which generalises
+the no-feature bound of \citet{Levi2007} to the high-dimensional contextual
+case. The empirical case for the integrated approach is on UK hospital nurse
+staffing data, where the demand for emergency-room beds depends on
+day-of-week, seasonal, and weather features. The best ERM result, with
+$\ell_1$ regularisation, attains a cost improvement of $23\%$ relative to the
+best-practice day-of-week-clustered SAA benchmark, equivalent to a saving of
+$\pounds 44{,}219$ per ward per year. The best KO result attains $24\%$ and
+$\pounds 46{,}555$ per ward per year, both statistically significant at the
+$5\%$ level, and the KO sorting procedure runs in $0.05$ seconds versus the
+two-orders-of-magnitude slower SAA baseline. The chapter's thesis quote is
+from the introduction. ``Rather than a two-step process of first estimating
+a demand distribution then optimizing for the optimal order quantity, we
+propose solving the Big Data newsvendor problem via single-step machine
+learning algorithms.''
+
+\citet{Oroojlooyjadid2020} extend the \citet{BanRudin2019} programme from
+linear to neural-network decision rules. The deep feed-forward network
+$\theta(x)$ takes the feature vector as input and outputs the order quantity
+directly, with the loss function being the newsvendor cost
+$\mathcal L(\theta) = \sum_i [c_u (d_i - \theta(x_i))^+ + c_o
+(\theta(x_i) - d_i)^+]$ rather than a forecast-error loss. The deep network
+generalises the linear hypothesis class of \citet{BanRudin2019} and is
+particularly effective for problems with small data, unknown demand
+distributions, or volatile historical data. The taxonomic contribution of
+\citet{Oroojlooyjadid2020} is the five-approach typology that classifies the
+literature on the feature-based newsvendor, ranging from estimate-as-solution
+through parametric estimation plus critical fractile and weighted-SAA via
+machine learning, to the linear ML programme of \citet{BanRudin2019} and the
+deep-learning generalisation of the present paper. The taxonomy makes the
+chapter-level argument concrete. The deepest forecasting-for-decision
+approaches are the ones that train the predictor on the realised decision
+cost, and the empirical advantage over predict-then-optimise grows with the
+level of demand-distribution misspecification.
+
+The deep-generative extension of \citet{HanZhengMisra2024} reformulates the
+contextual newsvendor under price-dependent demand and joint pricing-and-inventory
+decisions. They observe that when price $p$ varies in the historical data,
+traditional ERM is infeasible because the demand distribution is
+decision-dependent, namely $D \mid X = x, P = p$ varies with the price.
+The remedy is to estimate the conditional density $f_{D \mid X, P}$ by a
+conditional deep generative model trained on the empirical
+$\{(x_i, p_i, d_i)\}$ tuples, and then to sample from the estimated density
+to construct an empirical conditional profit function
+$\hat\pi(x, p, q) = \mathbb E_{D \sim \hat f}[(p - c) \min(D, q) - h (q - D)^+]$.
+Their three consistency theorems establish that the cDGM-based inventory
+decision converges to the true conditional optimum for any price, that the
+estimated profit function is consistent for the conditional expected profit,
+and that the joint pricing-and-inventory decisions are asymptotically
+optimal under the assumption that the conditional generator converges to
+the true conditional density. The empirical validation on Kaggle food
+demand data confirms the consistency results and shows that the
+generative approach dominates the linear and tree-ensemble baselines on
+realised profit. The methodological message is that decision-dependent
+uncertainty, which arises whenever the decision affects the distribution of
+the outcome, cannot be addressed by a fixed-price ERM and requires the
+joint distributional modelling that a conditional generative model provides.
+
+\citet{Amazon2025}, working at Amazon Supply Chain Optimization
+Technologies, push the framework to the multi-echelon production setting and
+treat the forecaster as a differentiable simulator inside an RL inventory
+ordering loop. Their Drain Model emulates the joint distribution
+$p(o^i_t, c^i_t \mid H^i_t, \theta)$ of outbound units $o^i_t$ and shipping
+costs $c^i_t$ for product $i$ at time $t$, conditional on the historical
+state $H^i_t$ that includes inventory levels, customer glance views, active
+warehouse set, and exogenous covariates. The output distribution combines a
+discrete part with explicit probability mass on small integer outbound values
+and a quantile-based tail for large outbounds, and the model is trained on a
+linear combination of cross-entropy, quantile, and negative-log-likelihood
+losses. The negative-log-likelihood term is preferred over the quantile loss
+for the trajectory-generation case because the log-likelihood is a strictly
+proper scoring rule in the sense of \citet{GneitingRaftery2007} while the
+quantile loss is only proper for a single marginal prediction. The core
+production challenge is that historical data only captures outcomes under the
+current inventory placement policy, while a learned RL ordering policy will
+visit out-of-distribution inventory configurations. \citet{Amazon2025} address
+this with an off-policy backtesting oracle that uses conditional glance-view
+conversion models to generate counterfactual fulfilment scenarios. The
+authors note that ``preliminary results demonstrate the model's accuracy
+within the in-distribution setting,'' which is the closest the published
+literature gets to a TSFM-style forecaster used as a differentiable simulator
+for an inventory RL agent, and the explicit acknowledgement of the
+off-policy out-of-distribution problem is the operational analogue of the
+Lucas critique discussed in Section~\ref{sec:bridge}.
+
+\subsubsection{Electricity dispatch and microgrid operation}
+\label{sec:app_electricity}
+
+Electricity dispatch is the cleanest empirical decision-focused win in the
+applied literature. The downstream optimisation is a two-stage robust
+operation problem with binary unit-commitment variables, energy-storage
+state-of-charge constraints, ramping limits, and demand-side flexibility, and
+the forecast objects are the joint distributions of renewable generation,
+load demand, and electricity price. Two-stage and stochastic dispatch
+problems with a downstream linear or convex programming structure are exactly
+the setting for which the SPO and SPO$^+$ machinery of
+Section~\ref{sec:dfl} provides finite-sample guarantees, and the empirical
+record bears out the theoretical promise.
+
+\citet{DontiAmosKolter2017} provide the first task-based-learning demonstration
+on real grid data, namely the PJM Interconnection electrical load series at
+hourly resolution over seven years of training data and a year and three quarters
+of testing data. The generator-scheduling problem has a $24$-hour horizon
+with explicit ramping constraints and asymmetric over- and under-generation
+penalties. A two-hidden-layer feed-forward neural network predicts the
+hourly mean and variance of next-day load under a Gaussian assumption, and the
+KKT-differentiable convex relaxation of the scheduling problem provides the
+gradient pathway through which the task loss propagates to the network
+weights. The task-based net reduces realised scheduling cost by $38.6\%$
+relative to the RMSE-trained net using the same optimisation routine, and by
+$8.6\%$ relative to a cost-weighted-RMSE variant. The result establishes that
+decision-focused training improves realised operational cost even when the
+predictor is structurally well-specified (Gaussian load with constant
+variance) and only the variance heteroscedasticity is misspecified.
+
+\citet{CaoXu2025} extend the decision-focused programme to multi-stage
+microgrid operation by embedding a multilayer encoder-decoder probabilistic
+forecaster inside a two-stage robust optimisation solved by the
+column-and-constraint generation algorithm. The forecaster handles the
+joint distribution of load demand, photovoltaic power, and wind turbine
+power at $15$-minute resolution. The architecture is hierarchical, with
+residual blocks followed by parallel encoder-decoder chains, Swish
+activations, and a temporal attention decoder that projects encoded features
+back into the prediction horizon. The training loss combines the continuous
+ranked probability score with a regret-type decision-focused term
+\begin{equation}
+\mathrm{Regret}_{\mathrm{SPO}}(D, \hat D)
+= J\bigl(\bar z_\rho(\hat D), D\bigr) - J\bigl(z^\star(D), D\bigr),
+\label{eq:caoxu_regret}
+\end{equation}
+wrapped in a softplus operator for numerical stability. The downstream
+operation problem includes binary commitment variables and is therefore
+non-differentiable, so \citet{CaoXu2025} introduce a continuous convex
+surrogate by relaxing the binaries to $[0, 1]$ and adding a Tikhonov
+regularisation $\rho \|z\|^2$ to guarantee strong convexity. Gradients
+through the surrogate optimiser $\bar z_\rho(\hat D)$ are obtained by
+implicit differentiation of the Karush-Kuhn-Tucker residual, in the spirit
+of \citet{DontiAmosKolter2017}. The forward decision evaluation uses the
+exact mixed-integer TSRO via C\&CG, and only the gradient path runs through
+the convex surrogate.
+
+The empirical results of \citet{CaoXu2025} are on modified IEEE 33-bus and
+69-bus power distribution networks with two ESS units and three to four
+PV and wind generators per network. On the forecasting side, the MED model
+attains $R^2 = 0.9651$ and $\mathrm{CRPS} = 0.72$ on load demand, $R^2 =
+0.9843$ on PV power, and $R^2 = 0.9852$ on wind power, all dominating
+DeepAR, Transformer, and Bi-LSTM baselines on all four metrics across the
+three series. On the dispatch side, the breakdown of daily operation cost in
+Table IV of \citet{CaoXu2025} shows the chapter's punchline cleanly. The
+baseline two-stage forecast-then-optimise pipeline costs \$5{,}127 per day on
+the 33-bus system. Replacing the deterministic forecast with DeepAR shaves
+$5.9\%$ off the net cost; adding the MED probabilistic forecaster shaves
+$11.5\%$; and switching to the end-to-end MED-plus-SPO-plus-TSRO framework
+brings the reduction to $18.0\%$. On the larger 69-bus system the
+corresponding reductions are $4.6\%$, $8.4\%$, and $12.6\%$ from a baseline of
+\$7{,}521 per day. The forecast-only improvements (DeepAR and MED without
+SPO) account for roughly two thirds of the total reduction; the
+decision-focused training contributes the remaining third. The robustness
+analysis varies the uncertainty budget $\Gamma$ and shows that the
+end-to-end framework's $95\%$ confidence-interval width on total operation
+cost is $42\%$ narrower than the baseline's, which is the operational
+analogue of the calibration improvement that the SPO programme is designed
+to deliver.
+
+The chapter's thesis statement is the abstract sentence of \citet{CaoXu2025}.
+The proposed method aligns forecasting accuracy with operational objectives
+by directly minimising decision regret via a surrogate SPO loss function. The
+combination of the formal regret bound from \citet{LiuGrigas2021},
+the implicit-KKT-differentiation routine from \citet{DontiAmosKolter2017}, and
+the empirical $12$-$18\%$ cost reduction on operational benchmarks makes
+electricity dispatch the cleanest case study in the chapter for the practical
+value of decision-focused forecasting.
+
+\subsubsection{Macroeconomic nowcasting and monetary policy reaction}
+\label{sec:app_macro}
+
+Macroeconomic nowcasting and monetary policy reaction sit at the intersection
+of the chapter's two halves. The forecasting half is anchored in
+Section~\ref{sec:adp_forecasting} by \citet{Fernandes2024}, who establishes
+that a neuro-dynamic-programming nowcaster trained by TD(0) on a 26-country EU
+panel transfers to a held-out country and lowers out-of-sample MAE by $32\%$
+relative to OLS on Portuguese GDP over 2015Q1-2023Q4. The decision half is
+anchored by \citet{HinterlangTaenzer2024}, who use the Bundesbank Discussion
+Paper 51/2021 to compute optimal interest-rate reaction functions by
+reinforcement learning under realistic central-bank loss functions, including
+the zero lower bound and nonlinear preferences. Their setup is the cleanest
+existing template for an RL agent in a calibrated macroeconomic environment.
+
+The environment is a two-equation system in inflation $\pi_t$ and the output
+gap $y_t$, evolving according to estimated transition equations
+\begin{equation}
+y_t = f_y(s^y_t) + \varepsilon^y_t, \qquad
+\pi_t = f_\pi(s^\pi_t) + \varepsilon^\pi_t,
+\label{eq:hinterlang_env}
+\end{equation}
+where the state vectors $s^y_t$ and $s^\pi_t$ contain contemporaneous and
+lagged values of $y, \pi$, and the nominal interest rate $i_t$. The state
+forms a New-Keynesian-three-equation representation in the spirit of
+\citet{RotembergWoodford1997}, with the central-bank reaction function
+explicitly excluded from $f_y$ and $f_\pi$. The functional forms $f_y, f_\pi$
+are estimated in two variants. The linear variant is a restricted structural
+vector autoregression of order two, with the restrictions chosen so that the
+Bayes and Akaike information criteria favour the parsimonious specification
+over the unrestricted SVAR(2). The nonlinear variant approximates each
+transition equation by a single-hidden-layer feed-forward neural network with
+the number of hidden units selected from one to ten by validation-set mean
+squared error. The nonlinear specification improves the in-sample fit by
+$35\%$ relative to the linear SVAR.
+
+The agent is a deep-RL controller that observes $x_t = (\pi_t, y_t, \cdot)$
+and selects $i_t$ to maximise the discounted expected central-bank reward
+$r_t = - w (\pi_t - \pi^\star)^2 - (1 - w) (y_t - y^\star)^2$. The policy is
+parametrised either as a linear function of the state, in the spirit of a
+Taylor rule, or as a nonlinear ANN. The estimated transition equations are
+held fixed during policy optimisation, which is the assumption against which
+the Lucas critique runs. The training algorithm is the deep-deterministic
+policy gradient of \citet{LillicrapDDPG2016}, with the target networks and
+replay buffer adapted to the macroeconometric setting. The data is quarterly
+US data from 1987Q3 to 2007Q2, deliberately stopping before the global
+financial crisis so that the zero-lower-bound period does not contaminate the
+transition estimation.
+
+The empirical results of \citet{HinterlangTaenzer2024} verify the abstract
+claim of the paper. All RL-optimised reaction functions outperform the
+realised federal funds rate path and the standard rule-based policies of
+\citet{Taylor1993}, \citet{TaylorWilliams2010}, and the Federal Reserve's
+Monetary Policy Report on the calibrated central-bank loss. Quantitatively,
+the linear RL reaction functions reduce the central-bank loss by over $35\%$
+relative to the realised rate, and the nonlinear RL reaction functions reduce
+it by over $43\%$, with the additional eight percentage points coming from
+the agent's ability to exploit the curvature in $f_y$ and $f_\pi$ that the
+linear policy cannot match. The historical counterfactual path of inflation
+and the output gap under the nonlinear RL rule sits visibly closer to the
+$(\pi^\star, y^\star)$ targets than either the realised path or the standard
+rules. A model-comparison exercise across eleven DSGE models confirms that
+the linear RL rules remain stable under reasonable alternative
+specifications, although the nonlinear rules are more sensitive to the choice
+of structural model.
+
+The Lucas critique applies in full force here. The transition equations are
+estimated from a single historical sample with a particular monetary-policy
+reaction function in place, and \citet{HinterlangTaenzer2024} explicitly
+acknowledge that allowing rational-expectations agents to update their
+expectations to the new RL-optimised policy would alter the transition
+parameters. The DSGE-model-comparison exercise is the paper's best available
+remedy, and the qualitative robustness of the linear RL rule across eleven
+DSGE models is the operative defence. The deeper remedy, namely identifying
+restrictions and instrumental variables for the structural shifts the agent
+might induce, requires the kind of econometric identification machinery that
+Section~\ref{sec:bridge} sketched and that
+Section~\ref{sec:forecasting_rl_open} returns to. The
+\citet{HinterlangTaenzer2024} result is therefore best read as a
+counterfactual quantification of how much realised-loss reduction was on the
+table during the 1987-2007 regime, holding the structural transition
+equations fixed, rather than as a recommendation for current monetary
+policy.
+
+\subsubsection{Order execution and market microstructure}
+\label{sec:app_execution}
+
+The fourth application set is order execution and the related microstructure
+problem of translating short-horizon directional forecasts into limit-order
+trading rules. The forecasting input is either an exogenous high-frequency
+signal of mid-quote returns or the agent's belief about how its own trades
+move the price. The decision is a sequence of limit-order placements over a
+discrete time grid. Both Micheli-Monod and the Nagy-Calliess-Zohren paper
+(cited here as \citealp{Briola2023} for bibliography-key continuity, see the
+note in the bib entry) work at the intersection of econometric price-impact
+modelling and deep reinforcement learning.
+
+\citet{MicheliMonod2024} formalise the optimal-execution problem with
+transient price impact following \citet{Obizhaeva2013} and Alfonsi-Schied-Slynko
+(2012). The agent's task is to liquidate an initial portfolio $X_0$ across
+$N + 1$ trades on an equispaced grid, with the executed price
+$P^\xi_t = P^0_t + \sum_{k \le t} \xi_{t_k} G(t - t_k)$ depending on past
+trades through a decay kernel $G$. The expected profit
+$V^\xi = -\mathbb E\bigl[\sum_k \xi_{t_k} \int_0^{\xi_{t_k}} G(0)\, ds\bigr]$
+admits a closed-form optimum under \citet{Alfonsi2012} when the decay kernel
+is strictly convex, namely
+$\xi^\star = - X_0\, M^{-1} \mathbf 1 / (\mathbf 1^\top M^{-1} \mathbf 1)$
+with $M_{ij} = G(|t_i - t_j|)$. The non-Markovian feature of the state, which
+includes the entire history of past trades $\xi_{0:(t-1)}$, makes standard
+deep RL slow to converge. \citet{MicheliMonod2024} address this with an
+auxiliary $Q$-function defined on the projected state
+$\hat\pi(s_t) = (t, X^\xi_t, \xi_{0:(t-1)})$ that drops the stochastic price
+component and reduces the input space from four dimensions to three. Their
+Proposition 3.1 establishes that the auxiliary $Q$-function satisfies an
+auxiliary Bellman equation, and Proposition 3.2 establishes the corresponding
+deterministic policy gradient, which lets the DDPG critic and actor exploit
+the auxiliary representation. The empirical study trains the agent over
+$30{,}000$ episodes per kernel and demonstrates convergence to the closed-form
+$\xi^\star$ on exponential, power-law, and two linear-resilience kernels. The
+online-learning experiment varies the kernel decay parameter $\rho$ from $1$
+to $0.5$ or $1.5$ over $100{,}000$ episodes, and the executed-strategy reward
+tracks the moving optimal within a small stable deviation attributable to
+exploration noise.
+
+The Nagy-Calliess-Zohren paper at \citet{Briola2023} addresses the
+complementary problem of converting an exogenous high-frequency directional
+signal into a limit-order trading rule. The agent operates in an OpenAI-Gym
+limit-order-book environment built on the ABIDES market simulator that
+replays NASDAQ price-time priority message data from the LOBSTER dataset.
+The directional signal is a Dirichlet random variable
+$d_t \in \Delta^2$ over the three classes
+$\{$down, stationary, up$\}$, with the Dirichlet parameters depending on the
+realised smoothed future return $r_{t+h}$ over a fixed horizon $h$ and the
+noise level controlled by the parameter $a$. The state vector includes the
+time remaining in the episode, the agent's cash balance and stock inventory,
+the directional signal probabilities, and the level-one bid and ask prices
+and volumes including the agent's own orders. The action space is
+single-share limit-order placements at bid, mid-quote, or ask, plus a skip
+action and an inventory-driven market order. The training algorithm is the
+APEX-Dueling-DQN of \citet{Horgan2018Apex} with double Q-learning, dueling
+networks, and asynchronous distributed prioritised experience replay. The
+neural architecture combines three feed-forward layers with an LSTM layer
+on a $100$-state context window for both the value and advantage streams.
+
+The empirical case for the Nagy-Calliess-Zohren agent is on $4.5$ months of
+AAPL training data (Jan-May 2012) and $1.5$ months of out-of-sample data
+(May-June 2012), with a robustness check on $2022$ data. Three noise levels
+are tested, namely $a = 1.1$ for high noise, $a = 1.3$ for medium noise, and
+$a = 1.6$ for low noise. The RL agent dominates the heuristic baseline at all
+three noise levels, with the differences in episodic mean return and in
+Sharpe ratio statistically significant under a paired $t$-test at $p \ll 0.1$
+across $31$ test episodes per noise level. The action distribution differs
+across noise regimes. Under the noisiest signal ($a = 1.1$), the agent
+skips $24.5\%$ of opportunities and places sells at the bid $95.4\%$ of the
+time and buys at the ask $97.5\%$ of the time, namely aggressive marketable
+limit orders. Under the cleanest signal ($a = 1.6$), the agent skips $7.8\%$
+and uses passive mid-quote placements more frequently, trading off execution
+probability against transaction cost. The robustness check on 2022 data
+confirms that the strategy generalises across the decade-long regime shift,
+with the high-noise case being the lone non-profitable scenario.
+
+The methodological message across \citet{MicheliMonod2024} and the
+Nagy-Calliess-Zohren paper is that the forecast and the execution are best
+trained jointly even when the forecast is exogenous. In Micheli-Monod, the
+forecast is the parametric model of price impact, and the closed-form
+optimum acts as the oracle benchmark that the DDPG converges to without
+prior knowledge of the kernel. In Nagy-Calliess-Zohren, the forecast is the
+noisy directional signal, and the agent's contribution is to translate the
+signal into a profitable order-placement rule that the rule-based heuristic
+cannot. Both papers vindicate the chapter's recurring thesis. Decision-aware
+training, namely either learning the policy end-to-end against the realised
+cost or constructing an action-specific representation that exploits the
+decision-induced structure of the state, outperforms predict-then-optimise
+even when the forecast is held fixed.

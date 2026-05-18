@@ -1,0 +1,35 @@
+  Cache hit: regret_vs_m
+  Cache hit: regret_vs_T
+  Cache hit: mabuc
+
+======================================================================
+  Causal Bandits on Parallel Bandits + Greedy Casino -- summary
+======================================================================
+  N parents = 50, action set |A| = 101
+  Reward gap epsilon = 0.3
+
+  --- Simple regret vs. graph hardness m(q) at T = 400 ---
+    m(q)       Succ-Reject mean (SE)        Lattimore Alg1 mean (SE)
+       2          0.2808 (0.0021)              0.0237 (0.0018)
+       8          0.2812 (0.0030)              0.0732 (0.0029)
+      24          0.2953 (0.0045)              0.1247 (0.0036)
+      48          0.3179 (0.0062)              0.0711 (0.0040)
+
+  --- Simple regret vs. horizon T at m(q) = 2 ---
+       T       Succ-Reject mean (SE)        Lattimore Alg1 mean (SE)
+     100          0.3099 (0.0013)              0.1320 (0.0034)
+     200          0.3003 (0.0016)              0.0601 (0.0027)
+     400          0.2827 (0.0020)              0.0217 (0.0018)
+     800          0.2262 (0.0030)              0.0024 (0.0006)
+    1600          0.1425 (0.0034)              0.0000 (0.0000)
+
+  --- Greedy-casino MABUC at T = 1000 ---
+  Vanilla Thompson sampling: cumulative regret = 200.49 (SE 0.28)
+  Causal Thompson (TS_C)   : cumulative regret = 0.66 (SE 0.04)
+  Ratio TS / TS_C = 305.3x
+
+  Output files:
+     /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_combined.png
+     /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_results.tex
+  Figure saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_combined.png
+  Table saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_results.tex
