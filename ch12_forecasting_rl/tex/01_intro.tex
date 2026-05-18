@@ -1,0 +1,188 @@
+% Section 1: Introduction (v2)
+\subsection{Introduction}
+\label{sec:forecasting_rl_intro}
+
+A retailer faces tomorrow's demand $y$ for a perishable good. Each unsold
+unit at day's end costs $c_o = 1$. Each unmet unit of demand costs
+$c_u = 4$, the lost margin from a stockout. The retailer must commit today
+to an order quantity $a$. The realised cost is
+$L(a, y) = c_u \max(y - a, 0) + c_o \max(a - y, 0)$, and the cost-minimising
+order is the $\tau^\star = c_u / (c_u + c_o) = 0.8$ quantile of the
+demand distribution. A forecaster who reports an unbiased point forecast
+$\hat y = \mathbb E[y]$ would have the retailer stock to the mean and incur
+a stockout four times out of five at the wrong margin. The forecaster trained
+on squared error is good at predicting the conditional mean but bad at
+informing the retailer's decision. The forecaster trained on the realised
+newsvendor loss is biased on squared-error metrics but recovers the right
+decision quantile.
+
+This is the chapter in miniature. Forecasting and reinforcement learning
+share a quantity, namely the conditional distribution of an outcome, but
+disagree on which functional of that distribution counts as evaluation.
+The remainder of this introduction develops the bridge between forecast
+loss and decision loss (\S\ref{sec:bridge}) that the rest of the chapter
+builds on. The body then unfolds in two parts. The first
+(Section~\ref{sec:rl_for_forecasting}, RL for forecasting) carries the
+decision-induced loss into single-period and sequential forecasting,
+from differentiable optimisation layers (Section~\ref{sec:dfl}) through
+approximate dynamic programming (Section~\ref{sec:adp}) to the
+operational boundary at which the sequential problem collapses back to
+supervised learning (Section~\ref{sec:madeka}). The second
+(Sections~\ref{sec:model_based_planning} and~\ref{sec:forecaster_as_policy},
+Forecasting for RL) inverts the relation. The forecaster becomes a
+component inside a reinforcement-learning agent and the artifact is a
+policy. Classical Dyna, value-aware model learning, and modern world
+models develop the model-based planning side
+(Section~\ref{sec:model_based_planning}); trajectory generative models
+and counterfactual off-policy evaluation develop the case in which the
+forecaster doubles as the policy
+(Section~\ref{sec:forecaster_as_policy}). A worked microgrid application
+(Section~\ref{sec:app_electricity}) and two synthetic simulations
+(Sections~\ref{sec:forecasting_rl_sim} and~\ref{sec:cfope_sim}) anchor
+the two parts.
+
+We adopt one notation throughout. Features observed before the decision
+are $x \in \mathcal X$, outcomes realised after the decision are
+$y \in \mathcal Y$, and decisions are $a \in \mathcal A$. The realised cost
+of decision $a$ under outcome $y$ is $L(a, y) \ge 0$. A forecaster is a
+parametric map $f_\theta : \mathcal X \to \mathcal Y$ or
+$f_\theta : \mathcal X \to \Delta(\mathcal Y)$ with parameter
+$\theta \in \Theta$, and we write $\hat y = f_\theta(x)$ for its output.
+The induced decision rule is
+$\pi_\theta(x) = \arg\min_a \mathbb E[L(a, y) \mid \hat y = f_\theta(x)]$
+when the forecaster is distributional, and
+$\pi_\theta(x) = \arg\min_a L(a, f_\theta(x))$ when it is a point
+predictor. A pointwise forecast loss is $\ell(\hat y, y)$, with squared
+error $\ell(\hat y, y) = (y - \hat y)^2$ the canonical example. The
+decision-induced loss, the central quantity of the chapter, is
+\begin{equation}
+R(\theta) = \mathbb E_{(x, y)}\bigl[ L(\pi_\theta(x), y) \bigr].
+\label{eq:decision_loss}
+\end{equation}
+For sequential problems we add state $s_t \in \mathcal S$, action
+$a_t \in \mathcal A$, one-step reward $r(s_t, a_t)$, discount
+$\gamma \in [0, 1)$, and the value and action-value functions
+$V^\pi(s) = \mathbb E_\pi[\sum_{t \ge 0} \gamma^t r_t \mid s_0 = s]$,
+$Q^\pi(s, a) = \mathbb E_\pi[\sum_{t \ge 0} \gamma^t r_t \mid s_0 = s,
+a_0 = a]$. Symbols are reused without redefinition across the chapter, and
+section-specific symbols are introduced explicitly at first use.
+
+The running example throughout is the newsvendor with $c_u = 4$,
+$c_o = 1$, $\tau^\star = 0.8$. The synthetic simulation of
+Section~\ref{sec:forecasting_rl_sim} makes the chapter's empirical
+punchline concrete on the same instance with an AR(1) demand process and a
+heteroscedastic noise model. Two forecasts that look identical on the
+squared-error metric differ by a factor of nearly five on the realised
+newsvendor cost when the noise model is misspecified, and the corrective
+is a training objective that knows about the decision.
+
+\subsubsection{The bridge between forecast loss and decision loss}
+\label{sec:bridge}
+
+Consider the newsvendor of the introduction in its simplest binary form.
+Each day the retailer chooses whether to stock an extra unit ($a = 1$,
+Yes) or not ($a = 0$, No). The day is Bad ($y = 1$, a stockout) with
+probability $\pi$ or Good ($y = 0$) with probability $1 - \pi$. Realised
+utilities are
+\begin{equation}
+\begin{array}{c|cc}
+                  & y = 1 \text{ (Bad)} & y = 0 \text{ (Good)} \\ \hline
+a = 1 \text{ (Yes)} & U_{yb} = 0           & U_{yg} = -1 \\
+a = 0 \text{ (No)}  & U_{nb} = -4          & U_{ng} = 0
+\end{array}
+\label{eq:gp_payoff_table}
+\end{equation}
+The retailer with forecast $\hat\pi$ acts Yes whenever
+$\hat\pi\, U_{yb} + (1 - \hat\pi) U_{yg} > \hat\pi\, U_{nb} +
+(1 - \hat\pi) U_{ng}$, which rearranges to the threshold rule
+$\pi_\theta(x) = \mathbf 1\{\hat\pi > \theta\}$ with
+$\theta = (U_{ng} - U_{yg}) / (U_{yb} - U_{nb} + U_{ng} - U_{yg})
+= 1/5 = 0.2$. The asymmetry $c_u / c_o = 4$ pushes the threshold below
+one half. The retailer stocks the extra unit unless the forecast of a
+stockout is very low.
+
+\citet{GrangerPesaran2000} point out the consequence for forecast
+evaluation. The realised economic value of the forecast $\hat\pi$ across
+$T$ periods is
+\begin{equation}
+V(\hat\pi)
+= T^{-1} \sum_{t=1}^T H \bigl(y_t - \theta\bigr)
+  \mathbf 1\{\hat\pi_t > \theta\}
+  + \text{constant},
+\label{eq:gp_value}
+\end{equation}
+with $H = U_{yb} - U_{nb} + U_{ng} - U_{yg} = 5 > 0$ a positive scale and
+the constant invariant across forecasts. Realised value depends on
+$\hat\pi$ only through the threshold-crossing indicator. Two forecasts that
+look the same on mean squared error can crossover at different rates and
+therefore deliver different realised values, and the statistical ranking
+can reverse the decision-economic ranking.\footnote{The concrete reversal
+example of \citet{GrangerPesaran2000} constructs two forecasters with the
+same MSE such that one is always above $\theta$ and the other always
+below. The MSEs are identical because the errors $\hat\pi^{(1)} - \pi$ and
+$\hat\pi^{(2)} - \pi$ are equal in absolute value at every $t$; the
+realised values differ by the full gap $H \mathbb E[|y - \theta|]$ per
+period.} A forecast trained to minimise squared error is good at the wrong
+thing. A forecast trained to maximise~\eqref{eq:gp_value} is good at the
+right thing but typically biased on MSE.
+
+The statistical complement of the argument is the proper scoring rule
+machinery of \citet{GneitingRaftery2007}. A scoring rule $S(P, y)$
+on a class of probability distributions $\mathcal P$ is proper when
+$\mathbb E_{y \sim Q}[S(Q, y)] \ge \mathbb E_{y \sim Q}[S(P, y)]$
+for every $P, Q \in \mathcal P$, and strictly proper when the inequality
+is strict for $P \ne Q$. The Brier score \citep{Brier1950}
+$S^{\mathrm B}(\hat\pi, y) = -(y - \hat\pi)^2$ is the canonical example for
+binary outcomes. The \citet{GneitingRaftery2007} characterisation theorem
+states that every regular proper scoring rule arises from a convex
+generating function $G$ on $\mathcal P$ via
+\begin{equation}
+S(P, \omega)
+= G(P) + G^\star(P, \omega) - \int G^\star(P, \cdot)\, \mathrm dP,
+\label{eq:proper_score_rep}
+\end{equation}
+where $G^\star(P, \cdot)$ is a subtangent of $G$ at $P$ and the divergence
+$d(P, Q) = S(Q, Q) - S(P, Q)$ is the Bregman divergence under $G$. The
+Brier score corresponds to $G(p) = \|p\|_2^2$ on the simplex, the
+logarithmic score to negative Shannon entropy, and the continuous ranked
+probability score and the energy score to analogous constructions on richer
+sample spaces.\footnote{Strict propriety prevents the forecaster from
+hedging. Any rule that admits a $P \ne Q$ with the same expected score
+under $Q$ gives the forecaster an incentive to misreport.}
+
+Proper scoring rules elicit the supreme solution $\hat\pi = \pi$, the true
+conditional probability, irrespective of the downstream decision threshold
+$\theta$. This is convenient when the forecaster does not know the
+decision maker's cost structure. It is also the source of the
+Granger-Pesaran problem. The supreme forecast is the right target only
+when the forecaster's hypothesis class can recover $\pi$ exactly. Under
+misspecification, namely when no $\theta \in \Theta$ achieves $f_\theta(x) =
+\pi(x)$, the best-in-class forecast under a strictly proper rule is the
+$L^2$ projection of $\pi$ onto the hypothesis class, which is generally
+not the value-maximising forecast under~\eqref{eq:gp_value}. A sequential
+analogue of the same calibration question recurs in the model-based
+reinforcement-learning literature, where a value-targeted surrogate loss
+that is itself uncalibrated can return the wrong transition model and the
+wrong value function even at the population level
+\citep{VoelckerCalib2025}, a point we take up in
+Section~\ref{sec:vaml_ve}.
+
+\citet{Dawid1998} closes the loop between decision theory and proper scoring
+rules. Given an action space $\mathcal A$, a utility $U(\omega, a)$, and the
+Bayes act $a_P = \arg\max_a \mathbb E_P[U(\omega, a)]$ under forecast
+distribution $P$, the score $S(P, \omega) = U(\omega, a_P)$ is proper with
+respect to the convex class containing $P$, and strictly proper when the
+Bayes act is unique. The decision-induced score depends on the entire utility
+structure of the downstream problem, while a generic strictly proper rule
+such as CRPS does not. The chapter's working definition of decision-focused
+learning is the construction that uses Dawid's reduction in reverse. Pick the
+utility $U$ first, derive the induced score, and train the forecaster against
+that score. Wald (1950) statistical decision theory carries the prescription
+in the abstract. Sections~\ref{sec:dfl}-\ref{sec:adp} carry it out in
+practice for single-period and sequential settings respectively.
+
+What loss should we train under? The supreme answer is a strictly proper
+rule on the conditional distribution. The pragmatic answer is the
+decision-induced score $S(P, \omega) = U(\omega, a_P)$ when the downstream
+decision and utility are known. The next section takes up the pragmatic
+case in the form that scales to high-dimensional predictors.

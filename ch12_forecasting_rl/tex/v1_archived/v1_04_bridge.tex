@@ -1,0 +1,165 @@
+% Section 4: The bridge between forecast loss and decision loss
+\subsection{The bridge between forecast loss and decision loss}
+\label{sec:bridge}
+
+The arguments of Sections~\ref{sec:rl_for_forecasting} and~\ref{sec:forecasting_for_rl}
+converge on a single methodological question, namely what loss should govern the
+training of the forecaster when the forecast is destined for use inside a
+decision. The classical answer is in \citet{GrangerPesaran2000}. The forecast
+evaluation problem and the decision evaluation problem are not separable in
+general, and the resolution requires going from forecast-error metrics to
+decision-induced metrics. The modern answer is in
+\citet{ElmachtoubGrigas2022} and \citet{DontiAmosKolter2017}, which make the
+Wald (1950) statistical decision theory differentiable and operational at
+scale. This subsection lays out the two answers and the obstacles to combining
+them with the time-series-foundation-model substrate of
+Section~\ref{sec:tsfm}.
+
+The Granger-Pesaran setup begins from the two-state two-action problem of
+Section~\ref{sec:forecasting_rl_intro}. Let $y_t \in \{0, 1\}$ index a Bad and
+a Good state, $a_t \in \{0, 1\}$ index a No and a Yes action, and
+$\{U_{yb}, U_{yg}, U_{nb}, U_{ng}\}$ be the payoffs. The optimal decision rule
+is $a_t = \mathbf 1\{\hat\pi_t > \theta_t\}$ with threshold
+$\theta_t = c_t / (1 + c_t)$ and cost-benefit ratio
+$c_t = (U_{nb} - U_{yb}) / (U_{yg} - U_{ng} + U_{nb} - U_{yb})$. The realised
+economic value of the forecast $\hat\pi$ for the binary event over $T$ periods
+is
+\begin{equation}
+V(\hat\pi, \theta) = \bar a +
+  T^{-1} \sum_{t=1}^T H_t (y_t - \theta_t)
+  \mathbf 1\{\hat\pi_t > \theta_t\},
+\label{eq:gp_value}
+\end{equation}
+where $\bar a$ is invariant across forecasts and $H_t > 0$ is a positive
+weight. Granger and Pesaran show that the supreme solution, namely the
+forecast that maximises~\eqref{eq:gp_value} for every threshold $\theta_t$
+simultaneously, is $\hat\pi_t = \pi_t$, the true conditional probability of the
+event. The supreme solution is the natural target for an independent
+forecaster who does not know the downstream decision maker's cost ratio,
+because it serves all decision makers equally well.
+
+Two scoring devices arise as soon as one evaluates a forecast at finite $T$.
+The Brier score \citep{Brier1950} is the cross-sectional analogue of mean
+squared error, $B = T^{-1} \sum_t (y_t - \hat\pi_t)^2$, and admits the
+\citet{Murphy1973} decomposition
+\begin{equation}
+B = (\bar y - \bar y^2)
+  + K^{-1} \sum_{k=1}^K T_k (\pi_k - \bar y_k)^2
+  - K^{-1} \sum_{k=1}^K T_k (\bar y_k - \bar y)^2,
+\label{eq:brier_decomp}
+\end{equation}
+namely the sum of uncertainty, reliability, and resolution, where the
+$K$ bins index the forecast probability and $\bar y_k$ is the within-bin
+event frequency. The Kuipers score
+$\mathrm{KS}(\theta) = H(\theta) - F(\theta)$ is the hit rate minus the false
+alarm rate at threshold $\theta$ and is the directional analogue used in
+meteorology. \citet{GrangerPesaran2000} establish the exact algebraic
+relationship between the Kuipers score and the
+\citet{PesaranTimmermann1992} market-timing test statistic. In the standard
+case where the per-period weight $H_t = H$ and the threshold $\theta_t = \theta$
+are constant, the average economic value relates to the Kuipers score via
+\begin{equation}
+V(\hat\pi, \theta) = H \bigl[ (1 - \theta) \bar y\, H(\theta)
+  - \theta\, (1 - \bar y)\, F(\theta) \bigr],
+\label{eq:gp_ks_link}
+\end{equation}
+and this expression reduces to a constant multiple of the Kuipers score only
+in the knife-edge case $\theta = \bar y$, namely when the threshold coincides
+with the unconditional event frequency. Outside this case, a forecast that
+ranks higher on Brier or on Kuipers can rank lower in realised economic value,
+and two forecasts with identical statistical accuracy can be ordered in
+opposite directions by the relevant decision loss.
+
+The statistical complement of the Granger-Pesaran argument is the proper
+scoring rule machinery of \citet{GneitingRaftery2007}. Their main
+characterisation theorem states that every regular proper scoring rule $S$ on
+a convex class of distributions $\mathcal P$ arises from a convex generating
+function $G : \mathcal P \to \mathbb R$ via
+\begin{equation}
+S(P, \omega) = G(P) + G^\star(P, \omega) - \int G^\star(P, \cdot) \,\mathrm dP,
+\label{eq:proper_score_rep}
+\end{equation}
+where $G^\star(P, \cdot)$ is a subtangent of $G$ at $P$, and the rule is
+strictly proper if and only if $G$ is strictly convex. The Brier score
+corresponds to $G(p) = \|p\|_2^2$ on the simplex, the logarithmic score to
+negative Shannon entropy, and the continuous ranked probability score and the
+energy score follow from analogous constructions on richer sample spaces. The
+divergence associated with $S$, namely
+$d(P, Q) = S(Q, Q) - S(P, Q)$, is a Bregman divergence under the convex
+function $G$, and it is nonnegative with equality only at $P = Q$ when the rule
+is strictly proper.
+
+\citet{Dawid1998} closes the loop between proper scoring rules and decision
+theory. Given an outcome space $\Omega$, an action space $\mathcal A$, a utility
+function $U(\omega, a)$, and the Bayes act $a_P = \arg\max_a \mathbb E_P[
+U(\omega, a)]$ under a forecast distribution $P$, the induced score
+$S(P, \omega) = U(\omega, a_P)$ is proper with respect to any convex class
+$\mathcal P$ containing $P$. Strict propriety holds when the Bayes act is
+unique. This is the construction that connects the forecast loss to the
+decision loss. The decision-induced score depends on the entire utility
+structure of the downstream problem, while a generic strictly proper rule such
+as CRPS does not, and the gap between the two is what
+\citet{ElmachtoubGrigas2022} and \citet{DontiAmosKolter2017} address with the
+SPO$^+$ surrogate and the implicit-KKT differentiation routine respectively.
+A reading of the latter two papers as the Wald (1950) statistical decision
+theory made differentiable is the most concise way to summarise the modern
+synthesis. Wald defined the loss of a decision rule as the expected payoff
+under the true distribution, with the optimal procedure being the minimax rule
+against the worst admissible distribution. SPO$^+$ and task-based learning
+parametrise the predictor, define a differentiable estimate of the
+decision-induced loss, and minimise it by stochastic gradient descent, with the
+finite-sample guarantees of \citet{LiuGrigas2021} and \citet{HuangGupta2024}
+turning the qualitative recipe into quantitative regret bounds at sample
+complexity $n^{-1/4}$ on polyhedra and $n^{-1/2}$ on strongly convex level
+sets.
+
+Three obstacles separate the current state from the immediate replacement of
+standalone forecasting by decision-focused training across the chapter's
+domains of interest. First, the pretraining objective of every existing time
+series foundation model is action-unconditional. Chronos
+\citep{Ansari2024}, TimesFM \citep{Das2024}, and Lag-Llama \citep{Rasul2023}
+all model $p(y_{T+1:T+H} \mid y_{1:T})$, possibly with exogenous covariates, but
+never $p(y_{T+1:T+H} \mid y_{1:T}, a_T)$ for a decision-maker's action $a_T$.
+The forecast distribution conditions on observed history, not on policy. An
+RL agent that uses a TSFM as its world model therefore lacks the architectural
+hook through which decision-focused training could backpropagate to the
+forecaster. Second, the joint-calibration failure documented by
+\citet{PerezDiaz2025} implies that path-dependent decisions, including
+threshold-crossing inventory rules and worst-case execution costs, see less
+calibrated forecasts than marginal ones. Even when the marginal-CRPS objective
+is met, the energy-score-based joint-calibration condition typically fails for
+trajectory ensembles drawn from current TSFMs, and the failure manifests
+exactly on the path-dependent functionals that economic decisions depend on.
+
+Third, the Lucas critique applies in its sharpest form. A foundation forecaster
+trained on observational data cannot distinguish the causal effect of a policy
+intervention from the response to a confounding shock, and adding parameters
+to the forecaster does not change this. The credible remedies parallel the
+identification toolkit of econometrics. Instrumental variables, in the spirit
+of \citet{Chernozhukov2018} and the broader machine-learning-instruments
+literature, can restore identification of the action-conditional dynamics
+under exogeneity restrictions. Structural causal model assumptions, in the
+spirit of \citet{Buesing2019} and \citet{Oberst2019}, can substitute correctly
+specified causal mechanisms for the missing dynamics model. Action-conditional
+pretraining, namely training the forecaster on data with action interventions
+explicitly recorded and varied, can substitute observational pretraining when
+such data is available. None of these remedies is currently implemented at
+scale on a TSFM, which is the central open problem we return to in
+Section~\ref{sec:forecasting_rl_open}.
+
+The methodological consequence for the practitioner is that the choice of loss
+depends on what the forecaster knows about the downstream decision. When the
+decision is well-defined and differentiable, decision-focused training in the
+spirit of \citet{ElmachtoubGrigas2022}, \citet{DontiAmosKolter2017}, or the
+perturbation-gradient generalisation of \citet{HuangGupta2024} is the right
+choice, and the finite-sample rate is at best $n^{-1/4}$ on polyhedra and
+$n^{-1/2}$ on strongly convex level sets. When the decision is unknown at
+training time or shared across many users with different cost structures, a
+strictly proper scoring rule in the sense of \citet{GneitingRaftery2007} is
+the right choice, because it elicits the supreme solution
+$\hat\pi = \pi$ that serves all downstream decisions. When the decision is
+known but the forecast is destined for a TSFM-style world model, current
+practice is to combine a strictly proper pretraining objective with a
+decision-focused fine-tuning pass, and the finite-sample guarantees of this
+two-stage recipe are the subject of \citet{Capitaine2025}'s online
+DFL programme and remain a research frontier.

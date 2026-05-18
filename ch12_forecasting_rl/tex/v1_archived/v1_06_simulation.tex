@@ -1,0 +1,122 @@
+% Section 6: Simulation
+\subsection{Simulation Study: Decision-Focused Forecasting under AR(1) Demand}
+\label{sec:forecasting_rl_sim}
+
+We illustrate the central methodological claim of the chapter on a clean
+synthetic instance designed to be familiar to economists. The data generating
+process is a univariate AR(1) demand with a linear covariate shifter,
+\begin{equation}
+d_t = \mu + \phi (d_{t-1} - \mu) + \beta^\top x_t + \sigma_t\,\varepsilon_t,
+\qquad \varepsilon_t \sim \mathcal N(0, 1),
+\label{eq:ar1_dgp}
+\end{equation}
+with $x_t \in \mathbb R^{10}$ drawn i.i.d.\ standard normal, persistence
+$\phi = 0.7$, demand mean $\mu = 10$, and a heteroscedastic noise scale
+$\sigma_t = \sigma_0 \exp(\gamma^\top x_t)$ with $\sigma_0 = 1$ and
+$\gamma \in \mathbb R^{10}$ drawn per seed. The hypothesis class assumes a
+homoscedastic noise, so the heteroscedasticity is the misspecification
+direction. A retailer chooses an order quantity $q_t$ at the start of period
+$t$ after observing $(d_{t-1}, x_t)$ and incurs the newsvendor cost
+$L(q_t, d_t) = c_u \max(d_t - q_t, 0) + c_o \max(q_t - d_t, 0)$
+with $c_u = 4$ and $c_o = 1$, so that the oracle order quantile is
+$\tau^\star = c_u / (c_u + c_o) = 0.8$ and the optimal decision under the
+true heteroscedastic DGP is
+$q^\star_t = \mu + \phi (d_{t-1} - \mu) + \beta^\top x_t + \sigma_t
+\Phi^{-1}(\tau^\star)$. We run $T = 2{,}000$ training steps and $500$ test
+steps over $20$ random seeds, with the seeds shared across the three
+procedures so that the comparison is paired.
+
+The three procedures share the same parametric family, namely an AR(1)
+mean with linear-in-$x$ regression and a single homoscedastic noise scale.
+Method A is the classical estimate-then-optimise procedure that fits
+$(\mu, \phi, \beta, \sigma)$ by ordinary least squares and plugs the fitted
+distribution into the critical fractile,
+$q^{\mathrm A}_t = \hat\mu + \hat\phi (d_{t-1} - \hat\mu)
++ \hat\beta^\top x_t + \hat\sigma\,\Phi^{-1}(\tau^\star)$.
+Method B is the decision-focused training of the same parametric family on the
+realised newsvendor loss, namely the SPO$^+$ surrogate of
+\citet{ElmachtoubGrigas2022} applied to the linear-cost-vector representation
+$c_t = (\mathbf 1\{d_t > q_t\}, -\mathbf 1\{d_t \le q_t\}) \cdot (c_u, c_o)$.
+The training step replaces the OLS first-order condition with a stochastic
+subgradient of the average newsvendor loss, taken with respect to the same
+parameters $(\mu, \phi, \beta, \sigma)$. Method C is the Bertsekas-style
+one-step rollout of \citet{BertsekasRollout2022}, namely the OLS mean
+prediction plus the empirical residual quantile in place of the parametric
+critical fractile, $q^{\mathrm C}_t = \hat\mu + \hat\phi (d_{t-1} - \hat\mu)
++ \hat\beta^\top x_t + \hat F^{-1}_{\mathrm{emp}}(\tau^\star)$, where
+$\hat F_{\mathrm{emp}}$ is the empirical CDF of the OLS in-sample residuals.
+
+The simulation is implemented in
+\verb|ch12_forecasting_rl/sims/decision_focused_ar1.py| with the
+\verb|sim_cache.py| caching infrastructure of the survey. Each method is
+trained, evaluated, and the resulting per-seed cost trajectory is cached
+independently so that re-runs after a parameter change recompute only the
+affected component. The shared environment fixture caches the per-seed
+data and the oracle cost path, and the three methods are computed from
+the shared fixture under their own configs. The full reproduction time is
+under two minutes on a single CPU core, and the cached pipeline runs in
+under five seconds when only the figure or table needs regeneration.
+
+Table~\ref{tab:forecasting_rl_sim} reports the headline numbers. Method A
+attains in-sample MSE of $44.91 \pm 18.70$ and out-of-sample MSE of
+$530.01 \pm 498.34$ on the heteroscedastically-misspecified DGP. Method B
+attains $45.65 \pm 18.79$ in-sample and $529.35 \pm 497.26$ out-of-sample,
+both statistically indistinguishable from Method A on the MSE metric. Method
+C, which uses the same OLS mean prediction, has the same MSEs as Method A by
+construction. On the realised newsvendor regret over $500$ test periods,
+however, the three methods diverge sharply. Method A's mean regret is
+$2.819 \pm 0.670$, Method B's is $0.597 \pm 0.142$, and Method C's is
+$0.946 \pm 0.177$. Method B's regret is lower than Method A's by a factor of
+$4.7$, and Method C's is lower by a factor of $3.0$, both with standard
+errors that exclude zero at the $5\%$ level.
+
+The pattern illustrates the Granger-Pesaran phenomenon
+(Section~\ref{sec:bridge}) on a familiar substrate. The MSE-based ranking
+declares the three forecasters equivalent, and the OLS first-order condition
+that produces the same $(\hat\mu, \hat\phi, \hat\beta)$ in all three
+procedures confirms that the conditional mean is well identified by either
+loss. The decision-induced ranking is qualitatively different. The SPO$^+$
+training of Method B shifts the parameters away from the conditional mean
+toward a regret-minimising configuration that the asymmetric cost structure
+requires and that OLS does not detect, exactly as
+\citet{ElmachtoubGrigas2022} and \citet{HuangGupta2024} predict under
+misspecification. Method C captures part of the gain without modifying the
+mean estimator, by replacing the parametric residual quantile with the
+empirical one and exploiting the heteroscedasticity through the empirical
+CDF of OLS residuals. Method B dominates Method C on regret because it
+adjusts the entire parameter set, not just the residual quantile.
+
+The simulation is also a worked example of the counterpoint of
+\citet{HuKallus2020}. Under well-specification, namely with
+$\gamma = 0$ so that the noise scale is genuinely homoscedastic, the three
+methods are statistically indistinguishable on regret as well as on MSE, and
+the OLS plug-in attains the parametric rate $n^{-1}$ for free. The case for
+decision-focused training and for the rollout-based residual-quantile method
+is therefore conditional on misspecification, in our case the
+heteroscedasticity that the homoscedastic OLS model cannot represent. The
+empirical magnitude of the gap, namely a factor of $4.7$ on regret with
+$45$-versus-$45.65$ on in-sample MSE, is consistent with the
+$n^{-1}$-versus-$n^{-2/3}$ rate comparison of \citet{HuKallus2020} once one
+shifts from their margin-condition regime to the broad-misspecification
+regime that economic data typically occupies. Figure~\ref{fig:forecasting_rl_sim}
+plots the cumulative regret over the test horizon, with shaded bands at one
+standard error of the mean across the $20$ seeds, and visualises the
+divergence of the three trajectories from the oracle baseline.
+
+\begin{table}[h]
+\centering
+\caption{Decision-focused forecasting under AR(1) demand with heteroscedastic
+noise, $20$ seeds. Standard errors in parentheses.}
+\label{tab:forecasting_rl_sim}
+\input{../ch12_forecasting_rl/sims/decision_focused_ar1_table}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\linewidth]{../ch12_forecasting_rl/sims/decision_focused_ar1.png}
+\caption{Cumulative newsvendor regret over the test horizon, $20$ seeds, shaded
+band reports $\pm 1$ standard error of the mean. The horizontal line at zero is
+the oracle. Method B (SPO$^+$ fine-tune) attains the lowest regret; Method A
+(OLS plus critical fractile) the highest.}
+\label{fig:forecasting_rl_sim}
+\end{figure}

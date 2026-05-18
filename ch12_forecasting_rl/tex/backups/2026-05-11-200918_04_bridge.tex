@@ -1,0 +1,54 @@
+% Section 4: The bridge between forecast loss and decision loss
+\subsection{The bridge between forecast loss and decision loss}
+\label{sec:bridge}
+
+The arguments of Sections~\ref{sec:rl_for_forecasting} and~\ref{sec:forecasting_for_rl}
+converge on a single methodological question, namely what loss should govern the
+training of the forecaster when the forecast is destined for use inside a decision.
+The classical answer was given by \citet{GrangerPesaran2000}. The forecast
+evaluation problem and the decision evaluation problem are not separable in general.
+For a two-state two-action setup with payoff matrix $\pi$ and forecast $\hat p$
+for the binary event $y$, the optimal action depends on whether $\hat p$ exceeds a
+threshold determined by the relative payoffs. The mean squared error of the
+forecast is monotone in $\lvert \hat p - p \rvert$ uniformly, but the realised
+payoff is sensitive to errors only in the neighbourhood of the threshold. Two
+forecasts with identical MSE rankings can swap under decision-theoretic ranking
+once the cost structure is asymmetric, and \citet{GrangerPesaran2000} construct
+the explicit reversal example. The bridge between meteorological forecast scoring
+via the Kuipers score and financial market timing tests is one of their key
+contributions.
+
+The statistical complement is \citet{GneitingRaftery2007}. A scoring rule
+$S(F, y)$ is proper if the forecaster's expected score is maximised at the true
+forecast distribution $F = G$, and strictly proper if the maximiser is unique. They
+show that the log score, the continuous ranked probability score, and the energy
+score are strictly proper, that the squared error loss is not strictly proper in
+distributional terms but is consistent for the mean, and that every strictly proper
+rule arises from a Bregman divergence under a convex score-generating function.
+Strictly proper rules are the right starting point for distribution forecasting
+because they prevent the forecaster from gaming the score by hedging.
+
+The decision-focused programme of \citet{ElmachtoubGrigas2022} and
+\citet{DontiAmosKolter2017} can be read as the Wald (1950) statistical decision
+theory made differentiable. Wald defined the loss of a decision rule as the
+expected payoff under the true distribution, and the optimal procedure is the
+minimax rule against the worst admissible distribution. SPO$^+$ and task-based
+learning operationalise this by treating the predictor as a parametric family
+that minimises an estimate of the decision-induced loss directly, and by training
+the family with stochastic gradient descent. The risk bounds of
+\citet{LiuGrigas2021} and \citet{HuangGupta2024} turn this into a quantitative
+statement about sample complexity. The picture across these strands is that the
+classical Granger-Pesaran question, namely which loss to use, now has a
+constructive answer at scale, conditional on misspecification and conditional on
+the downstream decision being expressible in a differentiable way.
+
+Three obstacles prevent the immediate replacement of standalone forecasting by
+decision-focused training. First, TSFM pretraining is action-unconditional, which
+means the forecast distribution conditions on observed covariates but not on the
+agent's decision. Second, the joint-calibration failure documented by
+\citet{PerezDiaz2025} implies that path-dependent decisions, for example
+threshold-crossing inventory rules, see less calibrated forecasts than marginal
+ones. Third, the Lucas critique applies. A foundation forecaster trained on
+observational data cannot distinguish the causal effect of a policy intervention
+from the response to a confounding shock, and adding parameters to the forecaster
+does not change this.

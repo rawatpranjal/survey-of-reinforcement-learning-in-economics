@@ -1,0 +1,100 @@
+% Section 6: Application: electricity dispatch
+\subsection{Application: electricity dispatch with decision-focused forecasting}
+\label{sec:app_electricity}
+
+A microgrid operator must decide how to schedule the next $24$ hours of
+electricity generation, energy-storage charging and discharging, and
+demand-side flexibility under uncertainty about renewable generation,
+load demand, and price. Each scheduling decision $a$ is a vector of
+hour-by-hour set-points subject to ramping constraints, state-of-charge
+limits, and exchange caps with the main grid. The realised operating
+cost depends on which generators were committed and how the realised
+renewable output and load tracked the forecast. The downstream problem is
+a two-stage robust optimisation. The forecast object is the joint
+distribution of renewable output and load demand at $15$-minute
+resolution. The application is the cleanest empirical
+decision-focused win in the literature because the downstream
+optimisation has a clean linear-plus-convex structure that the SPO
+machinery of Section~\ref{sec:dfl} fits exactly.
+
+\citet{CaoXu2025} embed a multilayer probabilistic encoder-decoder
+forecaster inside a two-stage robust optimisation solved by the
+column-and-constraint generation algorithm. The architecture is a
+hierarchy of residual blocks followed by parallel encoder-decoder chains
+with a temporal-attention decoder. The training loss combines the
+continuous ranked probability score with a regret-type decision-focused
+term,
+\begin{equation}
+\mathrm{Regret}_{\mathrm{SPO}}(y, \hat y)
+= J\bigl(\bar z_\rho(\hat y), y\bigr) - J\bigl(z^\star(y), y\bigr),
+\label{eq:caoxu_regret}
+\end{equation}
+where $J(z, y)$ is the realised operating cost of dispatch $z$ under
+realisation $y$, $z^\star(y)$ is the oracle dispatch, and $\bar
+z_\rho(\hat y)$ is the dispatch produced by a Tikhonov-regularised convex
+relaxation of the two-stage robust programme.\footnote{The downstream
+problem has binary unit-commitment variables and is therefore
+non-differentiable. \citet{CaoXu2025} relax the binaries to $[0, 1]$ and
+add $\rho \|z\|^2$ to guarantee strong convexity. Gradients of
+\eqref{eq:caoxu_regret} are obtained by implicit differentiation of the
+Karush-Kuhn-Tucker residual through the relaxed problem, in the spirit
+of \citet{DontiAmosKolter2017}. The forward decision evaluation still uses
+the exact mixed-integer programme via column-and-constraint generation,
+and only the gradient path runs through the convex surrogate.}
+
+The empirical comparison is on the modified IEEE 33-bus and 69-bus power
+distribution networks, each with two energy-storage units and several
+photovoltaic and wind generators. Table~\ref{tab:caoxu_breakdown} shows
+the daily cost breakdown on the 33-bus system across four
+forecasting-optimisation schemes. The deterministic-forecast pipeline
+costs \$5{,}127 per day. Replacing the deterministic forecast with a
+DeepAR probabilistic forecaster shaves $5.9\%$. Switching to the
+\citet{CaoXu2025} encoder-decoder (MED) trained on CRPS shaves
+$11.5\%$. Adding the decision-focused regret loss to the MED training
+brings the reduction to $18.0\%$.\footnote{On the larger 69-bus system the
+corresponding net-cost reductions are $4.6\%$, $8.4\%$, and $12.6\%$ from
+a baseline of \$7{,}521 per day. The forecasting-only improvements (DeepAR
+and MED without SPO) account for roughly two thirds of the total
+reduction; the decision-focused fine-tuning contributes the remaining
+third.}
+
+\begin{table}[h]
+\centering
+\caption{Daily net operating cost (\$) on the IEEE 33-bus microgrid for
+four forecasting-optimisation schemes \citep{CaoXu2025}. The
+decision-focused MED-plus-SPO training delivers an $18.0\%$ reduction over
+the deterministic baseline.}
+\label{tab:caoxu_breakdown}
+\begin{tabular}{lcc}
+\hline\hline
+Scheme              & Net daily cost (\$) & Reduction vs baseline \\
+\hline
+Deterministic + TSRO      & 5{,}127            & --                  \\
+DeepAR + TSRO             & 4{,}823            & $5.9\%$             \\
+MED + TSRO (CRPS only)    & 4{,}536            & $11.5\%$            \\
+MED + SPO + TSRO          & 4{,}205            & $18.0\%$            \\
+\hline\hline
+\end{tabular}
+\end{table}
+
+The forecast-side gains and the decision-side gains decompose cleanly.
+The MED architecture's CRPS reduction over DeepAR captures
+forecast-accuracy improvements that the operator could in principle have
+obtained without changing the optimisation routine. The MED-plus-SPO
+fine-tuning captures a further decision-aware adjustment that does not
+improve the CRPS but does improve realised operating cost.
+\citet{CaoXu2025} also report a $42\%$ narrowing of the $95\%$
+confidence interval on total operation cost under a stress-test of the
+uncertainty budget $\Gamma$, the calibration improvement that the SPO
+programme of Section~\ref{sec:dfl} is theoretically designed to deliver.
+The chapter's thesis statement carries over directly. The proposed method
+aligns forecasting accuracy with operational objectives by directly
+minimising decision regret via a surrogate SPO loss.
+\citet{DontiAmosKolter2017} on PJM load data, mentioned in
+Section~\ref{sec:dfl}, is the antecedent at the larger-scale grid level
+and reaches the same $38.6\%$-versus-baseline qualitative conclusion.
+
+The microgrid case study is the chapter's cleanest piece of evidence that
+decision-focused training is not a methodological curiosity but an
+operational lever for cost reduction in problems with both a quantifiable
+forecast object and a structured downstream decision.
