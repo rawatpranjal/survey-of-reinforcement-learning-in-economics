@@ -1,0 +1,64 @@
+% Section 5: Applications
+\subsection{Applications}
+\label{sec:forecasting_rl_applications}
+
+We outline four application domains where the prediction-and-decision interaction
+is the active research question. The unifying claim across them is that joint or
+decision-aware estimation outperforms two-step pipelines whenever the forecast
+distribution is misspecified or the decision is asymmetric.
+
+The contextual newsvendor is the canonical example. \citet{BanRudin2019} show that
+on a high-dimensional feature space, an empirical risk minimisation procedure with
+$\ell_1$ regularisation, applied directly to the newsvendor loss, dominates a
+two-step pipeline that first estimates a demand distribution and then solves the
+critical-fractile problem. On UK nurse staffing data, their single-step approach
+reduces cost by between $23\%$ and $24\%$ relative to the sample average
+approximation baseline, corresponding to roughly $\pounds 44{,}000$ to
+$\pounds 47{,}000$ per ward per year, and their finite-sample bounds extend the
+\citet{Levi2007} guarantees to the high-dimensional contextual case. The
+\citet{Oroojlooyjadid2020} neural extension parametrises the order quantile
+function directly with a deep network and trains it on the asymmetric newsvendor
+loss. \citet{HanZhengMisra2024} introduce a conditional deep generative model that
+respects the decision-dependent endogeneity in joint demand learning and pricing,
+proving consistency for the joint problem. \citet{Amazon2025} embed a probabilistic
+drain forecaster as a differentiable simulator inside an RL inventory ordering
+loop and validate the system on counterfactual out-of-distribution inventory
+states that arise from off-policy trajectories.
+
+Electricity dispatch is the cleanest empirical decision-focused win.
+\citet{DontiAmosKolter2017} on PJM grid data already established that task-based
+training reduces realised cost over likelihood-based training when the same
+optimisation routine is used downstream. \citet{CaoXu2025} extend this to microgrid
+operation by embedding a multilayer probabilistic encoder-decoder forecaster
+inside a two-stage robust optimisation, training under a smart predict-then-optimize
+surrogate. On IEEE 33-bus and 69-bus benchmarks, they report total cost reductions
+of up to $18\%$ relative to two-stage pipelines and improved forecast accuracy
+along the operational frontier. Their phrasing is the cleanest statement of the
+chapter's thesis, namely that the proposed method aligns forecasting accuracy
+with operational objectives by directly minimising decision regret via a surrogate
+SPO loss function.
+
+Macroeconomic nowcasting and monetary policy reaction sit at the intersection of
+our two halves. \citet{Fernandes2024} demonstrates the forecasting half. The
+decision-side example is \citet{HinterlangTaenzer2024}. They estimate a structural
+vector autoregression on US data from 1987Q3 to 2007Q2 and use it as the
+transition model for a reinforcement learning agent that learns a nonlinear
+monetary policy reaction function under a quadratic central bank loss. The
+learned policies outperform the realised federal funds rate path and standard
+Taylor rules on the calibrated loss, and the framework accommodates the zero
+lower bound and nonlinear preferences without requiring closed-form solution
+of the optimal policy problem.
+
+Order execution and market microstructure provide a fourth application set.
+\citet{MicheliMonod2024} train a Deep Deterministic Policy Gradient agent for
+optimal execution under transient price impact, using an auxiliary $Q$-function
+that projects the non-Markovian state into a low-dimensional representation. The
+agent converges to the optimal trading rate across exponential, power-law, and
+linear resilience kernels, and adapts online when the kernel decay parameter
+drifts linearly in time. \citet{Briola2023} train an Apex-Dueling-DQN agent on
+NASDAQ Apple limit-order-book data with a noisy directional forward-mid-quote
+signal and report return uplifts of between $14.8$ and $32.2$ percentage points
+relative to a heuristic benchmark with access to the same signal, with the gains
+robust to the 2012 to 2022 regime shift at low and moderate signal noise. The
+forecast is the noisy signal, and the agent's contribution is to translate the
+signal into a profitable trading rule that the heuristic does not extract.

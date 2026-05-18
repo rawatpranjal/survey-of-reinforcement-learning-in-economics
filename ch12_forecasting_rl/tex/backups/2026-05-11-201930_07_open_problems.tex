@@ -1,0 +1,25 @@
+% Section 7: Open problems
+\subsection{Open problems}
+\label{sec:forecasting_rl_open}
+
+Four problems deserve attention from researchers who already understand
+econometric identification. First, action-conditional foundation forecasters do
+not yet exist. The closest existing work is \citet{Ada2025}, which uses
+Lag-Llama as a passive observation-process prior inside an offline RL loop, but
+not as an action-conditional dynamics model. Building a TSFM whose pretraining
+objective is conditional on a notion of intervention is the natural next step
+and is the right architectural problem for a foundation-model team working with
+an applied economist. Second, identification under TSFM-induced counterfactuals
+remains unresolved. The Buesing-Oberst SCM programme assumes a correctly
+specified causal graph, and the Lucas critique applies once the agent's policy
+enters the data-generating process. Adding instrumental variable restrictions,
+along the lines of the recent econometric literature on machine-learning
+instruments, is a credible direction. Third, online decision-focused regret
+bounds outside the convex polyhedral setting are at the research frontier
+\citep{Capitaine2025}. Non-stationary economic environments will require dynamic
+regret guarantees that are robust to path variation. Fourth, the
+\citet{PerezDiaz2025} form-and-function critique calls for pretraining objectives
+that produce joint trajectory ensembles rather than marginal point or parametric
+forecasts. Path-dependent operational queries, including threshold-crossing
+inventory rules and worst-case execution costs, are not answerable from
+marginally-calibrated forecasts no matter how accurate they are.

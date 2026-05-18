@@ -1,0 +1,22 @@
+Config:
+  sample_sizes=[200, 500, 1000, 2000], n_seeds=20
+  sigma_u=0.5, true TE: tau(x) = 2.0 + 1.0*x1
+  forcing recompute of: ['misspec', 'well_spec']
+  Cache hit: shared
+  Computing: well_spec
+  Cache saved: /Users/pranjal/Code/rl/ch12_forecasting_rl/sims/cache/counterfactual_ope__well_spec.pkl
+  Computing: misspec
+  Cache saved: /Users/pranjal/Code/rl/ch12_forecasting_rl/sims/cache/counterfactual_ope__misspec.pkl
+  Figure: /Users/pranjal/Code/rl/ch12_forecasting_rl/sims/counterfactual_ope.png
+  Table:  /Users/pranjal/Code/rl/ch12_forecasting_rl/sims/counterfactual_ope_table.tex
+
+Oracle V(pi_tilde) = 2.2844
+
+Summary at n = 1000 over 20 seeds:
+Scenario         Est          Bias        Std       RMSE
+Well-spec        IS        +0.0174     0.0996     0.0987
+Well-spec        MB        -0.0009     0.0572     0.0558
+Well-spec        CF        +0.0031     0.0665     0.0649
+Misspec          IS        +0.0174     0.0996     0.0987
+Misspec          MB        -0.0716     0.0605     0.0928
+Misspec          CF        +0.0024     0.0777     0.0757
