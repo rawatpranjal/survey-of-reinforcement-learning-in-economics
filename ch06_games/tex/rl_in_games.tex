@@ -79,7 +79,7 @@ Two further algorithms deserve mention. Friend-or-Foe Q-learning \citep{littman2
 \subsubsection{Simulation Study: Cournot and Bertrand Duopoly}
 \label{sec:cournot_bertrand}
 
-Two canonical games from industrial organization serve as benchmarks. In Cournot duopoly, two firms choose quantities $q_i \in \{0, 1, \ldots, 9\}$ with inverse demand $P(Q) = 10 - Q$ and marginal cost $c = 1$; the unique Nash equilibrium is $q^* = 3$ with profit $\pi^* = 9$. In Bertrand duopoly with differentiated products, two firms choose prices $p_i \in \{0, 1, \ldots, 9\}$ with demand $d_i = 10 - 2p_i + p_j$ and marginal cost $c = 1$; the continuous Nash equilibrium is $p^* \approx 4.33$, which discretizes to $p^* = 4$ with profit $\pi^* = 18$. Both games have unique Nash equilibria in pure strategies.\footnote{Each configuration runs for 50,000 iterations across 20 seeds.} Three algorithms compete: independent Q-learning (IQL), Nash-Q, and WoLF-PHC.
+Two canonical games from industrial organization serve as benchmarks. In Cournot duopoly, two firms choose quantities $q_i \in \{0, 1, \ldots, 9\}$ with inverse demand $P(Q) = 10 - Q$ and marginal cost $c = 1$; the continuous Nash equilibrium is $q^* = 3$ with profit $\pi^* = 9$. In Bertrand duopoly with differentiated products, two firms choose prices $p_i \in \{0, 1, \ldots, 9\}$ with demand $d_i = 10 - 2 p_i + p_j$ and marginal cost $c = 1$; the symmetric first-order condition gives $p^* = (a + b c)/(2 b - e) = 4$ with profit $\pi^* = 18$. Bertrand admits a single pure-strategy Nash on the integer grid at $(p_0, p_1) = (4, 4)$, while Cournot admits three pure-strategy Nash equilibria on the integer grid, $(2, 4)$, $(3, 3)$, and $(4, 2)$, only the symmetric of which coincides with the continuous solution.\footnote{Each configuration runs for 50,000 iterations across 20 seeds. The Nash-Q implementation here selects the joint-payoff-maximizing equilibrium when multiple pure Nash exist, a deviation from the canonical Hu-Wellman 2003 backup that pins down a single value function; in this game it picks $(3, 3)$ for Cournot.} Three algorithms compete: independent Q-learning (IQL), Nash-Q, and WoLF-PHC. The framing connects to the recent literature on Q-learning collusion in IO duopoly \citep{Calvano2020}; the stateless design used here has no memory of past actions, so collusive trigger strategies are not available and the equilibria reached are one-shot Nash.
 
 \begin{table}[htbp]
 \centering
@@ -88,11 +88,11 @@ Two canonical games from industrial organization serve as benchmarks. In Cournot
 \input{../ch06_games/sims/cournot_bertrand_results}
 \begin{minipage}{0.9\textwidth}
 \footnotesize
-Notes: Action and Profit report mean $\pm$ standard error across 20 seeds over the final 5,000 iterations. $|a - a^*|$ is the mean distance from Nash. Conv.\ iter is the first iteration where the smoothed average action enters a $0.5$-neighborhood of Nash.
+Notes: Action and Profit report mean $\pm$ standard error across 20 seeds over the final 5,000 iterations. $|a - a^*|$ is the mean distance from the symmetric continuous Nash action ($q^* = 3$ for Cournot, $p^* = 4$ for Bertrand).
 \end{minipage}
 \end{table}
 
-Table~\ref{tab:cournot_bertrand} and Figure~\ref{fig:cournot_bertrand} report the results. All three algorithms converge to Nash in both games within the first 5,000 iterations. IQL, which lacks any game-theoretic computation, matches the game-aware methods in these well-structured games with unique pure-strategy equilibria. The advantage of Nash-Q and WoLF-PHC emerges in games requiring mixed strategies, where IQL's deterministic policy limit prevents convergence.
+Table~\ref{tab:cournot_bertrand} and Figure~\ref{fig:cournot_bertrand} report the results. All three algorithms settle near the symmetric Nash in both games. IQL, which lacks any game-theoretic computation, matches the game-aware methods in these well-structured games. The advantage of Nash-Q and WoLF-PHC emerges in games requiring mixed strategies, where IQL's deterministic policy limit prevents convergence.
 
 \begin{figure}[htbp]
 \centering
@@ -145,11 +145,68 @@ During play, agents follow $\bar{\pi}_\phi$ with probability $1-\eta$ and $Q_\th
 
 These methods achieved superhuman performance in poker. Deep CFR attained \emph{exploitability} of 37 mbb/g\footnote{Exploitability measures how far a strategy is from Nash equilibrium, defined as the maximum expected gain an adversary could achieve by best-responding. Zero exploitability means the strategy is unexploitable (Nash). In poker, exploitability is measured in milli-big-blinds per game (mbb/g).} in heads-up flop hold'em \citep{Brown2019}. Libratus defeated top human professionals in heads-up no-limit hold'em using nested subgame solving with CFR \citep{brown2017superhuman}. Pluribus extended to six-player no-limit hold'em \citep{brown2019superhuman}. The game tree of heads-up no-limit hold'em contains $\sim 10^{161}$ states; these results demonstrate that CFR-based methods scale to practically relevant game sizes.
 
-\subsection{The Coase Conjecture}
+\subsection{The Coase Conjecture in a Durable Goods Monopoly}
+\label{subsec:coase}
 
 The durable goods monopoly is a canonical extensive-form bargaining problem with private information: the seller does not know the buyer's valuation.
 
-\citet{coase1972durability} conjectured that a durable goods monopolist\footnote{A durable good provides utility over multiple periods (e.g., a car, appliance, or software license) rather than being consumed immediately. Unlike non-durable goods, durable goods create intertemporal competition, as the seller at time $t$ competes with her own future self at $t+1$.} loses market power when buyers are patient. Unable to commit to future prices, the seller competes with her future self, eroding rents. As the inter-offer interval shrinks ($\delta \to 1$), price collapses to marginal cost and all surplus is extracted by buyers. \citet{gul1986foundations} formalized this for the gap case, where the seller's cost is strictly below all buyer valuations, guaranteeing trade and a unique stationary equilibrium.\footnote{\citet{stokey1981rational} showed that a monopolist facing rational consumers cannot price discriminate intertemporally; \citet{bulow1982durable} proved that in the no-gap case, the monopolist prefers renting to selling. The no-gap case admits multiple equilibria with more complex dynamics.}
+\citet{coase1972durability} conjectured that a durable goods monopolist\footnote{A durable good provides utility over multiple periods (e.g., a car, appliance, or software license) rather than being consumed immediately. Unlike non-durable goods, durable goods create intertemporal competition, as the seller at time $t$ competes with her own future self at $t+1$.} loses market power when buyers are patient. Unable to commit to future prices, the seller competes with her future self, eroding rents. As the inter-offer interval shrinks ($\delta \to 1$), price collapses to marginal cost and all surplus is extracted by buyers. \citet{stokey1981rational} showed that a monopolist facing rational consumers cannot price discriminate intertemporally; \citet{bulow1982durable} proved that in the no-gap case the monopolist prefers renting to selling. \citet{gul1986foundations} formalized the Coase conjecture for the gap case, where the seller's cost is strictly below all buyer valuations, establishing that the unique stationary Markov-perfect equilibrium price collapses to marginal cost as the period length shrinks. \citet{ausubel1989reputation} and the survey of \citet{ausubel2002bargaining} extend the analysis to the no-gap case and to bargaining with two-sided incomplete information.
+
+The Coase conjecture is asymptotic in $T$ and $\delta$. A two-period game cannot exhibit it; the surplus erosion only operates when the seller can re-optimize many times and buyers can credibly wait. The simulation below uses backward induction on the seller's recursive problem with a continuum of buyers, varying $T$ and $\delta$ on a grid, and compares the Markov-perfect no-commitment value against the commitment benchmark. A separate two-period simulation in Section~\ref{subsec:durable_goods_screening} illustrates the screening-versus-pooling equilibrium structure that underlies the durable-goods game; the Coase conjecture proper is delivered by the asymptotic sweep here.
+
+\subsubsection{Model and Dynamic Programming}
+
+A monopolist with marginal cost $c = 0$ faces a continuum of buyers with valuations $v$ drawn from the uniform distribution on $[0, 1]$. The mass of buyers is normalized to one. In each period $t = 1, \ldots, T$, the seller posts a price $p_t$; each remaining buyer of type $v$ accepts iff $v - p_t \ge \delta \, \mathbb{E}_t[v - p_{t+1}^*]$, where $p_{t+1}^*$ is the equilibrium price the seller will post at $t+1$. The seller's per-period revenue is $p_t$ times the mass of buyers who accept.
+
+Define the state at the start of period $t$ as the cutoff $v_t \in [0, 1]$: remaining buyers have valuations uniformly distributed on $[0, v_t]$, with mass $v_t$. The seller's action is the next-period cutoff $w \in [0, v_t]$; buyers with type in $[w, v_t]$ accept at price $p_t$ and exit, while those in $[0, w]$ remain. Marginal-buyer indifference at $w$ pins down the posted price,
+\begin{equation}
+p_t(w) = (1 - \delta) w + \delta \, p_{t+1}^*(w),
+\label{eq:coase_marginal_price}
+\end{equation}
+where $p_{t+1}^*(w)$ is the seller's equilibrium price at state $w$ in period $t+1$. The seller's Bellman equation is
+\begin{equation}
+V_t(v) = \max_{w \in [0, v]} \left\{ p_t(w) \, (v - w) + \delta \, V_{t+1}(w) \right\},
+\label{eq:coase_bellman}
+\end{equation}
+with terminal condition $V_T(v) = \max_{w \in [0, v]} w (v - w) = v^2 / 4$ at $w = v/2$.
+
+With uniform $F$ on $[0, v]$, the value, equilibrium price, and equilibrium cutoff functions are homogeneous in $v$: $V_t(v) = \beta_t v^2$, $p_t^*(v) = \mu_t v$, $w_t^*(v) = \lambda_t v$. Substituting into \eqref{eq:coase_marginal_price}--\eqref{eq:coase_bellman} reduces the dynamic program to a scalar recursion in $(\mu_t, \lambda_t, \beta_t)$ with terminal values $\mu_T = \lambda_T = 1/2$ and $\beta_T = 1/4$.\footnote{Define $A_{t+1} = 1 - \delta + \delta \mu_{t+1}$. The first-order condition for the seller's choice of $w$ in \eqref{eq:coase_bellman} gives $\lambda_t = A_{t+1} / (2(A_{t+1} - \delta \beta_{t+1}))$, after which $\mu_t = \lambda_t A_{t+1}$ and $\beta_t = \lambda_t (1 - \lambda_t) A_{t+1} + \delta \beta_{t+1} \lambda_t^2$. The recursion is closed-form per period; the entire backward induction over $T = 200$ periods runs in under a millisecond.}
+
+The commitment benchmark is the optimal pre-committed price path. With forward-looking buyers, uniform $F$, and $c = 0$, the optimal commitment is the static-monopoly price $p^* = 1/2$ in every period. Buyers with $v \ge 1/2$ buy in period 1; nobody else buys (any later discount would induce strategic waiting and lower expected revenue). Commitment value: $V^{\mathrm{com}} = p^* (1 - p^*) = 1/4$ independent of $(T, \delta)$.
+
+\subsubsection{Results}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../ch06_games/sims/durable_goods_coase_price_paths.png}
+\caption{No-commitment price paths $p_t$ versus normalized period $t/T$ for representative horizons $T \in \{10, 50, 200\}$ at $\delta \in \{0.5, 0.75, 0.9, 0.95, 0.99\}$. Dashed line: commitment price $p = 1/2$. Dotted line: marginal cost $c = 0$.}
+\label{fig:coase_paths}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../ch06_games/sims/durable_goods_coase_collapse.png}
+\caption{Coase collapse. Left: terminal-period price $p_T$ versus $T$ on a log-$T$ axis. Right: opening price $p_1$ versus $T$, same axis. Each curve fixes $\delta$.}
+\label{fig:coase_collapse}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Commitment value $V^{\mathrm{com}}$, no-commitment Markov-perfect value $V^{\mathrm{nc}}$, ratio $V^{\mathrm{nc}}/V^{\mathrm{com}}$, opening price $p_1$, and terminal price $p_T$ across the $(T, \delta)$ grid. Uniform valuations on $[0, 1]$, $c = 0$.}
+\label{tab:coase_dp}
+\input{../ch06_games/sims/durable_goods_coase_results}
+\end{table}
+
+Table~\ref{tab:coase_dp} reports the sweep. At $T = 200$, $\delta = 0.99$ the no-commitment monopolist captures $V^{\mathrm{nc}} = 0.058$ against the commitment benchmark $V^{\mathrm{com}} = 0.25$, a ratio of $0.23$; the terminal price $p_T$ rounds to zero to four decimals, and the opening price $p_1 = 0.115$ is well below the static monopoly price $1/2$. Holding $\delta$ at $0.95$ and varying $T$, the value ratio drops monotonically from $0.96$ at $T = 2$ to $0.37$ at $T = 200$, and $p_T$ from $0.46$ to numerical zero. Holding $T$ at $200$ and varying $\delta$, the ratio drops monotonically from $0.83$ at $\delta = 0.5$ to $0.23$ at $\delta = 0.99$. As a cross-check, the finite-horizon values at $T = 200$ for $\delta \le 0.95$ match the analytical stationary Markov-perfect equilibrium values $\beta^*$ and $\mu^*$ to five decimals.\footnote{The stationary fixed point of the recursion in the footnote above satisfies $\mu = \lambda (1 - \delta) / (1 - \delta \lambda)$, $\beta = \lambda(1-\lambda) A / (1 - \delta \lambda^2)$, and $\lambda = A / (2 (A - \delta \beta))$. At $\delta = 0.9$ this gives $\lambda \approx 0.760$, $\mu \approx 0.240$, $\beta \approx 0.120$, matching the table's $T = 200$ entries. At $\delta = 0.99$ the stationary $\mu \approx 0.091$, $\beta \approx 0.045$, so $T = 200$ is still slightly above the asymptotic limit; the residual gap closes as $T$ grows further.}
+
+Figure~\ref{fig:coase_paths} traces the equilibrium price path: long horizons and patient buyers force the seller to start lower and end near marginal cost. Figure~\ref{fig:coase_collapse} summarizes the collapse rate: $p_T \to 0$ at all $\delta < 1$ once $T$ is large enough, and $p_1$ falls toward the stationary level $\mu^*(\delta)$ that itself tends to zero as $\delta \to 1$.
+
+The Coase conjecture is delivered numerically: in the absence of commitment power, the durable-goods monopolist captures only a fraction of the commitment surplus, and that fraction shrinks toward zero as $T$ and $\delta$ jointly grow. Section~\ref{subsec:durable_goods_screening} below presents a two-period precursor that focuses on the screening-versus-pooling equilibrium structure.
+
+\subsection{Screening versus Pooling in the Durable Goods Monopoly}
+\label{subsec:durable_goods_screening}
+
+The two-period analogue of the model in Section~\ref{subsec:coase} reduces to an extensive-form game with a discrete buyer type and a discrete seller action set; it is small enough to admit equilibrium computation via counterfactual regret minimization (CFR) and serves as a methodological precursor to the dynamic programming sweep above. Replacing the continuum of valuations with a two-point distribution $v \in \{v_L, v_H\}$ and restricting the seller to two prices $\{v_L, P^*(\delta)\}$ recovers the screening-versus-pooling threshold $\pi^* = 1/2$ in closed form; CFR finds this threshold without being told the analytical solution.
 
 \subsubsection{Model}
 
@@ -165,24 +222,26 @@ The seller's optimal strategy depends on $\pi$. Let $\Pi_{\text{screen}} = \pi P
 \begin{equation}
 \pi^* = \frac{v_L(1-\delta)}{P^* - \delta v_L} = \frac{1}{2} \quad \text{when } v_H = 2v_L.
 \end{equation}
-For $\pi < \pi^*$, the seller pools (offers $v_L$ immediately). For $\pi > \pi^*$, the seller screens (offers $P^*$, then $v_L$ if rejected).\footnote{In a screening equilibrium, the seller uses price to separate buyer types: high-value buyers accept immediately at a high price, while low-value buyers reject and receive a lower offer. In a pooling equilibrium, the seller offers a single price that all types accept. The gap case ($0 = c < v_L$) guarantees trade in equilibrium.} The Coase conjecture manifests as $\delta \to 1$, where $P^*(\delta) \to v_L$ and the seller cannot extract surplus from high types.
+For $\pi < \pi^*$, the seller pools (offers $v_L$ immediately). For $\pi > \pi^*$, the seller screens (offers $P^*$, then $v_L$ if rejected).\footnote{In a screening equilibrium, the seller uses price to separate buyer types: high-value buyers accept immediately at a high price, while low-value buyers reject and receive a lower offer. In a pooling equilibrium, the seller offers a single price that all types accept. The gap case ($0 = c < v_L$) guarantees trade in equilibrium.} As $\delta \to 1$, the screening price $P^*(\delta) \to v_L$ and the seller cannot extract a screening premium from high types, but in a two-period game with action set $\{v_L, P^*(\delta)\}$ the asymptotic price-collapse mechanism of the Coase conjecture does not operate.
 
 \subsubsection{Computational Results}
 
-I model the bargaining game as an extensive-form game and apply CFR.\footnote{The game tree has two information sets for the seller (indexed by rejection history) and two for the buyer (indexed by private type). CFR runs for 5,000 iterations per parameter configuration; NashConv (sum of exploitabilities) measures convergence.}
+I model the bargaining game as an extensive-form game and apply CFR.\footnote{The game tree has two information sets for the seller (indexed by rejection history) and two for the buyer (indexed by private type). CFR runs for 5,000 iterations per parameter configuration. Vanilla CFR is deterministic given zero initial regrets, so seed-level variability is obtained by perturbing the initial regret table with small Gaussian noise (standard deviation $0.05$); ten seeds are run per $(\pi, \delta)$ cell. The reported P(Screen) and NashConv are means across seeds; SE columns report the standard error of the mean. NashConv is the sum of both players' exploitabilities, reported on the utility scale where the maximum single-player payoff is $v_H = 200$.}
 
 \begin{table}[htbp]
 \centering
-\caption{CFR Equilibrium vs. Theory: $\pi$-sweep at $\delta = 0.5$}
+\caption{CFR strategy versus analytical equilibrium: $\pi$-sweep at $\delta = 0.5$, $n = 10$ seeds per cell.}
 \label{tab:coase}
 \input{../ch06_games/sims/durable_goods_results}
 \begin{minipage}{0.9\textwidth}
 \footnotesize
-Notes: P(Screen) is the probability the seller offers $P^* = 150$ in period 1. Theory column gives the predicted probability (0 for pooling, 1 for screening).
+Notes: P(Screen) is the probability the seller offers $P^* = 150$ in period 1, averaged across seeds. SE columns report the across-seed standard error. Theory gives the analytical pure-strategy prediction (0 for pooling, 1 for screening, 0.5 at the indifference point $\pi^* = 1/2$). $|\Delta| = |\text{P(Screen)} - \text{Theory}|$. NashConv is the sum of both players' exploitabilities at iteration 5000, on the same utility scale as the payoffs.
 \end{minipage}
 \end{table}
 
-Table~\ref{tab:coase} reports results from varying $\pi$ at fixed $\delta = 0.5$. CFR recovers the sharp phase transition at $\pi^* = 0.5$: pooling below, screening above. A $\delta$-sweep at $\pi = 0.7$ confirms the screening price formula $P^*(\delta) = 200 - 100\delta$ with zero error across $\delta \in [0.1, 0.9]$; at $\delta \approx 0.75$, the seller switches to pooling as patient buyers erode the screening premium, consistent with the Coase conjecture.\footnote{Four stress tests were conducted: (1) awkward primes $(v_L, v_H) = (37, 83)$, converging to $P^* = 55$ (theory: 55.4); (2) information leak with a single seller information set at the root; (3) grid shift with 150 removed, recovering 145 (99.4\%); (4) 3-period game, finding $P_1 = 120$ versus theoretical 136. The 3-period result reflects a tie-breaking equilibrium: at $P_1 = 136$ the high buyer is exactly indifferent, so the seller prefers $P_1 = 120$ (revenue 108 versus 86.4 if rejected).}
+Table~\ref{tab:coase} reports results from varying $\pi$ at fixed $\delta = 0.5$. Away from the indifference threshold ($\pi \le 0.40$ and $\pi \ge 0.80$), CFR's average strategy matches the analytical step function: $|\Delta| \le 0.001$ in the pooling region and $|\Delta| = 0.000$ in the deep screening region. In the transition window $\pi \in [0.45, 0.65]$, CFR returns mixed strategies with across-seed standard errors of $0.13$--$0.16$, reflecting the seller's economic indifference where both pooling and screening yield identical expected profit. The empirical transition CFR finds is slightly delayed relative to the analytical $\pi^* = 1/2$: $\text{P(Screen)} \approx 0.60$ at $\pi = 0.60$ and reaches $0.90$ only at $\pi = 0.70$. Residual NashConv after 5{,}000 iterations is in the range $4$--$24$ across $\pi$, equivalent to up to $12\%$ of the maximum single-player payoff; CFR is not at $\varepsilon$-Nash for small $\varepsilon$ here, and reporting NashConv on a linear utility scale rather than a log scale makes this gap visible.
+
+A $\delta$-sweep at $\pi = 0.7$ verifies the screening price formula $P^*(\delta) = 200 - 100\delta$ with zero error across $\delta \in [0.1, 0.9]$. The CFR average P(Screen) drops from $1.0$ at $\delta = 0.1$ to $0.50 \pm 0.17$ at $\delta \ge 0.75$. The analytical column predicts pure screening (P(Screen) $= 1$) throughout this range because $\pi = 0.7 > \pi^* = 1/2$, so this drift is not a Coase regime switch. Instead, as $\delta$ grows, the screening price $P^*(\delta)$ shrinks toward $v_L$ and the seller's screening profit approaches the pooling profit; the seller becomes near-indifferent and CFR's average strategy spreads across the two corners under seed-perturbed initial regrets.\footnote{Four stress tests were conducted: (1) awkward primes $(v_L, v_H) = (37, 83)$, converging to $P^* = 55$ (theory: 55.4); (2) information leak with a single seller information set at the root; (3) grid shift with 150 removed, recovering 145 (99.4\%); (4) 3-period game, finding $P_1 = 120$ versus theoretical 136. The 3-period result reflects a tie-breaking equilibrium: at $P_1 = 136$ the high buyer is exactly indifferent, so the seller prefers $P_1 = 120$ (revenue 108 versus 86.4 if rejected).}
 
 \subsection{Discussion}
 

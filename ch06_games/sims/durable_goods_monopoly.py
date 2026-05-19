@@ -1,13 +1,20 @@
-# 2-Period Durable Goods Monopoly — Chapter 5, RL in Games
-# Demonstrates the Coase Conjecture via CFR equilibrium computation
+# 2-Period Durable Goods Monopoly --- Chapter 6, RL in Games
 #
-# This simulation shows how a monopolist's pricing power collapses as buyers
-# become more patient (higher discount factor), forcing immediate low prices.
+# Finite-horizon screening-vs-pooling exercise via CFR. The seller's action set
+# is {P_LOW, P*(delta)} where P* is the analytical high-buyer-indifference
+# price; CFR chooses between these two prices, validating the screening
+# threshold pi* = 1/2 in the gap case (V_H = 2 V_L). This is a finite-horizon
+# precursor to the Coase conjecture; the asymptotic price-collapse statement
+# (T -> infty, delta -> 1) is not reproduced here. For the canonical asymptotic
+# treatment see Ausubel and Deneckere (1989, Econometrica 57, ausubel1989reputation)
+# and the survey in Ausubel, Cramton, Deneckere (2002, ausubel2002bargaining).
 #
-# VALIDATION FRAMEWORK:
-# 1. NashConv (Exploitability) - proves convergence to Nash equilibrium
-# 2. Benchmark Check - replicates analytical Coase Conjecture threshold
-# 3. Rationality Check - verifies monotonic, economically sensible strategies
+# OUTPUTS:
+# 1. pi-sweep at fixed delta = 0.5: phase transition at pi* = 1/2 between
+#    pooling (offer P_LOW) and screening (offer P*).
+# 2. delta-sweep at fixed pi = 0.7: variation of screening price P*(delta).
+# 3. Reported metrics: P(Screen) mean and standard error across seeds,
+#    NashConv (residual exploitability), agreement with analytical theory.
 
 import argparse
 import sys, os
@@ -35,7 +42,9 @@ CONFIG = {
     'delta_sweep_pi_high': 0.7,
     'delta_sweep_n_points': 17,
     'delta_sweep_iterations': 5000,
-    'version': 1,
+    'n_seeds': 10,
+    'init_regret_noise_std': 0.05,
+    'version': 2,
 }
 
 # =============================================================================
@@ -237,18 +246,32 @@ class DurableGoodsGame:
 # =============================================================================
 
 class DurableGoodsCFR:
-    """CFR trainer for the Durable Goods Monopoly game."""
+    """CFR trainer for the Durable Goods Monopoly game.
 
-    def __init__(self, delta: float, pi_high: float = 0.5):
+    Vanilla CFR is internally deterministic given zero initial regrets.
+    To obtain genuine seed-level variability for SE estimation, we initialize
+    the regret table with small Gaussian noise per seed. This perturbs the
+    early trajectory of regret matching without changing the algorithm.
+    """
+
+    def __init__(self, delta: float, pi_high: float = 0.5,
+                 seed: int = 0, init_regret_noise_std: float = 0.0):
         self.game = DurableGoodsGame(delta, pi_high)
         self.regret_sum: Dict[str, np.ndarray] = {}
         self.strategy_sum: Dict[str, np.ndarray] = {}
         self.iteration = 0
+        self.seed = seed
+        self.init_regret_noise_std = init_regret_noise_std
+        self._rng = np.random.default_rng(seed)
 
     def get_strategy(self, info_set: str, num_actions: int) -> np.ndarray:
         """Get current strategy via regret matching."""
         if info_set not in self.regret_sum:
-            self.regret_sum[info_set] = np.zeros(num_actions)
+            if self.init_regret_noise_std > 0:
+                self.regret_sum[info_set] = self._rng.normal(
+                    0.0, self.init_regret_noise_std, size=num_actions)
+            else:
+                self.regret_sum[info_set] = np.zeros(num_actions)
             self.strategy_sum[info_set] = np.zeros(num_actions)
 
         regret = self.regret_sum[info_set]
@@ -565,9 +588,12 @@ def compute_analytical_equilibrium_delta_sweep(delta: float) -> Dict[str, float]
 # =============================================================================
 
 def run_experiment_single(delta: float, pi_high: float = 0.5,
-                          num_iterations: int = 5000) -> Dict:
-    """Run CFR for a single (delta, pi_high) configuration with full validation."""
-    cfr = DurableGoodsCFR(delta, pi_high)
+                          num_iterations: int = 5000,
+                          seed: int = 0,
+                          init_regret_noise_std: float = 0.0) -> Dict:
+    """Run CFR for a single (delta, pi_high, seed) configuration."""
+    cfr = DurableGoodsCFR(delta, pi_high, seed=seed,
+                          init_regret_noise_std=init_regret_noise_std)
     training_history = cfr.train(num_iterations, compute_exploitability_every=500)
 
     avg_strategy = cfr.get_average_strategy()
@@ -582,10 +608,10 @@ def run_experiment_single(delta: float, pi_high: float = 0.5,
     # Final exploitability
     final_expl = compute_exploitability(cfr.game, avg_strategy)
 
-    # Get all strategy details
     return {
         'delta': delta,
         'pi_high': pi_high,
+        'seed': seed,
         'p_star': cfr.game.p_high,
         'prob_high_cfr': prob_high,
         'exploitability': final_expl,
@@ -594,34 +620,74 @@ def run_experiment_single(delta: float, pi_high: float = 0.5,
     }
 
 
-def run_pi_sweep_experiment(delta: float = 0.5, num_iterations: int = 5000) -> List[Dict]:
-    """
-    Run π-sweep experiment: vary probability of high-type buyer.
+def run_experiment_multi_seed(delta: float, pi_high: float, num_iterations: int,
+                              n_seeds: int, init_regret_noise_std: float) -> Dict:
+    """Run CFR across multiple seeds and aggregate to mean / SE.
 
-    This is the primary validation experiment. With V_H=200, V_L=100:
-    - Screening price: P* = 200 - 100δ = 150 (at δ=0.5)
-    - Critical threshold: π* = 0.5
-    - For π < 0.5: Seller pools (offers P_LOW=100 immediately)
-    - For π > 0.5: Seller screens (offers P*=150, then P_LOW=100)
+    Seed-level variability comes from Gaussian-perturbed initial regrets.
+    Each seed produces an independent CFR trajectory; the average strategy
+    P(Screen) and the residual NashConv are summarized by mean and SE.
+    Per-seed strategies are retained so plots can show a representative seed.
     """
+    seed_results = []
+    for s in range(n_seeds):
+        r = run_experiment_single(delta, pi_high, num_iterations,
+                                  seed=s,
+                                  init_regret_noise_std=init_regret_noise_std)
+        seed_results.append(r)
+
+    prob_high_arr = np.array([r['prob_high_cfr'] for r in seed_results])
+    expl_arr = np.array([r['exploitability'] for r in seed_results])
+
+    def _mean_se(x):
+        n = len(x)
+        if n <= 1:
+            return float(np.mean(x)), 0.0
+        return float(np.mean(x)), float(np.std(x, ddof=1) / np.sqrt(n))
+
+    prob_mean, prob_se = _mean_se(prob_high_arr)
+    expl_mean, expl_se = _mean_se(expl_arr)
+
+    return {
+        'delta': delta,
+        'pi_high': pi_high,
+        'n_seeds': n_seeds,
+        'p_star': seed_results[0]['p_star'],
+        'prob_high_cfr': prob_mean,
+        'prob_high_se': prob_se,
+        'exploitability': expl_mean,
+        'exploitability_se': expl_se,
+        # Keep first seed's strategy / training history for plots
+        'strategy': seed_results[0]['strategy'],
+        'training_history': seed_results[0]['training_history'],
+        'per_seed_prob_high': prob_high_arr.tolist(),
+        'per_seed_expl': expl_arr.tolist(),
+    }
+
+
+def run_pi_sweep_experiment(delta: float = 0.5, num_iterations: int = 5000,
+                            n_seeds: int = 10,
+                            init_regret_noise_std: float = 0.05) -> List[Dict]:
+    """pi-sweep with multi-seed CFR; reports mean and SE per pi value."""
     p_star = compute_screening_price(delta)
     pi_threshold = compute_pi_threshold(delta)
 
     print("=" * 70)
-    print("π-SWEEP EXPERIMENT: Two-Type Gap Seller-Offer Game")
+    print("pi-SWEEP: Two-Type Gap Seller-Offer Game (multi-seed)")
     print("=" * 70)
-    print(f"Parameters: V_H={V_HIGH}, V_L={V_LOW}, δ={delta}")
-    print(f"Screening price: P*(δ) = {p_star:.1f}")
-    print(f"Critical threshold: π* = {pi_threshold:.2f}")
-    print(f"CFR iterations: {num_iterations}")
+    print(f"Parameters: V_H={V_HIGH}, V_L={V_LOW}, delta={delta}")
+    print(f"Screening price: P*(delta) = {p_star:.1f}")
+    print(f"Critical threshold: pi* = {pi_threshold:.2f}")
+    print(f"CFR iterations: {num_iterations}, seeds: {n_seeds}, "
+          f"init regret noise std: {init_regret_noise_std}")
     print()
 
-    # Sweep π from 0.1 to 0.9
     pi_values = np.linspace(0.1, 0.9, 17)
     results = []
 
     for pi in pi_values:
-        result = run_experiment_single(delta, pi, num_iterations)
+        result = run_experiment_multi_seed(delta, pi, num_iterations,
+                                           n_seeds, init_regret_noise_std)
         analytical = compute_analytical_equilibrium(delta, pi)
 
         result['prob_high_analytical'] = analytical['prob_high_r1']
@@ -630,33 +696,34 @@ def run_pi_sweep_experiment(delta: float = 0.5, num_iterations: int = 5000) -> L
         result['pi_threshold'] = analytical['pi_threshold']
 
         results.append(result)
-        print(f"π={pi:.2f}: P(High)={result['prob_high_cfr']:.3f}, "
-              f"Expl={result['exploitability']:.4f}, Theory={analytical['eq_type']}")
+        print(f"pi={pi:.2f}: P(Screen)={result['prob_high_cfr']:.3f} "
+              f"(SE {result['prob_high_se']:.3f}), "
+              f"NashConv={result['exploitability']:.3f} "
+              f"(SE {result['exploitability_se']:.3f}), "
+              f"Theory={analytical['eq_type']}")
 
     return results
 
 
-def run_delta_sweep_experiment(pi_high: float = 0.7, num_iterations: int = 5000) -> List[Dict]:
-    """
-    Run δ-sweep experiment: vary discount factor with fixed π.
-
-    With π > 0.5, seller always prefers to screen.
-    The screening price P*(δ) = 200 - 100δ varies with δ.
-    """
+def run_delta_sweep_experiment(pi_high: float = 0.7, num_iterations: int = 5000,
+                               n_seeds: int = 10,
+                               init_regret_noise_std: float = 0.05) -> List[Dict]:
+    """delta-sweep with multi-seed CFR; pi > 0.5 so theory predicts screening."""
     print("=" * 70)
-    print("δ-SWEEP EXPERIMENT: Screening Price Variation")
+    print("delta-SWEEP: Screening Price Variation (multi-seed)")
     print("=" * 70)
-    print(f"Parameters: V_H={V_HIGH}, V_L={V_LOW}, π={pi_high}")
-    print(f"CFR iterations: {num_iterations}")
+    print(f"Parameters: V_H={V_HIGH}, V_L={V_LOW}, pi={pi_high}")
+    print(f"CFR iterations: {num_iterations}, seeds: {n_seeds}, "
+          f"init regret noise std: {init_regret_noise_std}")
     print()
 
-    # Range of discount factors
     deltas = np.linspace(0.1, 0.9, 17)
     results = []
 
     for delta in deltas:
         p_star = compute_screening_price(delta)
-        result = run_experiment_single(delta, pi_high, num_iterations)
+        result = run_experiment_multi_seed(delta, pi_high, num_iterations,
+                                           n_seeds, init_regret_noise_std)
         analytical = compute_analytical_equilibrium(delta, pi_high)
 
         result['prob_high_analytical'] = analytical['prob_high_r1']
@@ -664,8 +731,11 @@ def run_delta_sweep_experiment(pi_high: float = 0.7, num_iterations: int = 5000)
         result['seller_ev_theory'] = analytical['seller_ev']
 
         results.append(result)
-        print(f"δ={delta:.2f}: P*={p_star:.0f}, P(High)={result['prob_high_cfr']:.3f}, "
-              f"Expl={result['exploitability']:.4f}")
+        print(f"delta={delta:.2f}: P*={p_star:.0f}, "
+              f"P(Screen)={result['prob_high_cfr']:.3f} "
+              f"(SE {result['prob_high_se']:.3f}), "
+              f"NashConv={result['exploitability']:.3f} "
+              f"(SE {result['exploitability_se']:.3f})")
 
     return results
 
@@ -675,14 +745,15 @@ def run_delta_sweep_experiment(pi_high: float = 0.7, num_iterations: int = 5000)
 # =============================================================================
 
 def plot_exploitability_convergence(results: List[Dict], save_path: str):
-    """
-    VALIDATION 1: NashConv convergence plot.
-    Proves the algorithm converges to Nash equilibrium.
+    """NashConv (exploitability) trajectory on a linear scale.
+
+    Residual NashConv at iteration 5000 is non-trivial (5--30 utils) in this
+    two-period bargaining game with private information, where CFR's standard
+    guarantees apply only loosely. Plotting on a linear scale rather than log
+    scale prevents the residual gap from looking like full convergence.
     """
     fig, ax = plt.subplots(figsize=(8, 5))
 
-    # Pick a few representative π values to show convergence curves
-    # Check if this is a π-sweep or δ-sweep
     if 'pi_high' in results[0]:
         sample_values = [0.3, 0.5, 0.7]
         param_key = 'pi_high'
@@ -695,7 +766,6 @@ def plot_exploitability_convergence(results: List[Dict], save_path: str):
     colors = ['#e41a1c', '#377eb8', '#4daf4a']
 
     for val, color in zip(sample_values, colors):
-        # Find result for this value
         for r in results:
             if abs(r[param_key] - val) < 0.05:
                 history = r['training_history']
@@ -705,12 +775,15 @@ def plot_exploitability_convergence(results: List[Dict], save_path: str):
                         label=f'${param_label} = {val}$', markersize=4)
                 break
 
-    ax.axhline(y=0.01, color='gray', linestyle='--', linewidth=1, label='$\\epsilon = 0.01$')
+    # Reference: max single-player payoff is V_HIGH = 200; mark 5% of that.
+    ax.axhline(y=0.05 * V_HIGH, color='gray', linestyle='--', linewidth=1,
+               label=r'$0.05 \cdot V_H = 10$ (5\% of max payoff)')
 
-    ax.set_xlabel('CFR Iterations', fontsize=12)
-    ax.set_ylabel('Exploitability (NashConv)', fontsize=12)
-    ax.set_title('Convergence to Nash Equilibrium', fontsize=14)
-    ax.set_yscale('log')
+    ax.set_xlabel('CFR iterations', fontsize=12)
+    ax.set_ylabel('NashConv (sum of player exploitabilities)', fontsize=12)
+    ax.set_title('Residual exploitability over CFR iterations (linear scale)',
+                 fontsize=13)
+    ax.set_ylim(bottom=0)
     ax.legend(fontsize=10)
     ax.grid(True, alpha=0.3)
 
@@ -730,6 +803,7 @@ def plot_pi_sweep_benchmark(results: List[Dict], save_path: str):
     """
     pi_values = [r['pi_high'] for r in results]
     prob_high_cfr = [r['prob_high_cfr'] for r in results]
+    prob_high_se = [r.get('prob_high_se', 0.0) for r in results]
     prob_high_theory = [r['prob_high_analytical'] for r in results]
     delta = results[0]['delta']
     p_star = results[0]['p_star']
@@ -737,15 +811,17 @@ def plot_pi_sweep_benchmark(results: List[Dict], save_path: str):
 
     fig, ax = plt.subplots(figsize=(8, 5))
 
-    # Analytical solution (step function at π* = 0.5)
+    # Analytical solution (step function at pi* = 0.5)
     pi_theory = np.array([0, pi_threshold - 0.001, pi_threshold, pi_threshold + 0.001, 1])
     prob_theory = np.array([0, 0, 0.5, 1, 1])
     ax.plot(pi_theory, prob_theory, color='black', linestyle='--',
-            linewidth=2, label='Analytical (Step Function)')
+            linewidth=2, label='Analytical (step function)')
 
-    # CFR result
-    ax.plot(pi_values, prob_high_cfr, 'o-', color='#1f77b4', linewidth=2,
-            markersize=6, label='CFR Equilibrium')
+    # CFR result with SE error bars across seeds
+    ax.errorbar(pi_values, prob_high_cfr, yerr=prob_high_se,
+                fmt='o-', color='#1f77b4', linewidth=2, markersize=6,
+                ecolor='#1f77b4', elinewidth=1, capsize=3,
+                label=f'CFR mean $\\pm$ SE ($n=$ seeds)')
 
     # Critical threshold line
     ax.axvline(x=pi_threshold, color='red', linestyle=':', linewidth=2,
@@ -783,15 +859,18 @@ def plot_coase_benchmark(results: List[Dict], save_path: str):
     """
     deltas = [r['delta'] for r in results]
     prob_high_cfr = [r['prob_high_cfr'] for r in results]
+    prob_high_se = [r.get('prob_high_se', 0.0) for r in results]
     p_stars = [r['p_star'] for r in results]
     pi_high = results[0]['pi_high']
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-    # Left: Probability of high price offer
+    # Left: Probability of high price offer (with SE error bars)
     ax = axes[0]
-    ax.plot(deltas, prob_high_cfr, 'o-', color='#1f77b4', linewidth=2,
-            markersize=6, label='CFR P(Screen)')
+    ax.errorbar(deltas, prob_high_cfr, yerr=prob_high_se,
+                fmt='o-', color='#1f77b4', linewidth=2, markersize=6,
+                ecolor='#1f77b4', elinewidth=1, capsize=3,
+                label='CFR P(Screen) mean $\\pm$ SE')
 
     # At π > 0.5, should always screen
     if pi_high > 0.5:
@@ -909,59 +988,58 @@ def plot_buyer_strategy_heatmap(results: List[Dict], save_path: str):
 
 
 def generate_validation_table(results: List[Dict], save_path: str):
-    """Generate comprehensive validation table with NashConv scores."""
-    # Determine if this is π-sweep or δ-sweep
+    """Validation table with SE columns and an honest agreement column.
+
+    The Agree column reports |P(Screen) - Theory| (smaller is better). It is
+    raw arithmetic, with no post-hoc near-threshold carve-out. The seller is
+    economically indifferent near pi = 1/2, so empirical CFR strategies can
+    drift to either corner there; this is visible in the table rather than
+    hidden behind a checkmark.
+    """
     is_pi_sweep = 'pi_high' in results[0] and len(set(r['pi_high'] for r in results)) > 1
 
     if is_pi_sweep:
         lines = [
-            r"\begin{tabular}{lcccccl}",
+            r"\begin{tabular}{lcccccccc}",
             r"\toprule",
-            r"$\pi$ & $P^*$ & P(Screen) & Theory & NashConv & Eq. Type & Status \\",
+            r"$\pi$ & $P^*$ & P(Screen) & SE & Theory & $|\Delta|$ & NashConv & SE & Eq.\ Type \\",
             r"\midrule"
         ]
-
         for r in results:
             pi = r['pi_high']
             p_star = r['p_star']
             prob = r['prob_high_cfr']
+            prob_se = r.get('prob_high_se', 0.0)
             theory = r['prob_high_analytical']
             expl = r['exploitability']
+            expl_se = r.get('exploitability_se', 0.0)
             eq_type = r['eq_type_theory']
+            gap = abs(prob - theory)
 
-            # Validation status based on strategy match, not NashConv
-            # NashConv is inflated due to buyer indifference at P*
-            theory_match = abs(prob - theory) < 0.15
-            # Near threshold (0.45-0.60), strategies can mix during transition
-            near_threshold = 0.45 <= pi <= 0.60
-            if theory_match or near_threshold:
-                status = r"\checkmark"
-            else:
-                status = r"$\times$"
-
-            line = f"{pi:.2f} & {p_star:.0f} & {prob:.3f} & {theory:.1f} & {expl:.4f} & {eq_type} & {status} \\\\"
+            line = (f"{pi:.2f} & {p_star:.0f} & {prob:.3f} & {prob_se:.3f} & "
+                    f"{theory:.1f} & {gap:.3f} & {expl:.2f} & {expl_se:.2f} & "
+                    f"{eq_type} \\\\")
             lines.append(line)
     else:
         lines = [
-            r"\begin{tabular}{lccccl}",
+            r"\begin{tabular}{lccccccc}",
             r"\toprule",
-            r"$\delta$ & $P^*$ & P(Screen) & NashConv & Eq. Type & Status \\",
+            r"$\delta$ & $P^*$ & P(Screen) & SE & Theory & NashConv & SE & Eq.\ Type \\",
             r"\midrule"
         ]
-
         for r in results:
             delta = r['delta']
             p_star = r['p_star']
             prob = r['prob_high_cfr']
+            prob_se = r.get('prob_high_se', 0.0)
             theory = r['prob_high_analytical']
             expl = r['exploitability']
+            expl_se = r.get('exploitability_se', 0.0)
             eq_type = r['eq_type_theory']
 
-            # Validation based on strategy match
-            theory_match = abs(prob - theory) < 0.15
-            status = r"\checkmark" if theory_match else r"$\times$"
-
-            line = f"{delta:.2f} & {p_star:.0f} & {prob:.3f} & {expl:.4f} & {eq_type} & {status} \\\\"
+            line = (f"{delta:.2f} & {p_star:.0f} & {prob:.3f} & {prob_se:.3f} & "
+                    f"{theory:.1f} & {expl:.2f} & {expl_se:.2f} & "
+                    f"{eq_type} \\\\")
             lines.append(line)
 
     lines.extend([
@@ -983,23 +1061,33 @@ def compute_data():
 
     print("\n" + "=" * 70)
     print("DURABLE GOODS MONOPOLY: TWO-TYPE GAP SELLER-OFFER GAME")
-    print("Validation Framework: NashConv + Benchmark + Rationality")
+    print("Finite-horizon screening-vs-pooling (not asymptotic Coase)")
     print("=" * 70)
     print(f"\nParameters: V_H={V_HIGH}, V_L={V_LOW}")
-    print(f"Screening price formula: P*(δ) = {V_HIGH} - {V_HIGH-V_LOW}δ")
-    print(f"Critical π threshold: π* = 0.5")
+    print(f"Screening price formula: P*(delta) = {V_HIGH} - {V_HIGH-V_LOW}*delta")
+    print(f"Critical pi threshold: pi* = 0.5")
+    print(f"Seeds per (pi, delta): {CONFIG['n_seeds']}, "
+          f"init regret noise std: {CONFIG['init_regret_noise_std']}")
     print("=" * 70 + "\n")
 
     # ==========================================================================
-    # EXPERIMENT 1: π-SWEEP (PRIMARY VALIDATION)
+    # EXPERIMENT 1: pi-SWEEP at delta=0.5
     # ==========================================================================
-    pi_sweep_results = run_pi_sweep_experiment(delta=0.5, num_iterations=5000)
+    pi_sweep_results = run_pi_sweep_experiment(
+        delta=CONFIG['pi_sweep_delta'],
+        num_iterations=CONFIG['pi_sweep_iterations'],
+        n_seeds=CONFIG['n_seeds'],
+        init_regret_noise_std=CONFIG['init_regret_noise_std'])
 
     # ==========================================================================
-    # EXPERIMENT 2: δ-SWEEP (SECONDARY VALIDATION)
+    # EXPERIMENT 2: delta-SWEEP at pi=0.7
     # ==========================================================================
     print("\n")
-    delta_sweep_results = run_delta_sweep_experiment(pi_high=0.7, num_iterations=5000)
+    delta_sweep_results = run_delta_sweep_experiment(
+        pi_high=CONFIG['delta_sweep_pi_high'],
+        num_iterations=CONFIG['delta_sweep_iterations'],
+        n_seeds=CONFIG['n_seeds'],
+        init_regret_noise_std=CONFIG['init_regret_noise_std'])
 
     # ==========================================================================
     # SUMMARY STATISTICS
@@ -1008,11 +1096,16 @@ def compute_data():
     print("VALIDATION SUMMARY")
     print("=" * 70)
 
-    # π-sweep results
-    print("\n--- π-Sweep Results (δ=0.5) ---")
+    # pi-sweep results
+    print("\n--- pi-Sweep Results (delta=0.5) ---")
     final_expls = [r['exploitability'] for r in pi_sweep_results]
-    print(f"Mean NashConv: {np.mean(final_expls):.4f}")
-    print(f"Max NashConv: {np.max(final_expls):.4f}")
+    final_expl_ses = [r['exploitability_se'] for r in pi_sweep_results]
+    print(f"Mean NashConv (avg of per-pi means): {np.mean(final_expls):.3f}")
+    print(f"Max NashConv: {np.max(final_expls):.3f}")
+    print(f"Mean across-seed SE on P(Screen): {np.mean([r['prob_high_se'] for r in pi_sweep_results]):.3f}")
+    print(f"Mean across-seed SE on NashConv: {np.mean(final_expl_ses):.3f}")
+    print("NashConv is reported on the same scale as utility "
+          "(V_HIGH = 200); a NashConv of 10 = 5% of max single-player payoff.")
 
     # Check phase transition accuracy
     pooling_results = [r for r in pi_sweep_results if r['pi_high'] < 0.4]
@@ -1024,35 +1117,43 @@ def compute_data():
     print(f"Pooling region accuracy (π<0.4, P(Screen)<0.15): {pooling_accuracy:.1%}")
     print(f"Screening region accuracy (π>0.6, P(Screen)>0.85): {screening_accuracy:.1%}")
 
-    # δ-sweep results
-    print("\n--- δ-Sweep Results (π=0.7) ---")
+    # delta-sweep results
+    print("\n--- delta-Sweep Results (pi=0.7) ---")
     delta_expls = [r['exploitability'] for r in delta_sweep_results]
-    print(f"Mean NashConv: {np.mean(delta_expls):.4f}")
-    print(f"Max NashConv: {np.max(delta_expls):.4f}")
+    print(f"Mean NashConv: {np.mean(delta_expls):.3f}")
+    print(f"Max NashConv: {np.max(delta_expls):.3f}")
+    print(f"Mean across-seed SE on P(Screen): {np.mean([r['prob_high_se'] for r in delta_sweep_results]):.3f}")
 
     # Verify screening prices match theory
     price_errors = [abs(r['p_star'] - compute_screening_price(r['delta']))
                     for r in delta_sweep_results]
     print(f"Screening price formula verified: max error = {max(price_errors):.6f}")
 
-    # Print detailed results tables
-    print("\n" + "=" * 70)
-    print("DETAILED RESULTS: π-SWEEP")
-    print("=" * 70)
-    print(f"{'π':>6} {'P*':>6} {'P(Screen)':>10} {'Theory':>8} {'NashConv':>10} {'Type':>12}")
-    print("-" * 70)
+    # Print detailed results tables with SE
+    print("\n" + "=" * 90)
+    print("DETAILED RESULTS: pi-SWEEP (means and SE across seeds)")
+    print("=" * 90)
+    hdr = f"{'pi':>6} {'P*':>6} {'P(Scrn)':>9} {'SE':>8} {'Theory':>7} {'NashConv':>10} {'SE':>8} {'Type':>12}"
+    print(hdr)
+    print("-" * 90)
     for r in pi_sweep_results:
-        print(f"{r['pi_high']:>6.2f} {r['p_star']:>6.0f} {r['prob_high_cfr']:>10.3f} "
-              f"{r['prob_high_analytical']:>8.1f} {r['exploitability']:>10.4f} {r['eq_type_theory']:>12}")
+        print(f"{r['pi_high']:>6.2f} {r['p_star']:>6.0f} "
+              f"{r['prob_high_cfr']:>9.3f} {r['prob_high_se']:>8.3f} "
+              f"{r['prob_high_analytical']:>7.1f} "
+              f"{r['exploitability']:>10.3f} {r['exploitability_se']:>8.3f} "
+              f"{r['eq_type_theory']:>12}")
 
-    print("\n" + "=" * 70)
-    print("DETAILED RESULTS: δ-SWEEP")
-    print("=" * 70)
-    print(f"{'δ':>6} {'P*':>6} {'P(Screen)':>10} {'Theory':>8} {'NashConv':>10} {'Type':>12}")
-    print("-" * 70)
+    print("\n" + "=" * 90)
+    print("DETAILED RESULTS: delta-SWEEP (means and SE across seeds)")
+    print("=" * 90)
+    print(f"{'delta':>6} {'P*':>6} {'P(Scrn)':>9} {'SE':>8} {'Theory':>7} {'NashConv':>10} {'SE':>8} {'Type':>12}")
+    print("-" * 90)
     for r in delta_sweep_results:
-        print(f"{r['delta']:>6.2f} {r['p_star']:>6.0f} {r['prob_high_cfr']:>10.3f} "
-              f"{r['prob_high_analytical']:>8.1f} {r['exploitability']:>10.4f} {r['eq_type_theory']:>12}")
+        print(f"{r['delta']:>6.2f} {r['p_star']:>6.0f} "
+              f"{r['prob_high_cfr']:>9.3f} {r['prob_high_se']:>8.3f} "
+              f"{r['prob_high_analytical']:>7.1f} "
+              f"{r['exploitability']:>10.3f} {r['exploitability_se']:>8.3f} "
+              f"{r['eq_type_theory']:>12}")
 
     # Convert numpy arrays inside strategy dicts to lists for pickling reliability
     def serialize_results(results_list):

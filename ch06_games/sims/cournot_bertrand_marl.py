@@ -24,7 +24,7 @@ CONFIG = {
     'cournot_a': 10, 'cournot_c': 1, 'cournot_Q_max': 9,
     'bertrand_a': 10, 'bertrand_b': 2, 'bertrand_e': 1, 'bertrand_c': 1, 'bertrand_P_max': 9,
     'tail': 5000,
-    'version': 1,
+    'version': 2,
 }
 
 # ============================================================================
@@ -65,9 +65,9 @@ class BertrandDuopoly:
                 d1 = max(a - b * p1 + e * p0, 0)
                 self.payoff[p0, p1, 0] = (p0 - c) * d0
                 self.payoff[p0, p1, 1] = (p1 - c) * d1
-        # Nash: p* = (a + bc + ec) / (2b - e)
-        self.nash_action = (a + b * c + e * c) / (2 * b - e)
-        # Nash profit
+        # Symmetric FOC: (a - b p + e p) + (p - c)(-b) = 0  =>  p* = (a + b c) / (2b - e)
+        self.nash_action = (a + b * c) / (2 * b - e)
+        # Nash profit at symmetric p*
         d_nash = a - b * self.nash_action + e * self.nash_action
         self.nash_profit = (self.nash_action - c) * d_nash
 
@@ -333,23 +333,12 @@ def compute_stats(results, game, n_iter, tail=5000):
 
         dist = np.abs(mean_action - game.nash_action).mean()
 
-        # Convergence iteration: first time mean action stays within 0.5 of Nash
-        mean_traj = data[:, :, :].mean(axis=0)  # (n_iter, 2)
-        avg_action = (mean_traj[:, 0] + mean_traj[:, 1]) / 2
-        smoothed = smooth(avg_action, window=1000)
-        conv_iter = n_iter
-        for i in range(len(smoothed)):
-            if abs(smoothed[i] - game.nash_action) < 0.5:
-                conv_iter = i + 1000
-                break
-
         stats[name] = {
             'mean_action': mean_action.mean(),
             'se_action': se_action.mean(),
             'mean_profit': profits.mean(),
             'se_profit': profits.std() / np.sqrt(len(profits)),
             'dist_nash': dist,
-            'conv_iter': conv_iter,
         }
     return stats
 
@@ -394,9 +383,9 @@ def make_figure(results_cournot, results_bertrand, game_c, game_b, n_iter, outpa
 def make_table(stats_c, stats_b, game_c, game_b, outpath):
     """LaTeX results table."""
     lines = []
-    lines.append(r'\begin{tabular}{ll rr rr}')
+    lines.append(r'\begin{tabular}{ll rr r}')
     lines.append(r'\hline')
-    lines.append(r'Game & Algorithm & Action & Profit & $|a - a^*|$ & Conv.\ iter \\')
+    lines.append(r'Game & Algorithm & Action & Profit & $|a - a^*|$ \\')
     lines.append(r'\hline')
     for game, stats, gobj in [('Cournot', stats_c, game_c), ('Bertrand', stats_b, game_b)]:
         first = True
@@ -407,8 +396,7 @@ def make_table(stats_c, stats_b, game_c, game_b, outpath):
                 f'{gname} & {algo} & '
                 f'${s["mean_action"]:.2f} \\pm {s["se_action"]:.2f}$ & '
                 f'${s["mean_profit"]:.1f} \\pm {s["se_profit"]:.1f}$ & '
-                f'${s["dist_nash"]:.2f}$ & '
-                f'{s["conv_iter"]:,} \\\\'
+                f'${s["dist_nash"]:.2f}$ \\\\'
             )
             first = False
         lines.append(r'\hline')
@@ -467,13 +455,13 @@ def compute_data():
 
     for game_name, stats, game in [("Cournot", stats_c, game_c), ("Bertrand", stats_b, game_b)]:
         print(f"\n{game_name} Duopoly (Nash action = {game.nash_action:.2f}, Nash profit = {game.nash_profit:.2f})")
-        print(f"{'Algorithm':<12} {'Action':>14} {'Profit':>14} {'|a-a*|':>8} {'Conv iter':>10}")
-        print("-" * 60)
+        print(f"{'Algorithm':<12} {'Action':>14} {'Profit':>14} {'|a-a*|':>8}")
+        print("-" * 50)
         for algo in ['IQL', 'Nash-Q', 'WoLF-PHC']:
             s = stats[algo]
             print(f"{algo:<12} {s['mean_action']:>6.2f} +/- {s['se_action']:.2f}"
                   f"   {s['mean_profit']:>6.1f} +/- {s['se_profit']:.1f}"
-                  f"   {s['dist_nash']:>6.2f}   {s['conv_iter']:>8,}")
+                  f"   {s['dist_nash']:>6.2f}")
 
     # --- Serialize for caching ---
     # Convert numpy arrays in results to lists for pickling
