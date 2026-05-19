@@ -36,10 +36,25 @@ CHAPTERS=(
     "ch03b_deeprl_practice/tex/deeprl_practice.tex"
     "ch04_control_problems/tex/applications.tex"
     "ch05_econ_models/tex/rl_in_se.tex"
+    "ch06_macro/tex/macro_rl.tex"
     "ch06_games/tex/rl_in_games.tex"
     "ch07_bandits/tex/dynamic_pricing.tex"
     "ch08_offline_rl/tex/offline_rl.tex"
+    "ch09_rlhf/tex/rlhf.tex"
     "ch10_causal/tex/causal_rl.tex"
+    "ch10b_rl_for_ci/tex/rl_for_ci.tex"
+    "ch11_dist_robust_constrained/tex/dist_robust_constrained.tex"
+    "ch12_world_models/tex/world_models.tex"
+    "ch12_world_models/tex/s01_paradigms.tex"
+    "ch12_world_models/tex/s02_origins_1990.tex"
+    "ch12_world_models/tex/s03_dyna_q.tex"
+    "ch12_world_models/tex/s04_ha_schmidhuber.tex"
+    "ch12_world_models/tex/s05_rssm_line.tex"
+    "ch12_world_models/tex/s06_value_aware.tex"
+    "ch12_world_models/tex/s07_mbpo_ensembles.tex"
+    "ch12_world_models/tex/s08_tdmpc2.tex"
+    "ch12_world_models/tex/s09_dual_sim.tex"
+    "ch12_world_models/tex/s10_synthesis.tex"
     "ch99_conclusion/tex/conclusion.tex"
 )
 
@@ -68,6 +83,8 @@ FIGURES=(
     "ch03b_deeprl_practice/sims/brock_mirman_bellman.png"
     "ch04_control_problems/sims/bus_engine_scaling.png"
     "ch05_econ_models/sims/estimation_flowcharts.pdf"
+    "ch05_econ_models/sims/estimation_flowcharts.png"
+    "ch07_bandits/sims/curve_learning_pricing_regret.png"
     "ch05_econ_models/sims/nfxp_ccp_td_scaling_time.png"
     "ch08_offline_rl/sims/offline_rl_pricing_coverage.png"
     "ch06_games/sims/cournot_bertrand_marl.png"
@@ -81,6 +98,20 @@ FIGURES=(
     "ch10_causal/sims/identification_dags.png"
     "ch10_causal/sims/simulation_dag.png"
     "ch10_causal/sims/confounded_ope_bias.png"
+    "ch10_causal/sims/counterfactual_ope.png"
+    "ch06_macro/sims/lq_mfg.png"
+    "ch06_macro/sims/rbc_dp_vs_drl_learning_curves.png"
+    "ch10b_rl_for_ci/sims/causal_bandit_combined.png"
+    "ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy.png"
+    "ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png"
+    "ch11_dist_robust_constrained/sims/carbon_constrained_production_convergence.png"
+    "ch11_dist_robust_constrained/sims/robust_consumption_savings_policy.png"
+    "ch12_world_models/sims/dyna_maze.png"
+    "ch12_world_models/sims/dyna_maze_layout.png"
+    "ch12_world_models/sims/cobweb_paradigms.png"
+    "ch12_world_models/sims/cobweb_paradigms_param_recovery.png"
+    "ch12_world_models/sims/cobweb_paradigms_policy_distance.png"
+    "ch12_world_models/sims/fishery_paradigms.png"
 )
 
 for f in "${FIGURES[@]}"; do
@@ -100,11 +131,24 @@ TABLES=(
     "ch06_games/sims/cournot_bertrand_results.tex"
     "ch06_games/sims/durable_goods_results.tex"
     "ch07_bandits/sims/knowledge_ladder_results.tex"
+    "ch07_bandits/sims/curve_learning_pricing_summary.tex"
     "ch08_offline_rl/sims/offline_rl_pricing_results.tex"
     "ch09_rlhf/sims/job_search_results.tex"
     "ch09_rlhf/sims/job_search_diagnostics.tex"
     "ch09_rlhf/sims/job_search_horizon.tex"
     "ch10_causal/sims/confounded_ope_results.tex"
+    "ch10_causal/sims/counterfactual_ope_table.tex"
+    "ch06_macro/sims/lq_mfg_results.tex"
+    "ch06_macro/sims/rbc_dp_vs_drl_results.tex"
+    "ch10b_rl_for_ci/sims/causal_bandit_results.tex"
+    "ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex"
+    "ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex"
+    "ch11_dist_robust_constrained/sims/carbon_constrained_production_table.tex"
+    "ch11_dist_robust_constrained/sims/robust_consumption_savings_table.tex"
+    "ch12_world_models/sims/cobweb_paradigms_final_recovery.tex"
+    "ch12_world_models/sims/cobweb_paradigms_results.tex"
+    "ch12_world_models/sims/dyna_maze_results.tex"
+    "ch12_world_models/sims/fishery_paradigms_results.tex"
 )
 
 for f in "${TABLES[@]}"; do
@@ -148,10 +192,23 @@ noop ch09_rlhf/sims/job_search_results.tex
 noop ch09_rlhf/sims/job_search_diagnostics.tex
 noop ch09_rlhf/sims/job_search_horizon.tex
 noop ch10_causal/sims/confounded_ope_results.tex
+noop ch10_causal/sims/counterfactual_ope_table.tex
 noop ch03_theory/sims/brock_mirman_results.tex
 noop ch03_theory/sims/td_lambda_corridor.tex
 noop ch03_theory/sims/lqc_fvi_fqi_weights.tex
 noop ch03a_bm/sims/bm_fvi_fqi_results.tex
+noop ch06_macro/sims/lq_mfg_results.tex
+noop ch06_macro/sims/rbc_dp_vs_drl_results.tex
+noop ch10b_rl_for_ci/sims/causal_bandit_results.tex
+noop ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex
+noop ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
+noop ch11_dist_robust_constrained/sims/carbon_constrained_production_table.tex
+noop ch11_dist_robust_constrained/sims/robust_consumption_savings_table.tex
+noop ch12_world_models/sims/cobweb_paradigms_final_recovery.tex
+noop ch12_world_models/sims/cobweb_paradigms_results.tex
+noop ch12_world_models/sims/dyna_maze_results.tex
+noop ch12_world_models/sims/fishery_paradigms_results.tex
+noop ch07_bandits/sims/curve_learning_pricing_summary.tex
 READMEEOF
 echo "  Created 00README.XXX (prevents arXiv file deletion)"
 
