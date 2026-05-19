@@ -70,7 +70,7 @@ NN_EPOCHS = 100
 NN_BATCH = 64
 
 MASTER_SEED = 42
-OUTPUT_DIR = 'ch08_rlhf/sims'
+OUTPUT_DIR = 'ch09_rlhf/sims'
 
 # =============================================================================
 # State space: 112 states

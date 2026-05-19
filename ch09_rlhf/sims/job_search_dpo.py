@@ -70,7 +70,7 @@ SEGMENT_LENGTHS = [1, 3, 5, 10, 15, 30]
 K_HORIZON = 2000
 
 MASTER_SEED = 42
-OUTPUT_DIR = 'ch08_rlhf/sims'
+OUTPUT_DIR = 'ch09_rlhf/sims'
 
 # =============================================================================
 # State space: 112 states

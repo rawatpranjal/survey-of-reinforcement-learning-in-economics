@@ -197,11 +197,11 @@ MISSPECIFIED HAZARD ANALYSIS
   K= 2000: hazard visits=2.2, return=6.438
   K= 5000: hazard visits=2.1, return=6.420
 
-Saved: ch08_rlhf/sims/gridworld_sample_complexity.png
-Saved: ch08_rlhf/sims/gridworld_rlhf_results.tex
-Saved: ch08_rlhf/sims/gridworld_online_offline.tex
+Saved: ch09_rlhf/sims/gridworld_sample_complexity.png
+Saved: ch09_rlhf/sims/gridworld_rlhf_results.tex
+Saved: ch09_rlhf/sims/gridworld_online_offline.tex
 
 OUTPUT FILES:
-  ch08_rlhf/sims/gridworld_sample_complexity.png
-  ch08_rlhf/sims/gridworld_rlhf_results.tex
-  ch08_rlhf/sims/gridworld_online_offline.tex
+  ch09_rlhf/sims/gridworld_sample_complexity.png
+  ch09_rlhf/sims/gridworld_rlhf_results.tex
+  ch09_rlhf/sims/gridworld_online_offline.tex
