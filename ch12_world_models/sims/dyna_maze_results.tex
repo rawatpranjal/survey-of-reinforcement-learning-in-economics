@@ -1,0 +1,13 @@
+% Cumulative reward at end of Phase 1 (t=1000), gain over Phase 2 (last 2000 steps), and total at t=3000.
+% Mean +/- SE across 30 seeds.
+\begin{tabular}{lrrr}
+\toprule
+Agent & End of Phase 1 & Phase 2 gain & Total ($t = 3000$) \\
+\midrule
+Dyna-Q (K=50) & 42.2 $\pm$ 5.3 & 9.8 $\pm$ 4.0 & 52.0 $\pm$ 4.2 \\
+Dyna-Q+ (K=50) & 37.4 $\pm$ 3.7 & 9.6 $\pm$ 2.8 & 47.0 $\pm$ 4.4 \\
+Dyna-Q (K=5) & 34.4 $\pm$ 4.9 & 4.8 $\pm$ 3.0 & 39.2 $\pm$ 4.7 \\
+Schmidhuber 1990 (NN) & 2.5 $\pm$ 0.3 & 1.5 $\pm$ 0.2 & 4.0 $\pm$ 0.4 \\
+Q-learning (K=0) & 2.9 $\pm$ 0.5 & 0.6 $\pm$ 0.2 & 3.5 $\pm$ 0.5 \\
+\bottomrule
+\end{tabular}
