@@ -7,10 +7,12 @@
 # graph structure replaces the dependence on the number of arms N with a
 # graph-derived hardness quantity m(q) <= N, yielding simple-regret
 # O(sqrt(m(q)/T)) versus the Omega(sqrt(N/T)) floor of best-arm-identification
-# algorithms that ignore the graph. Also reproduces the Bareinboim-Forney-Pearl
-# (NeurIPS 2015) "greedy casino" instance, where causal Thompson sampling (TS_C)
-# remains effective under unobserved confounding while standard Thompson
-# sampling fails (linear cumulative regret).
+# algorithms that ignore the graph. Also exercises the Bareinboim-Forney-Pearl
+# (NeurIPS 2015) "greedy casino" instance with three Thompson-family
+# baselines (vanilla TS, context-conditional TS, and the full TS_C of
+# Bareinboim et al. with consistency-axiom seeding and RDC bias weighting),
+# demonstrating that causal posteriors achieve bounded cumulative regret
+# while standard Thompson sampling fails (linear cumulative regret).
 #
 # Setting:
 #   N independent binary parents X_1, ..., X_N of a binary reward Y.
@@ -23,18 +25,27 @@
 #   After each action, the agent observes the reward AND the realized
 #   non-intervened parents (Lattimore et al. 2016, Section 2).
 #
-# Three algorithms compared:
+# Four algorithms compared:
 #   1. Successive Reject (Audibert-Bubeck 2010): graph-blind best-arm
 #      identification. Achieves O(sqrt(N/T)) simple regret.
 #   2. Lattimore Algorithm 1 (parallel-bandit algorithm): allocates half the
 #      budget to do() to estimate the propensities q_i, then concentrates the
 #      remaining budget on the "unbalanced" arms whose direct-observation
 #      probability is below 1/tau. Achieves O(sqrt(m(q)/T)) simple regret.
-#   3. Causal Thompson Sampling (TS_C, Bareinboim-Forney-Pearl 2015): on the
-#      MABUC "greedy casino" instance with unobserved confounders, TS_C seeds
-#      Beta posteriors from observational data via the consistency axiom and
-#      biases sampling toward the agent's intuition arm, achieving bounded
-#      cumulative regret where standard TS / UCB grow linearly.
+#   3. Context-conditional Thompson sampling (CCTS): a minimal causal
+#      baseline on the MABUC "greedy casino" instance. Maintains a Beta
+#      posterior indexed by (intuition x, arm a) and uses straight argmax
+#      over posterior samples. Achieves bounded regret on this instance
+#      because (x, a) cells are independently learnable.
+#   4. Full Causal Thompson Sampling (TS_C) of Bareinboim, Forney & Pearl
+#      (NeurIPS 2015) Algorithm 1. Augments the (x, a) Beta posterior with
+#      (i) consistency-axiom seeding (each observation (X=x, A=a, Y=y)
+#      contributes a fractional pseudo-count to the off-intuition arm's
+#      posterior at the same context, per Pearl 2009 §3.6), and (ii) RDC
+#      bias weighting: each posterior sample theta_a is multiplied by
+#      w_a = 1 - |Q1(a) - Q2(a)| (clamped to [0.01, 1]) where Q1, Q2 are
+#      running empirical means of the do-effect under each context. Arms
+#      with high cross-context disagreement are suppressed.
 #
 # Outputs:
 #   causal_bandit_regret_vs_m.png  -- simple regret vs hardness m at fixed T, N
@@ -105,7 +116,9 @@ SHARED_CONFIG = {
 
 REGRET_VS_M_CONFIG = {**SHARED_CONFIG, 'experiment': 'regret_vs_m'}
 REGRET_VS_T_CONFIG = {**SHARED_CONFIG, 'experiment': 'regret_vs_T'}
-MABUC_CONFIG       = {**SHARED_CONFIG, 'experiment': 'mabuc'}
+# v2 marker forces a refresh of MABUC cache since results now include
+# the full Bareinboim TS_C (consistency seeding + RDC weighting) alongside CCTS.
+MABUC_CONFIG       = {**SHARED_CONFIG, 'experiment': 'mabuc', 'algos_version': 'v2_full_tsc'}
 
 
 # ---------------------------------------------------------------------------
@@ -404,7 +417,10 @@ def lattimore_alg1(q_true, w, T, rng):
 
 
 # ---------------------------------------------------------------------------
-# Algorithm 3: Causal Thompson Sampling (Bareinboim et al. 2015)
+# Algorithm 3: Context-conditional Thompson Sampling (CCTS, minimal baseline)
+# and
+# Algorithm 4: Full Causal Thompson Sampling (TS_C of Bareinboim et al. 2015,
+#   with consistency-axiom seeding and RDC bias weighting)
 # ---------------------------------------------------------------------------
 def mabuc_dgp(intuition, rng):
     """Sample the reward Y under the greedy-casino MABUC instance.
@@ -418,22 +434,30 @@ def mabuc_dgp(intuition, rng):
     return intuition  # placeholder; reward is sampled in run loop
 
 
-def causal_thompson_sampling(T, rng, observational_data=None):
-    """Causal Thompson Sampling on the MABUC greedy-casino instance.
+def context_conditional_thompson_sampling(T, rng, observational_data=None):
+    """Context-conditional Thompson sampling (CCTS) on the MABUC greedy-casino instance.
+
+    Minimal causal baseline. Retains the context-specific posterior indexed
+    by (intuition x, arm a), but does not implement the consistency-axiom
+    seeding of the off-intuition arm or the RDC bias weighting of the full
+    TS_C. Bounded cumulative regret is achieved on this instance because
+    each (x, a) cell is independently learnable from on-intuition observations
+    plus direct experimental pulls.
 
     Algorithm:
-      1. Seed Beta posteriors from observational data via the consistency
-         axiom: E[Y_{X=a} | X=a] = E[Y | X=a] (estimable from observational
-         data). For a != x, use the off-intuition prior Beta(1,1).
+      1. (Optional) Seed Beta posteriors from observational data along
+         the on-intuition diagonal (a = x), per the consistency axiom for
+         the on-intuition arm only.
       2. At each time, observe the agent's natural intuition x; sample a
-         counterfactual ETT estimate for each arm from its Beta posterior;
-         choose the arm with the higher sample (the Regret Decision Criterion).
+         reward estimate for each arm from its (x, a)-conditional Beta
+         posterior; choose the arm with the higher sample via straight
+         argmax (no RDC bias multiplier).
       3. Observe reward; update the Beta posterior conditioned on (x, a).
     """
     alpha = np.ones((2, 2))  # alpha[x, a] = pseudo-success count
     beta = np.ones((2, 2))   # beta[x, a]  = pseudo-failure count
 
-    # Optional: seed from observational data (sample-on-intuition consistency)
+    # Seed from observational data (sample-on-intuition consistency only)
     if observational_data is not None:
         for x_obs, y_obs in observational_data:
             alpha[x_obs, x_obs] += y_obs
@@ -454,6 +478,114 @@ def causal_thompson_sampling(T, rng, observational_data=None):
         # Update posterior
         alpha[x, a] += y
         beta[x, a] += 1 - y
+        # Track regret
+        cum_reg += optimal_payoff[x] - p
+        cum_regret[t] = cum_reg
+
+    return cum_regret
+
+
+# Pseudo-count fraction for consistency-axiom seeding of the off-intuition arm.
+# Bareinboim et al. (2015) Algorithm 1 line 2 seeds the on-intuition arm
+# directly from P_obs(y|x); the consistency-axiom extension to the
+# off-intuition arm a != x has no canonical pseudo-count in the paper, so we
+# use a conservative fractional weight. We disclose this in the tex.
+CONSISTENCY_OFF_INTUITION_WEIGHT = 0.5
+
+# Floor/ceiling for the RDC bias multiplier w_a = 1 - |Q1(a) - Q2(a)|.
+# w_a in [0.01, 1] avoids numerical degeneracy when Q1 and Q2 collide.
+RDC_WEIGHT_FLOOR = 0.01
+RDC_WEIGHT_CEILING = 1.0
+
+
+def causal_thompson_sampling_tsc(T, rng, observational_data=None):
+    """Full Causal Thompson Sampling TS_C (Bareinboim, Forney & Pearl 2015, Alg. 1).
+
+    Implements the two distinguishing features of the paper's TS_C beyond the
+    minimal context-conditional baseline:
+
+    (i) Consistency-axiom seeding (Pearl 2009 sec 3.6, Bareinboim 2015 Alg. 1
+        line 2). For an observation (X=x, A=a, Y=y) the on-intuition cell
+        (a = x) receives a full pseudo-count, and the off-intuition cell
+        (a != x) at the same context x receives a fractional pseudo-count
+        equal to CONSISTENCY_OFF_INTUITION_WEIGHT * y (success) or
+        CONSISTENCY_OFF_INTUITION_WEIGHT * (1-y) (failure). The
+        consistency-derived seed on the off-intuition arm is conservative
+        because we do not have direct observational access to E[Y_{X=a'} | X=x]
+        for a' != x; the binary-arm symmetry of the greedy casino means a
+        weak positive prior in that cell is a useful summary of "if the agent
+        had played against intuition, the payoff distribution is not
+        radically different from the observed on-intuition distribution".
+
+    (ii) RDC (Relative Difference of Confounders) bias weighting
+         (Bareinboim 2015 Alg. 1 lines 5-10). Maintain running empirical
+         estimates Q_hat[x, a] = E[Y | X=x, do(A=a)] for each (x, a) cell.
+         At each round, sample theta_a from the (x, a)-conditional Beta
+         posterior as usual, then multiply by
+             w_a = clamp(1 - |Q_hat[1, a] - Q_hat[2, a]|, 0.01, 1).
+         Arms whose do-effect varies sharply across contexts (high
+         cross-context disagreement) are suppressed; arms with stable
+         cross-context effects retain their full posterior signal. Pick
+         argmax_a (w_a * theta_a).
+
+    The paper's Algorithm 1 lines 5-9 use Q1 = E(Y_{X=x'} | X=x) and
+    Q2 = P(y | X=x), assigning the bias multiplier to the arm favored by
+    the higher Q value. The Q_hat[x, a] formulation above is the natural
+    generalization to running estimates that update as data accumulates.
+    """
+    alpha = np.ones((2, 2))  # alpha[x, a]
+    beta = np.ones((2, 2))   # beta[x, a]
+
+    # Q_hat[x, a]: running empirical mean reward at (x, a).
+    Q_sum = np.zeros((2, 2))
+    Q_n = np.zeros((2, 2))
+
+    # Consistency-axiom seeding from observational data.
+    # On-intuition cell: full pseudo-count (canonical Bareinboim 2015 line 2).
+    # Off-intuition cell at same context: fractional pseudo-count.
+    if observational_data is not None:
+        c = CONSISTENCY_OFF_INTUITION_WEIGHT
+        for x_obs, y_obs in observational_data:
+            # On-intuition (a = x_obs): full count
+            alpha[x_obs, x_obs] += y_obs
+            beta[x_obs, x_obs] += 1 - y_obs
+            Q_sum[x_obs, x_obs] += y_obs
+            Q_n[x_obs, x_obs] += 1
+            # Off-intuition (a != x_obs) at same context: fractional count
+            a_off = 1 - x_obs
+            alpha[x_obs, a_off] += c * y_obs
+            beta[x_obs, a_off] += c * (1 - y_obs)
+            Q_sum[x_obs, a_off] += c * y_obs
+            Q_n[x_obs, a_off] += c
+
+    cum_regret = np.zeros(T)
+    cum_reg = 0.0
+    optimal_payoff = GREEDY_CASINO_PAYOFFS.max(axis=1)
+
+    for t in range(T):
+        x = rng.integers(0, 2)
+        # Posterior samples
+        theta0 = rng.beta(alpha[x, 0], beta[x, 0])
+        theta1 = rng.beta(alpha[x, 1], beta[x, 1])
+        # RDC bias weights from running Q_hat estimates.
+        # Q_hat[x, a] defaults to 0.5 (uninformative) when n=0.
+        Q_hat = np.where(Q_n > 0, Q_sum / np.maximum(Q_n, 1e-9), 0.5)
+        # Disagreement of arm a across contexts {0, 1}
+        disagree_0 = abs(Q_hat[0, 0] - Q_hat[1, 0])
+        disagree_1 = abs(Q_hat[0, 1] - Q_hat[1, 1])
+        w0 = np.clip(1.0 - disagree_0, RDC_WEIGHT_FLOOR, RDC_WEIGHT_CEILING)
+        w1 = np.clip(1.0 - disagree_1, RDC_WEIGHT_FLOOR, RDC_WEIGHT_CEILING)
+        # Arm selection: argmax of weighted posterior samples
+        a = 0 if (w0 * theta0) >= (w1 * theta1) else 1
+        # Pull and observe
+        p = GREEDY_CASINO_PAYOFFS[x, a]
+        y = int(rng.uniform() < p)
+        # Update Beta posterior
+        alpha[x, a] += y
+        beta[x, a] += 1 - y
+        # Update Q_hat running mean
+        Q_sum[x, a] += y
+        Q_n[x, a] += 1
         # Track regret
         cum_reg += optimal_payoff[x] - p
         cum_regret[t] = cum_reg
@@ -565,15 +697,19 @@ def run_regret_vs_T():
 # Experiment 3: MABUC greedy casino
 # ---------------------------------------------------------------------------
 def run_mabuc():
-    """Run TS and TS_C on the greedy-casino environment. Record cumulative regret."""
+    """Run vanilla TS, context-conditional TS, and full TS_C on the greedy-casino
+    environment. Record cumulative regret."""
     T = MABUC_T
     n_seeds = MABUC_SEEDS
 
-    # Observational seed for TS_C: simulate n_obs samples where the agent
-    # follows its intuition (i.e., plays arm x for each intuition x).
+    # Observational seed: simulate n_obs samples where the agent follows its
+    # intuition (i.e., plays arm x for each intuition x). Both CCTS and TS_C
+    # consume this data, but TS_C additionally derives a fractional
+    # pseudo-count for the off-intuition arm via the consistency axiom.
     n_obs = 200
 
     ts_regret = np.zeros((n_seeds, T))
+    cctp_regret = np.zeros((n_seeds, T))
     tsc_regret = np.zeros((n_seeds, T))
 
     for s in tqdm(range(n_seeds), desc='  mabuc', leave=False,
@@ -587,13 +723,18 @@ def run_mabuc():
             p = GREEDY_CASINO_PAYOFFS[x, x]
             y = int(rng.uniform() < p)
             obs.append((x, y))
-        # Run both algorithms with independent RNGs to remove shared randomness
+        # Run all three algorithms with independent RNGs to remove shared randomness
         rng_ts = np.random.default_rng(s + 100_000)
-        rng_tsc = np.random.default_rng(s + 200_000)
+        rng_cctp = np.random.default_rng(s + 200_000)
+        rng_tsc = np.random.default_rng(s + 300_000)
         ts_regret[s] = vanilla_thompson_sampling(T, rng_ts)
-        tsc_regret[s] = causal_thompson_sampling(T, rng_tsc, observational_data=obs)
+        cctp_regret[s] = context_conditional_thompson_sampling(
+            T, rng_cctp, observational_data=obs)
+        tsc_regret[s] = causal_thompson_sampling_tsc(
+            T, rng_tsc, observational_data=obs)
 
-    return {'ts': ts_regret, 'tsc': tsc_regret, 'T': T, 'n_seeds': n_seeds}
+    return {'ts': ts_regret, 'cctp': cctp_regret, 'tsc': tsc_regret,
+            'T': T, 'n_seeds': n_seeds}
 
 
 # ---------------------------------------------------------------------------
@@ -650,7 +791,7 @@ def make_figure_combined(data):
         ax.errorbar(m_grid, mean_r, yerr=1.96 * se_r, marker='o',
                     label=ALG_LABELS[alg], color=ALG_COLORS[alg], capsize=3)
     ax.axhline(np.sqrt(N / T) * EPS_REWARD, **BENCH_STYLE,
-               label=r'$\sqrt{N/T} \cdot \epsilon$ reference')
+               label=r'$\sqrt{N/T} \cdot \epsilon$ asymptotic rate (lower bound)')
     ax.set_xlabel(r'graph hardness $m(q)$')
     ax.set_ylabel('simple regret')
     ax.set_title(fr'(a) Regret vs $m(q)$ at $N={N}$, $T={T}$')
@@ -677,15 +818,22 @@ def make_figure_combined(data):
     T_m = res_mabuc['T']
     ts_mean = res_mabuc['ts'].mean(axis=0)
     ts_se = res_mabuc['ts'].std(axis=0) / np.sqrt(res_mabuc['n_seeds'])
+    cctp_mean = res_mabuc['cctp'].mean(axis=0)
+    cctp_se = res_mabuc['cctp'].std(axis=0) / np.sqrt(res_mabuc['n_seeds'])
     tsc_mean = res_mabuc['tsc'].mean(axis=0)
     tsc_se = res_mabuc['tsc'].std(axis=0) / np.sqrt(res_mabuc['n_seeds'])
     tt = np.arange(1, T_m + 1)
     ax.plot(tt, ts_mean, color=COLORS['red'], label='Thompson sampling')
     ax.fill_between(tt, ts_mean - 1.96 * ts_se, ts_mean + 1.96 * ts_se,
                     color=COLORS['red'], alpha=0.2)
-    ax.plot(tt, tsc_mean, color=COLORS['blue'], label=r'Causal TS ($\mathrm{TS}_C$)')
-    ax.fill_between(tt, tsc_mean - 1.96 * tsc_se, tsc_mean + 1.96 * tsc_se,
+    ax.plot(tt, cctp_mean, color=COLORS['blue'],
+            label='Context-conditional TS')
+    ax.fill_between(tt, cctp_mean - 1.96 * cctp_se, cctp_mean + 1.96 * cctp_se,
                     color=COLORS['blue'], alpha=0.2)
+    ax.plot(tt, tsc_mean, color=COLORS['green'],
+            label=r'Full $\mathrm{TS}_C$ (Bareinboim 2015)')
+    ax.fill_between(tt, tsc_mean - 1.96 * tsc_se, tsc_mean + 1.96 * tsc_se,
+                    color=COLORS['green'], alpha=0.2)
     ax.set_xlabel(r'round $t$')
     ax.set_ylabel('cumulative regret')
     ax.set_title('(c) Greedy-casino MABUC')
@@ -757,13 +905,27 @@ def print_stdout(data):
     print()
     print('  --- Greedy-casino MABUC at T = {} ---'.format(res_mabuc['T']))
     final_ts = res_mabuc['ts'][:, -1]
+    final_cctp = res_mabuc['cctp'][:, -1]
     final_tsc = res_mabuc['tsc'][:, -1]
-    print(f'  Vanilla Thompson sampling: cumulative regret = {final_ts.mean():.2f}'
-          f' (SE {final_ts.std()/np.sqrt(res_mabuc["n_seeds"]):.2f})')
-    print(f'  Causal Thompson (TS_C)   : cumulative regret = {final_tsc.mean():.2f}'
-          f' (SE {final_tsc.std()/np.sqrt(res_mabuc["n_seeds"]):.2f})')
-    ratio = final_ts.mean() / max(final_tsc.mean(), 1e-3)
-    print(f'  Ratio TS / TS_C = {ratio:.1f}x')
+    n = res_mabuc['n_seeds']
+    print(f'  Vanilla Thompson sampling          : cumulative regret = {final_ts.mean():.2f}'
+          f' (SE {final_ts.std()/np.sqrt(n):.2f})')
+    print(f'  Context-conditional Thompson (CCTS): cumulative regret = {final_cctp.mean():.2f}'
+          f' (SE {final_cctp.std()/np.sqrt(n):.2f})')
+    print(f'  Full TS_C (Bareinboim 2015)        : cumulative regret = {final_tsc.mean():.2f}'
+          f' (SE {final_tsc.std()/np.sqrt(n):.2f})')
+    ratio_ts_cctp = final_ts.mean() / max(final_cctp.mean(), 1e-3)
+    ratio_ts_tsc = final_ts.mean() / max(final_tsc.mean(), 1e-3)
+    ratio_cctp_tsc = final_cctp.mean() / max(final_tsc.mean(), 1e-3)
+    print(f'  Ratio (vanilla TS) / (CCTS)        = {ratio_ts_cctp:.1f}x')
+    print(f'  Ratio (vanilla TS) / (TS_C)        = {ratio_ts_tsc:.1f}x')
+    print(f'  Ratio (CCTS)      / (TS_C)         = {ratio_cctp_tsc:.2f}x')
+    if final_tsc.mean() <= final_cctp.mean():
+        print(f'  TS_C beats CCTS by {final_cctp.mean() - final_tsc.mean():.2f}'
+              f' regret units ({(1 - final_tsc.mean()/max(final_cctp.mean(), 1e-9))*100:.1f}%).')
+    else:
+        print(f'  CCTS beats TS_C by {final_tsc.mean() - final_cctp.mean():.2f}'
+              f' regret units ({(1 - final_cctp.mean()/max(final_tsc.mean(), 1e-9))*100:.1f}%).')
     print()
     print('  Output files:')
     for f in ('causal_bandit_combined.png', 'causal_bandit_results.tex'):
