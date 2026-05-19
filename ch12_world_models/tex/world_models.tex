@@ -1,22 +1,26 @@
-% Chapter master file: Forecasting and Reinforcement Learning (v5)
+% Chapter master file: Forecasting, Dreaming and Learning (v6)
 % Inputs into docs/main.tex as a \section{}; section files live under
-% ch12_forecasting_rl/tex/. v1 in v1_archived/, v2 in v2_archived/,
-% earlier file versions in backups/.
-% v5 streamlines the chapter into two explicit parts. The intro
-% (01_intro.tex) absorbs the forecast-loss-to-decision-loss bridge that
-% v4 carried in 02_bridge.tex. Part I (03_rl_for_forecasting.tex)
-% carries the decision-induced loss through single-period DFL,
-% sequential ADP, and the Madeka operational boundary. Part II
-% (04_model_based_planning.tex, 05_forecaster_as_policy.tex) inverts
-% the relation: classical Dyna and modern world models on one side,
-% trajectory-generative policies and counterfactual OPE on the other.
-% The hinge is endogeneity: Part I holds while the decision does not
-% feed back into the data; Part II is where the feedback loop closes.
+% ch12_world_models/tex/. v3 (the previous DFL + forecaster-as-policy
+% organisation) is in v3_archived/. v1/v2 in v1_archived/ and v2_archived/.
+%
+% v6 replaces the two-part DFL/dreaming split with a single linear
+% chapter on model-based RL: family-of-paradigms framing, the two 1990
+% origins, Dyna-Q in proper notation, then the deep era (Ha-Schmidhuber,
+% the RSSM line, value-aware models + MuZero, MBPO and ensembles,
+% TD-MPC2), a dual simulation on cobweb + fishery, and a short
+% synthesis. Decision-Transformer / RvS material moves to ch08_offline_rl.
+%
 % Style: natbib citations, no em dashes, no colons in prose,
 % no \textbf{}, no \paragraph*{} headers, no bullet points outside
 % numbered lists.
 
-\input{../ch12_forecasting_rl/tex/01_intro}
-\input{../ch12_forecasting_rl/tex/03_rl_for_forecasting}
-\input{../ch12_forecasting_rl/tex/04_model_based_planning}
-\input{../ch12_forecasting_rl/tex/05_forecaster_as_policy}
+\input{../ch12_world_models/tex/s01_paradigms}
+\input{../ch12_world_models/tex/s02_origins_1990}
+\input{../ch12_world_models/tex/s03_dyna_q}
+\input{../ch12_world_models/tex/s04_ha_schmidhuber}
+\input{../ch12_world_models/tex/s05_rssm_line}
+\input{../ch12_world_models/tex/s06_value_aware}
+\input{../ch12_world_models/tex/s07_mbpo_ensembles}
+\input{../ch12_world_models/tex/s08_tdmpc2}
+\input{../ch12_world_models/tex/s09_dual_sim}
+\input{../ch12_world_models/tex/s10_synthesis}

@@ -1,0 +1,24 @@
+=== fishery_paradigms ===
+Paradigms: ['Oracle', 'RLS', 'Model-Based LQ', 'Q-Learning', 'Naive', 'Arifovic GA']
+N_SEEDS = 20, T_EPISODE = 500
+
+  Cache hit: shared
+  Cache hit: Oracle
+  Cache hit: Naive
+  Cache hit: RLS
+  Cache hit: Q-Learning
+  Cache hit: Arifovic_GA
+  Cache hit: Model-Based_LQ
+  Figure saved: /Users/pranjal/Code/rl/ch12_world_models/sims/fishery_paradigms.png
+  Table saved: /Users/pranjal/Code/rl/ch12_world_models/sims/fishery_paradigms_results.tex
+
+=== Cumulative regret at T=500 (mean ± SE, n=20 seeds) ===
+
+Paradigm                 Final regret
+--------------------------------------
+Oracle                0.00 ±  0.00
+RLS                  13.67 ±  0.43
+Model-Based LQ       14.69 ±  0.73
+Q-Learning          274.71 ± 24.36
+Naive               447.35 ±  3.24
+Arifovic GA         706.13 ± 16.65
