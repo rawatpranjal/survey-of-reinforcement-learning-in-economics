@@ -19,6 +19,8 @@ import os, sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from sims.sim_cache import load_results, save_results, add_cache_args
+from sims.plot_style import apply_style, COLORS, ALGO_COLORS
+apply_style()
 
 np.random.seed(42)
 torch.manual_seed(42)

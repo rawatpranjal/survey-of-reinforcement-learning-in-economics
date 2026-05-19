@@ -37,6 +37,8 @@ import argparse
 import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.plot_style import apply_style, COLORS, ALGO_COLORS
+apply_style()
 from sims.sim_cache import load_results, save_results, add_cache_args
 
 import numpy as np

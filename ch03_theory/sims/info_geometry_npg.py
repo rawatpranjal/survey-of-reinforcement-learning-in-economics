@@ -4,8 +4,8 @@
 
 import argparse
 import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'sims'))
-from plot_style import COLORS, FIG_DOUBLE, apply_style
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from sims.plot_style import apply_style, COLORS, ALGO_COLORS, FIG_DOUBLE
 apply_style()
 
 import numpy as np
