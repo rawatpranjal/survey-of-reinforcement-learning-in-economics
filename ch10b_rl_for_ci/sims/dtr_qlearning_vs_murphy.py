@@ -675,6 +675,37 @@ def generate_outputs(data):
     plt.close(fig)
     print(f'  Figure: {fig_path}')
 
+    # ---- LaTeX results table: rank-ordered by V(pi_hat)/V* at largest N ----
+    N_tab_max = n_grid[-1]
+    N_hd_max = fqi_hd['N_grid'][-1]
+    rows = [
+        ('Oracle $V^*$ (tabular)', 1.0, None),
+        ('Oracle $V^*$ (high-dim, $p={}$)'.format(P_FEAT), 1.0, None),
+        ('Murphy / FQI (tabular, $N={}$)'.format(N_tab_max),
+         m_means[-1], m_ses[-1]),
+        ('$Q$-learning (tabular, $N={}$, {} replays)'.format(N_tab_max, N_EPOCHS_DEFAULT),
+         q_means[-1], q_ses[-1]),
+        ('Neural-FQI / Murphy (high-dim, $N={}$)'.format(N_hd_max),
+         f_means[-1], f_ses[-1]),
+        ('DQN (high-dim, $N={}$)'.format(N_hd_max),
+         d_means[-1], d_ses[-1]),
+    ]
+    rows.sort(key=lambda r: -r[1])
+    lines = [
+        r'\begin{tabular}{lcc}',
+        r'\toprule',
+        r'Method & $V(\hat\pi) / V^*$ & SE \\',
+        r'\midrule',
+    ]
+    for name, mean, se in rows:
+        se_str = '({:.4f})'.format(se) if se is not None else '--'
+        lines.append('{} & {:.4f} & {} \\\\'.format(name, mean, se_str))
+    lines += [r'\bottomrule', r'\end{tabular}', '']
+    tab_path = os.path.join(OUTPUT_DIR, 'dtr_qlearning_vs_murphy_results.tex')
+    with open(tab_path, 'w') as f:
+        f.write('\n'.join(lines))
+    print(f'  Table:  {tab_path}')
+
 
 def main():
     parser = argparse.ArgumentParser()

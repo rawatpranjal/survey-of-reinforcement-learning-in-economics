@@ -7,14 +7,9 @@ Config:
   Cache hit: murphy
   Cache hit: qlearn_N
   Cache hit: qlearn_epochs
-  Computing: oracle_hd
-    High-dim Oracle V* = 0.7857 (MC SE 0.0017)
-    High-dim V(behavior policy) = 0.3350
-  Cache saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__oracle_hd.pkl
-  Computing: fqi_hd
-  Cache saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__fqi_hd.pkl
-  Computing: dqn_hd
-  Cache saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__dqn_hd.pkl
+  Cache hit: oracle_hd
+  Cache hit: fqi_hd
+  Cache hit: dqn_hd
 
 ========================================================================
   Murphy vs Q-learning equivalence -- simulation study
@@ -46,3 +41,4 @@ Config:
     5000         0.9310 (0.0024)         0.9126 (0.0030)
 
   Figure: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy.png
+  Table:  /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex
