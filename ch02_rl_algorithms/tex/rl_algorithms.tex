@@ -195,7 +195,7 @@ SAC is off-policy (using experience replay), handles continuous actions naturall
 \begin{figure}[t]
 \centering
 \includegraphics[width=\textwidth]{../ch02_rl_algorithms/sims/algorithm_architectures.png}
-\caption{Architecture comparison of the three fundamental algorithm families. (a) DQN maps states to Q-values for all actions, selecting the argmax. (b) REINFORCE maps states to a probability distribution over actions, then samples. (c) Actor-Critic maintains separate policy and value networks; the critic's TD error $\delta_t$ provides a low-variance learning signal to the actor.}
+\caption{Architecture comparison of three core algorithm families: value-based, policy gradient, and actor-critic. (a) DQN maps states to Q-values for all actions, selecting the argmax. (b) REINFORCE maps states to a probability distribution over actions, then samples. (c) Actor-Critic maintains separate policy and value networks; the critic's TD error $\delta_t$ feeds back into both during training, yielding lower-variance policy updates than REINFORCE's Monte-Carlo return. Each panel includes the environment feedback loop in which the agent's action produces a reward and next state.}
 \label{fig:algorithm_architectures}
 \end{figure}
 

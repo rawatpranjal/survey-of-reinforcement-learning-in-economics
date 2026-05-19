@@ -226,11 +226,34 @@ The first factor is unconfounded; the inner sum adjusts for confounding on the $
 Mediator-based RL is most attractive when the action changes an observable channel before it changes the long-run state. In mobile health, an app prompt may affect cortisol through supplement adherence. In retail pricing, a promotion may affect conversion through a marketing follow-up or browsing response. \citet{shiZhuShenLuoZhuSong2024cmdpCI} use mediator variables to identify and construct confidence intervals for policy values in confounded MDPs. \citet{geEtAl2023dynamicMediation} develop an RL framework for dynamic mediation analysis, decomposing the long-run effect into direct and mediated components. The policy question shifts from ``does the action work'' to ``through which sequential channel does the action work, and is that channel stable enough to transport across policies?''
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Structural Counterfactual Off-Policy Evaluation}
+\label{subsec:cfope_scm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The point-identification strategies of the preceding subsections recover the target-policy value $V(\widetilde\pi)$ from observational data under explicit graphical assumptions. A complementary route, originating in \citet{buesing2019woulda}, operates one level deeper. Cast the partially observable Markov decision process as a structural causal model, infer a posterior over its exogenous noise from the observed trajectory, and roll out under the counterfactual policy with that posterior held fixed. The output is not just a value estimate but a counterfactual trajectory the agent would have produced, sample by sample.
+
+The transition mechanism is $s_{t+1} = f^s(s_t, a_t, u^s_t)$ with exogenous noise $u^s_t$, the observation mechanism is $o_t = f^o(s_t, u^o_t)$, and the action mechanism is $a_t = f^\pi(h_t, u^a_t)$ given the history $h_t$. Given an observed trajectory $\hat\tau$, the counterfactual rule proceeds in three steps.
+
+\begin{algorithm}[h]
+\caption{Counterfactual off-policy evaluation \citep{buesing2019woulda}}
+\label{alg:buesing_cfope}
+\begin{algorithmic}[1]
+\State \emph{Abduction.} Infer the posterior $P(U \mid \hat\tau)$ over the exogenous noise from the observed trajectory.
+\State \emph{Action.} Replace the behaviour-policy mechanism $f^\pi$ with the target-policy mechanism $f^{\widetilde\pi}$ to form the modified SCM $\mathcal M^{\mathrm{do}(\widetilde\pi)}_{\hat\tau}$ with the same posterior on $U$.
+\State \emph{Prediction.} Sample $U \sim P(U \mid \hat\tau)$ and roll out the modified SCM to obtain counterfactual trajectories $\tau^{\mathrm{cf}}$ and their returns.
+\end{algorithmic}
+\end{algorithm}
+
+Lemma~1 of \citet{buesing2019woulda} establishes that the marginal of the counterfactual distribution over $\hat\tau$ equals the interventional distribution, so the counterfactual estimator is unbiased under correct SCM specification. On the partially-observable grid-world experiment of the paper, the counterfactual estimator's evaluation error decreases monotonically with the amount of off-policy data, while the model-based estimator's error remains stuck at the bias of the dynamics model.
+
+The categorical-action case raises an identification problem. \citet{oberst2019counterfactual} show that multiple structural causal models can be consistent with the same interventional distribution yet imply different counterfactual outcomes, and they resolve the ambiguity by assuming a Gumbel-max sampling mechanism that satisfies a counterfactual-stability condition.\footnote{The Pearl monotonicity condition resolves the binary case. The Gumbel-max SCM is the natural extension to $k$-way categorical outcomes. \citet{TangWiens2023} combine SCM-based counterfactual outcomes with importance sampling to obtain variance reductions while preserving unbiasedness under correct human annotation, with a sepsis-simulator demonstration that delivers an RMSE of $0.013$ against $0.113$ for vanilla per-decision IS.} The shared identifying assumption across this strand is that the structural causal model is correctly specified. The Lucas critique applies in its sharpest form when the agent's policy itself enters the data-generating process, and identification by instruments or exogeneity restrictions in the spirit of \citet{Chernozhukov2018} is the econometric remedy that composes naturally with the backdoor, front-door, proximal, and mediator-based identification strategies of the preceding subsections.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{The Broader Causal RL Landscape}
 \label{subsec:causal_rl_landscape}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Three further directions sit outside the chapter's central scope but deserve naming. \citet{paceEtAl2024delphic} respond to the case where no observed control, instrument, mediator, or proxy is strong enough to point-identify the policy value with Delphic offline RL, which treats hidden confounding as nonidentifiable uncertainty rather than pretending it has been solved. \citet{buesing2019woulda}, \citet{oberst2019counterfactual}, and \citet{mesnardEtAl2021counterfactual} develop counterfactual credit assignment, using structural causal models or constrained future-information conditioning to produce per-trajectory counterfactual rollouts and policy gradients. Transportability theory \citep{pearl2014external,bareinboim2016causal,liZhangBareinboim2024curriculum} asks which mechanisms remain invariant across source and target environments, governing sim-to-real transfer and curriculum learning under environment shift.
+Two further directions sit outside the chapter's central scope but deserve naming. \citet{paceEtAl2024delphic} respond to the case where no observed control, instrument, mediator, or proxy is strong enough to point-identify the policy value with Delphic offline RL, which treats hidden confounding as nonidentifiable uncertainty rather than pretending it has been solved. \citet{mesnardEtAl2021counterfactual} extends the structural-counterfactual machinery of Section~\ref{subsec:cfope_scm} from policy evaluation to per-trajectory counterfactual policy gradients, using constrained future-information conditioning to keep the gradient estimator unbiased. Transportability theory \citep{pearl2014external,bareinboim2016causal,liZhangBareinboim2024curriculum} asks which mechanisms remain invariant across source and target environments, governing sim-to-real transfer and curriculum learning under environment shift.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Simulation Study: Confounded Retail Pricing MDP}
@@ -260,5 +283,43 @@ Figure~\ref{fig:confounded_ope} reports bias and RMSE across confounding strengt
 \caption{(a) Bias of five OPE estimators as a function of confounding strength $\rho$. (b) RMSE of five estimators as a function of $\rho$. (c) IV estimator bias distribution vs.\ instrument strength at $\rho = 1$; dashed red line is naive estimator bias.}
 \label{fig:confounded_ope}
 \end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Simulation Study: Counterfactual OPE under a Misspecified SCM}
+\label{subsec:cfope_sim}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+A second synthetic instance illustrates the counterfactual machinery of Section~\ref{subsec:cfope_scm} on a contextual-bandit substrate that strips the temporal complication and isolates the model-misspecification question. The DGP is a linear structural causal model in two features,
+\begin{equation}
+y = 1 + 0.5\, x_1 - 0.3\, x_2 + 2\, a + a \cdot x_1 + u,
+\qquad u \sim \mathcal N(0,\, 0.5^2),
+\label{eq:cfope_dgp}
+\end{equation}
+with $x \sim \mathcal N(0, I_2)$, a binary action $a \in \{0, 1\}$, and a heterogeneous treatment effect $\tau(x) = 2 + x_1$. The behaviour policy $\pi_{\mathrm{obs}}(a = 1 \mid x) = \sigma(0.5 + x_1 - 0.5\, x_2)$ is confounded with $x$. The target policy $\widetilde\pi(a \mid x) = \mathbf 1\{x_1 + x_2 > 0\}$ is a deterministic threshold rule. The oracle value $V(\widetilde\pi) = \mathbb E_x[y \mid a = \widetilde\pi(x)]$ is computed by Monte Carlo at $10^6$ realisations.
+
+Three estimators are compared on $n \in \{200, 500, 1000, 2000\}$ logged samples, $20$ seeds per cell. Per-decision importance sampling is $\widehat V_{\mathrm{IS}} = n^{-1} \sum_i \rho_i y_i$ with $\rho_i = \mathbf 1\{a_i = \widetilde\pi(x_i)\} / \pi_{\mathrm{obs}}(a_i \mid x_i)$. The model-based plug-in $\widehat V_{\mathrm{MB}} = n^{-1} \sum_i \hat f(x_i, \widetilde\pi(x_i))$ uses an OLS fit $\hat f$ on the logged data. The counterfactual estimator follows the abduction-action-prediction rule of Algorithm~\ref{alg:buesing_cfope} and combines $\hat f$ with a residual correction weighted by the importance ratio,
+\begin{equation}
+\widehat V_{\mathrm{CF}}
+= n^{-1} \sum_i \hat f(x_i, \widetilde\pi(x_i))
+  + n^{-1} \sum_i \rho_i \bigl(y_i - \hat f(x_i, a_i)\bigr),
+\label{eq:cfope_dr}
+\end{equation}
+which is the doubly-robust form of the abduction-action-prediction rule and is unbiased under correct propensity \emph{or} correct outcome model.\footnote{The naive average of the per-observation counterfactual outcome $y'_i = \hat f(x_i, \widetilde\pi(x_i)) + (y_i - \hat f(x_i, a_i))$ collapses to $\widehat V_{\mathrm{MB}}$ under OLS with an intercept because the OLS residuals sum exactly to zero. The importance-weighted residual correction in \eqref{eq:cfope_dr} restores the bias-cancellation property in finite samples. The estimator coincides with the classical doubly-robust estimator of Robins-Rotnitzky-Zhao adapted to off-policy evaluation.} The well-specified scenario uses the feature set $\{1, x_1, x_2, a, a \cdot x_1\}$ in $\hat f$, matching the DGP. The misspecified scenario drops the interaction $a \cdot x_1$, the source of the heterogeneous treatment effect.
+
+\begin{table}[h]
+\centering
+\caption{Counterfactual off-policy evaluation under a linear SCM, $n = 1000$, $20$ seeds. The CF estimator's residual correction cancels the MB bias under misspecification while inheriting low variance from the model.}
+\label{tab:cfope_summary}
+\input{../ch10_causal/sims/counterfactual_ope_table}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\linewidth]{../ch10_causal/sims/counterfactual_ope.png}
+\caption{Root mean squared error of three OPE estimators against the sample size, log-log scale, two panels. Left panel, well-specified outcome model. Right panel, misspecified model with the interaction omitted. The MB estimator's RMSE plateaus under misspecification as the bias dominates the variance, while the CF estimator's RMSE continues to decline.}
+\label{fig:cfope_rmse}
+\end{figure}
+
+Table~\ref{tab:cfope_summary} reports bias, standard deviation, and root mean squared error at $n = 1000$. Under well-specification the model-based estimator attains bias $-0.001$ and RMSE $0.056$, the counterfactual estimator attains bias $0.003$ and RMSE $0.065$, and the importance-sampling estimator attains bias $0.017$ and RMSE $0.099$. The MB and CF estimators are statistically indistinguishable and both improve on IS. Under misspecification the MB estimator's bias jumps to $-0.072$ and its RMSE to $0.093$, while the CF estimator's bias remains at $0.002$ and its RMSE at $0.076$. The CF estimator's RMSE is $18\%$ lower than MB's, and the bias is two orders of magnitude smaller. The IS estimator is unchanged across scenarios because it does not use an outcome model. Figure~\ref{fig:cfope_rmse} plots RMSE against $n$ on log-log scale. The MB curve flattens under misspecification at the population bias of the OLS projection, the CF curve continues to decline at the parametric rate, and the IS curve traces the higher-variance parametric rate that the importance-weighted estimator delivers without any model assistance.
 
 The companion Chapter~\ref{section:rl_for_ci} inverts the direction of this one, asking how RL machinery imports into econometric causal inference rather than the reverse. The bridge there runs through the equivalence between Murphy's backward Bellman recursion for optimal dynamic treatment regimes and Watkins's $Q$-learning recursion on a history-augmented state. Once that translation is fixed, the dynamic-DML and policy-learning results of that chapter complement the identification techniques of this one: this chapter deals with what to do when sequential ignorability fails; the companion chapter deals with how far you can push the rate of convergence when it holds.

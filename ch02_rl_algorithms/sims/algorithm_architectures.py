@@ -235,7 +235,7 @@ def draw_reinforce(ax):
     draw_rect_node(ax, nodes['policy']['xy'], nodes['policy']['size'],
                    r'$\pi_\theta(a|s)$', color=col, fontsize=12)
     draw_rect_node(ax, nodes['sample']['xy'], nodes['sample']['size'],
-                   r'$a \sim \pi(\cdot|s)$', color=col, alpha=0.08, fontsize=10)
+                   r'$a \sim \pi_\theta(\cdot|s)$', color=col, alpha=0.08, fontsize=10)
     draw_circle_node(ax, nodes['a']['xy'], r'$a_t$')
 
     _connect(ax, nodes, 's', 'policy')
@@ -272,14 +272,14 @@ def draw_reinforce(ax):
 
 def draw_actor_critic(ax):
     col = ALGO_COLORS['Actor-Critic']
-    y_actor = 2.3
-    y_critic = 0.7
+    y_actor = 2.5
+    y_critic = 1.0
 
     nodes = {
         's':      {'xy': (0.0,  YMID), 'shape': 'circle', 'size': NODE_RADIUS},
-        'actor':  {'xy': (2.0,  y_actor), 'shape': 'rect', 'size': (1.8, 0.60)},
+        'actor':  {'xy': (2.0,  y_actor), 'shape': 'rect', 'size': (1.7, 0.55)},
         'a':      {'xy': (4.2,  y_actor), 'shape': 'circle', 'size': NODE_RADIUS},
-        'critic': {'xy': (2.0,  y_critic), 'shape': 'rect', 'size': (1.8, 0.60)},
+        'critic': {'xy': (2.0,  y_critic), 'shape': 'rect', 'size': (1.7, 0.55)},
         'td':     {'xy': (4.2,  y_critic), 'shape': 'circle', 'size': NODE_RADIUS},
     }
 
@@ -298,17 +298,48 @@ def draw_actor_critic(ax):
     # actor -> a
     _connect(ax, nodes, 'actor', 'a')
 
-    # critic -> td
-    _connect(ax, nodes, 'critic', 'td')
+    # critic -> td (curved above) and td -> critic (dashed, curves below)
+    # Opposite-direction arcs prevent the bidirectional pair from collapsing onto a single line
+    _connect(ax, nodes, 'critic', 'td', curve=0.30)
 
-    # Feedback: td -> actor (dashed, curved upward)
+    # Feedback: td -> actor (dashed) for policy gradient update
     draw_edge(ax, nodes['td']['xy'], nodes['actor']['xy'],
               p1_shape='circle', p2_shape='rect',
               p1_size=NODE_RADIUS, p2_size=nodes['actor']['size'],
               dashed=True, color=col, curve=-0.35)
 
-    # TD error formula below the delta node
-    ax.text(nodes['td']['xy'][0], nodes['td']['xy'][1] - 0.45,
+    # Feedback: td -> critic (dashed, opposite-arc to the critic->td forward edge above)
+    draw_edge(ax, nodes['td']['xy'], nodes['critic']['xy'],
+              p1_shape='circle', p2_shape='rect',
+              p1_size=NODE_RADIUS, p2_size=nodes['critic']['size'],
+              dashed=True, color=col, curve=0.30)
+
+    # Environment feedback loop below (matches panels a and b)
+    env_xy = (2.5, -0.15)
+    env_size = (1.6, 0.55)
+    draw_rect_node(ax, env_xy, env_size, 'Environment', color=COLORS['gray'],
+                   alpha=0.10, fontsize=10)
+
+    # a -> env (action feeds into environment); large negative curve sweeps right of central nodes
+    draw_edge(ax, nodes['a']['xy'], env_xy,
+              p1_shape='circle', p2_shape='rect',
+              p1_size=NODE_RADIUS, p2_size=env_size,
+              curve=-0.55, color=COLORS['gray'])
+
+    # env -> s (environment produces next state); symmetric sweep on the left
+    draw_edge(ax, env_xy, nodes['s']['xy'],
+              p1_shape='rect', p2_shape='circle',
+              p1_size=env_size, p2_size=NODE_RADIUS,
+              curve=-0.55, color=COLORS['gray'])
+
+    # Env-loop labels (match panels a and b)
+    ax.text(4.6, 0.5, r'$a_t$', fontsize=9, color=COLORS['gray'],
+            ha='center', va='center')
+    ax.text(0.4, 0.5, r'$r_{t+1}, s_{t+1}$', fontsize=9, color=COLORS['gray'],
+            ha='center', va='center')
+
+    # TD error formula below the env block to avoid collision with feedback arrows
+    ax.text(nodes['td']['xy'][0], -0.75,
             r'$\delta_t = r_t + \gamma V_w(s_{t+1}) - V_w(s_t)$',
             ha='center', va='top', fontsize=9, color=col,
             fontstyle='italic')
