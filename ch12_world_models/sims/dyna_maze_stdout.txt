@@ -1,0 +1,22 @@
+=== dyna_maze ===
+Agents: ['Dyna-Q (K=50)', 'Dyna-Q+ (K=50)', 'Dyna-Q (K=5)', 'Schmidhuber 1990 (NN)', 'Q-learning (K=0)']
+Phase switch at t=1000, total t=3000
+N_SEEDS = 30
+
+  Cache hit: Dyna-Q_K50
+  Cache hit: Dyna-Qplus_K50
+  Cache hit: Dyna-Q_K5
+  Cache hit: Schmidhuber_1990_NN
+  Cache hit: Q-learning_K0
+  Figure saved: /Users/pranjal/Code/rl/ch12_world_models/sims/dyna_maze.png
+  Table saved: /Users/pranjal/Code/rl/ch12_world_models/sims/dyna_maze_results.tex
+
+=== Cumulative reward (mean ± SE, n=30 seeds) ===
+
+Agent                      Phase 1 end    Phase 2 gain    Total t=3000
+----------------------------------------------------------------------
+Dyna-Q (K=50)                42.2 ± 5.3         9.8 ± 4.0        52.0 ± 4.2
+Dyna-Q+ (K=50)               37.4 ± 3.7         9.6 ± 2.8        47.0 ± 4.4
+Dyna-Q (K=5)                 34.4 ± 4.9         4.8 ± 3.0        39.2 ± 4.7
+Schmidhuber 1990 (NN)         2.5 ± 0.3         1.5 ± 0.2         4.0 ± 0.4
+Q-learning (K=0)              2.9 ± 0.5         0.6 ± 0.2         3.5 ± 0.5
