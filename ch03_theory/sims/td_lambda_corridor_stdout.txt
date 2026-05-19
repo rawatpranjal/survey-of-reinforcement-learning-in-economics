@@ -5,13 +5,23 @@ TD(LAMBDA) CREDIT ASSIGNMENT IN A CORRIDOR
 Environment: 20-state corridor (chain MDP)
   States: 20, Terminal: state 19
   Reward: +1 at terminal, 0 elsewhere
-  True V*(s) = gamma^(19 - s)
+  True V*(s) = gamma^(18 - s) for s < 19, V*(19) = 0
 
 Parameters: gamma=0.99, alpha=0.05
   Episodes: 200, Seeds: 20
   Lambda values: [0.0, 0.4, 0.8, 1.0]
 
-  Cache hit: td_lambda
+  Computing: td_lambda
+Running TD(lambda) corridor experiment
+  States: 20, gamma: 0.99, alpha: 0.05
+  Episodes: 200, Seeds: 20
+  Lambda values: [0.0, 0.4, 0.8, 1.0]
+
+  lambda=0.0: final RMSVE = 0.4012 +/- 0.0056
+  lambda=0.4: final RMSVE = 0.1902 +/- 0.0028
+  lambda=0.8: final RMSVE = 0.0108 +/- 0.0002
+  lambda=1.0: final RMSVE = 0.0000 +/- 0.0000
+  Cache saved: /Users/pranjal/Code/rl/ch03_theory/sims/cache/td_lambda_corridor__td_lambda.pkl
   Figure saved: /Users/pranjal/Code/rl/ch03_theory/sims/td_lambda_corridor.png
   Table saved: /Users/pranjal/Code/rl/ch03_theory/sims/td_lambda_corridor.tex
 
