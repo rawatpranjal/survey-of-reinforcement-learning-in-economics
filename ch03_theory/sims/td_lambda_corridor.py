@@ -30,7 +30,7 @@ CONFIG = {
     'n_seeds': 20,
     'lambdas': [0.0, 0.4, 0.8, 1.0],
     'rmsve_threshold': 0.05,
-    'version': 3,
+    'version': 4,
 }
 
 OUTPUT_DIR = os.path.dirname(__file__)
@@ -48,8 +48,15 @@ LAMBDA_COLORS = {
 # ---------------------------------------------------------------------------
 
 def true_values(n_states, gamma):
-    """V*(s) = gamma^(n_states - 1 - s) for s = 0, ..., n_states - 1."""
-    return np.array([gamma ** (n_states - 1 - s) for s in range(n_states)])
+    """V*(s) = gamma^(n_states - 2 - s) for s = 0, ..., n_states - 2, V*(terminal) = 0.
+
+    Reward 1 is received on the transition (n_states-2) -> (n_states-1) and the
+    terminal value is 0, so the Bellman recursion gives V*(n_states-2) = 1 and
+    V*(s) = gamma^(n_states - 2 - s) for s < n_states - 1.
+    """
+    V = np.array([gamma ** (n_states - 2 - s) for s in range(n_states)], dtype=float)
+    V[n_states - 1] = 0.0
+    return V
 
 
 def run_td_lambda(n_states, gamma, alpha, lam, n_episodes, seed):
@@ -244,7 +251,7 @@ def main():
     print("Environment: 20-state corridor (chain MDP)")
     print(f"  States: {CONFIG['n_states']}, Terminal: state {CONFIG['n_states'] - 1}")
     print(f"  Reward: +1 at terminal, 0 elsewhere")
-    print(f"  True V*(s) = gamma^(19 - s)")
+    print(f"  True V*(s) = gamma^(18 - s) for s < 19, V*(19) = 0")
     print()
     print(f"Parameters: gamma={CONFIG['gamma']}, alpha={CONFIG['alpha']}")
     print(f"  Episodes: {CONFIG['n_episodes']}, Seeds: {CONFIG['n_seeds']}")

@@ -138,7 +138,7 @@ Under linear function approximation, TD($\lambda$) converges to a unique fixed p
 \subsubsection{Simulation Study: Credit Assignment in a Corridor}
 \label{sec:sim_td_lambda_corridor}
 
-A 20-state deterministic corridor ($s \in \{0, \ldots, 19\}$, action: move right, reward $+1$ only at the terminal state $s = 19$, $\gamma = 0.99$) isolates the credit-assignment mechanism. The true value function is $V^*(s) = \gamma^{19-s}$. TD($\lambda$) performs policy evaluation for four values of $\lambda$ across 20 seeds and 200 episodes.
+A 20-state deterministic corridor ($s \in \{0, \ldots, 19\}$, action: move right, reward $+1$ on the transition into the terminal state $s = 19$, $\gamma = 0.99$) isolates the credit-assignment mechanism. The true value function is $V^*(s) = \gamma^{18-s}$ for $s \le 18$ (and $V^*(19) = 0$). TD($\lambda$) performs policy evaluation for four values of $\lambda$ across 20 seeds and 200 episodes.
 
 Table~\ref{tab:td_lambda_corridor} and Figure~\ref{fig:td_lambda_corridor} show that higher $\lambda$ propagates the sparse terminal reward signal backward through the corridor faster: TD($\lambda = 1$) reaches RMSVE $< 0.05$ in fewer episodes than TD(0), which must wait for many episodes before the reward signal diffuses back to early states through one-step bootstrapping alone.
 
