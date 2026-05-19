@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from sims.plot_style import apply_style, COLORS, BENCH_STYLE
-from sims.sim_cache import compute_or_load, add_component_args, parse_force_set
+from sims.sim_cache import load_results, save_results, add_cache_args
 apply_style()
 
 try:
@@ -36,7 +36,7 @@ except ImportError:
 # ============================================================================
 
 CONFIG = {
-    'version': 14,
+    'version': 15,
     'M': 20,
     'gamma': 0.95,
     'trans_probs': [0.4, 0.4, 0.2],
@@ -45,7 +45,7 @@ CONFIG = {
     'true_theta2': 4.0,
     'N_agents': 500,
     'T_periods': 100,
-    'exp2_seeds': 5,
+    'exp2_seeds': 10,
     'exp2_K_values': [1, 2, 3, 4],
     'timeout': 300,
     'vi_tol': 1e-8,
@@ -462,10 +462,16 @@ def estimate_td_ccp_linear(states, actions, env_config, precomp=None):
         return {'converged': False, 'theta': [np.nan]*3, 'time': time.time()-t0}
 
 
-def estimate_td_ccp_nn(states, actions, env_config, precomp=None):
+def estimate_td_ccp_nn(states, actions, env_config, precomp=None, seed=0):
     """TD-CCP with neural net: learn EV components via AVI with MLP, then PMLE."""
     if not HAS_TORCH:
         return {'converged': False, 'theta': [np.nan]*3, 'time': 0, 'reason': 'no_torch'}
+
+    # Seed PyTorch for within-seed reproducibility of MLP training (see audit
+    # 2026-05-19 §7 on PyTorch non-determinism in TD-CCP Neural).
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
     t0 = time.time()
     K, M, gamma = env_config['K'], env_config['M'], env_config['gamma']
@@ -569,12 +575,12 @@ def estimate_td_ccp_nn(states, actions, env_config, precomp=None):
 # Experiments
 # ============================================================================
 
-def run_single_estimation(method_name, states, actions, env_config, timeout=300, precomp=None):
+def run_single_estimation(method_name, states, actions, env_config, timeout=300, precomp=None, seed=0):
     dispatch = {
         'NFXP': lambda: estimate_nfxp(states, actions, env_config, timeout, precomp),
         'CCP': lambda: estimate_ccp(states, actions, env_config, precomp),
         'TD-CCP Linear': lambda: estimate_td_ccp_linear(states, actions, env_config, precomp),
-        'TD-CCP Neural': lambda: estimate_td_ccp_nn(states, actions, env_config, precomp),
+        'TD-CCP Neural': lambda: estimate_td_ccp_nn(states, actions, env_config, precomp, seed=seed),
     }
     return dispatch[method_name]()
 
@@ -618,7 +624,8 @@ def run_experiment_2():
             for method in METHOD_ORDER:
                 print(f"      {method:20s} ... ", end='', flush=True)
                 res = run_single_estimation(method, sim_states, sim_actions, env_config,
-                                             timeout=CONFIG['timeout'], precomp=precomp)
+                                             timeout=CONFIG['timeout'], precomp=precomp,
+                                             seed=seed)
                 theta = res['theta']
                 status = ''
                 if res.get('timeout'):
@@ -656,6 +663,51 @@ def compute_data():
 def generate_outputs(data):
     exp2 = data['exp2']
     true_params = [CONFIG['true_RC'], CONFIG['true_theta1'], CONFIG['true_theta2']]
+    n_seeds_used = CONFIG['exp2_seeds']
+
+    # --- Numeric summary to stdout (means and SEs) ---
+    print(f"\n{'='*70}")
+    print("SUMMARY: per-method, per-K results with standard errors")
+    print(f"  Seeds per cell: {n_seeds_used}")
+    print(f"{'='*70}")
+    header = (f"  {'Method':<16}{'K':>3}{'|S|':>8}{'Time(s)':>10}"
+              f"{'RC Bias':>10}{'SE':>8}{'RC RMSE':>10}{'SE':>8}"
+              f"{'th1 RMSE':>10}{'SE':>8}{'th2 RMSE':>10}{'SE':>8}")
+    print(header)
+    for K in CONFIG['exp2_K_values']:
+        if K not in exp2:
+            continue
+        for method in METHOD_ORDER:
+            valid = [r for r in exp2[K][method]
+                     if not r.get('skipped', False) and not any(np.isnan(r['theta']))]
+            if not valid:
+                print(f"  {method:<16}{K:>3}{CONFIG['M']**K:>8}    --- (no valid runs)")
+                continue
+            times = [r['time'] for r in valid]
+            rc_vals = np.array([r['theta'][0] for r in valid])
+            th1_vals = np.array([r['theta'][1] for r in valid])
+            th2_vals = np.array([r['theta'][2] for r in valid])
+            n_v = len(rc_vals)
+            rc_bias = rc_vals.mean() - true_params[0]
+            rc_bias_se = rc_vals.std(ddof=1) / np.sqrt(n_v) if n_v > 1 else 0.0
+            rc_sq = (rc_vals - true_params[0]) ** 2
+            rc_rmse = np.sqrt(rc_sq.mean())
+            rc_rmse_se = (rc_sq.std(ddof=1) / (2.0 * max(rc_rmse, 1e-12) * np.sqrt(n_v))
+                          if n_v > 1 else 0.0)
+            th1_sq = (th1_vals - true_params[1]) ** 2
+            th2_sq = (th2_vals - true_params[2]) ** 2
+            th1_rmse = np.sqrt(th1_sq.mean())
+            th2_rmse = np.sqrt(th2_sq.mean())
+            th1_rmse_se = (th1_sq.std(ddof=1) / (2.0 * max(th1_rmse, 1e-12) * np.sqrt(n_v))
+                           if n_v > 1 else 0.0)
+            th2_rmse_se = (th2_sq.std(ddof=1) / (2.0 * max(th2_rmse, 1e-12) * np.sqrt(n_v))
+                           if n_v > 1 else 0.0)
+            print(f"  {method:<16}{K:>3}{CONFIG['M']**K:>8}"
+                  f"{np.mean(times):>10.2f}"
+                  f"{rc_bias:>+10.3f}{rc_bias_se:>8.3f}"
+                  f"{rc_rmse:>10.3f}{rc_rmse_se:>8.3f}"
+                  f"{th1_rmse:>10.3f}{th1_rmse_se:>8.3f}"
+                  f"{th2_rmse:>10.3f}{th2_rmse_se:>8.3f}")
 
     # --- Figure: Scaling — wall-clock time vs K ---
     K_values = CONFIG['exp2_K_values']
@@ -689,13 +741,26 @@ def generate_outputs(data):
     print(f"  Saved: {path2}")
 
     # --- Table: Consolidated results ---
+    # SE columns added per audit 2026-05-19 §7. RC Bias SE is std(rc)/sqrt(n).
+    # RMSE SE is the standard error of the RMSE estimate across seeds: we
+    # report std of per-seed squared error / sqrt(n) / (2*RMSE) via the delta
+    # method, which simplifies to std(sq_err)/(2 * RMSE * sqrt(n)).
+    def _rmse_se(vals, truth):
+        sq = np.array([(v - truth) ** 2 for v in vals])
+        rmse = np.sqrt(sq.mean())
+        if rmse < 1e-12 or len(sq) < 2:
+            return 0.0
+        return sq.std(ddof=1) / (2.0 * rmse * np.sqrt(len(sq)))
+
     lines = []
-    lines.append(r'\begin{tabular}{ll rrr rrr}')
+    lines.append(r'\begin{tabular}{ll rr cc cc cc cc}')
     lines.append(r'\toprule')
-    lines.append(r'Method & K & $|S|$ & Time (s) & RC Bias & RC RMSE & '
-                 r'$\theta_1$ RMSE & $\theta_2$ RMSE \\')
+    lines.append(r' & & & & \multicolumn{2}{c}{RC Bias} & \multicolumn{2}{c}{RC RMSE} & \multicolumn{2}{c}{$\theta_1$ RMSE} & \multicolumn{2}{c}{$\theta_2$ RMSE} \\')
+    lines.append(r'\cmidrule(lr){5-6} \cmidrule(lr){7-8} \cmidrule(lr){9-10} \cmidrule(lr){11-12}')
+    lines.append(r'Method & K & $|S|$ & Time (s) & Mean & SE & Value & SE & Value & SE & Value & SE \\')
     lines.append(r'\midrule')
 
+    n_seeds_used = CONFIG['exp2_seeds']
     for K in K_values:
         if K not in exp2:
             continue
@@ -704,20 +769,26 @@ def generate_outputs(data):
             valid = [r for r in exp2[K][method]
                      if not r.get('skipped', False) and not any(np.isnan(r['theta']))]
             if not valid:
-                lines.append(f'{method} & {K} & {n_states:,} & --- & --- & --- & --- & --- \\\\')
+                lines.append(f'{method} & {K} & {n_states:,} & --- & --- & --- & --- & --- & --- & --- & --- & --- \\\\')
                 continue
             times = [r['time'] for r in valid]
             rc_vals = [r['theta'][0] for r in valid]
             th1_vals = [r['theta'][1] for r in valid]
             th2_vals = [r['theta'][2] for r in valid]
             rc_bias = np.mean(rc_vals) - true_params[0]
+            rc_bias_se = np.std(rc_vals, ddof=1) / np.sqrt(len(rc_vals)) if len(rc_vals) > 1 else 0.0
             rc_rmse = np.sqrt(np.mean([(v - true_params[0])**2 for v in rc_vals]))
+            rc_rmse_se = _rmse_se(rc_vals, true_params[0])
             th1_rmse = np.sqrt(np.mean([(v - true_params[1])**2 for v in th1_vals]))
             th2_rmse = np.sqrt(np.mean([(v - true_params[2])**2 for v in th2_vals]))
+            th1_rmse_se = _rmse_se(th1_vals, true_params[1])
+            th2_rmse_se = _rmse_se(th2_vals, true_params[2])
             mean_time = np.mean(times)
             lines.append(f'{method} & {K} & {n_states:,} & {mean_time:.1f} & '
-                         f'{rc_bias:+.3f} & {rc_rmse:.3f} & {th1_rmse:.3f} & '
-                         f'{th2_rmse:.3f} \\\\')
+                         f'{rc_bias:+.3f} & {rc_bias_se:.3f} & '
+                         f'{rc_rmse:.3f} & {rc_rmse_se:.3f} & '
+                         f'{th1_rmse:.3f} & {th1_rmse_se:.3f} & '
+                         f'{th2_rmse:.3f} & {th2_rmse_se:.3f} \\\\')
         if K < K_values[-1]:
             lines.append(r'\midrule')
 
