@@ -47,6 +47,7 @@ claude.md
 GEMINI.md
 AGENTS.md
 .claude/
+.serena/
 
 # Internal project management
 changelog.md
