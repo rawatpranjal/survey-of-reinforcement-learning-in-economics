@@ -112,6 +112,8 @@ FIGURES=(
     "ch12_world_models/sims/cobweb_paradigms_param_recovery.png"
     "ch12_world_models/sims/cobweb_paradigms_policy_distance.png"
     "ch12_world_models/sims/fishery_paradigms.png"
+    "ch06_games/sims/durable_goods_coase_collapse.png"
+    "ch06_games/sims/durable_goods_coase_price_paths.png"
 )
 
 for f in "${FIGURES[@]}"; do
@@ -149,6 +151,7 @@ TABLES=(
     "ch12_world_models/sims/cobweb_paradigms_results.tex"
     "ch12_world_models/sims/dyna_maze_results.tex"
     "ch12_world_models/sims/fishery_paradigms_results.tex"
+    "ch06_games/sims/durable_goods_coase_results.tex"
 )
 
 for f in "${TABLES[@]}"; do
@@ -209,6 +212,7 @@ noop ch12_world_models/sims/cobweb_paradigms_results.tex
 noop ch12_world_models/sims/dyna_maze_results.tex
 noop ch12_world_models/sims/fishery_paradigms_results.tex
 noop ch07_bandits/sims/curve_learning_pricing_summary.tex
+noop ch06_games/sims/durable_goods_coase_results.tex
 READMEEOF
 echo "  Created 00README.XXX (prevents arXiv file deletion)"
 
