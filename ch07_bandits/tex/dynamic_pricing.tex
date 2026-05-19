@@ -103,7 +103,7 @@ With known manipulation cost matrix $A$, the strategic pricing algorithm achieve
 
 When $A$ is unknown, the seller can still recover $O(d\sqrt{T/\tau})$ regret by tracking repeat buyers across exploration and exploitation phases, where $\tau$ is the fraction of buyers who appear in both phases (Theorem 3). Higher repeat rates mean more matched pairs for estimating manipulation behavior.
 
-The lesson is that demand learning is also mechanism design. A pricing rule changes buyer incentives, and those incentives change the data the seller sees. Incentive compatibility matters even in settings where the seller is ``just'' learning demand.\footnote{\citet{Agrawal2024ref} document a related phenomenon in pricing with reference effects. If consumers anchor on past prices, a static pricing policy that ignores reference dependence accumulates linear regret $\Omega(T)$. \citet{Chen2025fairness} show that imposing fairness constraints (requiring similar prices for similar customers) raises the regret floor to $\Theta(T^{2/3})$, a social cost of equitable treatment.}
+The lesson is that demand learning is also mechanism design. A pricing rule changes buyer incentives, and those incentives change the data the seller sees. Incentive compatibility matters even in settings where the seller is ``just'' learning demand.\footnote{\citet{Agrawal2024ref} document a related phenomenon in pricing with reference effects. If consumers anchor on past prices, a static pricing policy that ignores reference dependence accumulates linear regret $\Omega(T)$.}
 
 \subsection{Comparison of Regret Rates}
 \label{sec:comparison}
