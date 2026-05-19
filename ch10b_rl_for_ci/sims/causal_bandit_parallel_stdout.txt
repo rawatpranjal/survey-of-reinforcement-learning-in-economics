@@ -1,6 +1,7 @@
   Cache hit: regret_vs_m
   Cache hit: regret_vs_T
-  Cache hit: mabuc
+  Computing: mabuc
+  Cache saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/cache/causal_bandit_parallel__mabuc.pkl
 
 ======================================================================
   Causal Bandits on Parallel Bandits + Greedy Casino -- summary
@@ -24,9 +25,13 @@
     1600          0.1425 (0.0034)              0.0000 (0.0000)
 
   --- Greedy-casino MABUC at T = 1000 ---
-  Vanilla Thompson sampling: cumulative regret = 200.49 (SE 0.28)
-  Causal Thompson (TS_C)   : cumulative regret = 0.66 (SE 0.04)
-  Ratio TS / TS_C = 305.3x
+  Vanilla Thompson sampling          : cumulative regret = 200.49 (SE 0.28)
+  Context-conditional Thompson (CCTS): cumulative regret = 0.66 (SE 0.04)
+  Full TS_C (Bareinboim 2015)        : cumulative regret = 4.49 (SE 0.10)
+  Ratio (vanilla TS) / (CCTS)        = 305.3x
+  Ratio (vanilla TS) / (TS_C)        = 44.6x
+  Ratio (CCTS)      / (TS_C)         = 0.15x
+  CCTS beats TS_C by 3.84 regret units (85.4%).
 
   Output files:
      /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_combined.png
