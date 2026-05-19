@@ -4,11 +4,11 @@ Config:
   forcing recompute of: ['misspec', 'well_spec']
   Cache hit: shared
   Computing: well_spec
-  Cache saved: /Users/pranjal/Code/rl/ch12_forecasting_rl/sims/cache/counterfactual_ope__well_spec.pkl
+  Cache saved: /Users/pranjal/Code/rl/ch10_causal/sims/cache/counterfactual_ope__well_spec.pkl
   Computing: misspec
-  Cache saved: /Users/pranjal/Code/rl/ch12_forecasting_rl/sims/cache/counterfactual_ope__misspec.pkl
-  Figure: /Users/pranjal/Code/rl/ch12_forecasting_rl/sims/counterfactual_ope.png
-  Table:  /Users/pranjal/Code/rl/ch12_forecasting_rl/sims/counterfactual_ope_table.tex
+  Cache saved: /Users/pranjal/Code/rl/ch10_causal/sims/cache/counterfactual_ope__misspec.pkl
+  Figure: /Users/pranjal/Code/rl/ch10_causal/sims/counterfactual_ope.png
+  Table:  /Users/pranjal/Code/rl/ch10_causal/sims/counterfactual_ope_table.tex
 
 Oracle V(pi_tilde) = 2.2844
 

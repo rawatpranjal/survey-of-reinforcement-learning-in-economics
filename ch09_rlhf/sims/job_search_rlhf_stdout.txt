@@ -40,7 +40,7 @@ OFFER DISTRIBUTION:
   Accepts 25 of 56 offer types
   Stays at 25 of 56 job types
   Mean accepted amenity: 4.84, Mean accepted wage: 71
-Saved: ch08_rlhf/sims/job_search_env.png
+Saved: ch09_rlhf/sims/job_search_env.png
 
 ================================================================================
 2. Q-LEARNING
@@ -211,15 +211,15 @@ DIAGNOSTICS (K=5000, single seed)
   Correct         |   100.0 |  1.0000 |    4.84 |    71.3 |   0.597
   Misspecified    |    50.0 |  0.8892 |    3.00 |    69.7 |     ---
   Optimal         |   100.0 |  1.0000 |    4.84 |    71.3 |     ---
-Saved: ch08_rlhf/sims/job_search_rlhf_diagnostics.tex
+Saved: ch09_rlhf/sims/job_search_rlhf_diagnostics.tex
 
-Saved: ch08_rlhf/sims/job_search_sample_complexity.png
-Saved: ch08_rlhf/sims/job_search_rlhf_results.tex
-Saved: ch08_rlhf/sims/job_search_online_offline.tex
+Saved: ch09_rlhf/sims/job_search_sample_complexity.png
+Saved: ch09_rlhf/sims/job_search_rlhf_results.tex
+Saved: ch09_rlhf/sims/job_search_online_offline.tex
 
 OUTPUT FILES:
-  ch08_rlhf/sims/job_search_env.png
-  ch08_rlhf/sims/job_search_sample_complexity.png
-  ch08_rlhf/sims/job_search_rlhf_results.tex
-  ch08_rlhf/sims/job_search_online_offline.tex
-  ch08_rlhf/sims/job_search_rlhf_diagnostics.tex
+  ch09_rlhf/sims/job_search_env.png
+  ch09_rlhf/sims/job_search_sample_complexity.png
+  ch09_rlhf/sims/job_search_rlhf_results.tex
+  ch09_rlhf/sims/job_search_online_offline.tex
+  ch09_rlhf/sims/job_search_rlhf_diagnostics.tex

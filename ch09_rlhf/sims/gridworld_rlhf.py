@@ -68,7 +68,7 @@ DPO_EPOCHS = 300
 DPO_LAMBDA_CANDIDATES = [0.001, 0.01, 0.1]
 
 MASTER_SEED = 42
-OUTPUT_DIR = 'ch08_rlhf/sims'
+OUTPUT_DIR = 'ch09_rlhf/sims'
 
 
 # =============================================================================
