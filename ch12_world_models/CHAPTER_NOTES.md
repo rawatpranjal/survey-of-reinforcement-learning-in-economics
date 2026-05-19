@@ -101,6 +101,10 @@ Three sims, all in `sims/`. Each script uses the project's standard `sims.sim_ca
 - **Standalone PDF shows `§??` for ch02 forward references.** Decision is to leave as-is; the full monograph compile resolves `\ref{section:rl_algorithms}` correctly.
 - **Dyna sim cache refreshed 2026-05-19** with the proper untried-action-registration Dyna-Q+ and reward-head Schmidhuber agents. Headline numbers (52.0 / 47.0 / 39.2 / 4.0 / 3.5) are unchanged from the prior cached values on this small maze; the untried-action registration drives different exploration patterns but produces similar total-reward outcomes at this scale.
 
+## Archived sims
+
+- **decision_focused_ar1** (archived 2026-05-19) — newsvendor-under-AR(1) sim demonstrating decision-focused learning (Donti-Amos-Kolter 2017) vs OLS-plug-in vs Bertsekas rollout. Orphan in the current chapter spine: DFL is referenced only as a one-line footnote in `s06_value_aware.tex` (within the value-aware-model-learning discussion) and was never wired into a numbered §11. Moved to `archive/ch12_decision_focused_ar1/`. Can be revived if the chapter later adds a §11 on decision-focused learning.
+
 ## Papers directory
 
 `papers/` contains three subdirectories with literature digests:
