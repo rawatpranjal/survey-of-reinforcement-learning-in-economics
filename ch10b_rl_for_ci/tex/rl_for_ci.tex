@@ -63,6 +63,13 @@ Figure~\ref{fig:dtr_qlearning_vs_murphy} reports the value of the recovered regi
 \label{fig:dtr_qlearning_vs_murphy}
 \end{figure}
 
+\begin{table}[htbp]
+\centering
+\caption{Recovered policy value $V(\hat\pi) / V^*$ at the largest cohort size on the synthetic two-stage DTR (rank-ordered by performance). Tabular setting: $N = 10{,}000$ subjects, 30 Monte Carlo seeds. High-dimensional setting: $p = 10$ continuous state, $N = 5{,}000$, 30 seeds.}
+\label{tab:dtr_qlearning_vs_murphy}
+\input{../ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex}
+\end{table}
+
 Once the Bellman recursion is shared, the rest of the vocabulary aligns predictably. Table~\ref{tab:rl_ci_dictionary} translates between the two traditions following \citet{schulte2014qlearning}.\footnote{Throughout the table, the RL state $s$ is read as the full history $\bar h_k = (\bar s_k, \bar a_{k-1})$ at decision $k$, the horizon is finite and equal to $K$, all immediate rewards are zero except $R_{K+1} = Y$, and $\gamma = 1$. The Markov property of standard RL is replaced by history augmentation.}
 
 \begin{table}[htbp]
