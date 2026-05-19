@@ -1,0 +1,12 @@
+\begin{tabular}{lcc}
+\toprule
+Method & $V(\hat\pi) / V^*$ & SE \\
+\midrule
+Murphy / FQI (tabular, $N=10000$) & 1.0000 & (0.0000) \\
+Oracle $V^*$ (tabular) & 1.0000 & -- \\
+Oracle $V^*$ (high-dim, $p=10$) & 1.0000 & -- \\
+$Q$-learning (tabular, $N=10000$, 100 replays) & 0.9976 & (0.0006) \\
+Neural-FQI / Murphy (high-dim, $N=5000$) & 0.9310 & (0.0024) \\
+DQN (high-dim, $N=5000$) & 0.9126 & (0.0030) \\
+\bottomrule
+\end{tabular}
