@@ -139,7 +139,7 @@ SUMMARY OF FINDINGS
     Informed ref: -10.066 (-154.3% of DP)
     REJECTED: Reference policy quality does not matter much
 
-Saved: ch08_rlhf/sims/dpo_diagnosis.png
+Saved: ch09_rlhf/sims/dpo_diagnosis.png
 
 OUTPUT FILES:
-  ch08_rlhf/sims/dpo_diagnosis.png
+  ch09_rlhf/sims/dpo_diagnosis.png

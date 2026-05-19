@@ -169,15 +169,15 @@ VERIFICATION
   5. DPO improves with K: 89.6% -> 94.6% -> PASS
   6. DPO at L=1 >= L=30: 67.0% vs 95.1% -> CHECK
 
-Saved: ch08_rlhf/sims/job_search_dpo_results.tex
-Saved: ch08_rlhf/sims/job_search_dpo_horizon.tex
-Saved: ch08_rlhf/sims/job_search_dpo_diagnostics.tex
-Saved: ch08_rlhf/sims/job_search_dpo_sample_complexity.png
-Saved: ch08_rlhf/sims/job_search_dpo_horizon.png
+Saved: ch09_rlhf/sims/job_search_dpo_results.tex
+Saved: ch09_rlhf/sims/job_search_dpo_horizon.tex
+Saved: ch09_rlhf/sims/job_search_dpo_diagnostics.tex
+Saved: ch09_rlhf/sims/job_search_dpo_sample_complexity.png
+Saved: ch09_rlhf/sims/job_search_dpo_horizon.png
 
 OUTPUT FILES:
-  ch08_rlhf/sims/job_search_dpo_results.tex
-  ch08_rlhf/sims/job_search_dpo_horizon.tex
-  ch08_rlhf/sims/job_search_dpo_diagnostics.tex
-  ch08_rlhf/sims/job_search_dpo_sample_complexity.png
-  ch08_rlhf/sims/job_search_dpo_horizon.png
+  ch09_rlhf/sims/job_search_dpo_results.tex
+  ch09_rlhf/sims/job_search_dpo_horizon.tex
+  ch09_rlhf/sims/job_search_dpo_diagnostics.tex
+  ch09_rlhf/sims/job_search_dpo_sample_complexity.png
+  ch09_rlhf/sims/job_search_dpo_horizon.png

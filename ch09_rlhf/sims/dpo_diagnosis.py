@@ -28,7 +28,7 @@ import gridworld_rlhf as rlhf
 N_SEEDS = 5
 MASTER_SEED = 42
 EVAL_EPISODES = 200
-OUTPUT_DIR = 'ch08_rlhf/sims'
+OUTPUT_DIR = 'ch09_rlhf/sims'
 
 
 # =============================================================================
