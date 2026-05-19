@@ -4,9 +4,11 @@ Phase switch at t=1000, total t=3000
 N_SEEDS = 30
 
   Cache hit: Dyna-Q_K50
-  Cache hit: Dyna-Qplus_K50
+  Computing: Dyna-Qplus_K50
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/dyna_maze__Dyna-Qplus_K50.pkl
   Cache hit: Dyna-Q_K5
-  Cache hit: Schmidhuber_1990_NN
+  Computing: Schmidhuber_1990_NN
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/dyna_maze__Schmidhuber_1990_NN.pkl
   Cache hit: Q-learning_K0
   Figure saved: /Users/pranjal/Code/rl/ch12_world_models/sims/dyna_maze.png
   Table saved: /Users/pranjal/Code/rl/ch12_world_models/sims/dyna_maze_results.tex
