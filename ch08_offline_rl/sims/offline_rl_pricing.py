@@ -1,9 +1,29 @@
 # Offline RL for Perishable Inventory Pricing — Chapter 8, Offline Reinforcement Learning.
 # Compares seven methods on a finite-horizon perishable inventory pricing MDP with
-# demand regime switching: behavior cloning, FQI, CQL, IQL, BCQ (the pessimism family),
-# Decision Transformer, and return-conditioned supervised learning (the supervised-
-# conditioning family). Per-paradigm caching via sims.sim_cache.compute_or_load so
-# tweaking one method's hyperparameters does not invalidate the others.
+# demand regime switching: behavior cloning, FQI, CQL, IQL-argmax, BCQ-D (the pessimism
+# family), Decision Transformer, and return-conditioned supervised learning (the
+# supervised-conditioning family). Per-paradigm caching via sims.sim_cache.compute_or_load
+# so tweaking one method's hyperparameters does not invalidate the others.
+#
+# Algorithm-identity notes (per 2026-05-19 audit):
+#   * IQL-argmax: expectile-V regression follows Kostrikov2022 verbatim; the policy
+#     extraction step uses argmax_a Q(s, a) rather than advantage-weighted regression.
+#   * BCQ-D: discrete BCQ-D variant (Fujimoto2019b benchmark paper), thresholding on the
+#     behavioral action probability. NOT the continuous BCQ of Fujimoto2019 (VAE +
+#     perturbation network).
+#   * DT: each timestep is a single fused (R_t, s_t, a_{t-1}) token instead of three
+#     separate tokens; this trades the strict Chen2021 token order for a shorter context.
+# Internal cache/registry keys remain 'IQL' and 'BCQ' so existing cached results stay
+# valid; the renamed labels are applied at output time via DISPLAY_NAMES.
+#
+# Phase 2 recovery (2026-05-19): the behavioral policy is now state-dependent and
+# spread over multiple actions. Each demand regime has its own preferred price
+# (BEHAVIORAL_MARKUPS = [5, 7, 8, 9]); within a regime, action mass is distributed
+# softly around the preferred price via a triangular kernel (BEHAVIORAL_KERNEL).
+# This breaks the four-way collapse (BC=BCQ-D=DT=RvS=169.27) of the original
+# 85%-on-p=10 behavioral by giving the supervised-conditioning methods (a) state
+# variation BC can latch onto, (b) wider per-state support for BCQ-D's threshold,
+# (c) return diversity across episodes for DT/RvS return conditioning.
 
 import argparse
 import copy
@@ -49,8 +69,19 @@ DEMAND_TRANS = np.array([
 ])
 
 # Behavioral policy
-BEHAVIORAL_MARKUPS = np.array([10, 10, 10, 10], dtype=float)
+#
+# Phase 2 recovery: state-dependent preferred prices, soft distribution.
+# Old (Phase 1): BEHAVIORAL_MARKUPS = [10, 10, 10, 10], BEHAVIORAL_NOISE = 0.15
+#   → 85% mass on p=10 regardless of regime; the four supervised-conditioning
+#     methods (BC, BCQ-D, DT, RvS) all collapsed to argmax = p=10 → bit-identical
+#     169.27 ± 0.60 returns. Coverage sweep used noise_prob ∈ {0.05, 0.3, 0.9}.
+# New: each regime has its own preferred price (low demand → low price). Action
+#   probabilities follow a triangular kernel with width BEHAVIORAL_KERNEL=2 around
+#   the regime's preferred price, mixed with uniform noise BEHAVIORAL_NOISE=0.15
+#   so the support spans the full action grid for off-policy coverage.
+BEHAVIORAL_MARKUPS = np.array([5, 7, 8, 9], dtype=float)
 BEHAVIORAL_NOISE = 0.15
+BEHAVIORAL_KERNEL = 2  # triangular half-width (in price units) around the regime's preferred price
 
 # Experiment parameters
 N_OFFLINE_EPISODES = 500
@@ -89,7 +120,7 @@ RVS_LEARNING_RATE = 1e-3
 RVS_RETURN_NORM = 300.0
 
 # Config version (bump to invalidate all caches)
-CONFIG_VERSION = 13
+CONFIG_VERSION = 14
 
 ENV_PARAMS = {
     'MAX_INVENTORY': MAX_INVENTORY,
@@ -103,6 +134,7 @@ ENV_PARAMS = {
     'DEMAND_TRANS': DEMAND_TRANS.tolist(),
     'BEHAVIORAL_MARKUPS': BEHAVIORAL_MARKUPS.tolist(),
     'BEHAVIORAL_NOISE': BEHAVIORAL_NOISE,
+    'BEHAVIORAL_KERNEL': BEHAVIORAL_KERNEL,
 }
 
 SHARED_CONFIG = {
@@ -226,11 +258,25 @@ def solve_dp():
 # ---------------------------------------------------------------------------
 # Behavioral policy & offline data
 # ---------------------------------------------------------------------------
+def _triangular_kernel_probs(center_action, kernel=BEHAVIORAL_KERNEL):
+    """Triangular kernel over action indices {0, ..., N_PRICES-1} centered at
+    `center_action`. Width 2*kernel+1. Returns a normalized probability vector
+    over actions (so the unsupported tails sit at 0)."""
+    idxs = np.arange(N_PRICES)
+    raw = np.maximum(0.0, kernel + 1.0 - np.abs(idxs - center_action))
+    return raw / raw.sum()
+
+
 def behavioral_action(demand_regime, rng, noise_prob=BEHAVIORAL_NOISE):
+    """Soft state-dependent behavioral policy. With probability noise_prob, sample
+    uniformly over all prices (off-policy coverage); otherwise sample from a
+    triangular kernel centered on the regime's preferred price action index."""
     if rng.random() < noise_prob:
         return rng.randint(N_PRICES)
     base_price = BEHAVIORAL_MARKUPS[demand_regime]
-    return int(np.clip(base_price - 1, 0, N_PRICES - 1))
+    center = int(np.clip(base_price - 1, 0, N_PRICES - 1))
+    probs = _triangular_kernel_probs(center)
+    return int(rng.choice(N_PRICES, p=probs))
 
 
 def generate_offline_data(n_episodes, rng, noise_prob=BEHAVIORAL_NOISE):
@@ -997,6 +1043,18 @@ def compute_data(force=None):
 # ---------------------------------------------------------------------------
 ALL_METHODS = ['DP Oracle', 'BC', 'FQI', 'CQL', 'IQL', 'BCQ', 'DT', 'RvS']
 
+# Display labels: internal keys remain the bare algorithm names so cache files
+# stay valid, but the published table/figure/stdout use the audit-corrected
+# qualified labels for IQL-argmax and BCQ-D.
+DISPLAY_NAMES = {
+    'IQL': 'IQL-argmax',
+    'BCQ': 'BCQ-D',
+}
+
+
+def _label(name):
+    return DISPLAY_NAMES.get(name, name)
+
 
 def _rank_ordered(main_results):
     """Return method names sorted by mean return descending, with DP Oracle first."""
@@ -1021,7 +1079,7 @@ def generate_outputs(data):
         r = main_results[name]
         ret_str = f"${r['mean']:.2f} \\pm {r['se']:.2f}$"
         pct_str = f"${r.get('pct_optimal', 100.0):.1f}\\%$"
-        tex_lines.append(f"{name} & {ret_str} & {pct_str} \\\\")
+        tex_lines.append(f"{_label(name)} & {ret_str} & {pct_str} \\\\")
     tex_lines.append(r"\hline")
     tex_lines.append(r"\end{tabular}")
     tex_path = os.path.join(OUTPUT_DIR, "offline_rl_pricing_results.tex")
@@ -1047,7 +1105,7 @@ def generate_outputs(data):
         means = [coverage_results[name][eps]['mean'] for eps in EPSILON_B_VALUES]
         ses = [coverage_results[name][eps]['se'] for eps in EPSILON_B_VALUES]
         c = color_map.get(name, COLORS['gray'])
-        ax.plot(EPSILON_B_VALUES, means, 'o-', color=c, label=name, linewidth=1.8)
+        ax.plot(EPSILON_B_VALUES, means, 'o-', color=c, label=_label(name), linewidth=1.8)
         ax.fill_between(EPSILON_B_VALUES,
                         np.array(means) - np.array(ses),
                         np.array(means) + np.array(ses),
@@ -1069,15 +1127,15 @@ def generate_outputs(data):
     print(f"{'Method':<12} {'Mean':>10} {'SE':>8} {'% Optimal':>10}")
     for name in order:
         r = main_results[name]
-        print(f"{name:<12} {r['mean']:>10.2f} {r['se']:>8.2f} {r.get('pct_optimal', 100.0):>9.1f}%")
+        print(f"{_label(name):<12} {r['mean']:>10.2f} {r['se']:>8.2f} {r.get('pct_optimal', 100.0):>9.1f}%")
     print("\n=== Coverage sensitivity (% of DP optimal) ===")
-    print(f"{'Method':<6} " + " ".join(f"eps={e:<5}" for e in EPSILON_B_VALUES))
+    print(f"{'Method':<10} " + " ".join(f"eps={e:<5}" for e in EPSILON_B_VALUES))
     for name in method_names:
         if name not in coverage_results:
             continue
         cells = [f"{coverage_results[name][e]['mean']:>5.1f}±{coverage_results[name][e]['se']:.1f}"
                  for e in EPSILON_B_VALUES]
-        print(f"{name:<6} " + " ".join(cells))
+        print(f"{_label(name):<10} " + " ".join(cells))
 
 
 # ---------------------------------------------------------------------------
