@@ -145,25 +145,4 @@ def parse_force_set(args):
     return set(args.algo)
 
 
-def list_cached_components(cache_dir, script_name):
-    """Return [(component, hash, mtime)] for cached components of a script.
 
-    Useful for debugging cache state.
-    """
-    results = []
-    if not os.path.isdir(cache_dir):
-        return results
-    prefix = f'{script_name}__'
-    for fname in sorted(os.listdir(cache_dir)):
-        if fname.startswith(prefix) and fname.endswith('.pkl'):
-            component = fname[len(prefix):-4]
-            path = os.path.join(cache_dir, fname)
-            try:
-                with open(path, 'rb') as f:
-                    payload = pickle.load(f)
-                h = payload.get('_config_hash', '?')
-            except Exception:
-                h = 'corrupt'
-            mtime = os.path.getmtime(path)
-            results.append((component, h, mtime))
-    return results
