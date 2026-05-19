@@ -41,7 +41,7 @@ The strategy and venue analysis are in `../journal_target.md`; this index just m
 journals/
   README.md                  this file
   build.sh                   ./build.sh <version_dir> [entry_file]
-  shared/                    symlinks: refs.bib, refs_extended.bib, econometrica.bst, figs/, glossary.tex, compile_chapter.tex
+  shared/                    symlinks: refs.bib, econometrica.bst, figs/, glossary.tex, compile_chapter.tex
   <version>/
     main.tex                 (or abstract.tex / outline.tex where structure differs)
     NOTES.md                 framing, length norms, EiC names, what to cut from master
