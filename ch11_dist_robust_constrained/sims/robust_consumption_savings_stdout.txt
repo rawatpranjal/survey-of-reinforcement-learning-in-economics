@@ -1,0 +1,78 @@
+  Computing: shared
+============================================================
+Consumption-Savings Under Model Mismatch
+============================================================
+
+W_MAX=30, R=1.02, gamma=0.95, sigma=2.0
+Nominal:   [0.05 0.1  0.2  0.3  0.35]
+Perturbed: [0.3 0.3 0.2 0.1 0.1]
+Eval: 5000 episodes x 100 steps
+
+--- DP Policies ---
+Standard DP:        425 iters, V(15)=-4.9715
+Robust (th=5.0 ):    426 iters, V(15)=-5.0022
+Robust (th=2.0 ):    426 iters, V(15)=-5.0460
+Oracle DP:          435 iters, V(15)=-7.6545
+
+  w   Std  th=5  th=2   Orc
+  0     0     0     0     0
+  5     4     4     3     3
+ 10     5     4     4     3
+ 15     5     5     5     3
+ 20     5     5     5     4
+ 25     6     6     6     4
+ 30     5     5     5     4
+
+--- DP Evaluation (10 eval seeds) ---
+  Standard DP               nom=-4.941+/-0.001  pert=-8.694+/-0.004  delta=-76.0%+/-0.0
+  Robust DP (th=5.0)        nom=-4.942+/-0.001  pert=-8.672+/-0.004  delta=-75.5%+/-0.0
+  Robust DP (th=2.0)        nom=-4.948+/-0.001  pert=-8.486+/-0.004  delta=-71.5%+/-0.0
+  Oracle                    nom=-5.465+/-0.001  pert=-7.606+/-0.003  delta=-39.2%+/-0.0
+  Cache saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/cache/robust_consumption_savings__shared.pkl
+  Computing: Q-learning
+
+--- Q-Learning (10 seeds, 100000 episodes) ---
+  Seed 0: nom=-4.945, pert=-8.701, delta=-76.0%
+  Seed 1: nom=-4.938, pert=-8.691, delta=-76.0%
+  Seed 2: nom=-4.944, pert=-8.701, delta=-76.0%
+  Seed 3: nom=-4.945, pert=-8.705, delta=-76.0%
+  Seed 4: nom=-4.940, pert=-8.666, delta=-75.4%
+  Seed 5: nom=-4.934, pert=-8.673, delta=-75.8%
+  Seed 6: nom=-4.941, pert=-8.696, delta=-76.0%
+  Seed 7: nom=-4.943, pert=-8.703, delta=-76.1%
+  Seed 8: nom=-4.941, pert=-8.706, delta=-76.2%
+  Seed 9: nom=-4.939, pert=-8.677, delta=-75.7%
+  Max policy deviation from Standard DP: 1 (mean |dev|=0.10)
+  Cache saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/cache/robust_consumption_savings__Q-learning.pkl
+  Computing: Robust-QL-5
+
+--- Robust Q-Learning theta=5 (10 seeds, 100000 episodes) ---
+  Seed 0: nom=-4.945, pert=-8.679, delta=-75.5%
+  Seed 1: nom=-4.939, pert=-8.670, delta=-75.5%
+  Seed 2: nom=-4.945, pert=-8.679, delta=-75.5%
+  Seed 3: nom=-4.946, pert=-8.683, delta=-75.6%
+  Seed 4: nom=-4.940, pert=-8.666, delta=-75.4%
+  Seed 5: nom=-4.935, pert=-8.651, delta=-75.3%
+  Seed 6: nom=-4.942, pert=-8.675, delta=-75.5%
+  Seed 7: nom=-4.944, pert=-8.681, delta=-75.6%
+  Seed 8: nom=-4.943, pert=-8.684, delta=-75.7%
+  Seed 9: nom=-4.940, pert=-8.656, delta=-75.2%
+  Max policy deviation from Robust DP (th=5.0): 0 (mean |dev|=0.00)
+  Cache saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/cache/robust_consumption_savings__Robust-QL-5.pkl
+  Computing: Robust-QL-2
+
+--- Robust Q-Learning theta=2 (10 seeds, 100000 episodes) ---
+  Seed 0: nom=-4.952, pert=-8.493, delta=-71.5%
+  Seed 1: nom=-4.946, pert=-8.481, delta=-71.5%
+  Seed 2: nom=-4.951, pert=-8.491, delta=-71.5%
+  Seed 3: nom=-4.953, pert=-8.498, delta=-71.6%
+  Seed 4: nom=-4.947, pert=-8.479, delta=-71.4%
+  Seed 5: nom=-4.942, pert=-8.464, delta=-71.3%
+  Seed 6: nom=-4.948, pert=-8.490, delta=-71.6%
+  Seed 7: nom=-4.950, pert=-8.496, delta=-71.6%
+  Seed 8: nom=-4.949, pert=-8.497, delta=-71.7%
+  Seed 9: nom=-4.946, pert=-8.469, delta=-71.2%
+  Max policy deviation from Robust DP (th=2.0): 0 (mean |dev|=0.00)
+  Cache saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/cache/robust_consumption_savings__Robust-QL-2.pkl
+Figure: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/robust_consumption_savings_policy.png
+Table: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/robust_consumption_savings_table.tex
