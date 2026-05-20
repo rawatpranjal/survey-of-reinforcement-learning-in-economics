@@ -1,5 +1,5 @@
 # Dynamic Double Machine Learning on a 2-stage SNMM.
-# Chapter 11, RL for Causal Inference, Section 2 (DML for Dynamic Treatment Effects).
+# Chapter ch10b_rl_for_ci, RL for Causal Inference, Section 2 (DML for Dynamic Treatment Effects).
 #
 # Reproduces the central claim of Lewis & Syrgkanis (NeurIPS 2021,
 # "Double/Debiased Machine Learning for Dynamic Treatment Effects via

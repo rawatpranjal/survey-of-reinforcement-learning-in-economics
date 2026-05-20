@@ -36,7 +36,7 @@
     4000        -0.0047         0.0461        0.965        -0.0013         0.0184        0.930
 
   Output files:
-     /Users/pranjal/Code/rl/ch11_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
-     /Users/pranjal/Code/rl/ch11_rl_for_ci/sims/dynamic_dml_snmm_results.tex
-  Figure saved: /Users/pranjal/Code/rl/ch11_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
-  Table saved: /Users/pranjal/Code/rl/ch11_rl_for_ci/sims/dynamic_dml_snmm_results.tex
+     /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
+     /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
+  Figure saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
+  Table saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex

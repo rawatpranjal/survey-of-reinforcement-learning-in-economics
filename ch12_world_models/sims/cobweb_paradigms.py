@@ -1,7 +1,8 @@
 # Cobweb with adjustment cost: six learning paradigms.
 # Chapter: Forecasting, Dreaming and Learning. Section: dual simulation (cobweb panel).
-# Compares oracle, naive, RLS, Q-learning, Arifovic GA, and MBPO-style MBRL
-# on the self-referential cobweb across three stability regimes.
+# Compares oracle, naive, RLS, Q-learning, Arifovic GA, and a simplified
+# MBPO-style model-based REINFORCE learner (linear-Gaussian dynamics + linear
+# policy) on the self-referential cobweb across three stability regimes.
 
 import argparse
 import os
@@ -48,9 +49,9 @@ GA_CONFIG     = {**SHARED_CONFIG, 'N_POP': 30, 'L_BITS': 10,
                  'P_CROSS': 0.6, 'P_MUT': 0.0033, 'GEN_LEN': 10}
 MBLQ_CONFIG   = {**SHARED_CONFIG, 'EXPLORE_STD': 0.15, 'FIT_EVERY': 1,
                  'WARMUP': 5}
-MBPO_CONFIG   = {**SHARED_CONFIG, 'EXPLORE_STD': 0.15, 'WARMUP': 5,
-                 'ENSEMBLE_SIZE': 5, 'ROLLOUT_HORIZON': 5,
-                 'N_ROLLOUTS': 10, 'POLICY_LR': 0.005}
+MB_LG_REINFORCE_CONFIG = {**SHARED_CONFIG, 'EXPLORE_STD': 0.15, 'WARMUP': 5,
+                          'ENSEMBLE_SIZE': 5, 'ROLLOUT_HORIZON': 5,
+                          'N_ROLLOUTS': 10, 'POLICY_LR': 0.005}
 NAIVE_CONFIG  = {**SHARED_CONFIG}
 ORACLE_CONFIG = {**SHARED_CONFIG}
 
@@ -400,8 +401,9 @@ class ParametricLQLearner(Paradigm):
     """Learn (a, b, c, phi) by least squares on accumulated data, plan via
     the LQ-Bellman with current point estimates, act with Gaussian
     exploration noise. This is a model-based learner that exploits the
-    linear-Gaussian structure to skip branched rollouts entirely; the real
-    MBPO baseline (with ensemble rollouts and REINFORCE) lives below.
+    linear-Gaussian structure to skip branched rollouts entirely; the
+    MB-LG-REINFORCE baseline (with ensemble rollouts and REINFORCE) lives
+    below.
     """
     name = 'Model-Based LQ'
 
@@ -495,11 +497,15 @@ class ParametricLQLearner(Paradigm):
 
 
 # ---------------------------------------------------------------------------
-# MBPO (Janner et al. 2019): ensemble dynamics + branched rollouts + REINFORCE
+# MB-LG-REINFORCE: simplified MBPO variant (linear-Gaussian ensemble dynamics
+# + linear policy + branched rollouts + REINFORCE). Drops the SAC actor-critic
+# and dropout-based disagreement weighting of Janner et al. 2019's MBPO and
+# keeps the branched-rollout outer loop with a one-parameter-pair Gaussian
+# policy. Class name MBPOPolicy retained for cache/test compatibility.
 # ---------------------------------------------------------------------------
 
 class MBPOPolicy(Paradigm):
-    """Model-based policy optimization with branched rollouts.
+    """Simplified MBPO variant: linear-Gaussian ensemble dynamics + REINFORCE.
 
     Maintains an ensemble of linear-Gaussian demand models and a learned
     reward model, both fit from the replay buffer (no true parameters). At
@@ -509,8 +515,15 @@ class MBPOPolicy(Paradigm):
     Accumulates discounted rollout returns and updates (K0, Kq) by REINFORCE
     with a moving-average baseline. Acts under the same stochastic policy
     with decaying exploration noise.
+
+    Distinct from Janner et al. 2019's MBPO in three ways: (i) policy is a
+    two-parameter Gaussian rather than a SAC actor, (ii) dynamics are
+    linear-Gaussian bootstrap-ensembled rather than dropout-disagreement
+    neural networks, (iii) no entropy regularization on the policy. The
+    branched-rollout outer loop is preserved. Labelled "MB-LG-REINFORCE"
+    (model-based linear-Gaussian REINFORCE) in figures and tables.
     """
-    name = 'MBPO'
+    name = 'MB-LG-REINFORCE'
 
     def __init__(self, gamma, explore_std, warmup,
                  ensemble_size=5, rollout_horizon=5, n_rollouts=10,
@@ -740,7 +753,7 @@ def make_paradigm(name, config):
             warmup=config['WARMUP'],
             q_min=config['Q_MIN'], q_max=config['Q_MAX'],
         )
-    if name == 'MBPO':
+    if name == 'MB-LG-REINFORCE':
         return MBPOPolicy(
             gamma=config['GAMMA'], explore_std=config['EXPLORE_STD'],
             warmup=config['WARMUP'],
@@ -848,13 +861,13 @@ def compute_paradigm(config, shared, paradigm_name):
 # ---------------------------------------------------------------------------
 
 PARADIGM_REGISTRY = {
-    'Oracle':         (compute_paradigm, ORACLE_CONFIG),
-    'Naive':          (compute_paradigm, NAIVE_CONFIG),
-    'RLS':            (compute_paradigm, RLS_CONFIG),
-    'Q-Learning':     (compute_paradigm, QL_CONFIG),
-    'Arifovic GA':    (compute_paradigm, GA_CONFIG),
-    'Model-Based LQ': (compute_paradigm, MBLQ_CONFIG),
-    'MBPO':           (compute_paradigm, MBPO_CONFIG),
+    'Oracle':           (compute_paradigm, ORACLE_CONFIG),
+    'Naive':            (compute_paradigm, NAIVE_CONFIG),
+    'RLS':              (compute_paradigm, RLS_CONFIG),
+    'Q-Learning':       (compute_paradigm, QL_CONFIG),
+    'Arifovic GA':      (compute_paradigm, GA_CONFIG),
+    'Model-Based LQ':   (compute_paradigm, MBLQ_CONFIG),
+    'MB-LG-REINFORCE':  (compute_paradigm, MB_LG_REINFORCE_CONFIG),
 }
 
 
@@ -883,15 +896,15 @@ def compute_data(force=None):
 # ---------------------------------------------------------------------------
 
 PARADIGM_ORDER = ['Oracle', 'RLS', 'Model-Based LQ', 'Arifovic GA',
-                  'Naive', 'MBPO', 'Q-Learning']
+                  'Naive', 'MB-LG-REINFORCE', 'Q-Learning']
 PARADIGM_COLORS = {
-    'Oracle':         COLORS['black'],
-    'Naive':          COLORS['gray'],
-    'RLS':            COLORS['red'],
-    'Q-Learning':     COLORS['blue'],
-    'Arifovic GA':    COLORS['green'],
-    'Model-Based LQ': COLORS['purple'],
-    'MBPO':           COLORS['orange'],
+    'Oracle':          COLORS['black'],
+    'Naive':           COLORS['gray'],
+    'RLS':             COLORS['red'],
+    'Q-Learning':      COLORS['blue'],
+    'Arifovic GA':     COLORS['green'],
+    'Model-Based LQ':  COLORS['purple'],
+    'MB-LG-REINFORCE': COLORS['orange'],
 }
 REGIME_ORDER = ['stable', 'borderline', 'unstable']
 
@@ -926,7 +939,7 @@ def _plot_regret_curves(data):
 
 def _plot_param_recovery(data):
     """3 rows x 2 cols: a_hat and b_hat trajectories for the parametric
-    learners (RLS, Model-Based LQ, MBPO) per regime."""
+    learners (RLS, Model-Based LQ, MB-LG-REINFORCE) per regime."""
     T = SHARED_CONFIG['T_EPISODE']
     t_axis = np.arange(1, T + 1)
     fig, axes = plt.subplots(3, 2, figsize=(12, 9), sharex=True)
@@ -934,7 +947,7 @@ def _plot_param_recovery(data):
         rp = data['shared'][regime]['params']
         ax_a = axes[r_idx, 0]
         ax_b = axes[r_idx, 1]
-        for name in ['RLS', 'Model-Based LQ', 'MBPO']:
+        for name in ['RLS', 'Model-Based LQ', 'MB-LG-REINFORCE']:
             traj = data['results'][name][regime]['param_trajectories']
             if 'a_hat' in traj:
                 m, s = traj['a_hat']['mean'], traj['a_hat']['se']
@@ -954,7 +967,8 @@ def _plot_param_recovery(data):
             ax_b.set_title(f"$\\hat b_t$ (true b varies)")
     axes[-1, 0].set_xlabel('environment step $t$')
     axes[-1, 1].set_xlabel('environment step $t$')
-    fig.suptitle("Parameter recovery for RLS and MBPO (20 seeds, mean $\\pm$ SE; "
+    fig.suptitle("Parameter recovery for RLS, Model-Based LQ, and "
+                 "MB-LG-REINFORCE (20 seeds, mean $\\pm$ SE; "
                  "dashed lines mark the true values)", fontsize=11)
     fig.tight_layout()
     fig_path = os.path.join(OUTPUT_DIR, 'cobweb_paradigms_param_recovery.png')
@@ -1014,7 +1028,7 @@ def _write_table_regret(data):
 
 
 def _write_table_recovery(data):
-    """Final |Delta_a|, |Delta_b|, [|Delta_c|, |Delta_phi|] for RLS and MBPO."""
+    """Final |Delta_a|, |Delta_b|, [|Delta_c|, |Delta_phi|] for parametric learners."""
     tbl_path = os.path.join(OUTPUT_DIR, 'cobweb_paradigms_final_recovery.tex')
     with open(tbl_path, 'w') as f:
         f.write('% Final parameter recovery error |hat - true|, mean +/- SE over 20 seeds.\n')
@@ -1022,7 +1036,7 @@ def _write_table_recovery(data):
         f.write('\\toprule\n')
         f.write('Paradigm & Regime & $|\\hat a - a|$ & $|\\hat b - b|$ & $|\\hat c - c|$ & $|\\hat\\phi - \\phi|$ \\\\\n')
         f.write('\\midrule\n')
-        for name in ['RLS', 'Model-Based LQ', 'MBPO']:
+        for name in ['RLS', 'Model-Based LQ', 'MB-LG-REINFORCE']:
             for regime in REGIME_ORDER:
                 rp = data['shared'][regime]['params']
                 traj = data['results'][name][regime]['param_trajectories']
@@ -1044,18 +1058,18 @@ def _write_table_recovery(data):
 
 def _print_summary(data):
     print("\n=== Cumulative regret at T=500 (mean ± SE, n=20 seeds) ===\n")
-    header = f"{'Paradigm':<13}" + ''.join(f"{r:>22}" for r in REGIME_ORDER)
+    header = f"{'Paradigm':<17}" + ''.join(f"{r:>22}" for r in REGIME_ORDER)
     print(header)
     print('-' * len(header))
     for name in PARADIGM_ORDER:
-        row = f"{name:<13}"
+        row = f"{name:<17}"
         for regime in REGIME_ORDER:
             r = data['results'][name][regime]
             row += f"  {r['final_mean']:>10.2f} ± {r['final_se']:>5.2f}    "
         print(row)
 
     print("\n=== Final |hat - true| parameter recovery (n=20 seeds) ===\n")
-    for name in ['RLS', 'Model-Based LQ', 'MBPO']:
+    for name in ['RLS', 'Model-Based LQ', 'MB-LG-REINFORCE']:
         print(f"\n  {name}:")
         for regime in REGIME_ORDER:
             rp = data['shared'][regime]['params']
@@ -1070,11 +1084,11 @@ def _print_summary(data):
 
     print("\n=== Policy distance to oracle at reference state, final step (mean ± SE) ===\n")
     learner_names = [n for n in PARADIGM_ORDER if n != 'Oracle']
-    header = f"{'Paradigm':<13}" + ''.join(f"{r:>18}" for r in REGIME_ORDER)
+    header = f"{'Paradigm':<17}" + ''.join(f"{r:>18}" for r in REGIME_ORDER)
     print(header)
     print('-' * len(header))
     for name in learner_names:
-        row = f"{name:<13}"
+        row = f"{name:<17}"
         for regime in REGIME_ORDER:
             r = data['results'][name][regime]
             row += f"  {r['policy_distance_mean'][-1]:>8.3f} ± {r['policy_distance_se'][-1]:>5.3f}  "

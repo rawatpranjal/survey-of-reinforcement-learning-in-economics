@@ -13,7 +13,10 @@ interpreter for that checkout.  The resulting JSON is consumed by
 The run used for the checked-in artifact was from MFAX commit ``9acc1eb``.
 Under Python 3.11, the temporary MFAX checkout also needed dataclass
 ``default_factory`` compatibility fixes in unused environments, plus a small
-stdout patch so the scripts print ``Return`` in each evaluation line.
+stdout patch so the scripts print ``Return`` in each evaluation line. Both
+edits are captured verbatim in ``patches/mfax/py311_compat.patch`` at the
+repository root, with a README documenting that none of them touches the
+SPG, RSPG, or environment update rules.
 """
 
 import argparse

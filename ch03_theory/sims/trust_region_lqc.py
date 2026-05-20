@@ -19,7 +19,8 @@ import matplotlib.patches as mpatches
 from matplotlib.patches import Ellipse
 
 # ── Parameters ────────────────────────────────────────────────────────────────
-np.random.seed(42)
+NP_SEED = 42
+np.random.seed(NP_SEED)
 
 A = np.array([[0.5, 0.2], [0.0, 0.8]])    # IS-Phillips dynamics
 B = np.array([[0.5], [1.0]])              # interest rate effect
@@ -32,6 +33,10 @@ delta = 0.1        # KL budget
 eps = 0.2          # PPO clip
 theta_old = np.array([0.0, 0.0])          # starting iterate: no policy response
 
+# PPO Monte Carlo parameters (affect ppo_mask; included in cache key)
+N_SAMPLES = 200
+FRAC_THRESHOLD = 0.50
+
 # Grid for parameter space (Panel 2 and 3)
 N_GRID = 100
 theta1_vals = np.linspace(-0.5, 2.0, N_GRID)
@@ -42,13 +47,16 @@ TH1, TH2 = np.meshgrid(theta1_vals, theta2_vals)  # shape (N_GRID, N_GRID)
 CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
 SCRIPT_NAME = 'trust_region_lqc'
 CONFIG = {
-    'version': 2,
+    'version': 3,
     'A': A.tolist(), 'B': B.tolist(), 'Q': Q.tolist(),
     'R': R, 'gamma': gamma,
     'sigma2_w': sigma2_w, 'sigma2_a': sigma2_a,
     'delta': delta, 'eps': eps,
     'theta_old': theta_old.tolist(),
     'N_GRID': N_GRID,
+    'n_samples': N_SAMPLES,
+    'frac_threshold': FRAC_THRESHOLD,
+    'np_seed': NP_SEED,
 }
 
 
@@ -308,7 +316,7 @@ def _run_trust_region_analysis():
     print("\nComputing PPO feasible region...")
     ppo_mask, ppo_frac = compute_ppo_band(
         theta_old, TH1, TH2, Sigma_x, sigma2_a, eps,
-        n_samples=200, frac_threshold=0.50
+        n_samples=N_SAMPLES, frac_threshold=FRAC_THRESHOLD
     )
 
     theta_ppo = compute_ppo_step(theta_old, g, ppo_mask, theta1_vals, theta2_vals)

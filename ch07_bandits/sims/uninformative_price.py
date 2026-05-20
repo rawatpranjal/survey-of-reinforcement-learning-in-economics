@@ -69,11 +69,13 @@ def generate_outputs():
     # Dot at peak
     ax.plot(p_star, r_star, 'ko', markersize=6, zorder=5)
 
-    # Annotation arrow
+    # Annotation arrow. The plotted curves are revenue, not demand; the underlying
+    # demand curves (linearly distinct, crossing at p*) are not shown here. See
+    # Broder 2012 Theorem 3.1 for the demand-level construction.
     ax.annotate(
-        r'All demand models agree at $p^*$',
+        r'Revenue curves share the maximizer $p^*$',
         xy=(p_star, r_star),
-        xytext=(p_star + 1.8, r_star + 2.5),
+        xytext=(p_star + 1.4, r_star + 2.5),
         fontsize=10,
         ha='left',
         arrowprops=dict(arrowstyle='->', color=COLORS['black'], lw=1.2),

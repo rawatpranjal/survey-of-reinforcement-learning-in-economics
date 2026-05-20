@@ -1,0 +1,209 @@
+diff --git a/mfax/algos/hsm/algos/rspg.py b/mfax/algos/hsm/algos/rspg.py
+index da07db9..31f66bd 100644
+--- a/mfax/algos/hsm/algos/rspg.py
++++ b/mfax/algos/hsm/algos/rspg.py
+@@ -407,10 +407,11 @@ if __name__ == "__main__":
+                 }
+             )
+         jax.debug.print(
+-            "Iteration: {}, Train Time: {}, Exploitability: {}",
++            "Iteration: {}, Train Time: {}, Exploitability: {}, Return: {}",
+             iteration_idx,
+             elapsed_time,
+             mf_eval_results.exploitability.exploitability,
++            mf_eval_results.exploitability.mean_policy_return,
+         )
+ 
+     for iteration_idx in range(0, args.num_iterations, args.eval_frequency):
+@@ -444,10 +445,11 @@ if __name__ == "__main__":
+                     }
+                 )
+             jax.debug.print(
+-                "Iteration: {}, Train Time: {}, Exploitability: {}",
++                "Iteration: {}, Train Time: {}, Exploitability: {}, Return: {}",
+                 iteration_idx,
+                 elapsed_time,
+                 mf_eval_results.exploitability.exploitability,
++                mf_eval_results.exploitability.mean_policy_return,
+             )
+ 
+     # --- save mf agent wrapper ---
+diff --git a/mfax/algos/hsm/algos/spg.py b/mfax/algos/hsm/algos/spg.py
+index 955f93a..7897f66 100644
+--- a/mfax/algos/hsm/algos/spg.py
++++ b/mfax/algos/hsm/algos/spg.py
+@@ -371,10 +371,11 @@ if __name__ == "__main__":
+                 }
+             )
+         jax.debug.print(
+-            "Iteration: {}, Train Time: {}, Exploitability: {}",
++            "Iteration: {}, Train Time: {}, Exploitability: {}, Return: {}",
+             iteration_idx,
+             elapsed_time,
+             mf_eval_results.exploitability.exploitability,
++            mf_eval_results.exploitability.mean_policy_return,
+         )
+ 
+     for iteration_idx in range(0, args.num_iterations, args.eval_frequency):
+@@ -408,10 +409,11 @@ if __name__ == "__main__":
+                     }
+                 )
+             jax.debug.print(
+-                "Iteration: {}, Train Time: {}, Exploitability: {}",
++                "Iteration: {}, Train Time: {}, Exploitability: {}, Return: {}",
+                 iteration_idx,
+                 elapsed_time,
+                 mf_eval_results.exploitability.exploitability,
++                mf_eval_results.exploitability.mean_policy_return,
+             )
+ 
+     # --- save mf agent wrapper ---
+diff --git a/mfax/algos/rl/algos/rippo.py b/mfax/algos/rl/algos/rippo.py
+index 7cdcada..f13cd7e 100644
+--- a/mfax/algos/rl/algos/rippo.py
++++ b/mfax/algos/rl/algos/rippo.py
+@@ -804,10 +804,11 @@ if __name__ == "__main__":
+                 }
+             )
+         jax.debug.print(
+-            "Iteration: {}, Train Time: {}, Exploitability: {}",
++            "Iteration: {}, Train Time: {}, Exploitability: {}, Return: {}",
+             iteration_idx,
+             elapsed_time,
+             mf_eval_results.exploitability.exploitability,
++            mf_eval_results.exploitability.mean_policy_return,
+         )
+ 
+     for iteration_idx in range(0, args.num_iterations, args.eval_frequency):
+@@ -841,10 +842,11 @@ if __name__ == "__main__":
+                     }
+                 )
+             jax.debug.print(
+-                "Iteration: {}, Train Time: {}, Exploitability: {}",
++                "Iteration: {}, Train Time: {}, Exploitability: {}, Return: {}",
+                 iteration_idx,
+                 elapsed_time,
+                 mf_eval_results.exploitability.exploitability,
++                mf_eval_results.exploitability.mean_policy_return,
+             )
+ 
+     # --- save single agent and value wrappers ---
+diff --git a/mfax/envs/base/toy/beach_bar_1d.py b/mfax/envs/base/toy/beach_bar_1d.py
+index dd5a47a..17f8d8d 100644
+--- a/mfax/envs/base/toy/beach_bar_1d.py
++++ b/mfax/envs/base/toy/beach_bar_1d.py
+@@ -1,6 +1,7 @@
+ import jax
+ import jax.numpy as jnp
+ from flax import struct
++from dataclasses import field
+ from gymnax.environments import spaces
+ 
+ from mfax.envs.base.base import BaseEnvironment, BaseEnvParams, BaseAggregateState
+@@ -18,12 +19,16 @@ class BaseBeachBar1DEnvParams(BaseEnvParams):
+     num_states: int = 101
+ 
+     # actions
+-    actions: jax.Array = jnp.array([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
++    actions: jax.Array = field(
++        default_factory=lambda: jnp.array([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
++    )
+ 
+     # idiosyncratic noise parameters
+     idio_noise: bool = True
+-    idio_atoms: jax.Array = jnp.array([-2, -1, 0, 1, 2])
+-    idio_atoms_probs: jax.Array = jnp.array([0.05, 0.1, 0.7, 0.1, 0.05])
++    idio_atoms: jax.Array = field(default_factory=lambda: jnp.array([-2, -1, 0, 1, 2]))
++    idio_atoms_probs: jax.Array = field(
++        default_factory=lambda: jnp.array([0.05, 0.1, 0.7, 0.1, 0.05])
++    )
+ 
+     # common noise parameters
+     common_noise: bool = False
+diff --git a/mfax/envs/base/toy/linear_quadratic.py b/mfax/envs/base/toy/linear_quadratic.py
+index 92adbbc..4f98ebf 100644
+--- a/mfax/envs/base/toy/linear_quadratic.py
++++ b/mfax/envs/base/toy/linear_quadratic.py
+@@ -2,6 +2,7 @@ import jax
+ import jax.numpy as jnp
+ from flax import struct
+ import math
++from dataclasses import field
+ from gymnax.environments import spaces
+ 
+ from mfax.envs.base.base import BaseEnvironment, BaseEnvParams, BaseAggregateState
+@@ -26,13 +27,15 @@ class BaseLinearQuadraticEnvParams(BaseEnvParams):
+     num_states: int = 99
+ 
+     # actions
+-    actions: jax.Array = jnp.array([-3, -2, -1, 0, 1, 2, 3])
++    actions: jax.Array = field(
++        default_factory=lambda: jnp.array([-3, -2, -1, 0, 1, 2, 3])
++    )
+ 
+     # idiosyncratic noise parameters
+     idio_noise: bool = True
+     idio_atoms_per_side: int = 3
+-    idio_atoms: jnp.ndarray = jnp.empty((0,))
+-    idio_atoms_probs: jnp.ndarray = jnp.empty((0,))
++    idio_atoms: jnp.ndarray = field(default_factory=lambda: jnp.empty((0,)))
++    idio_atoms_probs: jnp.ndarray = field(default_factory=lambda: jnp.empty((0,)))
+ 
+     # common noise parameters
+     common_noise: bool = False
+diff --git a/mfax/envs/pushforward/macro/endogenous.py b/mfax/envs/pushforward/macro/endogenous.py
+index 098226e..e66a17c 100644
+--- a/mfax/envs/pushforward/macro/endogenous.py
++++ b/mfax/envs/pushforward/macro/endogenous.py
+@@ -29,13 +29,15 @@ class PushforwardEndogenousEnvParams(PushforwardEnvParams, BaseEndogenousEnvPara
+     states: jax.Array = field(default_factory=lambda: jnp.empty((0, 0)))
+ 
+     # states per dimension
+-    lower_bound: jax.Array = jnp.array([0.0, 0.1])
+-    upper_bound: jax.Array = jnp.array([99, 2.0])
++    lower_bound: jax.Array = field(default_factory=lambda: jnp.array([0.0, 0.1]))
++    upper_bound: jax.Array = field(default_factory=lambda: jnp.array([99, 2.0]))
+     num_states: tuple[int, int] = (200, 5)
+ 
+     # idiosyncratic noise parameters
+-    idio_atoms: jax.Array = jnp.array([-1, 0, 1])
+-    idio_atoms_probs: jax.Array = jnp.array([0.1, 0.8, 0.1])
++    idio_atoms: jax.Array = field(default_factory=lambda: jnp.array([-1, 0, 1]))
++    idio_atoms_probs: jax.Array = field(
++        default_factory=lambda: jnp.array([0.1, 0.8, 0.1])
++    )
+ 
+     def __post_init__(self):
+         BaseEndogenousEnvParams.__post_init__(self)
+diff --git a/mfax/envs/sample/macro/endogenous.py b/mfax/envs/sample/macro/endogenous.py
+index 29fc596..184913b 100644
+--- a/mfax/envs/sample/macro/endogenous.py
++++ b/mfax/envs/sample/macro/endogenous.py
+@@ -1,6 +1,7 @@
+ import jax
+ import jax.numpy as jnp
+ from flax import struct
++from dataclasses import field
+ 
+ from mfax.envs.base.macro.endogenous import (
+     BaseEndogenousEnvironment,
+@@ -33,13 +34,15 @@ class SampleEndogenousEnvParams(SampleEnvParams, BaseEndogenousEnvParams):
+     n_agents: int = 10000
+ 
+     # states per dimension
+-    lower_bound: jax.Array = jnp.array([0.0, 0.1])
+-    upper_bound: jax.Array = jnp.array([99, 2.0])
++    lower_bound: jax.Array = field(default_factory=lambda: jnp.array([0.0, 0.1]))
++    upper_bound: jax.Array = field(default_factory=lambda: jnp.array([99, 2.0]))
+     num_states: tuple[int, int] = (200, 5)
+ 
+     # idiosyncratic noise parameters
+-    idio_atoms: jax.Array = jnp.array([-1, 0, 1])
+-    idio_atoms_probs: jax.Array = jnp.array([0.1, 0.8, 0.1])
++    idio_atoms: jax.Array = field(default_factory=lambda: jnp.array([-1, 0, 1]))
++    idio_atoms_probs: jax.Array = field(
++        default_factory=lambda: jnp.array([0.1, 0.8, 0.1])
++    )
+ 
+     def __post_init__(self):
+         BaseEndogenousEnvParams.__post_init__(self)

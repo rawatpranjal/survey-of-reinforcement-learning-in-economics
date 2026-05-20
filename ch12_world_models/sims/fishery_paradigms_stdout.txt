@@ -1,24 +1,46 @@
 === fishery_paradigms ===
-Paradigms: ['Oracle', 'RLS', 'Model-Based LQ', 'Q-Learning', 'Naive', 'Arifovic GA']
+Paradigms: ['Oracle', 'RLS', 'Model-Based DP', 'Q-Learning', 'Naive', 'Arifovic GA', 'Myopic']
 N_SEEDS = 20, T_EPISODE = 500
 
   Cache hit: shared
   Cache hit: Oracle
   Cache hit: Naive
+  Cache hit: Myopic
   Cache hit: RLS
   Cache hit: Q-Learning
   Cache hit: Arifovic_GA
-  Cache hit: Model-Based_LQ
+  Cache hit: Model-Based_DP
   Figure saved: /Users/pranjal/Code/rl/ch12_world_models/sims/fishery_paradigms.png
   Table saved: /Users/pranjal/Code/rl/ch12_world_models/sims/fishery_paradigms_results.tex
 
 === Cumulative regret at T=500 (mean ± SE, n=20 seeds) ===
 
-Paradigm                 Final regret
---------------------------------------
-Oracle                0.00 ±  0.00
-RLS                  13.67 ±  0.43
-Model-Based LQ       14.69 ±  0.73
-Q-Learning          274.71 ± 24.36
-Naive               447.35 ±  3.24
-Arifovic GA         706.13 ± 16.65
+Paradigm                   Final regret
+----------------------------------------
+Oracle                  0.00 ±  0.00
+RLS                    13.67 ±  0.43
+Model-Based DP         14.69 ±  0.73
+Q-Learning            274.71 ± 24.36
+Naive                 447.35 ±  3.24
+Arifovic GA           706.13 ± 16.65
+Myopic                753.11 ±  1.75
+
+=== Stock-collapse incidence: fraction of seeds with mean final regret >= 0.95 * Myopic floor (proxy for sustained collapse) ===
+
+Paradigm           frac collapsed
+----------------------------------
+Oracle                       0.00
+RLS                          0.00
+Model-Based DP               0.00
+Q-Learning                   0.00
+Naive                        0.00
+Arifovic GA                  0.60
+Myopic                       1.00
+
+=== Parameter recovery at t = T (true r = 0.4, K = 10.0) ===
+
+Paradigm                    r_hat            K_hat    |r_err|    |K_err|
+------------------------------------------------------------------------
+RLS                0.398±0.002   10.034±0.064       0.007      0.219
+Model-Based DP     0.400±0.002    9.965±0.050       0.006      0.180
+  Recovery table saved: /Users/pranjal/Code/rl/ch12_world_models/sims/fishery_paradigms_recovery.tex

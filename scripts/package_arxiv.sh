@@ -84,7 +84,7 @@ FIGURES=(
     "ch04_control_problems/sims/bus_engine_scaling.png"
     "ch05_econ_models/sims/estimation_flowcharts.pdf"
     "ch05_econ_models/sims/estimation_flowcharts.png"
-    "ch07_bandits/sims/curve_learning_pricing_regret.png"
+    "ch07_bandits/sims/curve_learning_pricing_pct_oracle.png"
     "ch05_econ_models/sims/nfxp_ccp_td_scaling_time.png"
     "ch08_offline_rl/sims/offline_rl_pricing_coverage.png"
     "ch06_games/sims/cournot_bertrand_marl.png"

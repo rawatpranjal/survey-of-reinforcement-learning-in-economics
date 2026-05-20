@@ -63,6 +63,12 @@ def generate_outputs():
     print(f"  Euclidean: g^T * euc_step = {g @ euc_step:.4f}")
     print(f"  Natural:   g^T * nat_step = {g @ nat_step:.4f}")
     print(f"  Ratio (natural/euclidean): {(g @ nat_step)/(g @ euc_step):.4f}")
+    print(f"\nNote: Euclidean step violates the KL constraint "
+          f"(KL = {kl_euc:.3f} > delta = {delta:.1f}); not a valid trust-region step.")
+    print(f"The natural step saturates the KL budget exactly "
+          f"(KL = {kl_nat:.3f} = delta/2), so the comparison of linear gains "
+          f"above is not apples-to-apples; the Euclidean step buys its higher "
+          f"linear gain by leaving the trust region.")
 
 
     # ── Figure ────────────────────────────────────────────────────────────────────
@@ -159,11 +165,16 @@ def generate_outputs():
     # ── Right panel: Tangent plane ────────────────────────────────────────────────
 
     # KL ellipse: {Δθ : Δθ^T F Δθ ≤ δ}
-    # Eigendecomposition for ellipse parameters
-    angle = np.degrees(np.arctan2(eigvecs[1, 1], eigvecs[0, 1]))
-    # Semi-axes: sqrt(delta / eigenvalue)
-    width = 2 * np.sqrt(delta / eigvals[0])
-    height = 2 * np.sqrt(delta / eigvals[1])
+    # In the eigenbasis, x^T F x = λ_0 c_0^2 + λ_1 c_1^2 ≤ δ, so the semi-axis
+    # along eigvec[:,i] is sqrt(δ / λ_i). With eigvals returned in ascending
+    # order by np.linalg.eigh, eigvals[0] is the smallest eigenvalue and its
+    # eigenvector eigvecs[:,0] points in the *shallow* direction of F — the
+    # LONG axis of the KL ellipse. matplotlib's Ellipse(width, height, angle)
+    # places `width` along the local x-axis BEFORE rotating by `angle`, so we
+    # rotate to align with eigvecs[:,0] and set width to the long semi-axis.
+    angle = np.degrees(np.arctan2(eigvecs[1, 0], eigvecs[0, 0]))
+    width = 2 * np.sqrt(delta / eigvals[0])   # long axis, along eigvecs[:,0]
+    height = 2 * np.sqrt(delta / eigvals[1])  # short axis, along eigvecs[:,1]
 
     # Euclidean ball
     euc_circle = plt.Circle((0, 0), eps_euc, color=COLORS['red'], alpha=0.12,

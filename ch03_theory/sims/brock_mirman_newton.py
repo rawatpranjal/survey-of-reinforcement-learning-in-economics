@@ -42,6 +42,9 @@ OUTPUT_DIR = os.path.join(os.path.dirname(__file__))
 CACHE_DIR = os.path.join(OUTPUT_DIR, 'cache')
 SCRIPT_NAME = 'brock_mirman'
 
+# Module-level verbosity flag; set by main() from --verbose.
+VERBOSE = False
+
 # ============================================================================
 # Per-component config dicts
 # ============================================================================
@@ -49,14 +52,18 @@ SCRIPT_NAME = 'brock_mirman'
 ENV_PARAMS = {
     'alpha': ALPHA, 'beta': BETA,
     'z': Z_VALS.tolist(), 'pi': PI_TRANS.tolist(),
-    'seed': SEED, 'tol': TOL, 'version': 3,
+    'seed': SEED, 'tol': TOL, 'version': 4,
 }
 
+# Wall-clock timings are reported as the median of TIMING_REPS independent runs
+# (algorithm iteration counts are deterministic; only the timings vary run-to-run).
+TIMING_REPS = 5
+
 SHARED_R1_CONFIG = {**ENV_PARAMS, 'n_k': 500}
-VI_R1_CONFIG     = {**SHARED_R1_CONFIG, 'max_iter_vi': MAX_ITER_VI}
-PI_R1_CONFIG     = {**SHARED_R1_CONFIG, 'max_iter_pi': MAX_ITER_PI}
-LP_R2_CONFIG     = {**ENV_PARAMS, 'n_k': 20}
-TIMING_CONFIG    = {**ENV_PARAMS, 'grid_sizes': [10, 20, 50, 100, 200]}
+VI_R1_CONFIG     = {**SHARED_R1_CONFIG, 'max_iter_vi': MAX_ITER_VI, 'timing_reps': TIMING_REPS}
+PI_R1_CONFIG     = {**SHARED_R1_CONFIG, 'max_iter_pi': MAX_ITER_PI, 'timing_reps': TIMING_REPS}
+LP_R2_CONFIG     = {**ENV_PARAMS, 'n_k': 20, 'timing_reps': TIMING_REPS}
+TIMING_CONFIG    = {**ENV_PARAMS, 'grid_sizes': [10, 20, 50, 100, 200], 'timing_reps': TIMING_REPS}
 
 # Regime shorthand mapping for --algo r1, r2, r3
 REGIME_COMPONENTS = {
@@ -286,40 +293,65 @@ def compute_shared_r1():
 
 
 def compute_vi_r1(shared):
-    """Value iteration on Regime 1 MDP."""
+    """Value iteration on Regime 1 MDP. Reports median wall-clock over TIMING_REPS runs."""
     R, P = shared['R'], shared['P']
+
+    # First (anchor) run captures the iterate trajectory and final policy.
     t0 = time.perf_counter()
     V_vi, pol_vi, errs_vi_succ, V_history_vi = value_iteration(R, P, BETA)
-    t_vi = time.perf_counter() - t0
+    timings = [time.perf_counter() - t0]
+
+    # Additional reps only for timing distribution; iteration counts are deterministic.
+    for _ in range(TIMING_REPS - 1):
+        t0 = time.perf_counter()
+        value_iteration(R, P, BETA)
+        timings.append(time.perf_counter() - t0)
+    t_vi = float(np.median(timings))
 
     vi_cf_match = np.mean(pol_vi == shared['cf_pol']) * 100
-    print(f"  VI: {len(errs_vi_succ)} iterations, {t_vi:.2f}s, final error={errs_vi_succ[-1]:.2e}")
-    print(f"  VI policy matches closed-form: {vi_cf_match:.1f}%")
+    print(f"  VI: {len(errs_vi_succ)} iterations, "
+          f"median {t_vi:.2f}s over {TIMING_REPS} runs "
+          f"(min {min(timings):.2f}s, max {max(timings):.2f}s), "
+          f"final error={errs_vi_succ[-1]:.2e}")
+    if VERBOSE:
+        print(f"  VI policy matches closed-form: {vi_cf_match:.1f}%")
 
     return {
         'V_vi': V_vi, 'pol_vi': pol_vi,
         'errs_vi': errs_vi_succ, 'V_history': V_history_vi,
-        't_vi': t_vi, 'n_iters_vi': len(errs_vi_succ),
+        't_vi': t_vi, 't_vi_runs': timings,
+        'n_iters_vi': len(errs_vi_succ),
         'vi_cf_match': vi_cf_match,
     }
 
 
 def compute_pi_r1(shared):
-    """Policy iteration on Regime 1 MDP."""
+    """Policy iteration on Regime 1 MDP. Reports median wall-clock over TIMING_REPS runs."""
     R, P = shared['R'], shared['P']
+
     t0 = time.perf_counter()
     V_pi, pol_pi, errs_pi, timings_pi, bellman_resids_pi = policy_iteration(R, P, BETA)
-    t_pi = time.perf_counter() - t0
+    timings = [time.perf_counter() - t0]
+
+    for _ in range(TIMING_REPS - 1):
+        t0 = time.perf_counter()
+        policy_iteration(R, P, BETA)
+        timings.append(time.perf_counter() - t0)
+    t_pi = float(np.median(timings))
 
     pi_cf_match = np.mean(pol_pi == shared['cf_pol']) * 100
-    print(f"  PI: {len(errs_pi)} iterations, {t_pi:.2f}s")
-    print(f"  PI policy matches closed-form: {pi_cf_match:.1f}%")
+    print(f"  PI: {len(errs_pi)} iterations, "
+          f"median {t_pi:.2f}s over {TIMING_REPS} runs "
+          f"(min {min(timings):.2f}s, max {max(timings):.2f}s)")
+    if VERBOSE:
+        print(f"  PI policy matches closed-form: {pi_cf_match:.1f}%")
 
     return {
         'V_pi': V_pi, 'pol_pi': pol_pi,
         'errs_pi': errs_pi, 'timings_pi': timings_pi,
         'bellman_resids_pi': bellman_resids_pi,
-        't_pi': t_pi, 'n_iters_pi': len(errs_pi),
+        't_pi': t_pi, 't_pi_runs': timings,
+        'n_iters_pi': len(errs_pi),
         'pi_cf_match': pi_cf_match,
     }
 
@@ -334,20 +366,30 @@ def compute_lp_r2():
 
     print(f"  States: {n_s}, Actions: {n_k}, SA pairs: {n_s * n_k}")
 
-    # VI as baseline
+    # VI baseline (median of TIMING_REPS runs; anchor run keeps the policy/value)
     t0 = time.perf_counter()
     V_vi, pol_vi, _, _ = value_iteration(R, P, BETA)
-    t_vi = time.perf_counter() - t0
-    print(f"  VI baseline: {t_vi:.3f}s")
+    vi_timings = [time.perf_counter() - t0]
+    for _ in range(TIMING_REPS - 1):
+        t0 = time.perf_counter()
+        value_iteration(R, P, BETA)
+        vi_timings.append(time.perf_counter() - t0)
+    t_vi = float(np.median(vi_timings))
+    print(f"  VI baseline: median {t_vi:.3f}s over {TIMING_REPS} runs")
 
-    # LP primal + dual
+    # LP primal + dual (median of TIMING_REPS runs)
     t0 = time.perf_counter()
     V_lp, pol_lp, mu = lp_primal(R, P, BETA)
-    t_lp = time.perf_counter() - t0
+    lp_timings = [time.perf_counter() - t0]
+    for _ in range(TIMING_REPS - 1):
+        t0 = time.perf_counter()
+        lp_primal(R, P, BETA)
+        lp_timings.append(time.perf_counter() - t0)
+    t_lp = float(np.median(lp_timings))
 
     lp_vi_diff = np.max(np.abs(V_lp - V_vi))
     pol_match = np.mean(pol_lp == pol_vi) * 100
-    print(f"  LP primal: {t_lp:.3f}s")
+    print(f"  LP primal: median {t_lp:.3f}s over {TIMING_REPS} runs")
     print(f"  ||V_LP - V_VI||_inf = {lp_vi_diff:.2e}")
     print(f"  LP policy matches VI: {pol_match:.1f}%")
 
@@ -361,6 +403,7 @@ def compute_lp_r2():
         'lp_vi_diff': lp_vi_diff,
         'pol_match': pol_match,
         't_vi': t_vi, 't_lp': t_lp,
+        't_vi_runs': vi_timings, 't_lp_runs': lp_timings,
         'k_grid': k_grid,
         'n_s': n_s, 'n_a': n_k,
     }
@@ -376,20 +419,33 @@ def compute_timing_sweep():
         kg = build_grid(nk)
         Rg, Pg = build_reward_and_transitions(kg, Z_VALS, PI_TRANS)
 
+        # Anchor run captures iteration counts; additional reps only re-time.
         t0 = time.perf_counter()
         _, _, errs, _ = value_iteration(Rg, Pg, BETA)
-        t_v = time.perf_counter() - t0
+        vi_runs = [time.perf_counter() - t0]
+        for _ in range(TIMING_REPS - 1):
+            t0 = time.perf_counter()
+            value_iteration(Rg, Pg, BETA)
+            vi_runs.append(time.perf_counter() - t0)
+        t_v = float(np.median(vi_runs))
 
         t0 = time.perf_counter()
         _, _, errs_p, _, _ = policy_iteration(Rg, Pg, BETA)
-        t_p = time.perf_counter() - t0
+        pi_runs = [time.perf_counter() - t0]
+        for _ in range(TIMING_REPS - 1):
+            t0 = time.perf_counter()
+            policy_iteration(Rg, Pg, BETA)
+            pi_runs.append(time.perf_counter() - t0)
+        t_p = float(np.median(pi_runs))
 
         timing_results.append({
             'n_k': nk, 'n_s': nk * len(Z_VALS),
             'vi_iters': len(errs), 'pi_iters': len(errs_p),
             't_vi': t_v, 't_pi': t_p,
+            't_vi_runs': vi_runs, 't_pi_runs': pi_runs,
         })
-        print(f"  Grid {nk}: VI {len(errs)} iters ({t_v:.3f}s), PI {len(errs_p)} iters ({t_p:.3f}s)")
+        print(f"  Grid {nk}: VI {len(errs)} iters (median {t_v:.3f}s over {TIMING_REPS} runs), "
+              f"PI {len(errs_p)} iters (median {t_p:.3f}s over {TIMING_REPS} runs)")
 
     # Cost summary from the n_k=20 entry
     r20 = next(r for r in timing_results if r['n_k'] == 20)
@@ -585,16 +641,20 @@ def generate_table(data):
     lines = []
     lines.append(r'\begin{table}[t]')
     lines.append(r'\centering')
-    lines.append(r'\caption{Brock--Mirman Economy: VI vs PI vs LP}')
+    lines.append(r'\caption{Brock--Mirman Economy: VI vs PI vs LP. '
+                 r'Wall-clock times are medians of ' + str(TIMING_REPS) + r' independent runs; '
+                 r'iteration counts are deterministic.}')
     lines.append(r'\label{tab:brock_mirman}')
     lines.append(r'\begin{tabular}{llrrr}')
     lines.append(r'\hline')
-    lines.append(r'Regime & Method & Iterations & Time (s) & $\|V - V^*\|_\infty$ \\')
+    lines.append(r'Regime & Method & Iterations & Time (s) & Final error \\')
     lines.append(r'\hline')
 
-    # Regime 1
+    # Regime 1. PI terminates on exact policy stability and the final iterate
+    # satisfies the Bellman equation to solver precision, so the meaningful
+    # cross-check is $\|V_{VI} - V_{PI}\|_\infty$, reported in the prose.
     lines.append(f'1. Contraction & VI & {vi_r1["n_iters_vi"]} & {vi_r1["t_vi"]:.2f} & {vi_r1["errs_vi"][-1]:.1e} \\\\')
-    lines.append(f' & PI & {pi_r1["n_iters_pi"]} & {pi_r1["t_pi"]:.2f} & {pi_r1["errs_pi"][-1]:.1e} \\\\')
+    lines.append(f' & PI & {pi_r1["n_iters_pi"]} & {pi_r1["t_pi"]:.2f} & --- \\\\')
 
     # Regime 2
     lines.append(f'2. LP dual & VI & --- & {lp_r2["t_vi"]:.3f} & --- \\\\')
@@ -634,14 +694,19 @@ def generate_outputs(data):
 # ============================================================================
 
 def main():
+    global VERBOSE
     parser = argparse.ArgumentParser(description='Brock-Mirman VI vs PI vs LP')
     add_component_args(parser)
+    parser.add_argument('--verbose', action='store_true',
+                        help='Print additional diagnostics (closed-form policy match rates).')
     args = parser.parse_args()
 
+    VERBOSE = args.verbose
     force = parse_force_set(args)
 
     print("Brock-Mirman Optimal Growth: VI vs PI vs LP")
     print(f"Parameters: α={ALPHA}, β={BETA}, z∈{Z_VALS.tolist()}")
+    print(f"Timing protocol: median of {TIMING_REPS} independent wall-clock runs per algorithm.")
     if force:
         print(f"Force recompute: {sorted(force)}")
 

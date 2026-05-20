@@ -1,7 +1,6 @@
   Cache hit: regret_vs_m
   Cache hit: regret_vs_T
-  Computing: mabuc
-  Cache saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/cache/causal_bandit_parallel__mabuc.pkl
+  Cache hit: mabuc
 
 ======================================================================
   Causal Bandits on Parallel Bandits + Greedy Casino -- summary
@@ -36,5 +35,7 @@
   Output files:
      /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_combined.png
      /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_results.tex
+     /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_mabuc_results.tex
   Figure saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_combined.png
   Table saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_results.tex
+  Table saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_mabuc_results.tex
