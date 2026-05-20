@@ -589,11 +589,24 @@ $10^5$ episodes.} All seven policies are then evaluated under both the
 nominal and perturbed income models.
 
 Table~\ref{tab:robust_consumption} reports discounted returns under both
-models. Under the nominal model, all policies perform similarly.
+models, with each of the seven policies evaluated on a common set of ten
+income-sequence seeds so that returns are mean estimates with standard
+errors. Under the nominal model, all policies perform similarly.
 Under the perturbed model, standard DP degrades by 76\% while the
-$\theta = 2$ robust policy degrades by 72\%. The Q-learning and robust
-Q-learning policies match their DP counterparts, confirming that the
-model-free algorithms recover the same precautionary savings behavior.
+$\theta = 2$ robust policy degrades by 72\%. Across the ten seeds the
+Q-learning and robust Q-learning policies recover their DP counterparts:
+the two robust variants reproduce the robust DP consumption rule exactly,
+and standard Q-learning differs at no more than one wealth level, with
+returns statistically indistinguishable from standard DP. The model-free
+algorithms thus recover the same precautionary savings behavior without
+access to the income distribution.
+The gain from robustness here is modest in absolute terms. The
+$\theta = 2$ policy recovers about 4.5 percentage points of the 76\%
+degradation, whereas an oracle that knows the perturbed distribution
+recovers 37 points. KL-ball robustness hedges against a band of nearby
+distributions rather than fitting the realized one, so it closes only a
+fraction of the oracle gap; this is the expected price of not knowing the
+true model, not a deficiency of the method.
 Figure~\ref{fig:robust_consumption} shows the mechanism: robust agents
 consume less at each wealth level, building a precautionary savings buffer
 against adverse income realizations.
