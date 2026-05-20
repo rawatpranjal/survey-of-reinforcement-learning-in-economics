@@ -440,18 +440,21 @@ def generate_outputs(data):
     print(f"Figure: {fig_path}")
 
     # -- Table ----------------------------------------------------------------
+    # All seven policies are evaluated across the same N_SEEDS eval seeds;
+    # SEs are reported at 3 decimals (the 5000-episode MC error is small).
     tex = [r"\begin{tabular}{lrrr}", r"\hline",
            r"Method & Nominal & Perturbed & Degradation (\%) \\", r"\hline"]
     for name in METHOD_ORDER:
         r = all_results[name]
-        if r['nom_se'] is not None and r['nom_se'] > 0:
-            nom_str = f"${r['nom']:.2f} \\pm {r['nom_se']:.2f}$"
-            pert_str = f"${r['pert']:.2f} \\pm {r['pert_se']:.2f}$"
-            pct_str = f"${r['pct']:.1f}$"
+        nom_se = r['nom_se'] if r['nom_se'] is not None else 0.0
+        pert_se = r['pert_se'] if r['pert_se'] is not None else 0.0
+        if nom_se > 0:
+            nom_str = f"${r['nom']:.3f} \\pm {nom_se:.3f}$"
+            pert_str = f"${r['pert']:.3f} \\pm {pert_se:.3f}$"
         else:
-            nom_str = f"${r['nom']:.2f}$"
-            pert_str = f"${r['pert']:.2f}$"
-            pct_str = f"${r['pct']:.1f}$"
+            nom_str = f"${r['nom']:.3f}$"
+            pert_str = f"${r['pert']:.3f}$"
+        pct_str = f"${r['pct']:.1f}$"
         label = name.replace('th=', r'$\theta$=')
         tex.append(f"{label} & {nom_str} & {pert_str} & {pct_str} \\\\")
     tex += [r"\hline", r"\end{tabular}"]
