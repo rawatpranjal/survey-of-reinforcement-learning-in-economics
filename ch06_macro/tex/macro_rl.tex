@@ -357,8 +357,17 @@ trained from scratch with $10$ independent seeds. Every method is
 evaluated on a fixed set of $30$ initial conditions $(K_0, A_0) \sim
 \mathcal{U}[0.5, 8] \times \mathcal{U}[0.95, 1.05]$ and shock paths
 $\{\varepsilon_t\}_{t=1}^T$, identical across methods, so cross-method
-differences are not driven by evaluation noise. The training budgets
-and convergence-monitoring schedules are recorded in the simulation
+differences are not driven by evaluation noise. PPO is trained for
+roughly $102{,}400$ environment steps per seed ($100$ updates of
+$1024$ steps), DDPG for $60{,}000$, reflecting per-algorithm tuning
+rather than equalised compute; the qualitative ordering (DRL within
+the VFI standard-error band on welfare) is robust to this asymmetry.
+The PPO entropy coefficient is set to zero, which reduces actor
+variance in this one-dimensional control problem but may need to be
+positive in higher-dimensional MDPs to avoid premature collapse.
+Wall-clock training time per seed is reported in
+Table~\ref{tab:macro:rbc-results}. The training budgets and
+convergence-monitoring schedules are recorded in the simulation
 script.}
 
 Table~\ref{tab:macro:rbc-results} reports mean episode return,
@@ -380,7 +389,7 @@ textbook case.
 \begin{table}[ht]
 \centering
 \input{../ch06_macro/sims/rbc_dp_vs_drl_results.tex}
-\caption{Representative-agent RBC under four methods. Mean episode return averaged over 30 evaluation episodes with shared initial conditions and shock paths. Standard error across 10 training seeds for PPO and DDPG, across 30 evaluation episodes for KPR and VFI. Policy mean-squared error reported against VFI consumption on 1000 random states drawn uniformly from the evaluation support.}
+\caption{Representative-agent RBC under four methods. Mean episode return averaged over 30 evaluation episodes with shared initial conditions and shock paths. The SE column reflects cross-seed standard error of per-seed mean returns for the stochastic methods (PPO and DDPG, $10$ seeds) and cross-episode standard error of returns within the single deterministic solution for KPR and VFI ($30$ episodes); the two are not strict comparables but are reported in the same column for compactness. Policy mean-squared error reported against VFI consumption on 1000 random states drawn uniformly from the evaluation support. Wall-clock time is per seed for PPO and DDPG, and total solver time for VFI.}
 \label{tab:macro:rbc-results}
 \end{table}
 
@@ -612,13 +621,26 @@ R_t(s,a,\mu,z)
 \end{equation}
 with terminal reward
 $R_T(s,\mu,z) = -c_{\mathrm{term}}(\bar{s}_T - s)^2/2$.
-The implementation follows MFAX in evaluating the reward after the
-population transition, using $\bar{s}_{t+1}$, and using the terminal
-reward on the final transition. The reward encourages agents to
-coordinate with the moving population while paying an action cost.
+The MFAX defaults that we adopt unchanged are $c_a = 0.5$, $q = 0.1$,
+$\kappa = 0.5$, and $c_{\mathrm{term}} = 1.0$, with idiosyncratic-noise
+scale $\sigma = 1.0$ and common-noise sensitivity $\rho = 0.5$. The
+horizon $T = 30$ is the MFAX truncation; the discount factor
+$\gamma = 0.99$ used during training is finite-horizon-compatible and
+matches the paper's configuration. The implementation follows MFAX in
+evaluating the reward after the population transition, using
+$\bar{s}_{t+1}$, and using the terminal reward on the final
+transition. The reward encourages agents to coordinate with the moving
+population while paying an action cost.
 
 The reported results come from the public MFAX implementation of the
-paper's two structural policy-gradient algorithms on this environment.
+paper's two structural policy-gradient algorithms on this environment.%
+\footnote{Specifically MFAX commit \texttt{9acc1eb}
+(\url{https://github.com/CWibault/mfax.git}). We apply only mechanical
+Python~3.11 dataclass \texttt{default\_factory} fixes and a stdout
+addition that prints the per-iteration mean policy return; the diff is
+checked in at \texttt{patches/mfax/py311\_compat.patch} with a README.
+None of the patched lines touches the SPG, RSPG, or environment update
+rules.}
 SPG uses the analytic mean-field update and a memoryless categorical
 policy that conditions on current state and current mean observation.
 RSPG uses the same analytic update, but encodes the sequence of shared
@@ -635,10 +657,16 @@ Table~\ref{tab:macro:lqmfg-results} reports exploitability, expected
 return, and training time across ten training seeds after sweeping the
 official learning-rate grid. RSPG has lower exploitability than SPG,
 which is the partial-observation lesson of the paper's LQ example:
-history helps infer where the common-noise episode is headed. Expected
-returns are reported for completeness but should not be read as a
-welfare ranking across methods, since each method induces a different
-mean-field path. Figure~\ref{fig:macro:lqmfg-curves} plots
+history helps infer where the common-noise episode is headed.%
+\footnote{RSPG's mean final exploitability is non-monotone in the
+learning rate (1316, 60, 797 at $10^{-4}, 10^{-3}, 10^{-2}$), an
+interior optimum at $10^{-3}$. SPG's minimum sits at the grid edge
+$10^{-2}$ (1824, 153, 87); a wider sweep might push SPG below its
+current 86.64 mean, but does not flip the ranking, since RSPG's regret
+floor at 60.37 is below SPG's interior best at this resolution.}
+Expected returns are reported for completeness but should not be read
+as a welfare ranking across methods, since each method induces a
+different mean-field path. Figure~\ref{fig:macro:lqmfg-curves} plots
 exploitability over training and the final exploitability sensitivity
 to the learning rate.
 

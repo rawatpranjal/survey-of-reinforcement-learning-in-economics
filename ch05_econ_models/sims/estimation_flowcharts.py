@@ -117,8 +117,12 @@ def draw_edge(ax, p1, p2, p1_size=None, p2_size=None, dashed=False,
 
 
 def draw_self_loop(ax, center, size, side='right', color='black', lw=ARROW_LW,
-                   label='', label_fontsize=9):
-    """Draw a visible self-loop arc on one side of a rectangle."""
+                   label='', label_fontsize=9, label_offset=0.85):
+    """Draw a visible self-loop arc on one side of a rectangle.
+
+    `label_offset` is the horizontal distance from the rectangle edge to the
+    label centre; increase to keep multi-line labels clear of the box edge.
+    """
     hw, hh = size[0] / 2, size[1] / 2
     if side == 'right':
         edge_x = center[0] + hw
@@ -127,7 +131,7 @@ def draw_self_loop(ax, center, size, side='right', color='black', lw=ARROW_LW,
         start = (edge_x + 0.02, y_lo)
         end = (edge_x + 0.02, y_hi)
         rad = -1.2
-        label_pos = (edge_x + 0.55, center[1])
+        label_pos = (edge_x + label_offset, center[1])
     elif side == 'left':
         edge_x = center[0] - hw
         y_lo = center[1] - hh * 0.7
@@ -135,7 +139,7 @@ def draw_self_loop(ax, center, size, side='right', color='black', lw=ARROW_LW,
         start = (edge_x - 0.02, y_hi)
         end = (edge_x - 0.02, y_lo)
         rad = -1.2
-        label_pos = (edge_x - 0.55, center[1])
+        label_pos = (edge_x - label_offset, center[1])
     else:
         return
 
@@ -209,7 +213,7 @@ def generate_outputs():
 
     # -- Self-loop on Bellman box --
     draw_self_loop(ax, bellman_center, bellman_size, side='right',
-                   color=red, lw=1.4, label='VI\niters')
+                   color=red, lw=1.4, label='VI\niters', label_offset=0.85)
 
     # -- Arrow from data to outer loop --
     outer_top_y = outer_center[1] + outer_size[1] / 2
@@ -277,6 +281,10 @@ def generate_outputs():
                    r'Update $\omega$' + '\n(value/policy\nweights)',
                    edgecolor=blue, facecolor=blue, alpha=0.15,
                    fontsize=9.5, linewidth=1.2)
+
+    # -- Self-loop on omega box (fast-timescale SA steps), mirroring left panel's VI loop --
+    draw_self_loop(ax, omega_center, omega_size, side='right',
+                   color=blue, lw=1.4, label='SA\nsteps', label_offset=0.85)
 
     # -- Bidirectional coupling arrows between theta and omega --
     mid_y_hi = 0.22

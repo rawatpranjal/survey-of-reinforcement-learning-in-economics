@@ -1,5 +1,9 @@
-"""RLHF vs DPO pipeline comparison diagram for Chapter 8.
-Uses DAG-style drawing helpers (cf. ch09 identification_dags.py)."""
+"""RLHF vs DPO pipeline comparison diagram for Chapter 9.
+Uses DAG-style drawing helpers (cf. ch10 identification_dags.py).
+
+Notation matches ch09_rlhf/tex/rlhf.tex:
+  reference policy = pi^{SFT}, optimized policy = pi_phi,
+  reward model = r_theta, KL weight = lambda_{KL}, state = s, output = y."""
 
 import argparse
 import sys, os
@@ -135,11 +139,11 @@ def generate_outputs():
     rm_top  = (X_RM, Y_TOP)
     ppo_top = (X_FINAL, Y_TOP)
 
-    draw_rect_node(ax, sft_top, r'SFT Model $\pi_{\mathrm{ref}}$',
+    draw_rect_node(ax, sft_top, r'SFT Model $\pi^{\mathrm{SFT}}$',
                    half_w=HW_STD, half_h=HH_STD,
                    facecolor=FILL_SFT, edgecolor=EDGE_CLR)
 
-    draw_rect_node(ax, rm_top, r'Reward Model $r_\varphi$',
+    draw_rect_node(ax, rm_top, r'Reward Model $r_\theta$',
                    half_w=HW_RM, half_h=HH_STD,
                    facecolor=FILL_RM, edgecolor=EDGE_CLR)
 
@@ -164,7 +168,7 @@ def generate_outputs():
 
     # PPO inner-loop annotation below the PPO box
     ax.text(X_FINAL, Y_TOP - 1.1,
-            r'$\pi_\theta$ generates $\;\to\; r_\varphi$ scores'
+            r'$\pi_\phi$ generates $\;\to\; r_\theta$ scores'
             '\n'
             r'$\to\; \lambda_{\mathrm{KL}}$ penalty $\;\to\;$ update',
             ha='center', va='center', fontsize=7.5, color=COLORS['gray'])
@@ -187,7 +191,7 @@ def generate_outputs():
     ghost_bot = (X_RM, Y_BOT)
     dpo_bot   = (X_FINAL, Y_BOT)
 
-    draw_rect_node(ax, sft_bot, r'SFT Model $\pi_{\mathrm{ref}}$',
+    draw_rect_node(ax, sft_bot, r'SFT Model $\pi^{\mathrm{SFT}}$',
                    half_w=HW_STD, half_h=HH_STD,
                    facecolor=FILL_SFT, edgecolor=EDGE_CLR)
 
@@ -223,8 +227,9 @@ def generate_outputs():
     # Between rows: implicit reward formula
     # ==================================================================
     ax.text((X_SFT + X_FINAL) / 2, 2.7,
-            r'Implicit reward:  $r(x,y) = \beta \log\left(\pi_\theta(y\mid x)'
-            r'\,/\,\pi_{\mathrm{ref}}(y\mid x)\right)$',
+            r'Implicit reward:  $r(s,y) = \lambda_{\mathrm{KL}} \log\left('
+            r'\pi_\phi(y\mid s)\,/\,\pi^{\mathrm{SFT}}(y\mid s)\right)'
+            r' + \lambda_{\mathrm{KL}} \log Z(s)$',
             ha='center', va='center', fontsize=11, color=COLORS['black'],
             style='italic')
 

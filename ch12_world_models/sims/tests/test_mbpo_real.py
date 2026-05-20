@@ -54,11 +54,18 @@ def test_real_mbpo_has_learnable_policy_and_ensemble():
 
 
 def test_real_mbpo_name():
+    """Display name is 'MB-LG-REINFORCE' (simplified MBPO variant). Class
+    name MBPOPolicy retained for backwards-compatible cache/test wiring; the
+    label distinguishes this implementation from the SAC-based MBPO of
+    Janner et al. 2019, since it uses linear-Gaussian dynamics and a
+    two-parameter REINFORCE policy rather than neural dynamics and SAC."""
     mbpo = cp.MBPOPolicy(
         gamma=0.95, explore_std=0.1, warmup=5,
         ensemble_size=5, rollout_horizon=5, n_rollouts=10,
     )
-    assert mbpo.name == 'MBPO', f"name should be 'MBPO'; got {mbpo.name!r}"
+    assert mbpo.name == 'MB-LG-REINFORCE', (
+        f"name should be 'MB-LG-REINFORCE'; got {mbpo.name!r}"
+    )
 
 
 def test_real_mbpo_policy_moves_with_training():

@@ -36,22 +36,27 @@ GAMMA = 0.95
 CAPACITY = 3      # max engines replaceable per period
 
 COMPLEXITY_SWEEP = [1, 2, 3, 4, 5, 6]
-SEEDS = [42, 123, 7]
+# Ten seeds for paired-evaluation statistics per CLAUDE.md.
+SEEDS = [42, 123, 7, 11, 19, 23, 31, 47, 61, 83]
 TRAIN_HORIZON = 50      # training episode length (92% of discounted value)
 EVAL_HORIZON = 100      # evaluation horizon (99.4% of discounted value)
 EVAL_EPISODES = 200
+EVAL_INIT_SEED = 2026   # seed for the shared initial-state draws (paired evaluation)
 
 DP_FEASIBLE_THRESHOLD = 10_000  # DP for N=1..4 (max 1,296 states)
 DP_TIMEOUT = 300                # seconds, for N=5 attempt
 
-# DQN hyperparameters scaled by N
+# DQN hyperparameters scaled by N. Episode budgets reduced from the 3-seed
+# pilot to fit the 10-seed sweep within a tractable wall-clock budget on a
+# busy CPU; the pilot showed all values had ample slack above the
+# convergence point.
 DQN_CONFIG = {
-    1: dict(episodes=3000,  replay=5_000,  hidden1=128, hidden2=64,  lr=1e-3, batch=64,  eps_decay=0.5),
-    2: dict(episodes=4000,  replay=8_000,  hidden1=128, hidden2=64,  lr=1e-3, batch=64,  eps_decay=0.5),
-    3: dict(episodes=6000,  replay=10_000, hidden1=128, hidden2=64,  lr=1e-3, batch=64,  eps_decay=0.55),
-    4: dict(episodes=8000,  replay=15_000, hidden1=128, hidden2=64,  lr=5e-4, batch=128, eps_decay=0.55),
-    5: dict(episodes=10000, replay=20_000, hidden1=256, hidden2=128, lr=5e-4, batch=128, eps_decay=0.6),
-    6: dict(episodes=12000, replay=25_000, hidden1=256, hidden2=128, lr=5e-4, batch=128, eps_decay=0.6),
+    1: dict(episodes=1000, replay=5_000,  hidden1=128, hidden2=64,  lr=1e-3, batch=64,  eps_decay=0.5),
+    2: dict(episodes=1500, replay=8_000,  hidden1=128, hidden2=64,  lr=1e-3, batch=64,  eps_decay=0.5),
+    3: dict(episodes=2000, replay=10_000, hidden1=128, hidden2=64,  lr=1e-3, batch=64,  eps_decay=0.55),
+    4: dict(episodes=2500, replay=15_000, hidden1=128, hidden2=64,  lr=5e-4, batch=128, eps_decay=0.55),
+    5: dict(episodes=3000, replay=20_000, hidden1=256, hidden2=128, lr=5e-4, batch=128, eps_decay=0.6),
+    6: dict(episodes=4000, replay=25_000, hidden1=256, hidden2=128, lr=5e-4, batch=128, eps_decay=0.6),
 }
 
 OUTPUT_DIR = Path(__file__).resolve().parent
@@ -68,10 +73,11 @@ CONFIG = {
     'train_horizon': TRAIN_HORIZON,
     'eval_horizon': EVAL_HORIZON,
     'eval_episodes': EVAL_EPISODES,
+    'eval_init_seed': EVAL_INIT_SEED,
     'dp_feasible_threshold': DP_FEASIBLE_THRESHOLD,
     'dp_timeout': DP_TIMEOUT,
     'dqn_config': {str(k): v for k, v in DQN_CONFIG.items()},
-    'version': 1,
+    'version': 2,
 }
 
 
@@ -181,7 +187,11 @@ def make_never_replace_heuristic(env):
 # Run single complexity level
 # ---------------------------------------------------------------------------
 def run_single_complexity(N, seeds):
-    """Run benchmark for a single fleet size N."""
+    """Run benchmark for a single fleet size N.
+
+    All policies (DP, DQN, heuristics) are evaluated on the same set of
+    pre-sampled initial states to ensure paired comparison.
+    """
     env = BusEngine(N)
     cfg = DQN_CONFIG[N]
     result = {
@@ -192,9 +202,16 @@ def run_single_complexity(N, seeds):
 
     print(f"\n  N={N}: {env.num_states:,} states, {env.num_actions} actions")
 
+    # --- Pre-sample initial states once (paired evaluation) ---
+    init_rng = np.random.RandomState(EVAL_INIT_SEED + N)
+    eval_initial_states = [
+        tuple(int(x) for x in init_rng.randint(0, MILEAGE_STATES, size=N))
+        for _ in range(EVAL_EPISODES)
+    ]
+
     # --- Value Iteration (if feasible) ---
     V, policy = None, None
-    if env.dp_feasible or env.num_states <= 10_000:
+    if env.dp_feasible:
         print("    Running Value Iteration...")
         t0 = time.time()
         try:
@@ -211,7 +228,7 @@ def run_single_complexity(N, seeds):
                 dp_reward = evaluate_dp_policy(
                     env, policy, gamma=GAMMA,
                     n_episodes=EVAL_EPISODES, horizon=EVAL_HORIZON,
-                    discount=GAMMA
+                    discount=GAMMA, initial_states=eval_initial_states
                 )
                 result['dp_reward'] = dp_reward
                 result['dp_time'] = vi_metrics.wall_time
@@ -227,7 +244,9 @@ def run_single_complexity(N, seeds):
     else:
         result['dp_reward'] = None
         result['dp_time'] = None
-        print("    DP skipped (state space too large)")
+        print(f"    DP skipped: state space {env.num_states:,} exceeds "
+              f"DP_FEASIBLE_THRESHOLD={DP_FEASIBLE_THRESHOLD:,} "
+              f"(wall-clock heuristic, not a numerical infeasibility)")
 
     # --- DQN (multiple seeds) ---
     print(f"    Running DQN ({len(seeds)} seeds)...")
@@ -259,7 +278,8 @@ def run_single_complexity(N, seeds):
 
         reward = evaluate_dqn_policy(
             env, q_net, n_episodes=EVAL_EPISODES,
-            horizon=EVAL_HORIZON, discount=GAMMA
+            horizon=EVAL_HORIZON, discount=GAMMA,
+            initial_states=eval_initial_states
         )
         dqn_rewards.append(reward)
         dqn_times.append(metrics.wall_time)
@@ -272,14 +292,18 @@ def run_single_complexity(N, seeds):
 
         print(f"      seed={seed}: reward={reward:.2f}, time={metrics.wall_time:.1f}s")
 
-    result['dqn_reward_mean'] = np.mean(dqn_rewards)
-    result['dqn_reward_std'] = np.std(dqn_rewards)
+    n_dqn = len(dqn_rewards)
+    result['dqn_reward_mean'] = float(np.mean(dqn_rewards))
+    # Report standard error of the mean (std / sqrt(n)) per CLAUDE.md.
+    # ddof=1 -> sample std; SE = sample_std / sqrt(n).
+    result['dqn_reward_se'] = float(np.std(dqn_rewards, ddof=1) / np.sqrt(n_dqn)) if n_dqn > 1 else 0.0
+    result['dqn_reward_std'] = float(np.std(dqn_rewards, ddof=1)) if n_dqn > 1 else 0.0
     result['dqn_rewards'] = dqn_rewards
-    result['dqn_time_mean'] = np.mean(dqn_times)
+    result['dqn_time_mean'] = float(np.mean(dqn_times))
 
     if dqn_q_errors:
-        result['q_error'] = np.mean(dqn_q_errors)
-        result['agreement'] = np.mean(dqn_agreements)
+        result['q_error'] = float(np.mean(dqn_q_errors))
+        result['agreement'] = float(np.mean(dqn_agreements))
     else:
         result['q_error'] = None
         result['agreement'] = None
@@ -289,12 +313,14 @@ def run_single_complexity(N, seeds):
     threshold_h = make_threshold_heuristic(env, threshold=3)
     h_threshold = evaluate_heuristic(
         env, threshold_h, n_episodes=EVAL_EPISODES,
-        horizon=EVAL_HORIZON, discount=GAMMA
+        horizon=EVAL_HORIZON, discount=GAMMA,
+        initial_states=eval_initial_states
     )
     never_h = make_never_replace_heuristic(env)
     h_never = evaluate_heuristic(
         env, never_h, n_episodes=EVAL_EPISODES,
-        horizon=EVAL_HORIZON, discount=GAMMA
+        horizon=EVAL_HORIZON, discount=GAMMA,
+        initial_states=eval_initial_states
     )
 
     result['h_threshold'] = h_threshold
@@ -339,7 +365,7 @@ def make_figures(results):
     dqn_times = []
     dp_rewards = []
     dqn_means = []
-    dqn_stds = []
+    dqn_ses = []
     h_thresh = []
     h_never = []
 
@@ -348,7 +374,7 @@ def make_figures(results):
         dqn_times.append(r['dqn_time_mean'])
         dp_rewards.append(r['dp_reward'])
         dqn_means.append(r['dqn_reward_mean'])
-        dqn_stds.append(r['dqn_reward_std'])
+        dqn_ses.append(r.get('dqn_reward_se', r.get('dqn_reward_std', 0.0)))
         h_thresh.append(r['h_threshold'])
         h_never.append(r['h_never'])
 
@@ -372,8 +398,8 @@ def make_figures(results):
     if dp_r_valid:
         ax.plot([x[0] for x in dp_r_valid], [x[1] for x in dp_r_valid],
                 's-', color=COLORS['blue'], label='DP (VI)', markersize=7)
-    ax.errorbar(Ns, dqn_means, yerr=dqn_stds, fmt='o-',
-                color=COLORS['cyan'], label='DQN', markersize=7, capsize=3)
+    ax.errorbar(Ns, dqn_means, yerr=dqn_ses, fmt='o-',
+                color=COLORS['cyan'], label='DQN (mean $\\pm$ SE)', markersize=7, capsize=3)
     ax.plot(Ns, h_thresh, '^--', color=COLORS['green'],
             label='Threshold(3)', markersize=6, alpha=0.8)
     ax.plot(Ns, h_never, 'v--', color=COLORS['red'],
@@ -414,7 +440,8 @@ def make_latex_table(results):
             dp_t = "---"
             dp_r = "---"
 
-        dqn_r = f"${r['dqn_reward_mean']:.1f} \\pm {r['dqn_reward_std']:.1f}$"
+        dqn_se = r.get('dqn_reward_se', r.get('dqn_reward_std', 0.0))
+        dqn_r = f"${r['dqn_reward_mean']:.1f} \\pm {dqn_se:.2f}$"
         h_t = f"${r['h_threshold']:.1f}$"
         h_n = f"${r['h_never']:.1f}$"
 
@@ -436,27 +463,42 @@ def make_latex_table(results):
 # ---------------------------------------------------------------------------
 def print_detailed_results(results):
     """Print detailed results to stdout."""
+    print("=" * 70)
+    print("  Bus Engine Replacement Benchmark: Scaling Analysis (Chapter 4)")
+    print("=" * 70)
+    print(f"  Fleet sizes N:        {COMPLEXITY_SWEEP}")
+    print(f"  Mileage bins M:       {MILEAGE_STATES}")
+    print(f"  Capacity:             {CAPACITY} engines/period")
+    print(f"  Cost weights:         alpha={ALPHA}, beta={BETA}")
+    print(f"  Discount gamma:       {GAMMA}")
+    print(f"  Train horizon:        {TRAIN_HORIZON}")
+    print(f"  Eval horizon:         {EVAL_HORIZON}, eval episodes: {EVAL_EPISODES}")
+    print(f"  DQN seeds:            {len(SEEDS)} -> {SEEDS}")
+    print(f"  Paired-eval init seed:{EVAL_INIT_SEED} (shared initial states per N)")
+    print(f"  DP feasible threshold:{DP_FEASIBLE_THRESHOLD:,} states")
+
     print("\n" + "=" * 70)
     print("  SCALING SUMMARY")
     print("=" * 70)
 
-    print("\n  " + "-" * 80)
+    print("\n  " + "-" * 86)
     print(f"  {'N':>3} | {'|S|':>7} | {'DP Time':>8} | {'DP Return':>10} | "
-          f"{'DQN Return':>18} | {'Thresh(3)':>10} | {'Never':>8}")
-    print("  " + "-" * 80)
+          f"{'DQN Return (mean +/- SE)':>26} | {'Thresh(3)':>10} | {'Never':>8}")
+    print("  " + "-" * 86)
 
     for r in results:
         N = r['complexity']
         states = r['states']
         dp_t = f"{r['dp_time']:.2f}s" if r['dp_time'] is not None else "---"
         dp_r = f"{r['dp_reward']:.2f}" if r['dp_reward'] is not None else "---"
-        dqn_r = f"{r['dqn_reward_mean']:.2f} +/- {r['dqn_reward_std']:.2f}"
+        dqn_se = r.get('dqn_reward_se', r.get('dqn_reward_std', 0.0))
+        dqn_r = f"{r['dqn_reward_mean']:.2f} +/- {dqn_se:.3f}"
         h_t = f"{r['h_threshold']:.2f}"
         h_n = f"{r['h_never']:.2f}"
         print(f"  {N:>3} | {states:>7,} | {dp_t:>8} | {dp_r:>10} | "
-              f"{dqn_r:>18} | {h_t:>10} | {h_n:>8}")
+              f"{dqn_r:>26} | {h_t:>10} | {h_n:>8}")
 
-    print("  " + "-" * 80)
+    print("  " + "-" * 86)
 
     # Per-seed DQN results
     print("\n  Per-Seed DQN Returns:")

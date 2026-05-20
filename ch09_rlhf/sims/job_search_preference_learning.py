@@ -18,7 +18,11 @@ Three experiments:
 """
 
 import os
-os.environ['PYTHONUNBUFFERED'] = '1'
+import sys
+# Line-buffer stdout so a long run produces a readable stdout file even when
+# redirected to disk. Setting PYTHONUNBUFFERED here is a no-op because Python
+# has already buffered stdout by the time this line executes; reconfigure works.
+sys.stdout.reconfigure(line_buffering=True)
 
 import numpy as np
 from scipy import stats
@@ -30,7 +34,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from datetime import datetime
-import sys
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -433,6 +436,16 @@ def train_reward_net(w_states, l_states, w_actions, l_actions, length):
 
 
 def extract_reward_table(model):
+    # The network ingests an (s, a) feature vector and therefore parameterises
+    # r_theta(s, a). We average over the two actions to hand value iteration a
+    # state-only reward vector r_bar(s) = 0.5*(r_theta(s, 0) + r_theta(s, 1)).
+    # This is harmless in this environment because the true reward
+    # TRUE_REWARD_VEC is action-independent (lines 143-149): action affects only
+    # the next-state transition, not the per-period payoff. So the Bradley-Terry
+    # MLE has no incentive to fit action-dependence in r_theta, and averaging
+    # discards at most noise. In environments with action-dependent rewards
+    # this routine would need to return the full (NUM_STATES, 2) table and VI
+    # would have to operate on (s, a)-conditioned rewards.
     all_feats = STATE_FEATURES.reshape(NUM_STATES * 2, NN_INPUT_DIM)
     model.eval()
     with torch.no_grad():

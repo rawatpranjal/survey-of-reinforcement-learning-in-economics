@@ -34,6 +34,7 @@ GA_CONFIG = {**SHARED_CONFIG, 'N_POP': 30, 'L_BITS': 10,
 MBPO_CONFIG = {**SHARED_CONFIG, 'EXPLORE_STD': 0.15, 'WARMUP': 10,
                'REFIT_EVERY': 25}
 NAIVE_CONFIG = {**SHARED_CONFIG, 'H_FIXED': 0.5}
+MYOPIC_CONFIG = {**SHARED_CONFIG}
 ORACLE_CONFIG = {**SHARED_CONFIG}
 
 
@@ -84,6 +85,29 @@ class NaivePolicy(Paradigm):
 
     def act(self, s, t):
         return min(s, self.h_fixed)
+
+
+class MyopicPolicy(Paradigm):
+    """Open-access / per-period profit maximizer. Knows (p, c) but ignores
+    stock dynamics. Solves argmax_h (p h - (c/2) h^2) s.t. 0 <= h <= s,
+    giving the unconstrained interior solution h = p / c whenever stock
+    permits. With p = 2, c = 0.2 this is h = 10 per step, so the fishery
+    collapses on the first step when s_0 = K = 10 (full harvest) and
+    persists at zero stock thereafter."""
+    name = 'Myopic'
+
+    def __init__(self):
+        self.p = None
+        self.c = None
+
+    def reset(self, params, seed=0):
+        self.p = params['p']
+        self.c = params['c']
+
+    def act(self, s, t):
+        # Unconstrained myopic optimum: h* = p/c
+        h_star = self.p / self.c
+        return float(min(s, max(0.0, h_star)))
 
 
 class RLSPolicy(Paradigm):
@@ -273,8 +297,11 @@ class ArifovicGAPolicy(Paradigm):
 
 
 class MBPOPolicy(Paradigm):
-    """Learn (r, K, p, c) by LS; plan by re-solving DP with point estimates."""
-    name = 'Model-Based LQ'
+    """Learn (r, K, p, c) by LS; plan by re-solving DP with point estimates.
+    Despite the class name retained from the cobweb sibling, the planner on
+    the non-linear fishery is grid-based dynamic programming, not LQ Riccati;
+    the paradigm's display name is therefore "Model-Based DP"."""
+    name = 'Model-Based DP'
 
     def __init__(self, gamma, explore_std, warmup, refit_every,
                  inner_ns, inner_nh, inner_iter):
@@ -382,12 +409,25 @@ def rollout(paradigm, params, T, gamma, seed):
     return rewards
 
 
+def _extract_param_estimates(paradigm):
+    """Return final (r_hat, K_hat) for paradigms that estimate them, else None."""
+    if isinstance(paradigm, RLSPolicy):
+        r_hat = max(0.05, float(paradigm.theta[0]))
+        r_over_K = max(1e-3, float(paradigm.theta[1]))
+        return (r_hat, r_hat / r_over_K)
+    if isinstance(paradigm, MBPOPolicy):
+        return (float(paradigm.r_hat), float(paradigm.K_hat))
+    return None
+
+
 def make_paradigm(name, config):
     if name == 'Oracle':
         return OraclePolicy(gamma=config['GAMMA'],
                             n_s=config['N_S_GRID'], n_h=config['N_H_GRID'])
     if name == 'Naive':
         return NaivePolicy(h_fixed=config['H_FIXED'])
+    if name == 'Myopic':
+        return MyopicPolicy()
     if name == 'RLS':
         return RLSPolicy(
             gamma=config['GAMMA'], init_var=config['INIT_VAR'],
@@ -406,7 +446,7 @@ def make_paradigm(name, config):
             p_cross=config['P_CROSS'], p_mut=config['P_MUT'],
             gen_len=config['GEN_LEN'],
         )
-    if name == 'Model-Based LQ':
+    if name == 'Model-Based DP':
         return MBPOPolicy(
             gamma=config['GAMMA'], explore_std=config['EXPLORE_STD'],
             warmup=config['WARMUP'], refit_every=config['REFIT_EVERY'],
@@ -434,14 +474,19 @@ def compute_paradigm(config, shared, name):
     oracle_rewards = shared['oracle_rewards']
     regret_curves = np.zeros((N, T))
     final_regret = np.zeros(N)
+    r_hats = np.full(N, np.nan)
+    K_hats = np.full(N, np.nan)
     for s in range(N):
         np.random.seed(s)
         paradigm = make_paradigm(name, config)
         rewards = rollout(paradigm, params, T, config['GAMMA'], seed=s)
+        est = _extract_param_estimates(paradigm)
+        if est is not None:
+            r_hats[s], K_hats[s] = est
         curve = np.cumsum(oracle_rewards[s] - rewards)
         regret_curves[s] = curve
         final_regret[s] = curve[-1]
-    return dict(
+    out = dict(
         regret_curves=regret_curves,
         final_regret=final_regret,
         mean_curve=regret_curves.mean(axis=0),
@@ -449,15 +494,20 @@ def compute_paradigm(config, shared, name):
         final_mean=float(final_regret.mean()),
         final_se=float(final_regret.std(ddof=1) / np.sqrt(N)),
     )
+    if not np.all(np.isnan(r_hats)):
+        out['r_hats'] = r_hats
+        out['K_hats'] = K_hats
+    return out
 
 
 PARADIGM_REGISTRY = {
-    'Oracle':       (compute_paradigm, ORACLE_CONFIG),
-    'Naive':        (compute_paradigm, NAIVE_CONFIG),
-    'RLS':          (compute_paradigm, RLS_CONFIG),
-    'Q-Learning':   (compute_paradigm, QL_CONFIG),
-    'Arifovic GA':  (compute_paradigm, GA_CONFIG),
-    'Model-Based LQ':         (compute_paradigm, MBPO_CONFIG),
+    'Oracle':         (compute_paradigm, ORACLE_CONFIG),
+    'Naive':          (compute_paradigm, NAIVE_CONFIG),
+    'Myopic':         (compute_paradigm, MYOPIC_CONFIG),
+    'RLS':            (compute_paradigm, RLS_CONFIG),
+    'Q-Learning':     (compute_paradigm, QL_CONFIG),
+    'Arifovic GA':    (compute_paradigm, GA_CONFIG),
+    'Model-Based DP': (compute_paradigm, MBPO_CONFIG),
 }
 
 
@@ -479,14 +529,16 @@ def compute_data(force=None):
 
 
 # Rank order by expected performance (lower regret = better)
-PARADIGM_ORDER = ['Oracle', 'RLS', 'Model-Based LQ', 'Q-Learning', 'Naive', 'Arifovic GA']
+PARADIGM_ORDER = ['Oracle', 'RLS', 'Model-Based DP', 'Q-Learning',
+                  'Naive', 'Arifovic GA', 'Myopic']
 PARADIGM_COLORS = {
-    'Oracle':       COLORS['black'],
-    'RLS':          COLORS['red'],
-    'Model-Based LQ':         COLORS['purple'],
-    'Naive':        COLORS['gray'],
-    'Arifovic GA':  COLORS['green'],
-    'Q-Learning':   COLORS['blue'],
+    'Oracle':         COLORS['black'],
+    'RLS':            COLORS['red'],
+    'Model-Based DP': COLORS['purple'],
+    'Naive':          COLORS['gray'],
+    'Arifovic GA':    COLORS['green'],
+    'Q-Learning':     COLORS['blue'],
+    'Myopic':         COLORS['orange'],
 }
 
 
@@ -494,8 +546,13 @@ def generate_outputs(data):
     apply_style()
     T = SHARED_CONFIG['T_EPISODE']
     t_axis = np.arange(1, T + 1)
+
+    # Sort paradigms by final regret ascending (Oracle first at 0)
+    ranked = sorted(PARADIGM_ORDER,
+                    key=lambda nm: data['results'][nm]['final_mean'])
+
     fig, ax = plt.subplots(figsize=(9, 5))
-    for name in PARADIGM_ORDER:
+    for name in ranked:
         res = data['results'][name]
         mean, se = res['mean_curve'], res['se_curve']
         ax.plot(t_axis, mean, label=name, color=PARADIGM_COLORS[name], linewidth=1.7)
@@ -504,7 +561,7 @@ def generate_outputs(data):
     ax.axhline(0, **BENCH_STYLE)
     ax.set_xlabel('environment step $t$')
     ax.set_ylabel('cumulative regret')
-    ax.set_title('Fishery: cumulative regret across six paradigms '
+    ax.set_title('Fishery: cumulative regret across seven paradigms '
                  '(20 seeds, mean $\\pm$ SE)')
     ax.legend(loc='upper left', fontsize=9)
     fig.tight_layout()
@@ -520,7 +577,7 @@ def generate_outputs(data):
         f.write('\\toprule\n')
         f.write('Paradigm & Final regret \\\\\n')
         f.write('\\midrule\n')
-        for name in PARADIGM_ORDER:
+        for name in ranked:
             r = data['results'][name]
             f.write(f"{name} & {r['final_mean']:.2f} $\\pm$ {r['final_se']:.2f} \\\\\n")
         f.write('\\bottomrule\n')
@@ -528,11 +585,66 @@ def generate_outputs(data):
     print(f"  Table saved: {tbl_path}")
 
     print("\n=== Cumulative regret at T=500 (mean ± SE, n=20 seeds) ===\n")
-    print(f"{'Paradigm':<14} {'Final regret':>22}")
-    print('-' * 38)
-    for name in PARADIGM_ORDER:
+    print(f"{'Paradigm':<16} {'Final regret':>22}")
+    print('-' * 40)
+    for name in ranked:
         r = data['results'][name]
-        print(f"{name:<14}  {r['final_mean']:>10.2f} ± {r['final_se']:>5.2f}")
+        print(f"{name:<16}  {r['final_mean']:>10.2f} ± {r['final_se']:>5.2f}")
+
+    # Diagnostic: collapse incidence per paradigm.
+    print("\n=== Stock-collapse incidence: fraction of seeds with mean final"
+          " regret >= 0.95 * Myopic floor (proxy for sustained collapse) ===\n")
+    myopic_floor = data['results']['Myopic']['final_mean']
+    if myopic_floor > 1.0:
+        print(f"{'Paradigm':<16} {'frac collapsed':>16}")
+        print('-' * 34)
+        for name in ranked:
+            fr = data['results'][name]['final_regret']
+            frac = float(np.mean(fr >= 0.95 * myopic_floor))
+            print(f"{name:<16} {frac:>16.2f}")
+
+    # Parameter recovery for the two structured learners.
+    r_true = SHARED_CONFIG['r']
+    K_true = SHARED_CONFIG['K']
+    recovery_rows = []
+    for name in PARADIGM_ORDER:
+        res = data['results'][name]
+        if 'r_hats' not in res:
+            continue
+        r_hats = res['r_hats']
+        K_hats = res['K_hats']
+        r_err = np.abs(r_hats - r_true)
+        K_err = np.abs(K_hats - K_true)
+        recovery_rows.append((
+            name,
+            float(np.nanmean(r_hats)), float(np.nanstd(r_hats, ddof=1) / np.sqrt(np.sum(~np.isnan(r_hats)))),
+            float(np.nanmean(K_hats)), float(np.nanstd(K_hats, ddof=1) / np.sqrt(np.sum(~np.isnan(K_hats)))),
+            float(np.nanmean(r_err)), float(np.nanmean(K_err)),
+        ))
+    if recovery_rows:
+        print(f"\n=== Parameter recovery at t = T (true r = {r_true}, K = {K_true}) ===\n")
+        print(f"{'Paradigm':<16} {'r_hat':>16} {'K_hat':>16} {'|r_err|':>10} {'|K_err|':>10}")
+        print('-' * 72)
+        for row in recovery_rows:
+            name, r_m, r_se, K_m, K_se, r_err, K_err = row
+            print(f"{name:<16} {r_m:>7.3f}±{r_se:.3f}  {K_m:>7.3f}±{K_se:.3f}  "
+                  f"{r_err:>10.3f} {K_err:>10.3f}")
+        # Write recovery table
+        rec_path = os.path.join(OUTPUT_DIR, 'fishery_paradigms_recovery.tex')
+        with open(rec_path, 'w') as f:
+            f.write(f'% Parameter recovery on fishery, mean +- SE over 20 seeds.'
+                    f' True r = {r_true}, K = {K_true}.\n')
+            f.write('\\begin{tabular}{lcccc}\n\\toprule\n')
+            f.write('Paradigm & $\\hat r$ & $\\hat K$ & '
+                    '$|\\hat r - r|$ & $|\\hat K - K|$ \\\\\n')
+            f.write('\\midrule\n')
+            for row in recovery_rows:
+                name, r_m, r_se, K_m, K_se, r_err, K_err = row
+                f.write(f"{name} & {r_m:.3f} $\\pm$ {r_se:.3f} & "
+                        f"{K_m:.3f} $\\pm$ {K_se:.3f} & "
+                        f"{r_err:.3f} & {K_err:.3f} \\\\\n")
+            f.write('\\bottomrule\n\\end{tabular}\n')
+        print(f"  Recovery table saved: {rec_path}")
 
 
 def main():

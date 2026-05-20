@@ -41,6 +41,13 @@ PRICES = np.arange(1, K + 1, dtype=float) / K
 CHECKPOINTS = [500, 2_500]
 SAMPLE_INTERVAL = 10
 
+# GP kernel hyperparameters. Listed in CONFIG below so the cache invalidates
+# correctly when any of these are edited.
+KERNEL_LENGTHSCALE = 0.18
+KERNEL_VARIANCE = 0.20
+OBSERVATION_NOISE = 0.25  # Bernoulli worst-case Var(y) bound, scaled by 1/n_a
+GP_UCB_BETA = 1.8
+
 SCENARIOS = {
     'b29': {
         'label': r'$B(2,9)$',
@@ -68,7 +75,6 @@ ALG_NAMES = [
 ]
 
 ALG_LABELS = {
-    'ucb': 'UCB',
     'ts': 'TS',
     'gp_ucb': 'GP-UCB',
     'gp_ts': 'GP-TS',
@@ -77,7 +83,6 @@ ALG_LABELS = {
 }
 
 ALG_COLORS = {
-    'ucb': COLORS['blue'],
     'ts': COLORS['orange'],
     'gp_ucb': COLORS['green'],
     'gp_ts': COLORS['cyan'],
@@ -97,7 +102,11 @@ CONFIG = {
     'CHECKPOINTS': CHECKPOINTS,
     'SAMPLE_INTERVAL': SAMPLE_INTERVAL,
     'SCENARIOS': SCENARIOS,
-    'version': 9,
+    'KERNEL_LENGTHSCALE': KERNEL_LENGTHSCALE,
+    'KERNEL_VARIANCE': KERNEL_VARIANCE,
+    'OBSERVATION_NOISE': OBSERVATION_NOISE,
+    'GP_UCB_BETA': GP_UCB_BETA,
+    'version': 10,
 }
 
 
@@ -128,33 +137,6 @@ class BetaWTPDemand:
 # =============================================================================
 # Independent-arm bandits
 # =============================================================================
-class PricingUCB:
-    """Price-scaled UCB on realized per-customer profit."""
-
-    def __init__(self, prices):
-        self.prices = prices
-        self.K = len(prices)
-        self.counts = np.zeros(self.K)
-        self.values = np.zeros(self.K)
-        self.batch_index = 0
-
-    def select_arm(self, rng):
-        if self.batch_index < self.K:
-            return self.batch_index
-        bonus = self.prices * np.sqrt(
-            2 * np.log(max(self.batch_index, 2)) / np.maximum(self.counts, 1)
-        )
-        return int(np.argmax(self.values + bonus))
-
-    def update_batch(self, arm, sales, n_customers):
-        reward_mean = self.prices[arm] * sales / n_customers
-        old_n = self.counts[arm]
-        new_n = old_n + 1
-        self.values[arm] = (old_n * self.values[arm] + reward_mean) / new_n
-        self.counts[arm] = new_n
-        self.batch_index += 1
-
-
 class PricingTS:
     """Beta-Bernoulli Thompson sampling on demand, scaled by price."""
 
@@ -176,30 +158,30 @@ class PricingTS:
 # =============================================================================
 # GP curve-learning algorithms
 # =============================================================================
-def rbf_kernel_cross(x, z, lengthscale=0.18, variance=0.20):
+def rbf_kernel_cross(x, z, lengthscale=KERNEL_LENGTHSCALE, variance=KERNEL_VARIANCE):
     x = np.asarray(x)
     z = np.asarray(z)
     sqdist = (x[:, None] - z[None, :]) ** 2
     return variance * np.exp(-0.5 * sqdist / lengthscale ** 2)
 
 
-def rbf_kernel(x, lengthscale=0.18, variance=0.20):
+def rbf_kernel(x, lengthscale=KERNEL_LENGTHSCALE, variance=KERNEL_VARIANCE):
     return rbf_kernel_cross(x, x, lengthscale, variance)
 
 
-def cov_f_deriv(x, z, lengthscale=0.18, variance=0.20):
+def cov_f_deriv(x, z, lengthscale=KERNEL_LENGTHSCALE, variance=KERNEL_VARIANCE):
     """Covariance between f(x) and f'(z) for an RBF kernel."""
     kxz = rbf_kernel_cross(x, z, lengthscale, variance)
     return ((x[:, None] - z[None, :]) / lengthscale ** 2) * kxz
 
 
-def cov_deriv_f(x, z, lengthscale=0.18, variance=0.20):
+def cov_deriv_f(x, z, lengthscale=KERNEL_LENGTHSCALE, variance=KERNEL_VARIANCE):
     """Covariance between f'(x) and f(z) for an RBF kernel."""
     kxz = rbf_kernel_cross(x, z, lengthscale, variance)
     return (-(x[:, None] - z[None, :]) / lengthscale ** 2) * kxz
 
 
-def cov_deriv_deriv(x, z, lengthscale=0.18, variance=0.20):
+def cov_deriv_deriv(x, z, lengthscale=KERNEL_LENGTHSCALE, variance=KERNEL_VARIANCE):
     """Covariance between f'(x) and f'(z) for an RBF kernel."""
     diff = x[:, None] - z[None, :]
     kxz = rbf_kernel_cross(x, z, lengthscale, variance)
@@ -230,7 +212,8 @@ def sample_normal_below(rng, mean, sd, upper=0.0):
 class DemandGP:
     """GP-UCB/GP-TS on demand values over the tested price grid."""
 
-    def __init__(self, prices, mode='ucb', noise_var=0.25, beta=1.8, seed=0):
+    def __init__(self, prices, mode='ucb', noise_var=OBSERVATION_NOISE,
+                 beta=GP_UCB_BETA, seed=0):
         self.prices = prices
         self.K = len(prices)
         self.mode = mode
@@ -271,7 +254,7 @@ class MonotoneDemandGP:
     demand by integration. GP-UCB-M uses high quantiles from constrained draws.
     """
 
-    def __init__(self, prices, mode='ucb', noise_var=0.25, seed=0,
+    def __init__(self, prices, mode='ucb', noise_var=OBSERVATION_NOISE, seed=0,
                  gibbs_sweeps=2, ucb_samples=8, ucb_quantile=0.9):
         self.prices = prices
         self.K = len(prices)
@@ -458,14 +441,44 @@ def run_one_for_pool(args):
     return run_one(scenario_config, seed)
 
 
+def _regret_slope(time_points, profit_curve, oracle):
+    """Log-log slope of cumulative regret R_t = t * oracle - profit_t.
+
+    Returns (slope, stderr) computed on the regression log R_t = a + b log t,
+    restricted to the second half of the trajectory to avoid the initial burn-in
+    where regret is non-monotone. Theoretical rates: O(sqrt(T)) gives slope 0.5,
+    O(log T) gives slope -> 0.
+    """
+    regret = np.asarray(time_points, dtype=float) * float(oracle) - np.asarray(profit_curve)
+    mask = regret > 1e-6
+    mask[: len(mask) // 2] = False
+    if mask.sum() < 5:
+        return float('nan'), float('nan')
+    x = np.log(np.asarray(time_points)[mask])
+    y = np.log(regret[mask])
+    n = len(x)
+    x_mean = x.mean()
+    y_mean = y.mean()
+    sxx = np.sum((x - x_mean) ** 2)
+    sxy = np.sum((x - x_mean) * (y - y_mean))
+    slope = sxy / sxx
+    resid = y - (y_mean + slope * (x - x_mean))
+    sigma2 = np.sum(resid ** 2) / max(n - 2, 1)
+    stderr = float(np.sqrt(sigma2 / sxx))
+    return float(slope), stderr
+
+
 def _print_summary(data):
     print('=' * 72)
     print('WEAVER-STYLE CURVE-LEARNING PRICING REPLICATION')
     print('=' * 72)
     print(f'K={K}, T={T:,}, seeds={N_SEEDS}, batch={BATCH_SIZE}, workers={N_WORKERS}')
+    print(f'GP kernel: lengthscale={KERNEL_LENGTHSCALE}, variance={KERNEL_VARIANCE}, '
+          f'obs_noise={OBSERVATION_NOISE}, gp_ucb_beta={GP_UCB_BETA}')
     print('Algorithms:', ', '.join(ALG_LABELS[name] for name in ALG_NAMES))
     print()
     results = data['results']
+    time_points = data['time_points']
     for scenario_name, scenario_config in SCENARIOS.items():
         scenario = results[scenario_name]
         print(f"Scenario: {scenario_config['label']} ({scenario_config['description']})")
@@ -476,6 +489,15 @@ def _print_summary(data):
             pct = 100 * final_profit / (T * oracle)
             print(f'  {ALG_LABELS[name]:<10} final profit {pct:6.1f}% of grid oracle')
         print()
+        print('  Empirical regret-rate slope (log R_t vs log t, second-half fit):')
+        for name in ALG_NAMES:
+            mean_profit = scenario['profit_arrays'][name].mean(axis=0)
+            slope, stderr = _regret_slope(time_points, mean_profit, oracle)
+            if np.isnan(slope):
+                print(f'    {ALG_LABELS[name]:<10} slope=N/A (regret never positive)')
+            else:
+                print(f'    {ALG_LABELS[name]:<10} slope={slope:+.3f} +/- {stderr:.3f}')
+        print()
 
 
 def compute_data():
@@ -485,18 +507,11 @@ def compute_data():
         _print_summary(cached)
         return cached
 
-    print('=' * 72)
-    print('WEAVER-STYLE CURVE-LEARNING PRICING REPLICATION')
-    print('=' * 72)
-    print(f'K={K}, T={T:,}, seeds={N_SEEDS}, batch={BATCH_SIZE}, workers={N_WORKERS}')
-    print('Algorithms:', ', '.join(ALG_LABELS[name] for name in ALG_NAMES))
-    print()
-
     time_points = np.arange(SAMPLE_INTERVAL, T + 1, SAMPLE_INTERVAL)
     results = {}
 
     for scenario_name, scenario_config in SCENARIOS.items():
-        print(f"Scenario: {scenario_config['label']} ({scenario_config['description']})")
+        print(f"Running scenario: {scenario_config['label']} ({scenario_config['description']})")
         jobs = [(scenario_config, seed) for seed in range(N_SEEDS)]
         if N_WORKERS > 1:
             with mp.Pool(processes=N_WORKERS) as pool:
@@ -526,18 +541,13 @@ def compute_data():
             'true_opt_prices': np.array([run['true_opt_price'] for run in runs]),
             'true_opt_profits': np.array([run['true_opt_profit'] for run in runs]),
         }
-        print(f"  Price-set optimum: {results[scenario_name]['price_set_opt_prices'][0]:.2f}")
-        for name in ALG_NAMES:
-            final_profit = profit_arrays[name][:, -1].mean()
-            pct = 100 * final_profit / (T * results[scenario_name]['price_set_opt_profits'][0])
-            print(f'  {ALG_LABELS[name]:<10} final profit {pct:6.1f}% of grid oracle')
-        print()
 
     data = {
         'time_points': time_points,
         'results': results,
     }
     save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
+    _print_summary(data)
     return data
 
 
@@ -584,9 +594,9 @@ def generate_outputs(data):
     fig.legend(handles, labels, loc='lower center', ncol=3, frameon=False,
                bbox_to_anchor=(0.5, -0.05))
     fig.tight_layout(rect=(0, 0.10, 1, 1))
-    fig.savefig(os.path.join(OUT_DIR, 'curve_learning_pricing_regret.png'),
+    fig.savefig(os.path.join(OUT_DIR, 'curve_learning_pricing_pct_oracle.png'),
                 bbox_inches='tight')
-    print('  Saved: curve_learning_pricing_regret.png')
+    print('  Saved: curve_learning_pricing_pct_oracle.png')
 
     print('Generating Weaver-style curve-learning tables...')
     tex_path = os.path.join(OUT_DIR, 'curve_learning_pricing_results.tex')

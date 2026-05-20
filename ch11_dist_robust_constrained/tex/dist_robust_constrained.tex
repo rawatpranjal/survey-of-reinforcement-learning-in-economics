@@ -373,25 +373,44 @@ Table~\ref{tab:carbon_results} and
 Figure~\ref{fig:carbon_convergence} compare three methods:
 the constrained LP oracle, unconstrained Q-learning, and
 Lagrangian Q-learning with dual ascent
-on~\eqref{eq:dual_update}. Unconstrained Q-learning converges
-near the DP optimum (return 255 versus 273) but violates the
-carbon budget by a factor of three (cost 96 versus $d = 31$).
-The learned multiplier rises from zero, overshoots to
-$\lambda \approx 3.2$ before settling at $\lambda \approx 1.40$,
-near the analytical shadow price $\lambda^* = 1.20$.
-The overshoot is the characteristic oscillation of naive dual
-ascent that \citet{Stooke2020}'s PID controller is designed
-to dampen. Because the transient spike drives the policy
-toward clean energy more aggressively than necessary, the
-final cost (27) undershoots the budget (31), leaving the
-Lagrangian agent slightly too conservative (return 180 versus
-the LP optimum of 186). The LP optimal policy is stochastic,
+on~\eqref{eq:dual_update}. Each Q-learning variant is run
+over five seeds; the table reports means and standard
+errors.\footnote{The LP oracle value is computed by exact
+policy evaluation
+$V = (I - \gamma P_\pi)^{-1} R_\pi$, an infinite-horizon
+quantity. The Q-learning returns are Monte Carlo averages
+over rollouts truncated at horizon $H = 100$. With
+$\gamma^{100} \approx 6\times 10^{-3}$, the truncation
+removes a non-negative discounted tail bounded by roughly
+$\gamma^{H} r_{\max}/(1-\gamma)$, on the order of one to two
+percent of the return. Part of the gap between the LP value
+and the Q-learning returns is therefore truncation bias
+rather than policy suboptimality.}
+Unconstrained Q-learning converges
+near the DP optimum (return $254 \pm 6$ versus 273) but
+violates the carbon budget by a factor of three
+(cost $95 \pm 5$ versus $d = 31$).
+The learned multiplier rises from zero and settles at
+$\lambda \approx 1.39$, near the analytical shadow price
+$\lambda^* = 1.20$. Across the five seeds the trajectory
+is nearly monotone: the peak value is $1.407 \pm 0.003$,
+within one percent of the settling value, so naive dual
+ascent here exhibits little of the overshoot that
+\citet{Stooke2020}'s PID controller is designed to dampen.
+The final $\lambda$ sits about sixteen percent above
+$\lambda^*$, and the corresponding policy holds emissions
+at $23 \pm 2$, below the budget of 31, leaving the
+Lagrangian agent slightly too conservative
+(return $172 \pm 3$ versus the LP optimum of 186).
+The LP optimal policy is stochastic,
 mixing dirty and clean energy at a single state; Q-learning
 recovers a deterministic approximation.
 
 \begin{table}[h]
 \centering
-\caption{Carbon-constrained production results. Budget $d = 31.35$.}
+\caption{Carbon-constrained production results. Budget
+$d = 31.35$. Q-learning rows report means and standard
+errors over five seeds.}
 \label{tab:carbon_results}
 \input{../ch11_dist_robust_constrained/sims/carbon_constrained_production_table}
 \end{table}
@@ -402,7 +421,9 @@ recovers a deterministic approximation.
 \caption{(a) Lagrange multiplier $\lambda$ over training episodes,
 with the LP shadow price $\lambda^*$ as the dashed reference.
 (b) Mean discounted return for unconstrained and Lagrangian
-Q-learning, with the constrained LP optimum as the dashed reference.}
+Q-learning, with the constrained LP optimum as the dashed reference.
+Solid lines are means over five seeds; shaded bands are
+$\pm 1$ standard error.}
 \label{fig:carbon_convergence}
 \end{figure}
 

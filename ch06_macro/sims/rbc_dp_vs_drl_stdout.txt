@@ -1,9 +1,15 @@
-Loading cached data...
+Computing data...
   Cache hit: shared
   Cache hit: KPR
-  Cache hit: VFI
-  Cache hit: PPO
-  Cache hit: DDPG
+  Computing: VFI
+    VFI converged at iteration 231, max-diff = 9.72e-06
+  Cache saved: /Users/pranjal/Code/rl/ch06_macro/sims/cache/rbc_dp_vs_drl__VFI.pkl
+  Computing: PPO
+PPO seeds:   0%|          | 0/10 [00:00<?, ?it/s]PPO seeds:  10%|█         | 1/10 [00:29<04:23, 29.33s/it]PPO seeds:  20%|██        | 2/10 [00:56<03:42, 27.78s/it]PPO seeds:  30%|███       | 3/10 [01:20<03:04, 26.34s/it]PPO seeds:  40%|████      | 4/10 [01:44<02:32, 25.34s/it]PPO seeds:  50%|█████     | 5/10 [02:08<02:03, 24.78s/it]PPO seeds:  60%|██████    | 6/10 [02:32<01:38, 24.66s/it]PPO seeds:  70%|███████   | 7/10 [02:59<01:16, 25.49s/it]PPO seeds:  80%|████████  | 8/10 [03:35<00:57, 28.60s/it]PPO seeds:  90%|█████████ | 9/10 [04:09<00:30, 30.34s/it]PPO seeds: 100%|██████████| 10/10 [05:32<00:00, 46.73s/it]PPO seeds: 100%|██████████| 10/10 [05:32<00:00, 33.27s/it]
+  Cache saved: /Users/pranjal/Code/rl/ch06_macro/sims/cache/rbc_dp_vs_drl__PPO.pkl
+  Computing: DDPG
+DDPG seeds:   0%|          | 0/10 [00:00<?, ?it/s]DDPG seeds:  10%|█         | 1/10 [13:20<2:00:05, 800.62s/it]DDPG seeds:  20%|██        | 2/10 [16:20<58:02, 435.34s/it]  DDPG seeds:  30%|███       | 3/10 [19:29<37:40, 322.90s/it]DDPG seeds:  40%|████      | 4/10 [22:26<26:32, 265.42s/it]DDPG seeds:  50%|█████     | 5/10 [24:28<17:47, 213.50s/it]DDPG seeds:  60%|██████    | 6/10 [26:13<11:46, 176.60s/it]DDPG seeds:  70%|███████   | 7/10 [30:17<09:56, 198.77s/it]DDPG seeds:  80%|████████  | 8/10 [1:23:53<38:38, 1159.42s/it]DDPG seeds:  90%|█████████ | 9/10 [1:31:57<15:48, 948.32s/it] DDPG seeds: 100%|██████████| 10/10 [1:36:43<00:00, 743.78s/it]DDPG seeds: 100%|██████████| 10/10 [1:36:43<00:00, 580.37s/it]
+  Cache saved: /Users/pranjal/Code/rl/ch06_macro/sims/cache/rbc_dp_vs_drl__DDPG.pkl
   Saved figure: /Users/pranjal/Code/rl/ch06_macro/sims/rbc_dp_vs_drl_learning_curves.png
   Saved table: /Users/pranjal/Code/rl/ch06_macro/sims/rbc_dp_vs_drl_results.tex
 
@@ -15,9 +21,9 @@ Results summary
   Evaluation episodes per seed: 30
   Evaluation horizon: 200
 
-  Method     Mean return        SE     Policy MSE vs VFI
-  KPR             45.883     0.587                0.0004
-  VFI             45.861     0.589                0.0000
-  PPO             45.821     0.843                0.0087
-  DDPG            45.173     1.476                0.0365
+  Method     Mean return        SE     Policy MSE vs VFI    Wall clock
+  KPR             45.883     0.587                0.0004           $-$
+  VFI             45.861     0.589                0.0000        13.8 s
+  PPO             45.821     0.843                0.0087        32.9 s
+  DDPG            45.173     1.476                0.0365       579.4 s
 

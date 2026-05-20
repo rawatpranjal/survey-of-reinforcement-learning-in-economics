@@ -671,7 +671,7 @@ def compute_vfi(shared, config):
         'policy_C': sol['policy_C'], 'V': sol['V'],
         'mean_return': float(np.mean(rets)),
         'se_return': float(np.std(rets) / np.sqrt(len(rets))),
-        'capital_traj_first': sol['policy_C'],  # placeholder
+        'policy_C_grid': sol['policy_C'],  # consumption policy on (A, K) grid; retained for parity with cache schema
         'eval_returns': rets,
         'eval_traj': traj,
         'vfi_time_sec': vfi_time,
@@ -687,8 +687,11 @@ def compute_ppo(shared, config):
     mean_returns = []
     se_returns = []
     policies = []
+    train_times = []
     for seed in tqdm(seeds, desc='PPO seeds'):
+        t0 = time.time()
         result = ppo_train_one_seed(seed, config, params, lambda: RBCEnv(params), eval_subset=eval_subset)
+        train_times.append(time.time() - t0)
         rets, _ = evaluate_policy(
             result['policy_fn'], params,
             n_eps=config['N_EVAL_EPISODES'], T=config['EVAL_T'],
@@ -708,6 +711,8 @@ def compute_ppo(shared, config):
         'mean_returns': np.array(mean_returns),
         'se_returns': np.array(se_returns),
         'policy_on_test_states': np.array(policies),
+        'train_time_sec_mean': float(np.mean(train_times)),
+        'train_times_sec': np.array(train_times),
     }
 
 
@@ -720,8 +725,11 @@ def compute_ddpg(shared, config):
     mean_returns = []
     se_returns = []
     policies = []
+    train_times = []
     for seed in tqdm(seeds, desc='DDPG seeds'):
+        t0 = time.time()
         result = ddpg_train_one_seed(seed, config, params, lambda: RBCEnv(params), eval_subset=eval_subset)
+        train_times.append(time.time() - t0)
         rets, _ = evaluate_policy(
             result['policy_fn'], params,
             n_eps=config['N_EVAL_EPISODES'], T=config['EVAL_T'],
@@ -741,6 +749,8 @@ def compute_ddpg(shared, config):
         'mean_returns': np.array(mean_returns),
         'se_returns': np.array(se_returns),
         'policy_on_test_states': np.array(policies),
+        'train_time_sec_mean': float(np.mean(train_times)),
+        'train_times_sec': np.array(train_times),
     }
 
 
@@ -822,11 +832,15 @@ def generate_outputs(data):
     # ---- Results table ----
     def fmt(x, n=3):
         return f"{x:.{n}f}"
+    ppo_wc = ppo.get('train_time_sec_mean')
+    ddpg_wc = ddpg.get('train_time_sec_mean')
     rows = [
         ('KPR',  kpr['mean_return'], kpr['se_return'], kpr_mse, '$-$'),
         ('VFI',  vfi['mean_return'], vfi['se_return'], 0.0, fmt(vfi.get('vfi_time_sec', 0.0), 1) + ' s'),
-        ('PPO',  float(np.mean(ppo['mean_returns'])), float(np.std(ppo['mean_returns']) / np.sqrt(len(ppo['mean_returns']))), ppo_mse, '$-$'),
-        ('DDPG', float(np.mean(ddpg['mean_returns'])), float(np.std(ddpg['mean_returns']) / np.sqrt(len(ddpg['mean_returns']))), ddpg_mse, '$-$'),
+        ('PPO',  float(np.mean(ppo['mean_returns'])), float(np.std(ppo['mean_returns']) / np.sqrt(len(ppo['mean_returns']))), ppo_mse,
+            (fmt(ppo_wc, 1) + ' s') if ppo_wc is not None else '$-$'),
+        ('DDPG', float(np.mean(ddpg['mean_returns'])), float(np.std(ddpg['mean_returns']) / np.sqrt(len(ddpg['mean_returns']))), ddpg_mse,
+            (fmt(ddpg_wc, 1) + ' s') if ddpg_wc is not None else '$-$'),
     ]
 
     tex = []
@@ -853,9 +867,9 @@ def generate_outputs(data):
     print(f"  Evaluation episodes per seed: {SHARED_CONFIG['N_EVAL_EPISODES']}")
     print(f"  Evaluation horizon: {SHARED_CONFIG['EVAL_T']}")
     print()
-    print(f"  {'Method':<8}{'Mean return':>14}{'SE':>10}{'Policy MSE vs VFI':>22}")
-    for name, mret, mse_s, mse, _ in rows:
-        print(f"  {name:<8}{mret:>14.3f}{mse_s:>10.3f}{mse:>22.4f}")
+    print(f"  {'Method':<8}{'Mean return':>14}{'SE':>10}{'Policy MSE vs VFI':>22}{'Wall clock':>14}")
+    for name, mret, mse_s, mse, wc in rows:
+        print(f"  {name:<8}{mret:>14.3f}{mse_s:>10.3f}{mse:>22.4f}{wc:>14}")
     print()
 
 
