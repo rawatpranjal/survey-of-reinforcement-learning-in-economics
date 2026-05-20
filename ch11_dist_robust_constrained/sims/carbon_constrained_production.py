@@ -58,7 +58,9 @@ EVAL_CONFIG = {
     'N_FINAL_EVAL': 5000,
 }
 
-CONFIG = {**ENV_PARAMS, **QL_CONFIG, **EVAL_CONFIG, 'version': 12}
+SEEDS = [0, 1, 2, 3, 4]  # multi-seed: mean +/- SE reported over these seeds
+
+CONFIG = {**ENV_PARAMS, **QL_CONFIG, **EVAL_CONFIG, 'seeds': SEEDS, 'version': 13}
 
 # ── Environment ──────────────────────────────────────────────────────────────
 
@@ -366,16 +368,58 @@ def compute_data(force=False):
     print(f"  LP return: {ret_con:.2f}, LP cost: {cost_con:.2f}")
     print(f"  lambda*:   {oracle['lambda_star']:.4f}")
 
-    # Unconstrained Q-learning
-    print("\n--- Unconstrained Q-Learning ---")
-    ql = run_q_learning(env, QL_CONFIG, seed=0, carbon_budget=None)
-    print(f"  Final return: {ql['final_return']:.2f}, cost: {ql['final_cost']:.2f}")
+    def _se(x):
+        x = np.asarray(x, dtype=float)
+        return float(np.std(x, ddof=1) / np.sqrt(len(x))) if len(x) > 1 else 0.0
 
-    # Lagrangian Q-learning
-    print("\n--- Lagrangian Q-Learning ---")
-    ql_lag = run_q_learning(env, QL_CONFIG, seed=0, carbon_budget=carbon_budget)
-    print(f"  Final return: {ql_lag['final_return']:.2f}, cost: {ql_lag['final_cost']:.2f}")
-    print(f"  Final lambda: {ql_lag['final_lambda']:.4f}")
+    # Unconstrained Q-learning across seeds
+    print(f"\n--- Unconstrained Q-Learning ({len(SEEDS)} seeds) ---")
+    ql_runs = []
+    for sd in SEEDS:
+        print(f"  seed {sd}:", flush=True)
+        run = run_q_learning(env, QL_CONFIG, seed=sd, carbon_budget=None)
+        ql_runs.append(run)
+        print(f"    final return: {run['final_return']:.2f}, cost: {run['final_cost']:.2f}")
+    ql_ret = [r['final_return'] for r in ql_runs]
+    ql_cost = [r['final_cost'] for r in ql_runs]
+    print(f"  mean return: {np.mean(ql_ret):.2f} +/- {_se(ql_ret):.2f}")
+    print(f"  mean cost:   {np.mean(ql_cost):.2f} +/- {_se(ql_cost):.2f}")
+
+    # Lagrangian Q-learning across seeds
+    print(f"\n--- Lagrangian Q-Learning ({len(SEEDS)} seeds) ---")
+    lag_runs = []
+    for sd in SEEDS:
+        print(f"  seed {sd}:", flush=True)
+        run = run_q_learning(env, QL_CONFIG, seed=sd, carbon_budget=carbon_budget)
+        lag_runs.append(run)
+        print(f"    final return: {run['final_return']:.2f}, cost: {run['final_cost']:.2f}, "
+              f"lambda: {run['final_lambda']:.4f}, "
+              f"lambda_peak: {max(run['lambda_trajectory']):.4f}")
+    lag_ret = [r['final_return'] for r in lag_runs]
+    lag_cost = [r['final_cost'] for r in lag_runs]
+    lag_lam = [r['final_lambda'] for r in lag_runs]
+    lag_lam_peak = [max(r['lambda_trajectory']) for r in lag_runs]
+    print(f"  mean return: {np.mean(lag_ret):.2f} +/- {_se(lag_ret):.2f}")
+    print(f"  mean cost:   {np.mean(lag_cost):.2f} +/- {_se(lag_cost):.2f}")
+    print(f"  mean lambda: {np.mean(lag_lam):.4f} +/- {_se(lag_lam):.4f}")
+    print(f"  mean lambda peak: {np.mean(lag_lam_peak):.4f} +/- {_se(lag_lam_peak):.4f} "
+          f"(max over seeds: {max(lag_lam_peak):.4f})")
+
+    # representative single seed (first) for the trajectory figure
+    ql = ql_runs[0]
+    ql_lag = lag_runs[0]
+
+    stats = {
+        'ql_return_mean': float(np.mean(ql_ret)), 'ql_return_se': _se(ql_ret),
+        'ql_cost_mean': float(np.mean(ql_cost)), 'ql_cost_se': _se(ql_cost),
+        'lag_return_mean': float(np.mean(lag_ret)), 'lag_return_se': _se(lag_ret),
+        'lag_cost_mean': float(np.mean(lag_cost)), 'lag_cost_se': _se(lag_cost),
+        'lag_lambda_mean': float(np.mean(lag_lam)), 'lag_lambda_se': _se(lag_lam),
+        'lag_lambda_peak_mean': float(np.mean(lag_lam_peak)),
+        'lag_lambda_peak_se': _se(lag_lam_peak),
+        'lag_lambda_peak_max': float(max(lag_lam_peak)),
+        'n_seeds': len(SEEDS),
+    }
 
     data = {
         'carbon_budget': carbon_budget,
@@ -383,6 +427,8 @@ def compute_data(force=False):
         'oracle': oracle,
         'oracle_return': ret_con, 'oracle_cost': cost_con,
         'ql': ql, 'ql_lag': ql_lag,
+        'ql_runs': ql_runs, 'lag_runs': lag_runs,
+        'stats': stats,
     }
     save_results(CACHE_DIR, SCRIPT_NAME, CONFIG, data)
     return data
@@ -397,9 +443,18 @@ def generate_outputs(data):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=FIG_DOUBLE)
 
     eps = lag['eval_episodes']
+    lag_runs = data.get('lag_runs', [lag])
+    ql_runs = data.get('ql_runs', [ql])
 
-    # (a) Lambda trajectory
-    ax1.plot(eps, lag['lambda_trajectory'], color=COLORS['green'], label='Lagrangian Q-learning')
+    # (a) Lambda trajectory: mean +/- SE band over seeds
+    lam_arr = np.array([r['lambda_trajectory'] for r in lag_runs])
+    lam_mean = lam_arr.mean(axis=0)
+    lam_se = lam_arr.std(axis=0, ddof=1) / np.sqrt(len(lag_runs)) if len(lag_runs) > 1 \
+        else np.zeros_like(lam_mean)
+    ax1.plot(eps, lam_mean, color=COLORS['green'],
+             label=f'Lagrangian Q-learning ({len(lag_runs)} seeds)')
+    ax1.fill_between(eps, lam_mean - lam_se, lam_mean + lam_se,
+                     color=COLORS['green'], alpha=0.25)
     ax1.axhline(oracle['lambda_star'], **BENCH_STYLE,
                 label=f"$\\lambda^* = {oracle['lambda_star']:.2f}$")
     ax1.set_xlabel('Episode')
@@ -407,10 +462,22 @@ def generate_outputs(data):
     ax1.set_title('(a)  Lagrange multiplier convergence')
     ax1.legend()
 
-    # (b) Return over training
-    ax2.plot(ql['eval_episodes'], ql['eval_returns'],
+    # (b) Return over training: mean +/- SE band over seeds
+    ql_ret_arr = np.array([r['eval_returns'] for r in ql_runs])
+    ql_ret_mean = ql_ret_arr.mean(axis=0)
+    ql_ret_se = ql_ret_arr.std(axis=0, ddof=1) / np.sqrt(len(ql_runs)) if len(ql_runs) > 1 \
+        else np.zeros_like(ql_ret_mean)
+    lag_ret_arr = np.array([r['eval_returns'] for r in lag_runs])
+    lag_ret_mean = lag_ret_arr.mean(axis=0)
+    lag_ret_se = lag_ret_arr.std(axis=0, ddof=1) / np.sqrt(len(lag_runs)) if len(lag_runs) > 1 \
+        else np.zeros_like(lag_ret_mean)
+    ax2.plot(ql_runs[0]['eval_episodes'], ql_ret_mean,
              color=COLORS['orange'], label='Unconstrained Q-learning')
-    ax2.plot(eps, lag['eval_returns'], color=COLORS['green'], label='Lagrangian Q-learning')
+    ax2.fill_between(ql_runs[0]['eval_episodes'], ql_ret_mean - ql_ret_se,
+                     ql_ret_mean + ql_ret_se, color=COLORS['orange'], alpha=0.25)
+    ax2.plot(eps, lag_ret_mean, color=COLORS['green'], label='Lagrangian Q-learning')
+    ax2.fill_between(eps, lag_ret_mean - lag_ret_se, lag_ret_mean + lag_ret_se,
+                     color=COLORS['green'], alpha=0.25)
     ax2.axhline(data['oracle_return'], **BENCH_STYLE,
                 label=f"Constrained LP = {data['oracle_return']:.0f}")
     ax2.set_xlabel('Episode')
@@ -424,9 +491,11 @@ def generate_outputs(data):
     plt.close(fig)
     print(f"\nFigure saved: {fig_path}")
 
-    # Table
-    sat_ql = "Y" if ql['final_cost'] <= budget else "N"
-    sat_lag = "Y" if lag['final_cost'] <= budget else "N"
+    # Table (means +/- SE over seeds)
+    st = data['stats']
+    n = st['n_seeds']
+    sat_ql = "Y" if st['ql_cost_mean'] <= budget else "N"
+    sat_lag = "Y" if st['lag_cost_mean'] <= budget else "N"
     lines = [
         r"\begin{tabular}{lrrcc}",
         r"\hline",
@@ -434,10 +503,12 @@ def generate_outputs(data):
         r"\hline",
         f"LP Oracle & {data['oracle_return']:.1f} & {data['oracle_cost']:.2f} "
         f"& Y & {oracle['lambda_star']:.2f} \\\\",
-        f"Unconstrained Q-learning & {ql['final_return']:.1f} & {ql['final_cost']:.2f} "
+        f"Unconstrained Q-learning & {st['ql_return_mean']:.1f} $\\pm$ {st['ql_return_se']:.1f} "
+        f"& {st['ql_cost_mean']:.2f} $\\pm$ {st['ql_cost_se']:.2f} "
         f"& {sat_ql} & -- \\\\",
-        f"Lagrangian Q-learning & {lag['final_return']:.1f} & {lag['final_cost']:.2f} "
-        f"& {sat_lag} & {lag['final_lambda']:.2f} \\\\",
+        f"Lagrangian Q-learning & {st['lag_return_mean']:.1f} $\\pm$ {st['lag_return_se']:.1f} "
+        f"& {st['lag_cost_mean']:.2f} $\\pm$ {st['lag_cost_se']:.2f} "
+        f"& {sat_lag} & {st['lag_lambda_mean']:.2f} $\\pm$ {st['lag_lambda_se']:.2f} \\\\",
         r"\hline",
         r"\end{tabular}",
     ]
@@ -447,17 +518,24 @@ def generate_outputs(data):
     print(f"Table saved: {table_path}")
 
     # Summary
-    print(f"\n{'='*60}")
-    print(f"Carbon budget d = {budget:.2f}")
-    print(f"{'Method':<26s} {'Return':>8s} {'Cost':>8s} {'Budget':>7s} {'lambda':>8s}")
-    print(f"{'-'*60}")
-    print(f"{'LP Oracle':<26s} {data['oracle_return']:>8.1f} {data['oracle_cost']:>8.2f} "
-          f"{'Y':>7s} {oracle['lambda_star']:>8.2f}")
-    print(f"{'Unconstrained Q-learning':<26s} {ql['final_return']:>8.1f} {ql['final_cost']:>8.2f} "
-          f"{sat_ql:>7s} {'--':>8s}")
-    print(f"{'Lagrangian Q-learning':<26s} {lag['final_return']:>8.1f} {lag['final_cost']:>8.2f} "
-          f"{sat_lag:>7s} {lag['final_lambda']:>8.2f}")
-    print(f"{'='*60}")
+    print(f"\n{'='*72}")
+    print(f"Carbon budget d = {budget:.2f}   ({n} seeds, mean +/- SE)")
+    print(f"{'Method':<26s} {'Return':>14s} {'Cost':>14s} {'Budget':>7s} {'lambda':>14s}")
+    print(f"{'-'*72}")
+    print(f"{'LP Oracle':<26s} {data['oracle_return']:>14.1f} {data['oracle_cost']:>14.2f} "
+          f"{'Y':>7s} {oracle['lambda_star']:>14.2f}")
+    print(f"{'Unconstrained Q-learning':<26s} "
+          f"{st['ql_return_mean']:>8.1f}+/-{st['ql_return_se']:<4.1f} "
+          f"{st['ql_cost_mean']:>8.2f}+/-{st['ql_cost_se']:<4.2f} "
+          f"{sat_ql:>7s} {'--':>14s}")
+    print(f"{'Lagrangian Q-learning':<26s} "
+          f"{st['lag_return_mean']:>8.1f}+/-{st['lag_return_se']:<4.1f} "
+          f"{st['lag_cost_mean']:>8.2f}+/-{st['lag_cost_se']:<4.2f} "
+          f"{sat_lag:>7s} {st['lag_lambda_mean']:>8.2f}+/-{st['lag_lambda_se']:<4.2f}")
+    print(f"{'-'*72}")
+    print(f"Lagrangian lambda peak: mean {st['lag_lambda_peak_mean']:.3f} "
+          f"+/- {st['lag_lambda_peak_se']:.3f}, max over seeds {st['lag_lambda_peak_max']:.3f}")
+    print(f"{'='*72}")
 
 
 if __name__ == '__main__':

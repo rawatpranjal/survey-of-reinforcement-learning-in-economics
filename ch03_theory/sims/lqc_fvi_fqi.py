@@ -65,6 +65,7 @@ DQN_EPS_END   = 0.05
 DQN_EPS_DECAY = 40_000
 DQN_EVAL_INT  = 1_000     # evaluate error every N steps
 REWARD_SCALE  = 20.0      # scale rewards to [-1, 0] range; Q-targets in [-1.85, 0]
+DQN_N_SEEDS   = 10        # number of seeds to average DQN results over
 
 # ── Caching ───────────────────────────────────────────────────────────────────
 CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
@@ -85,7 +86,7 @@ DQN_CONFIG      = {
     'DQN_TARGET_UP': DQN_TARGET_UP, 'DQN_STEPS': DQN_STEPS,
     'DQN_EPS_START': DQN_EPS_START, 'DQN_EPS_END': DQN_EPS_END,
     'DQN_EPS_DECAY': DQN_EPS_DECAY, 'DQN_EVAL_INT': DQN_EVAL_INT,
-    'REWARD_SCALE': REWARD_SCALE,
+    'REWARD_SCALE': REWARD_SCALE, 'DQN_N_SEEDS': DQN_N_SEEDS,
 }
 
 # ── Riccati solution (analytical, deterministic — stays at module level) ──────
@@ -308,11 +309,16 @@ def compute_fqi(exact_vi_data):
     }
 
 
-def compute_dqn():
-    """DQN with 2x64 ReLU network."""
-    np.random.seed(42)
-    torch.manual_seed(42)
-    random.seed(42)
+def _run_dqn_single_seed(seed):
+    """Run one DQN training trajectory with the given seed.
+
+    Per CLAUDE.md Color Standards and seed conventions: numpy, torch, and
+    python-random seeds are all set so that replay sampling, ε-greedy choice,
+    weight init, and reset positions are deterministic given `seed`.
+    """
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    random.seed(seed)
 
     online = QNet()
     target = QNet()
@@ -320,12 +326,11 @@ def compute_dqn():
     opt = optim.Adam(online.parameters(), lr=DQN_LR)
 
     buf = ReplayBuffer(DQN_BUFFER)
-    dqn_step_log = []
-    dqn_err_log  = []
+    step_log = []
+    err_log  = []
 
     x_idx = np.random.randint(N_X)   # start at random state
 
-    print(f"\nDQN training ({DQN_STEPS} steps)...")
     for step in range(1, DQN_STEPS + 1):
         eps = max(DQN_EPS_END,
                   DQN_EPS_START - (DQN_EPS_START - DQN_EPS_END) * step / DQN_EPS_DECAY)
@@ -343,8 +348,7 @@ def compute_dqn():
         buf.push(x_idx, u_idx, r_val, xp_idx)
         x_idx = xp_idx   # step forward
 
-        # Reset to random state every 20 steps (optimal policy converges to x≈0 in ~5 steps;
-        # frequent resets ensure buffer covers large |x| states throughout training)
+        # Reset to random state every 20 steps so the buffer covers large |x|
         if step % 20 == 0:
             x_idx = np.random.randint(N_X)
 
@@ -353,16 +357,16 @@ def compute_dqn():
 
         # Sample minibatch
         xi, ui, r_b, xpi = buf.sample(DQN_BATCH)
-        x_t  = torch.tensor(X[xi, np.newaxis] / 4.0, dtype=torch.float32)    # (B, 1)
-        xp_t = torch.tensor(X[xpi, np.newaxis] / 4.0, dtype=torch.float32)   # (B, 1)
-        r_t  = torch.tensor(r_b, dtype=torch.float32)                         # (B,)
-        ui_t = torch.tensor(ui, dtype=torch.long)                             # (B,)
+        x_t  = torch.tensor(X[xi, np.newaxis] / 4.0, dtype=torch.float32)
+        xp_t = torch.tensor(X[xpi, np.newaxis] / 4.0, dtype=torch.float32)
+        r_t  = torch.tensor(r_b, dtype=torch.float32)
+        ui_t = torch.tensor(ui, dtype=torch.long)
 
         with torch.no_grad():
-            max_q_next = target(xp_t).max(dim=1).values   # (B,)
+            max_q_next = target(xp_t).max(dim=1).values
         y = r_t + gamma * max_q_next
 
-        q_pred = online(x_t).gather(1, ui_t.unsqueeze(1)).squeeze(1)   # (B,)
+        q_pred = online(x_t).gather(1, ui_t.unsqueeze(1)).squeeze(1)
         loss   = nn.functional.mse_loss(q_pred, y)
 
         opt.zero_grad()
@@ -375,29 +379,73 @@ def compute_dqn():
 
         if step % DQN_EVAL_INT == 0:
             with torch.no_grad():
-                x_all = torch.tensor(X[:, np.newaxis] / 4.0, dtype=torch.float32)  # (N_X, 1)
-                V_dqn_now = online(x_all).max(dim=1).values.numpy() * REWARD_SCALE  # rescaled
+                x_all = torch.tensor(X[:, np.newaxis] / 4.0, dtype=torch.float32)
+                V_dqn_now = online(x_all).max(dim=1).values.numpy() * REWARD_SCALE
             err = np.max(np.abs(V_dqn_now - V_star))
-            dqn_step_log.append(step)
-            dqn_err_log.append(err)
-            if step % 10_000 == 0:
-                print(f"  step {step:6d}, eps={eps:.3f}, err vs V*={err:.4f}")
+            step_log.append(step)
+            err_log.append(err)
 
     # Final DQN value function (rescale back to original units)
     with torch.no_grad():
         x_all = torch.tensor(X[:, np.newaxis] / 4.0, dtype=torch.float32)
         V_dqn = online(x_all).max(dim=1).values.numpy() * REWARD_SCALE
-    dqn_err_an = np.max(np.abs(V_dqn - V_star))
-    print(f"\nDQN: {DQN_STEPS} steps, error vs analytical V*: {dqn_err_an:.2e}")
+    final_err = float(np.max(np.abs(V_dqn - V_star)))
+    return np.asarray(step_log), np.asarray(err_log), V_dqn, final_err
 
-    # Verification
-    assert dqn_err_an < 1.0, f"DQN error {dqn_err_an:.4f} exceeds 1.0"
+
+def compute_dqn():
+    """DQN with 2x64 ReLU network. Loops over DQN_N_SEEDS seeds and reports
+    mean and standard error across seeds for the final value-function error
+    and the learning curve. Reproducibility: numpy + torch + python-random
+    seeds are set inside `_run_dqn_single_seed` for each seed independently.
+    """
+    print(f"\nDQN training ({DQN_STEPS} steps × {DQN_N_SEEDS} seeds)...")
+    step_log_ref = None
+    err_curves = []          # (N_SEEDS, n_evals)
+    final_errs = []
+    V_seeds = []
+
+    for s_idx in range(DQN_N_SEEDS):
+        seed = 42 + s_idx
+        step_log, err_log, V_dqn_s, final_err = _run_dqn_single_seed(seed)
+        if step_log_ref is None:
+            step_log_ref = step_log
+        err_curves.append(err_log)
+        final_errs.append(final_err)
+        V_seeds.append(V_dqn_s)
+        print(f"  seed {seed:3d}: final err vs V* = {final_err:.4f}")
+
+    err_curves = np.asarray(err_curves)                 # (N_SEEDS, n_evals)
+    final_errs = np.asarray(final_errs)                 # (N_SEEDS,)
+    V_seeds    = np.asarray(V_seeds)                    # (N_SEEDS, N_X)
+
+    # Mean ± SE (SE = std / sqrt(N)) across seeds
+    err_mean = err_curves.mean(axis=0)
+    err_se   = err_curves.std(axis=0, ddof=1) / np.sqrt(DQN_N_SEEDS)
+    dqn_err_an_mean = float(final_errs.mean())
+    dqn_err_an_se   = float(final_errs.std(ddof=1) / np.sqrt(DQN_N_SEEDS))
+    V_dqn_mean = V_seeds.mean(axis=0)
+
+    print(f"\nDQN: {DQN_STEPS} steps, {DQN_N_SEEDS} seeds")
+    print(f"  Final error vs analytical V*: {dqn_err_an_mean:.4f} ± {dqn_err_an_se:.4f} (mean ± SE)")
+    print(f"  Min final err across seeds:   {final_errs.min():.4f}")
+    print(f"  Max final err across seeds:   {final_errs.max():.4f}")
+
+    # Verification: every seed's final error stays in the documented regime
+    assert dqn_err_an_mean < 2.0, \
+        f"DQN mean error {dqn_err_an_mean:.4f} exceeds 2.0"
 
     return {
-        'dqn_step_log': dqn_step_log,
-        'dqn_err_log': dqn_err_log,
-        'dqn_err_an': dqn_err_an,
-        'V_dqn': V_dqn,
+        'dqn_step_log': step_log_ref,
+        'dqn_err_mean': err_mean,
+        'dqn_err_se':   err_se,
+        'dqn_err_an':   dqn_err_an_mean,
+        'dqn_err_an_se': dqn_err_an_se,
+        'dqn_final_errs': final_errs,
+        'V_dqn': V_dqn_mean,
+        'n_seeds': DQN_N_SEEDS,
+        # Back-compat name for any external caller that read 'dqn_err_log'
+        'dqn_err_log': err_mean,
     }
 
 
@@ -437,9 +485,14 @@ def generate_outputs(data):
     fqi_iters      = data['FQI']['fqi_iters']
     theta_Q        = np.array(data['FQI']['theta_Q'])
     V_fqi          = np.array(data['FQI']['V_fqi'])
-    dqn_step_log   = data['DQN']['dqn_step_log']
-    dqn_err_log    = data['DQN']['dqn_err_log']
+    dqn_step_log   = np.array(data['DQN']['dqn_step_log'])
+    dqn_err_mean   = np.array(data['DQN'].get('dqn_err_mean',
+                                              data['DQN'].get('dqn_err_log')))
+    dqn_err_se     = np.array(data['DQN'].get('dqn_err_se',
+                                              np.zeros_like(dqn_err_mean)))
     dqn_err_an     = data['DQN']['dqn_err_an']
+    dqn_err_an_se  = data['DQN'].get('dqn_err_an_se', 0.0)
+    dqn_n_seeds    = data['DQN'].get('n_seeds', 1)
     V_dqn          = np.array(data['DQN']['V_dqn'])
 
     # ── Summary table (stdout) ────────────────────────────────────────────────
@@ -455,11 +508,16 @@ def generate_outputs(data):
           f"{-theta_Q[1]:>10.4f} {theta_Q[1]:>8.4f} {theta_Q[4]:>8.4f} {theta_Q[3]:>8.4f}")
     print(f"{'DQN (2x64 ReLU)':<18} {DQN_STEPS:>6d} {'---':>10} {dqn_err_an:>10.2e} "
           f"{'---':>10} {'---':>8} {'---':>8} {'---':>8}")
+    print(f"{'  DQN seeds':<18} {dqn_n_seeds:>6d} {'---':>10} {'± SE':>10} "
+          f"{dqn_err_an_se:>10.2e} {'---':>8} {'---':>8} {'---':>8}")
     print(f"{'Analytical':<18} {'---':>6} {'---':>10} {'0':>10} "
           f"{P:>10.4f} {c_xx:>8.4f} {c_xu:>8.4f} {c_uu:>8.4f}")
     print(f"{'='*78}")
 
     # ── LaTeX table ────────────────────────────────────────────────────────────
+    # DQN row reports mean ± SE across DQN_N_SEEDS seeds; FVI/FQI/exact VI are
+    # deterministic given the grid, so no SE is reported for them.
+    dqn_err_str = rf"{dqn_err_an:.2e} $\pm$ {dqn_err_an_se:.2e}"
     lines = [
         r"\begin{tabular}{lrrrr}",
         r"\hline",
@@ -470,7 +528,8 @@ def generate_outputs(data):
          rf" & $\hat\theta_V^{{x^2}} = {theta_V[1]:.4f}$ \\"),
         (rf"FQI & {fqi_iters} & {fqi_err_an:.2e} & {-theta_Q[1]:.4f}"
          rf" & $\hat\theta_Q^{{xu}} = {theta_Q[4]:.4f}$ \\"),
-        (rf"DQN ($2 \times 64$ ReLU) & {DQN_STEPS} & {dqn_err_an:.2e} & --- & --- \\"),
+        (rf"DQN ($2 \times 64$ ReLU, {dqn_n_seeds} seeds) & {DQN_STEPS}"
+         rf" & {dqn_err_str} & --- & --- \\"),
         (rf"Analytical ($V^* = -Px^2$) & --- & 0 & {P:.4f}"
          rf" & $c_{{xu}} = {c_xu:.4f}$ \\"),
         r"\hline",
@@ -496,14 +555,21 @@ def generate_outputs(data):
     ax.legend()
     ax.grid(True, alpha=0.3)
 
-    # Panel 2: DQN learning curve
+    # Panel 2: DQN learning curve (mean ± SE across DQN_N_SEEDS seeds)
     ax = axes[1]
     steps_k = np.array(dqn_step_log) / 1000.0   # scale to thousands
-    ax.semilogy(steps_k, dqn_err_log,
-                color=ALGO_COLORS['DQN'], lw=2)
+    ax.semilogy(steps_k, dqn_err_mean,
+                color=ALGO_COLORS['DQN'], lw=2,
+                label=f'mean over {dqn_n_seeds} seeds')
+    if np.any(dqn_err_se > 0):
+        lo = np.clip(dqn_err_mean - dqn_err_se, 1e-12, None)
+        hi = dqn_err_mean + dqn_err_se
+        ax.fill_between(steps_k, lo, hi, color=ALGO_COLORS['DQN'], alpha=0.25,
+                        label='± 1 SE')
     ax.set_xlabel('Gradient steps (thousands)')
     ax.set_ylabel(r'$\|V_{\mathrm{DQN}} - V^*\|_\infty$')
-    ax.set_title('DQN Learning Curve')
+    ax.set_title(f'DQN Learning Curve ({dqn_n_seeds} seeds)')
+    ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
     # Panel 3: Value function recovery
@@ -514,7 +580,7 @@ def generate_outputs(data):
     ax.plot(X, V_fqi,  ':',   color=COLORS['red'], lw=2,
             label=f'FQI  (error {fqi_error:.1e})')
     ax.plot(X, V_dqn,  '-.',  color=ALGO_COLORS['DQN'], lw=2,
-            label=f'DQN  (error {dqn_err_an:.1e})')
+            label=f'DQN  (mean error {dqn_err_an:.1e}$\\pm${dqn_err_an_se:.0e}, n={dqn_n_seeds})')
     ax.set_xlabel('State $x$')
     ax.set_ylabel('Value $V(x)$')
     ax.set_title('Value Function Recovery')

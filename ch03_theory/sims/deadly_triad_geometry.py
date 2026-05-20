@@ -2,6 +2,21 @@
 
 Chapter 3 — Theory. Shows why off-policy + function approximation diverges:
 oblique projection can expand the Bellman operator, breaking the contraction.
+
+Notation matches planning_learning_v3.tex (Section ``The Central Challenge:
+The Deadly Triad''): $d^\pi$ is the on-policy (target) stationary
+distribution; $\mu$ is the behavior (sampling) distribution. Panel (a) shows
+the orthogonal projection $\Pi_{d^\pi}$; panel (b) shows the oblique
+projection $\Pi_\mu$.
+
+Geometry parameters (theta_sub = 20 deg, delta_deg = 20 deg) are
+illustrative; they are chosen so the projection-norm contraction in (a) and
+expansion in (b) are visible at figure scale without overpowering the
+layout. The expansion ratio 1.52 is a property of this hand-picked
+configuration, not a quantity derived from any specific MDP / behavior pair.
+The figure depicts only the projection-norm leg of the deadly triad; the
+bootstrapping and off-policy sampling legs are exercised numerically in
+bairds_counterexample.py in the same sims/ directory.
 """
 
 import argparse
@@ -112,7 +127,7 @@ def generate_outputs():
 
     # Projection arrow (green)
     draw_arrow(ax1, [0, 0], proj_orth, COLORS['green'])
-    ax1.text(proj_orth[0] + 0.08, proj_orth[1] - 0.18, r'$\Pi_\mu\, TV$',
+    ax1.text(proj_orth[0] + 0.08, proj_orth[1] - 0.18, r'$\Pi_{d^\pi}\, TV$',
              fontsize=14, color=COLORS['green'], ha='left', va='top', weight='bold')
 
     # Dashed line TV -> orthogonal projection
@@ -124,7 +139,7 @@ def generate_outputs():
     draw_right_angle(ax1, proj_orth, e_sub, perp_dir, size=0.10)
 
     # Length annotation
-    ax1.text(0.50, -0.02, r'$\|\Pi_\mu\, TV\| < \|TV\|$  — contraction preserved',
+    ax1.text(0.50, -0.02, r'$\|\Pi_{d^\pi}\, TV\| < \|TV\|$  — contraction preserved',
              fontsize=11, color=COLORS['black'], ha='center', va='top',
              transform=ax1.transAxes)
 
@@ -146,7 +161,7 @@ def generate_outputs():
 
     # Oblique projection arrow (red)
     draw_arrow(ax2, [0, 0], proj_oblique, COLORS['red'])
-    ax2.text(proj_oblique[0] + 0.08, proj_oblique[1] - 0.18, r'$\Pi_\nu\, TV$',
+    ax2.text(proj_oblique[0] + 0.08, proj_oblique[1] - 0.18, r'$\Pi_\mu\, TV$',
              fontsize=14, color=COLORS['red'], ha='left', va='top', weight='bold')
 
     # Dashed line TV -> oblique projection (along direction d)
@@ -154,7 +169,7 @@ def generate_outputs():
              '--', color=COLORS['gray'], lw=1.4, zorder=4)
 
     # Length annotation
-    ax2.text(0.50, -0.02, r'$\|\Pi_\nu\, TV\| > \|TV\|$  — expansion causes divergence',
+    ax2.text(0.50, -0.02, r'$\|\Pi_\mu\, TV\| > \|TV\|$  — expansion can defeat contraction',
              fontsize=11, color=COLORS['black'], ha='center', va='top',
              transform=ax2.transAxes)
 

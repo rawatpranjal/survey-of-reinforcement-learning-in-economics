@@ -19,27 +19,29 @@ def generate_outputs():
     d = 5
 
     # Regret rate functions (constants = 1)
+    # Legend labels name the source paper for each rate so a reader skimming
+    # the legend can map the curve to the chapter table without cross-reference.
     rates = {
-        r'$T$ (linear)':                T,
-        r'$d\sqrt{T}$, $d=5$':         d * np.sqrt(T),
-        r'$T^{2/3}$':                   T ** (2/3),
-        r'$\sqrt{T}$':                  np.sqrt(T),
-        r'$d\log T$, $d=5$':           d * np.log(T),
-        r'$s_0 \log d \log T$, $s_0=5$': 5 * np.log(d) * np.log(T),
-        r'$s_0 \log d \log T$, $s_0=1$': 1 * np.log(d) * np.log(T),
-        r'$\log T$':                    np.log(T),
+        r'$T$ (linear, strategic-naive, Liu 2024)':       T,
+        r'$d\sqrt{T}$, $d=5$ (corrected, Liu 2024)':      d * np.sqrt(T),
+        r'$T^{2/3}$ (Lipschitz noise, Tullii 2024)':      T ** (2/3),
+        r'$\sqrt{T}$ (Kleinberg 2003 / Broder 2012)':     np.sqrt(T),
+        r'$d\log T$, $d=5$ (contextual, Xu 2021)':        d * np.log(T),
+        r'$s_0 \log d \log T$, $s_0=5$ (Javanmard 2019)$^\dagger$': 5 * np.log(d) * np.log(T),
+        r'$s_0 \log d \log T$, $s_0=1$ (Javanmard 2019)': 1 * np.log(d) * np.log(T),
+        r'$\log T$ (well-sep., Broder 2012 / Misra 2019)': np.log(T),
     }
 
     # Ordered from top to bottom (worst to best) for legend clarity
     order = [
-        r'$T$ (linear)',
-        r'$d\sqrt{T}$, $d=5$',
-        r'$T^{2/3}$',
-        r'$\sqrt{T}$',
-        r'$d\log T$, $d=5$',
-        r'$s_0 \log d \log T$, $s_0=5$',
-        r'$s_0 \log d \log T$, $s_0=1$',
-        r'$\log T$',
+        r'$T$ (linear, strategic-naive, Liu 2024)',
+        r'$d\sqrt{T}$, $d=5$ (corrected, Liu 2024)',
+        r'$T^{2/3}$ (Lipschitz noise, Tullii 2024)',
+        r'$\sqrt{T}$ (Kleinberg 2003 / Broder 2012)',
+        r'$d\log T$, $d=5$ (contextual, Xu 2021)',
+        r'$s_0 \log d \log T$, $s_0=5$ (Javanmard 2019)$^\dagger$',
+        r'$s_0 \log d \log T$, $s_0=1$ (Javanmard 2019)',
+        r'$\log T$ (well-sep., Broder 2012 / Misra 2019)',
     ]
 
     colors = [
@@ -71,6 +73,17 @@ def generate_outputs():
     ax.set_ylabel('Cumulative regret')
     ax.set_title('Theoretical regret rates (constants $= 1$, $d = 5$)')
     ax.legend(loc='upper left', framealpha=0.9, fontsize=8)
+
+    # In-figure footnote explaining the visually counterintuitive ordering
+    # of the s_0=5 sparse curve relative to d log T. At constants=1 the rate
+    # s_0 log d log T exceeds d log T iff s_0 log d > d, which holds at
+    # s_0=5, d=5 (log d ~ 1.61, so s_0 log d ~ 8.05 > d = 5). In typical
+    # sparse-recovery regimes s_0 << d, so the sparse rate dominates.
+    fig.text(
+        0.5, -0.02,
+        r'$^\dagger$ At $s_0 = d = 5$, $s_0 \log d \approx 8.0 > d = 5$, so the sparse '
+        r'rate sits above $d \log T$. Sparse dominates when $s_0 \ll d$.',
+        ha='center', va='top', fontsize=7, color=COLORS['black'])
 
     fig.tight_layout()
     fig.savefig('ch07_bandits/sims/regret_rates.png', dpi=300, bbox_inches='tight')

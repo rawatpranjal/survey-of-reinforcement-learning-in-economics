@@ -8,28 +8,77 @@ States: 18, Actions: 8
   LP return: 186.40, LP cost: 31.35
   lambda*:   1.2000
 
---- Unconstrained Q-Learning ---
+--- Unconstrained Q-Learning (5 seeds) ---
+  seed 0:
     QL ep  10000: ret=259.4, cost=102.24
     QL ep  20000: ret=265.7, cost=102.47
     QL ep  30000: ret=253.9, cost=95.61
-  Final return: 255.21, cost: 95.83
+    final return: 255.21, cost: 95.83
+  seed 1:
+    QL ep  10000: ret=240.0, cost=109.84
+    QL ep  20000: ret=250.4, cost=102.37
+    QL ep  30000: ret=260.5, cost=97.96
+    final return: 262.21, cost: 98.14
+  seed 2:
+    QL ep  10000: ret=238.1, cost=80.79
+    QL ep  20000: ret=257.1, cost=94.77
+    QL ep  30000: ret=230.0, cost=77.37
+    final return: 231.59, cost: 77.57
+  seed 3:
+    QL ep  10000: ret=240.2, cost=91.91
+    QL ep  20000: ret=258.7, cost=106.57
+    QL ep  30000: ret=261.6, cost=105.32
+    final return: 262.93, cost: 105.44
+  seed 4:
+    QL ep  10000: ret=263.8, cost=103.73
+    QL ep  20000: ret=232.5, cost=78.27
+    QL ep  30000: ret=256.2, cost=98.31
+    final return: 256.78, cost: 98.16
+  mean return: 253.74 +/- 5.74
+  mean cost:   95.03 +/- 4.65
 
---- Lagrangian Q-Learning ---
+--- Lagrangian Q-Learning (5 seeds) ---
+  seed 0:
     QL-Lag ep  10000: ret=247.1, cost=88.27, lam=0.963
     QL-Lag ep  20000: ret=157.6, cost=17.03, lam=1.381
     QL-Lag ep  30000: ret=179.0, cost=26.96, lam=1.397
-  Final return: 180.27, cost: 26.88
-  Final lambda: 1.3972
+    final return: 180.27, cost: 26.88, lambda: 1.3972, lambda_peak: 1.4109
+  seed 1:
+    QL-Lag ep  10000: ret=240.0, cost=82.15, lam=0.972
+    QL-Lag ep  20000: ret=199.1, cost=47.14, lam=1.396
+    QL-Lag ep  30000: ret=166.8, cost=16.55, lam=1.390
+    final return: 168.17, cost: 16.59, lambda: 1.3901, lambda_peak: 1.4022
+  seed 2:
+    QL-Lag ep  10000: ret=211.8, cost=67.16, lam=0.967
+    QL-Lag ep  20000: ret=182.8, cost=36.65, lam=1.391
+    QL-Lag ep  30000: ret=175.2, cost=29.87, lam=1.392
+    final return: 176.64, cost: 30.17, lambda: 1.3916, lambda_peak: 1.3978
+  seed 3:
+    QL-Lag ep  10000: ret=230.7, cost=76.65, lam=0.970
+    QL-Lag ep  20000: ret=164.3, cost=17.65, lam=1.396
+    QL-Lag ep  30000: ret=173.1, cost=23.05, lam=1.392
+    final return: 174.22, cost: 22.96, lambda: 1.3918, lambda_peak: 1.4139
+  seed 4:
+    QL-Lag ep  10000: ret=247.4, cost=85.49, lam=0.966
+    QL-Lag ep  20000: ret=209.9, cost=56.96, lam=1.395
+    QL-Lag ep  30000: ret=161.9, cost=20.43, lam=1.398
+    final return: 163.06, cost: 20.45, lambda: 1.3983, lambda_peak: 1.4093
+  mean return: 172.47 +/- 3.07
+  mean cost:   23.41 +/- 2.38
+  mean lambda: 1.3938 +/- 0.0017
+  mean lambda peak: 1.4068 +/- 0.0030 (max over seeds: 1.4139)
   Cache saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/cache/carbon_constrained_production.pkl
 
 Figure saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/carbon_constrained_production_convergence.png
 Table saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/carbon_constrained_production_table.tex
 
-============================================================
-Carbon budget d = 31.35
-Method                       Return     Cost  Budget   lambda
-------------------------------------------------------------
-LP Oracle                     186.4    31.35       Y     1.20
-Unconstrained Q-learning      255.2    95.83       N       --
-Lagrangian Q-learning         180.3    26.88       Y     1.40
-============================================================
+========================================================================
+Carbon budget d = 31.35   (5 seeds, mean +/- SE)
+Method                             Return           Cost  Budget         lambda
+------------------------------------------------------------------------
+LP Oracle                           186.4          31.35       Y           1.20
+Unconstrained Q-learning      253.7+/-5.7     95.03+/-4.65       N             --
+Lagrangian Q-learning         172.5+/-3.1     23.41+/-2.38       Y     1.39+/-0.00
+------------------------------------------------------------------------
+Lagrangian lambda peak: mean 1.407 +/- 0.003, max over seeds 1.414
+========================================================================

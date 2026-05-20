@@ -24,4 +24,7 @@ Improvement (linear approx):
   Natural:   g^T * nat_step = 0.7097
   Ratio (natural/euclidean): 0.6798
 
+Note: Euclidean step violates the KL constraint (KL = 1.088 > delta = 1.0); not a valid trust-region step.
+The natural step saturates the KL budget exactly (KL = 0.500 = delta/2), so the comparison of linear gains above is not apples-to-apples; the Euclidean step buys its higher linear gain by leaving the trust region.
+
 Output: /Users/pranjal/Code/rl/ch03_theory/sims/info_geometry_npg.png

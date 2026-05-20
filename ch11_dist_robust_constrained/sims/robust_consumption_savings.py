@@ -45,20 +45,22 @@ QL_ALPHA_C = 100.0       # visit-count LR: alpha = C / (C + N(s,a))
 QL_EPS_START = 1.0
 QL_EPS_END = 0.05
 QL_EPS_DECAY = 0.99998
-N_SEEDS = 1
+N_SEEDS = 10
+EVAL_SEED_OFFSET = 1000  # eval seeds shared across DP and QL: 1000, 1001, ..., 1000+N_SEEDS-1
 
 # -- Per-Component Configs ----------------------------------------------------
 
 ENV_PARAMS = {
     'W_MAX': W_MAX, 'Y_VALUES': Y_VALUES, 'R': R, 'GAMMA': GAMMA,
     'SIGMA': SIGMA, 'nominal': NOMINAL_INCOME.tolist(),
-    'perturbed': PERTURBED_INCOME.tolist(), 'version': 5,
+    'perturbed': PERTURBED_INCOME.tolist(), 'version': 6,
 }
 
 SHARED_CONFIG = {
     **ENV_PARAMS,
     'thetas': THETA_VALUES,
     'n_eval': N_EVAL, 'eval_len': EVAL_LEN,
+    'n_seeds': N_SEEDS, 'eval_seed_offset': EVAL_SEED_OFFSET,
 }
 
 QL_CONFIG = {
@@ -254,14 +256,27 @@ def compute_shared():
         dp_methods[f'Robust DP (th={th})'] = robust[th]
     dp_methods['Oracle'] = pi_orc
 
-    print(f"\n--- DP Evaluation ---")
+    print(f"\n--- DP Evaluation ({N_SEEDS} eval seeds) ---")
     dp_results = {}
     for name, pi in dp_methods.items():
-        nom = evaluate(pi, NOMINAL_INCOME)
-        pert = evaluate(pi, PERTURBED_INCOME)
-        pct = 100 * (pert - nom) / abs(nom)
-        dp_results[name] = {'nom': nom, 'pert': pert, 'pct': pct}
-        print(f"  {name:<25} nom={nom:.3f}  pert={pert:.3f}  delta={pct:.1f}%")
+        noms = np.array([evaluate(pi, NOMINAL_INCOME, seed=s + EVAL_SEED_OFFSET)
+                         for s in range(N_SEEDS)])
+        perts = np.array([evaluate(pi, PERTURBED_INCOME, seed=s + EVAL_SEED_OFFSET)
+                          for s in range(N_SEEDS)])
+        pcts = 100 * (perts - noms) / np.abs(noms)
+        nom_mean, pert_mean, pct_mean = noms.mean(), perts.mean(), pcts.mean()
+        if N_SEEDS > 1:
+            nom_se = noms.std(ddof=1) / np.sqrt(N_SEEDS)
+            pert_se = perts.std(ddof=1) / np.sqrt(N_SEEDS)
+            pct_se = pcts.std(ddof=1) / np.sqrt(N_SEEDS)
+        else:
+            nom_se = pert_se = pct_se = 0.0
+        dp_results[name] = {
+            'nom': nom_mean, 'pert': pert_mean, 'pct': pct_mean,
+            'nom_se': nom_se, 'pert_se': pert_se, 'pct_se': pct_se,
+        }
+        print(f"  {name:<25} nom={nom_mean:.3f}+/-{nom_se:.3f}  "
+              f"pert={pert_mean:.3f}+/-{pert_se:.3f}  delta={pct_mean:.1f}%+/-{pct_se:.1f}")
 
     return {
         'dp_results': dp_results,
@@ -269,61 +284,40 @@ def compute_shared():
     }
 
 
-def compute_q_learning(shared):
-    print(f"\n--- Q-Learning ({N_SEEDS} seeds, {QL_EPISODES} episodes) ---")
+def _run_ql_seeds(shared, dp_key, train_fn, label):
+    print(f"\n--- {label} ({N_SEEDS} seeds, {QL_EPISODES} episodes) ---")
     all_results = []
     for seed in range(N_SEEDS):
-        pi = train_q_learning(seed)
-        nom = evaluate(pi, NOMINAL_INCOME, seed=seed + 1000)
-        pert = evaluate(pi, PERTURBED_INCOME, seed=seed + 1000)
+        pi = train_fn(seed)
+        nom = evaluate(pi, NOMINAL_INCOME, seed=seed + EVAL_SEED_OFFSET)
+        pert = evaluate(pi, PERTURBED_INCOME, seed=seed + EVAL_SEED_OFFSET)
         pct = 100 * (pert - nom) / abs(nom)
         all_results.append({'policy': pi.tolist(), 'nom': nom, 'pert': pert, 'pct': pct})
         print(f"  Seed {seed}: nom={nom:.3f}, pert={pert:.3f}, delta={pct:.1f}%")
 
-    dp_pi = np.array(shared['dp_policies']['Standard DP'])
+    dp_pi = np.array(shared['dp_policies'][dp_key])
     mean_pi = np.mean([np.array(r['policy']) for r in all_results], axis=0)
     modal_pi = np.round(mean_pi).astype(int)
     max_dev = int(np.max(np.abs(modal_pi - dp_pi)))
-    print(f"  Max policy deviation from Standard DP: {max_dev}")
+    mean_dev = float(np.mean(np.abs(mean_pi - dp_pi)))
+    print(f"  Max policy deviation from {dp_key}: {max_dev} (mean |dev|={mean_dev:.2f})")
     return {'seed_results': all_results}
+
+
+def compute_q_learning(shared):
+    return _run_ql_seeds(shared, 'Standard DP', train_q_learning, 'Q-Learning')
 
 
 def compute_robust_ql_5(shared):
-    print(f"\n--- Robust Q-Learning theta=5 ({N_SEEDS} seeds, {QL_EPISODES} episodes) ---")
-    all_results = []
-    for seed in range(N_SEEDS):
-        pi = train_robust_q_learning(seed, theta=5.0)
-        nom = evaluate(pi, NOMINAL_INCOME, seed=seed + 1000)
-        pert = evaluate(pi, PERTURBED_INCOME, seed=seed + 1000)
-        pct = 100 * (pert - nom) / abs(nom)
-        all_results.append({'policy': pi.tolist(), 'nom': nom, 'pert': pert, 'pct': pct})
-        print(f"  Seed {seed}: nom={nom:.3f}, pert={pert:.3f}, delta={pct:.1f}%")
-
-    dp_pi = np.array(shared['dp_policies']['Robust DP (th=5.0)'])
-    mean_pi = np.mean([np.array(r['policy']) for r in all_results], axis=0)
-    modal_pi = np.round(mean_pi).astype(int)
-    max_dev = int(np.max(np.abs(modal_pi - dp_pi)))
-    print(f"  Max policy deviation from Robust DP (th=5): {max_dev}")
-    return {'seed_results': all_results}
+    return _run_ql_seeds(shared, 'Robust DP (th=5.0)',
+                         lambda s: train_robust_q_learning(s, theta=5.0),
+                         'Robust Q-Learning theta=5')
 
 
 def compute_robust_ql_2(shared):
-    print(f"\n--- Robust Q-Learning theta=2 ({N_SEEDS} seeds, {QL_EPISODES} episodes) ---")
-    all_results = []
-    for seed in range(N_SEEDS):
-        pi = train_robust_q_learning(seed, theta=2.0)
-        nom = evaluate(pi, NOMINAL_INCOME, seed=seed + 1000)
-        pert = evaluate(pi, PERTURBED_INCOME, seed=seed + 1000)
-        pct = 100 * (pert - nom) / abs(nom)
-        all_results.append({'policy': pi.tolist(), 'nom': nom, 'pert': pert, 'pct': pct})
-        print(f"  Seed {seed}: nom={nom:.3f}, pert={pert:.3f}, delta={pct:.1f}%")
-
-    dp_pi = np.array(shared['dp_policies']['Robust DP (th=2.0)'])
-    mean_pi = np.mean([np.array(r['policy']) for r in all_results], axis=0)
-    modal_pi = np.round(mean_pi).astype(int)
-    max_dev = int(np.max(np.abs(modal_pi - dp_pi)))
-    print(f"  Max policy deviation from Robust DP (th=2): {max_dev}")
-    return {'seed_results': all_results}
+    return _run_ql_seeds(shared, 'Robust DP (th=2.0)',
+                         lambda s: train_robust_q_learning(s, theta=2.0),
+                         'Robust Q-Learning theta=2')
 
 
 # -- Main Compute -------------------------------------------------------------
@@ -409,10 +403,14 @@ def generate_outputs(data):
 
     for name in ['Standard DP', 'Robust DP (th=5.0)', 'Robust DP (th=2.0)', 'Oracle']:
         r = dp_results[name]
-        all_results[name] = {'nom': r['nom'], 'pert': r['pert'], 'pct': r['pct'],
-                             'nom_se': None, 'pert_se': None, 'pct_se': None}
+        all_results[name] = {
+            'nom': r['nom'], 'pert': r['pert'], 'pct': r['pct'],
+            'nom_se': r.get('nom_se', 0.0),
+            'pert_se': r.get('pert_se', 0.0),
+            'pct_se': r.get('pct_se', 0.0),
+        }
         all_policies[name] = dp_policies[name]
-        all_se_policies[name] = None
+        all_se_policies[name] = None  # DP policy is deterministic — no band
 
     for label, agg in [('Q-learning', ql_agg),
                        ('Robust Q-learning (th=5)', rql5_agg),

@@ -140,7 +140,7 @@ Under linear function approximation, TD($\lambda$) converges to a unique fixed p
 
 A 20-state deterministic corridor ($s \in \{0, \ldots, 19\}$, action: move right, reward $+1$ on the transition into the terminal state $s = 19$, $\gamma = 0.99$) isolates the credit-assignment mechanism. The true value function is $V^*(s) = \gamma^{18-s}$ for $s \le 18$ (and $V^*(19) = 0$). TD($\lambda$) performs policy evaluation for four values of $\lambda$ across 20 seeds and 200 episodes.
 
-Table~\ref{tab:td_lambda_corridor} and Figure~\ref{fig:td_lambda_corridor} show that higher $\lambda$ propagates the sparse terminal reward signal backward through the corridor faster: TD($\lambda = 1$) reaches RMSVE $< 0.05$ in fewer episodes than TD(0), which must wait for many episodes before the reward signal diffuses back to early states through one-step bootstrapping alone.
+Table~\ref{tab:td_lambda_corridor} and Figure~\ref{fig:td_lambda_corridor} show that higher $\lambda$ propagates the sparse terminal reward signal backward through the corridor faster: TD($\lambda = 1$) crosses RMSVE $< 0.05$ at episode 52 and converges to $V^*$ to numerical precision, while TD(0) does not cross the threshold within 200 episodes because the reward must diffuse back through one-step bootstrapping alone.
 
 \begin{figure}[t]
 \centering
@@ -165,9 +165,9 @@ the smallest residual achievable when the Bellman operator maps any element of $
 \| V_{K} - V^* \|_{p,\rho} \;\leq\; C_{\rho,\mu} \left[ \gamma^K \|V_0 - V^*\|_{p,\rho} + \frac{\varepsilon_{\mathrm{approx}}}{(1-\gamma)^2} + O\!\left(\frac{1}{\sqrt{N}}\right) \right],
 \label{eq:fvi_error_bound}
 \end{equation}
-where $C_{\rho,\mu}$ is a \emph{concentrability coefficient} bounding the ratio of future-state distributions under the evaluation distribution $\rho$ relative to the data distribution $\mu$.\footnote{The concentrability coefficient $C_{\rho,\mu}$ measures how well the data distribution $\mu$ covers future states reachable under optimal policies from $\rho$. When $\mu$ is the state-action distribution of the optimal policy itself, $C_{\rho,\mu} = 1$. Distribution mismatch, common when batch data comes from a sub-optimal behavior policy, inflates $C_{\rho,\mu}$ and worsens the bound. \citet{Antos2008} extend these results to continuous action spaces and single-trajectory data.} Three terms drive the error: the geometric decay $\gamma^K$ (initialization bias), the approximation error $(1-\gamma)^{-2} \varepsilon_{\mathrm{approx}}$ (bias from function class), and the estimation error $O(1/\sqrt{N})$ (variance from finite samples). When $\mathcal{F}$ contains $V^*$ exactly, $\varepsilon_{\mathrm{approx}} = 0$ and the bound recovers exact convergence as $K \to \infty$. The $(1-\gamma)^{-2}$ amplification, one factor of $(1-\gamma)^{-1}$ more than in tabular Q-learning, reflects error accumulation across approximate DP steps: each regression step introduces bias, and this bias compounds over $K$ iterations.
+where $C_{\rho,\mu}$ is a \emph{concentrability coefficient} bounding the ratio of future-state distributions under the evaluation distribution $\rho$ relative to the data distribution $\mu$.\footnote{The concentrability coefficient $C_{\rho,\mu}$ measures how well the data distribution $\mu$ covers future states reachable under optimal policies from $\rho$. When $\mu$ is the state-action distribution of the optimal policy itself, $C_{\rho,\mu} = 1$. Distribution mismatch, common when batch data comes from a sub-optimal behavior policy, inflates $C_{\rho,\mu}$ and worsens the bound. \citet{Antos2008} extend these results to continuous action spaces and single-trajectory data.} Three terms drive the error: the geometric decay $\gamma^K$ (initialization bias), the approximation error $(1-\gamma)^{-2} \varepsilon_{\mathrm{approx}}$ (bias from function class), and the estimation error $O(1/\sqrt{N})$ (variance from finite samples). When $\mathcal{F}$ contains $V^*$ exactly, $\varepsilon_{\mathrm{approx}} = 0$ and the bound recovers exact convergence as $K \to \infty$. The $(1-\gamma)^{-2}$ amplification, one factor of $(1-\gamma)^{-1}$ more than in tabular Q-learning, reflects error accumulation across approximate DP steps: each regression step introduces bias, and this bias compounds over $K$ iterations.\footnote{The simulation in Section~\ref{sec:lqc_fvi_fqi} exercises only the bias / projection-error term of the Munos--Szepesvari bound; the variance / concentrability term is not stressed because we use a full $301 \times 201$ deterministic grid with the true transition kernel rather than a Monte Carlo sample, so there is no $N$ to vary and the $O(1/\sqrt{N})$ contribution is absent.}
 
-Both algorithms solve projected Bellman equations. When $V^* \in \mathrm{span}(\Phi)$ exactly, FVI converges to $V^*$ in a single projected iteration, since the normal equations \eqref{eq:fvi_normal} recover $\theta_V^*$ satisfying $\Phi \theta_V^* = V^*$. For FQI, the per-action Q-functions satisfy $Q^*(s, a^*(s)) = V^*(s)$ at the optimal action $a^*(s)$, so when $Q^*(\cdot, a)$ is also representable in $\mathrm{span}(\Phi)$ for each $a$, FQI recovers consistent value estimates $\phi(s)^\top \theta_{a^*(s)}^* = \phi(s)^\top \theta_V^*$ at convergence. Whether FQI succeeds therefore depends on the geometry of the problem: when $Q^*(\cdot, a) \notin \mathrm{span}(\Phi)$, as on the Brock--Mirman economy, where the per-action Q-function requires fractional-power terms $k^{-n\alpha}$ outside the log-polynomial span, FQI stalls at error 1.65 while FVI converges to 0.001; when $Q^*(x,u)$ is exactly quadratic in $(x,u)$, as on the linear-quadratic control problem (Section~\ref{sec:lqc_fvi_fqi}), both FVI and FQI converge to near-zero error. Section~\ref{sec:bm_fvi_fqi} shows that replacing the linear basis with a nonlinear parametric model that matches the log-Cobb--Douglas structure of $Q^*$ restores FQI convergence on the Brock--Mirman economy.
+Both algorithms solve projected Bellman equations. When $V^* \in \mathrm{span}(\Phi)$ exactly, the projection step is exact and FVI reduces to iterating a $\gamma$-contraction in coefficient space: from $V_0 = V^*$ it would terminate after a single projected iteration via the normal equations \eqref{eq:fvi_normal}, but from $V_0 = 0$ (the initial condition used in Section~\ref{sec:lqc_fvi_fqi}) the contraction drives $\theta_V \to \theta_V^*$ geometrically, so the algorithm reaches the tolerance $\|\theta_{k+1} - \theta_k\|_\infty < 10^{-9}$ in nine fitted iterations. For FQI, the per-action Q-functions satisfy $Q^*(s, a^*(s)) = V^*(s)$ at the optimal action $a^*(s)$, so when $Q^*(\cdot, a)$ is also representable in $\mathrm{span}(\Phi)$ for each $a$, FQI recovers consistent value estimates $\phi(s)^\top \theta_{a^*(s)}^* = \phi(s)^\top \theta_V^*$ at convergence. Whether FQI succeeds therefore depends on the geometry of the problem: when $Q^*(\cdot, a) \notin \mathrm{span}(\Phi)$, as on the Brock--Mirman economy, where the per-action Q-function requires fractional-power terms $k^{-n\alpha}$ outside the log-polynomial span, FQI stalls at error 1.65 while FVI converges to 0.001; when $Q^*(x,u)$ is exactly quadratic in $(x,u)$, as on the linear-quadratic control problem (Section~\ref{sec:lqc_fvi_fqi}), both FVI and FQI converge to near-zero error. Section~\ref{sec:bm_fvi_fqi} shows that replacing the linear basis with a nonlinear parametric model that matches the log-Cobb--Douglas structure of $Q^*$ restores FQI convergence on the Brock--Mirman economy.
 
 
 \subsubsection{Simulation Study: Fitted Methods on Linear-Quadratic Control}
@@ -175,20 +175,20 @@ Both algorithms solve projected Bellman equations. When $V^* \in \mathrm{span}(\
 
 Linear-quadratic control (LQC) is a setting where both $V^*$ and $Q^*$ are quadratic polynomials, so the fitted method comparison is analytically transparent. The model has scalar state $x \in [-4, 4]$ and action $u \in [-2, 2]$, deterministic dynamics $x' = ax + bu$ with $a = 0.5$, $b = 1.0$, reward $r(x,u) = -(x^2 + u^2)$, and discount $\gamma = 0.95$. The parameters are chosen so that $x' = 0.5x + u \in [-4, 4]$ whenever $(x, u) \in [-4,4] \times [-2,2]$, making the grid strictly invariant. The optimal value function satisfies $V^*(x) = -Px^2$, where $P$ solves $\gamma b^2 P^2 + P(1 - \gamma(a^2 + b^2)) - 1 = 0$, yielding $P \approx 1.129$. The optimal Q-function is $Q^*(x,u) = -(1+\gamma Pa^2)x^2 - 2\gamma Pab\,xu - (1+\gamma Pb^2)u^2 \approx -1.268x^2 - 1.073xu - 2.073u^2$, which lies exactly in $\mathrm{span}\{x^2, xu, u^2\} \subset \mathrm{span}\{x, x^2, u, u^2, xu\}$. FVI uses state features $\phi_V(x) = [x, x^2]^\top \in \mathbb{R}^2$ (no intercept, since $V^*(0) = 0$); FQI uses state-action features $\phi_Q(x,u) = [x, x^2, u, u^2, xu]^\top \in \mathbb{R}^5$. Both use a 301-point state grid and 201-point action grid. DQN uses a two-layer network of 64 units per layer with ReLU activations, an experience replay buffer of 50,000 transitions, a hard target-network update every 500 gradient steps, and rewards scaled by a factor of $1/20$ to stabilize training.
 
-Both methods recover the analytical solution to machine precision (Table~\ref{tab:lqc_fvi_fqi}, Figure~\ref{fig:lqc_fvi_fqi}): FVI and FQI converge in under 10 iterations with errors below $10^{-3}$, matching the known polynomial structure of $Q^*$. DQN also converges (error $5.6 \times 10^{-1}$ after 100,000 gradient steps) with no prior knowledge of the feature basis. The contrast with Brock--Mirman is exact: FQI succeeds here because $Q^*(x,u) \in \mathrm{span}(\Phi_Q)$, while it fails on Brock--Mirman because $Q^*(\cdot,a) \notin \mathrm{span}(\Phi)$.
+Both linear-feature methods recover the analytical solution to machine precision (Table~\ref{tab:lqc_fvi_fqi}, Figure~\ref{fig:lqc_fvi_fqi}): FVI and FQI converge in under 10 iterations with errors below $10^{-3}$, matching the known polynomial structure of $Q^*$. DQN, run over ten independent seeds, converges to a mean error of order $10^{-1}$ against $V^*$ after 100,000 gradient steps with no prior knowledge of the feature basis; the exact mean and standard error are reported in Table~\ref{tab:lqc_fvi_fqi}. The comparison is illustrative rather than a horse-race: FVI and FQI exercise the full deterministic $301 \times 201$ grid with the true transition map and a feature basis containing $Q^*$, while DQN learns a generic two-layer network from sampled transitions and has no prior on the polynomial structure. The contrast with Brock--Mirman is exact: FQI succeeds here because $Q^*(x,u) \in \mathrm{span}(\Phi_Q)$, while it fails on Brock--Mirman because $Q^*(\cdot,a) \notin \mathrm{span}(\Phi)$.
 
 \begin{table}[h]
 \centering
 \small
 \input{../ch03_theory/sims/lqc_fvi_fqi_weights.tex}
-\caption{Fitted weights and convergence metrics for FVI, FQI, and DQN on linear-quadratic control. The FVI $x^2$ coefficient recovers the Riccati solution $P \approx 1.129$. The FQI quadratic coefficients match the analytical $Q^*$ to four decimal places. FVI and FQI achieve max error below $10^{-3}$ against the analytical $V^*$; DQN achieves error $5.6 \times 10^{-1}$ after 100,000 gradient steps with no feature basis specified.}
+\caption{Fitted weights and convergence metrics for FVI, FQI, and DQN on linear-quadratic control. The FVI $x^2$ coefficient recovers the Riccati solution $P \approx 1.129$. The FQI quadratic coefficients match the analytical $Q^*$ to four decimal places. FVI and FQI achieve max error below $10^{-3}$ against the analytical $V^*$; the DQN row reports mean $\pm$ standard error across ten independent seeds after 100,000 gradient steps with no feature basis specified. FVI and FQI exercise the full deterministic grid with the true transition kernel, so seed-to-seed variation is exactly zero and no standard error is reported for them.}
 \label{tab:lqc_fvi_fqi}
 \end{table}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{../ch03_theory/sims/lqc_fvi_fqi.png}
-\caption{LQC convergence of FVI and FQI (left), DQN learning curve (middle), and value function recovery for all three methods (right). FVI and FQI reduce $\|V_k - V^*\|_\infty$ to near-zero in under 10 iterations, exploiting the known polynomial structure of $Q^*$. DQN declines from error 6.7 to 0.56 over 100,000 gradient steps with no feature basis specified.}
+\caption{LQC convergence of FVI and FQI (left), DQN learning curve (middle, mean and $\pm 1$ standard-error band over ten seeds), and value function recovery for all three methods (right; the DQN trace is the cross-seed mean). FVI and FQI reduce $\|V_k - V^*\|_\infty$ to near-zero in under 10 iterations, exploiting the known polynomial structure of $Q^*$. DQN's learning curve over 100,000 gradient steps is shown with no feature basis specified.}
 \label{fig:lqc_fvi_fqi}
 \end{figure}
 
@@ -284,7 +284,7 @@ Each element of the triad is individually necessary for divergence. Without func
 \begin{figure}[t]
 \centering
 \includegraphics[width=\textwidth]{../ch03_theory/sims/deadly_triad_geometry.png}
-\caption{Geometry of the projected Bellman operator in $\mathbb{R}^2$. The gray line is the function approximation subspace span($\Phi$); the blue arrow is $TV$, the Bellman update. (a) On-policy: the orthogonal projection $\Pi_\mu$ drops $TV$ perpendicularly onto the subspace, preserving the contraction. (b) Off-policy: the oblique projection $\Pi_\nu$ (under the behavior distribution) reaches a point further from the origin than $TV$ itself, causing expansion.}
+\caption{Geometric intuition for the projection-norm leg of the deadly triad in $\mathbb{R}^2$. The gray line is the function approximation subspace span($\Phi$); the blue arrow is $TV$, the Bellman update. (a) On-policy: the orthogonal projection $\Pi_{d^\pi}$ (under the target-policy stationary distribution) drops $TV$ perpendicularly onto the subspace, preserving the contraction. (b) Off-policy: the oblique projection $\Pi_\mu$ (under the behavior distribution) reaches a point further from the origin than $TV$ itself, so the projection can expand distances. Bootstrapping and off-policy sampling, the other two legs of the triad, are not depicted; their joint effect on divergence is exhibited numerically in Baird's seven-state star counterexample \citep{Baird1995}. The displayed expansion ratio is illustrative; the subspace and projection-direction angles are chosen so contraction in (a) and expansion in (b) are visible at figure scale rather than derived from a specific MDP.}
 \label{fig:deadly_triad_geometry}
 \end{figure}
 
@@ -372,14 +372,19 @@ The geometric foundation of trust region methods lies in information geometry. T
   \centering
   \includegraphics[width=\textwidth]{../ch03_theory/sims/info_geometry_npg.png}
   \caption{Information geometry of the natural policy gradient.
-  \emph{Left}: the policy manifold $\mathcal{M}$ with Euclidean gradient
-  $\nabla_\theta J$ (red) and natural gradient $F^{-1}\nabla_\theta J$ (green)
-  from the current iterate $\pi_{\theta_{\mathrm{old}}}$ toward the optimal
-  policy $\pi^*$.
+  \emph{Left}: schematic of the policy manifold $\mathcal{M}$ with Euclidean
+  gradient $\nabla_\theta J$ (red) and natural gradient
+  $F^{-1}\nabla_\theta J$ (green) from the current iterate
+  $\pi_{\theta_{\mathrm{old}}}$ toward the optimal policy $\pi^*$. The two
+  arrows are placed schematically to convey the convergence advantage of NPG;
+  quantitative behavior depends on the loss landscape and is shown in the
+  right panel.
   \emph{Right}: tangent plane at $\theta_{\mathrm{old}}$ showing the Euclidean
   unit ball $\|\Delta\theta\|_2 \leq \varepsilon$ (red) and the KL unit ball
   $\Delta\theta^\top F \Delta\theta \leq \delta$ (green), with the
-  respective steepest-ascent directions.}
+  respective steepest-ascent directions. The Euclidean step (red arrow) leaves
+  the KL ball, violating the trust-region constraint; the natural step (green
+  arrow) saturates the KL budget by construction.}
   \label{fig:info_geometry}
 \end{figure}
 
@@ -391,7 +396,7 @@ TRPO formalizes this insight as a constrained optimization problem. At each iter
 where $A^{\pi}(s,a) = Q^{\pi}(s,a) - V^{\pi}(s)$ is the advantage function. Linearizing $L(\theta)$ around $\theta_{\mathrm{old}}$ and applying the quadratic KL approximation yields a Lagrangian whose closed-form solution is
 \begin{equation}
 \label{eq:trpo_step}
-\theta_{\mathrm{new}} = \theta_{\mathrm{old}} + \sqrt{\frac{2\delta}{g^\top F^{-1} g}} \, F^{-1} g, \qquad g = \nabla_\theta L(\theta)\big|_{\theta_{\mathrm{old}}}.
+\theta_{\mathrm{new}} = \theta_{\mathrm{old}} + \sqrt{\frac{\delta}{g^\top F^{-1} g}} \, F^{-1} g, \qquad g = \nabla_\theta L(\theta)\big|_{\theta_{\mathrm{old}}}.
 \end{equation}
 This is precisely the natural gradient direction, scaled so that the step saturates the KL budget $\delta$. The step size is determined entirely by the trust region geometry, not by a learning rate hyperparameter. In practice, TRPO solves the linear system $F v = g$ via conjugate gradient and performs a backtracking line search to enforce the KL constraint exactly.\footnote{Conjugate gradient solves $Fv = g$ iteratively using only matrix-vector products $Fv$, which can be computed via automatic differentiation without forming $F$ explicitly. With $k$ iterations it costs $O(kd)$ versus $O(d^3)$ for direct inversion, making it feasible for neural networks with millions of parameters.}
 
@@ -400,16 +405,18 @@ The theoretical guarantee underlying TRPO is a majorization-minimization (MM) ar
 \begin{figure}[t]
   \centering
   \includegraphics[width=\textwidth]{../ch03_theory/sims/mm_surrogate_trpo.png}
-  \caption{Majorization-minimization interpretation of trust region updates.
-  \emph{Left}: the surrogate $L(\theta|\theta_{\mathrm{old}})$ (dashed)
-  lower-bounds $J(\theta)$ (solid) and is tight at $\theta_{\mathrm{old}}$;
+  \caption[Schematic of the MM step underlying TRPO]{Schematic of the majorize-minimize step underlying TRPO: a surrogate
+  $L(\theta)$ lower-bounds the true objective $J(\theta)$ and is monotonically
+  improved by maximizing $L$.
+  \emph{Left}: the surrogate (dashed) is tight at $\theta_{\mathrm{old}}$;
   the trust region (shaded) constrains the step. The gap between
   $L(\theta_{\mathrm{new}})$ and $J(\theta_{\mathrm{new}})$ is the
   guaranteed improvement.
   \emph{Right}: iterative MM convergence from $\theta_0$ through four
-  surrogates (dashed, colored by iteration) to $\theta^*$.}
+  surrogates (dashed, colored by iteration) to $\theta^*$.\protect\footnotemark}
   \label{fig:mm_surrogate}
 \end{figure}
+\footnotetext{The quadratic majorizer here uses a fitted constant $c$ chosen so the surrogate touches the true objective at $\theta_{\mathrm{old}}$ and remains below it on the visible grid. \citet{Schulman2015}'s theoretical constant $C = 4\varepsilon\gamma/(1-\gamma)^2$ is so conservative the resulting step is unusably small in practice; modern TRPO implementations replace the penalty with a hard KL constraint. This illustrative cartoon visualizes the \emph{form} of the MM bound, not its sharpness.}
 
 PPO \citep{Schulman2017} replaces the hard KL constraint with a clipped surrogate objective. Let $r_t(\theta) = \pi_\theta(a_t|s_t) / \pi_{\theta_{\mathrm{old}}}(a_t|s_t)$ denote the importance ratio. PPO maximizes
 \begin{equation}
@@ -427,12 +434,14 @@ The trust region framework connects naturally to econometric optimization. The L
   learns a Taylor rule $u_t = -(\theta_1 x_{1t} + \theta_2 x_{2t})$ mapping output
   gap $x_1$ and inflation gap $x_2$ to an interest rate instrument.
   \emph{Left}: policy contour lines in state space for the current iterate
-  $\theta_{\mathrm{old}}$, optimal weights $\theta^*$, and the unconstrained gradient
-  step $\theta_{\mathrm{bad}}$, with phase arrows showing closed-loop dynamics under
-  $\theta_{\mathrm{old}}$.
+  $\theta_{\mathrm{old}}$, optimal weights $\theta^*$, and an illustrative
+  KL-violating iterate $\theta_{\mathrm{bad}}$ (constructed as a $3\times$ scaling
+  of the TRPO step, not a literal unconstrained gradient step), with phase arrows
+  showing closed-loop dynamics under $\theta_{\mathrm{old}}$.
   \emph{Center}: expected return $J(\theta_1, \theta_2)$ in parameter space;
   hatching marks the unstable region. The KL trust region ellipse bounds the TRPO
-  step; the unconstrained gradient step overshoots into the unstable region.
+  step; $\theta_{\mathrm{bad}}$ lands in the unstable region, illustrating the
+  consequence of violating the KL constraint.
   \emph{Right}: TRPO feasible region (KL ellipse) and PPO feasible region (50\%
   ratio-clip band over 200 sampled state-action pairs) overlaid on $J(\theta)$,
   with the respective constrained steps marked.}

@@ -351,12 +351,24 @@ def run_dqn(env, gamma=0.95, num_episodes=5000, episode_horizon=50,
 # Evaluation helpers
 # ---------------------------------------------------------------------------
 
-def evaluate_dp_policy(env, policy, gamma=0.95, n_episodes=200, horizon=50, discount=None):
+def _start_episode(env, init_state):
+    """Helper: either reset env to a pre-sampled initial state or call env.reset()."""
+    if init_state is not None:
+        env.state = init_state
+        return init_state
+    return env.reset()
+
+
+def evaluate_dp_policy(env, policy, gamma=0.95, n_episodes=200, horizon=50, discount=None,
+                       initial_states=None):
     """Evaluate a tabular DP policy via simulation. Returns mean episode reward.
-    If discount is provided, applies geometric discounting to per-step rewards."""
+    If discount is provided, applies geometric discounting to per-step rewards.
+    If initial_states is provided (list of length n_episodes), uses those starts
+    instead of consuming the global RNG via env.reset()."""
     rewards = []
-    for _ in range(n_episodes):
-        s = env.reset()
+    for ep in range(n_episodes):
+        init = initial_states[ep] if initial_states is not None else None
+        s = _start_episode(env, init)
         ep_r = 0.0
         for t in range(horizon):
             si = env.state_to_index(s)
@@ -370,13 +382,16 @@ def evaluate_dp_policy(env, policy, gamma=0.95, n_episodes=200, horizon=50, disc
     return np.mean(rewards)
 
 
-def evaluate_dqn_policy(env, q_net, n_episodes=200, horizon=50, discount=None):
+def evaluate_dqn_policy(env, q_net, n_episodes=200, horizon=50, discount=None,
+                        initial_states=None):
     """Evaluate a trained DQN policy via simulation. Returns mean episode reward.
-    If discount is provided, applies geometric discounting to per-step rewards."""
+    If discount is provided, applies geometric discounting to per-step rewards.
+    If initial_states is provided, uses those starts instead of env.reset()."""
     q_net.eval()
     rewards = []
-    for _ in range(n_episodes):
-        s = env.reset()
+    for ep in range(n_episodes):
+        init = initial_states[ep] if initial_states is not None else None
+        s = _start_episode(env, init)
         ep_r = 0.0
         for t in range(horizon):
             s_feat = env.state_to_features(s)
@@ -392,13 +407,16 @@ def evaluate_dqn_policy(env, q_net, n_episodes=200, horizon=50, discount=None):
     return np.mean(rewards)
 
 
-def evaluate_heuristic(env, heuristic_fn, n_episodes=200, horizon=50, discount=None):
+def evaluate_heuristic(env, heuristic_fn, n_episodes=200, horizon=50, discount=None,
+                       initial_states=None):
     """Evaluate a heuristic policy function. heuristic_fn(state) -> action.
     Returns mean episode reward.
-    If discount is provided, applies geometric discounting to per-step rewards."""
+    If discount is provided, applies geometric discounting to per-step rewards.
+    If initial_states is provided, uses those starts instead of env.reset()."""
     rewards = []
-    for _ in range(n_episodes):
-        s = env.reset()
+    for ep in range(n_episodes):
+        init = initial_states[ep] if initial_states is not None else None
+        s = _start_episode(env, init)
         ep_r = 0.0
         for t in range(horizon):
             a = heuristic_fn(s)

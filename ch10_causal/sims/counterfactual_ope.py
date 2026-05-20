@@ -1,15 +1,22 @@
 # Counterfactual off-policy evaluation under a misspecified linear SCM.
-# Chapter 12 (forecasting and reinforcement learning), §5.3 simulation.
+# Chapter 10 (causal inference for reinforcement learning), §cfope_sim.
 # Compares three estimators of V(pi_tilde) from logged data under pi_obs:
 #   IS  Per-decision importance sampling
 #   MB  Model-based (fit hat_f, plug pi_tilde actions)
-#   CF  Counterfactual-augmented (residual correction via importance weights)
-#       This is the finite-sample analogue of Buesing (2019) abduction-action
-#       -prediction. Under OLS with intercept the naive y_cf-mean reduces to
-#       MB because OLS residuals sum to zero. The CF estimator below adds an
-#       importance-weighted residual correction, which is the doubly-robust
-#       form. It is unbiased under correct propensity OR correct model.
+#   CF  Residual-corrected estimator labelled "CF" in the tex.
+#       This is algebraically the classical doubly-robust / AIPW estimator
+#       (Robins-Rotnitzky-Zhao 1994; Bang-Robins 2005), not the Buesing
+#       (2019) abduction-action-prediction estimator, which operates at the
+#       trajectory level under a known/learned SCM and is not implemented
+#       here. The naive Buesing-style average of
+#         y'_i = hat_f(x_i, pi_tilde(x_i)) + (y_i - hat_f(x_i, a_i))
+#       collapses to V_MB under OLS with intercept because residuals sum to
+#       zero. Weighting the residual by the importance ratio rho_i restores
+#       bias cancellation, yielding the AIPW form below. Unbiased under
+#       correct propensity OR correct outcome model.
 # Two scenarios: well-specified outcome model and misspecified outcome model.
+# The propensity is held fixed at the true DGP value in both scenarios, so
+# only the outcome-model side of double robustness is stressed here.
 
 import argparse
 import os

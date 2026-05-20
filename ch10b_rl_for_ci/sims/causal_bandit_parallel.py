@@ -52,6 +52,7 @@
 #   causal_bandit_regret_vs_T.png  -- simple regret vs horizon T at fixed m, N
 #   causal_bandit_mabuc.png        -- cumulative regret in greedy casino
 #   causal_bandit_results.tex      -- consolidated table at T=400, m grid
+#   causal_bandit_mabuc_results.tex-- MABUC three-variant cumulative-regret table
 #   causal_bandit_stdout.txt       -- numerical log (run via shell redirect)
 
 import argparse
@@ -871,6 +872,36 @@ def make_table(data):
         f.write('\n'.join(tex) + '\n')
     print(f"  Table saved: {out}")
 
+    # MABUC three-variant cumulative-regret table at fixed horizon T.
+    res_mabuc = data['mabuc']
+    T_mabuc = res_mabuc['T']
+    n_mabuc = res_mabuc['n_seeds']
+    final_ts = res_mabuc['ts'][:, -1]
+    final_cctp = res_mabuc['cctp'][:, -1]
+    final_tsc = res_mabuc['tsc'][:, -1]
+    mabuc_rows = [
+        ('Vanilla Thompson sampling',
+         final_ts.mean(), final_ts.std() / np.sqrt(n_mabuc)),
+        (r'Full $\mathrm{TS}_C$ \citep{bareinboim2015mabuc}',
+         final_tsc.mean(), final_tsc.std() / np.sqrt(n_mabuc)),
+        ('Context-conditional TS (CCTS)',
+         final_cctp.mean(), final_cctp.std() / np.sqrt(n_mabuc)),
+    ]
+    # Sort ascending by mean cumulative regret (best last? rank-order: best first)
+    mabuc_rows_sorted = sorted(mabuc_rows, key=lambda r: r[1])
+    tex2 = [r'\begin{tabular}{lr}']
+    tex2.append(r'\toprule')
+    tex2.append(r'Algorithm & Cumulative regret at $T = ' + str(T_mabuc) + r'$ \\')
+    tex2.append(r'\midrule')
+    for label, mean, se in mabuc_rows_sorted:
+        tex2.append(f'{label} & {mean:.2f} ({se:.2f}) ' + r'\\')
+    tex2.append(r'\bottomrule')
+    tex2.append(r'\end{tabular}')
+    out2 = os.path.join(OUTPUT_DIR, 'causal_bandit_mabuc_results.tex')
+    with open(out2, 'w') as f:
+        f.write('\n'.join(tex2) + '\n')
+    print(f"  Table saved: {out2}")
+
 
 def print_stdout(data):
     res_m = data['regret_vs_m']
@@ -928,7 +959,8 @@ def print_stdout(data):
               f' regret units ({(1 - final_cctp.mean()/max(final_tsc.mean(), 1e-9))*100:.1f}%).')
     print()
     print('  Output files:')
-    for f in ('causal_bandit_combined.png', 'causal_bandit_results.tex'):
+    for f in ('causal_bandit_combined.png', 'causal_bandit_results.tex',
+              'causal_bandit_mabuc_results.tex'):
         print('    ', os.path.join(OUTPUT_DIR, f))
 
 

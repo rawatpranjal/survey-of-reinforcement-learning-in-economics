@@ -2,7 +2,7 @@
 Brock-Mirman: BRM vs FQE on Offline Data
 Demonstrates Fujimoto (2022): lower Bellman error != lower value error
 alpha=0.36, beta=0.96, N_K=50, N_S=100, N_A=50, gamma=0.96
-Offline dataset: T=2000 | Training: 50,000 steps x 3 seeds
+Offline dataset: T=2000 | Training: 50,000 steps x 10 seeds
 ======================================================================
 
 Capital grid: [0.0100, 0.3310], log-spaced, N=50
@@ -22,7 +22,7 @@ Capital grid: [0.0100, 0.3310], log-spaced, N=50
   Coverage: 0.2%
   Reward stats (shifted): mean=0.3459, min=-0.4903, max=0.5063
 
-[4] Training BRM (3 seeds x 50,000 steps)...
+[4] Training BRM (10 seeds x 50,000 steps)...
 
   Seed 42:
     Final BE on D:       0.000209
@@ -45,7 +45,56 @@ Capital grid: [0.0100, 0.3310], log-spaced, N=50
     Final pol. agree:    8.0%
     Pearson r(BE, VE):   0.022
 
-[5] Training FQE (3 seeds x 50,000 steps)...
+  Seed 314:
+    Final BE on D:       0.000002
+    Final VE (all s,a):  7.477383
+    VE/BE ratio:         3699667.10
+    Final pol. agree:    6.0%
+    Pearson r(BE, VE):   -0.034
+
+  Seed 271:
+    Final BE on D:       0.000004
+    Final VE (all s,a):  7.504891
+    VE/BE ratio:         2130955.67
+    Final pol. agree:    7.0%
+    Pearson r(BE, VE):   -0.262
+
+  Seed 1618:
+    Final BE on D:       0.000044
+    Final VE (all s,a):  7.622838
+    VE/BE ratio:         173007.09
+    Final pol. agree:    7.0%
+    Pearson r(BE, VE):   -0.279
+
+  Seed 1000:
+    Final BE on D:       0.000100
+    Final VE (all s,a):  7.700630
+    VE/BE ratio:         77051.82
+    Final pol. agree:    7.0%
+    Pearson r(BE, VE):   -0.311
+
+  Seed 2718:
+    Final BE on D:       0.000107
+    Final VE (all s,a):  7.256212
+    VE/BE ratio:         67560.17
+    Final pol. agree:    6.0%
+    Pearson r(BE, VE):   0.185
+
+  Seed 9001:
+    Final BE on D:       0.000001
+    Final VE (all s,a):  7.210619
+    VE/BE ratio:         6194368.90
+    Final pol. agree:    9.0%
+    Pearson r(BE, VE):   0.410
+
+  Seed 31415:
+    Final BE on D:       0.000321
+    Final VE (all s,a):  7.240904
+    VE/BE ratio:         22560.72
+    Final pol. agree:    7.0%
+    Pearson r(BE, VE):   0.018
+
+[5] Training FQE (10 seeds x 50,000 steps)...
 
   Seed 42:
     Final BE on D:       0.203655
@@ -68,6 +117,55 @@ Capital grid: [0.0100, 0.3310], log-spaced, N=50
     Final pol. agree:    6.0%
     Pearson r(BE, VE):   0.513
 
+  Seed 314:
+    Final BE on D:       0.113039
+    Final VE (all s,a):  7.193285
+    VE/BE ratio:         63.64
+    Final pol. agree:    6.0%
+    Pearson r(BE, VE):   0.901
+
+  Seed 271:
+    Final BE on D:       0.518403
+    Final VE (all s,a):  7.890764
+    VE/BE ratio:         15.22
+    Final pol. agree:    6.0%
+    Pearson r(BE, VE):   0.786
+
+  Seed 1618:
+    Final BE on D:       0.269654
+    Final VE (all s,a):  7.852991
+    VE/BE ratio:         29.12
+    Final pol. agree:    6.0%
+    Pearson r(BE, VE):   0.889
+
+  Seed 1000:
+    Final BE on D:       0.141031
+    Final VE (all s,a):  7.299968
+    VE/BE ratio:         51.76
+    Final pol. agree:    6.0%
+    Pearson r(BE, VE):   0.815
+
+  Seed 2718:
+    Final BE on D:       0.078282
+    Final VE (all s,a):  7.104838
+    VE/BE ratio:         90.76
+    Final pol. agree:    6.0%
+    Pearson r(BE, VE):   0.936
+
+  Seed 9001:
+    Final BE on D:       0.124872
+    Final VE (all s,a):  6.929626
+    VE/BE ratio:         55.49
+    Final pol. agree:    6.0%
+    Pearson r(BE, VE):   0.754
+
+  Seed 31415:
+    Final BE on D:       0.178531
+    Final VE (all s,a):  7.151430
+    VE/BE ratio:         40.06
+    Final pol. agree:    6.0%
+    Pearson r(BE, VE):   0.629
+
 [6] Running OLS expanding window...
   Window: 10–1990 obs | Noise std: 0.3
   Initial OOS MSE: 0.109373, Final OOS MSE: 0.095896
@@ -84,22 +182,37 @@ Method     Seed     Final BE     Final VE     VE/BE  Pol.Agree   r(BE,VE)
 BRM          42     0.000209     7.060712  33808.38       8.0%      0.170
 BRM         123     0.000291     7.450106  25629.99       7.0%     -0.315
 BRM         777     0.000312     7.278114  23319.57       8.0%      0.022
-BRM mean    ---     0.000271     7.262977  27585.98        ---        ---
+BRM         314     0.000002     7.477383 3699667.10       6.0%     -0.034
+BRM         271     0.000004     7.504891 2130955.67       7.0%     -0.262
+BRM        1618     0.000044     7.622838 173007.09       7.0%     -0.279
+BRM        1000     0.000100     7.700630  77051.82       7.0%     -0.311
+BRM        2718     0.000107     7.256212  67560.17       6.0%      0.185
+BRM        9001     0.000001     7.210619 6194368.90       9.0%      0.410
+BRM       31415     0.000321     7.240904  22560.72       7.0%      0.018
+BRM mean    ---     0.000139     7.380241 1244792.94        ---        ---
 
 FQE          42     0.203655     6.926888     34.01       6.0%      0.518
 FQE         123     0.217327     7.465210     34.35       6.0%      0.686
 FQE         777     0.242506     7.281134     30.02       6.0%      0.513
-FQE mean    ---     0.221163     7.224411     32.80        ---        ---
+FQE         314     0.113039     7.193285     63.64       6.0%      0.901
+FQE         271     0.518403     7.890764     15.22       6.0%      0.786
+FQE        1618     0.269654     7.852991     29.12       6.0%      0.889
+FQE        1000     0.141031     7.299968     51.76       6.0%      0.815
+FQE        2718     0.078282     7.104838     90.76       6.0%      0.936
+FQE        9001     0.124872     6.929626     55.49       6.0%      0.754
+FQE       31415     0.178531     7.151430     40.06       6.0%      0.629
+FQE mean    ---     0.208730     7.309613     44.44        ---        ---
 
 OLS         --- OOS MSE=0.095896  OOS R²=0.1118  r=-1.000
 
 ================================================================================
 VERIFICATION (Fujimoto 2022 Table 1 pattern)
 ================================================================================
-  [PASS] BRM BE < FQE BE: 0.000271 vs 0.221163
-  [PASS] BRM VE > FQE VE: 7.262977 vs 7.224411
-  [PASS] BRM VE/BE > FQE VE/BE: 27585.98 vs 32.80
+  [PASS] BRM BE < FQE BE: 0.000139 vs 0.208730
+  [PASS] BRM VE > FQE VE: 7.380241 vs 7.309613
+  [PASS] BRM VE/BE > FQE VE/BE: 1244792.94 vs 44.44
   [PASS] OLS r(MSE,R²) < -0.90: -1.000
+  Cache saved: /Users/pranjal/Code/rl/ch03b_deeprl_practice/sims/cache/brock_mirman_bellman.pkl
 
 [7] Generating figure...
 
