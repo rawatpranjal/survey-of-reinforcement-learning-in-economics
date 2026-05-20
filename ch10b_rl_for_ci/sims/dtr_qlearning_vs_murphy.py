@@ -334,7 +334,12 @@ SHARED_CONFIG_HD = {
 }
 ORACLE_HD_CONFIG = {**SHARED_CONFIG_HD}
 FQI_HD_CONFIG = {**SHARED_CONFIG_HD, 'N_FQI_EPOCHS': N_FQI_EPOCHS}
-DQN_HD_CONFIG = {**SHARED_CONFIG_HD, 'N_DQN_STEPS': N_DQN_STEPS, 'BATCH_SIZE_HD': BATCH_SIZE_HD}
+# 'seed_scheme' makes the per-seed RNG offset part of the cache key. The DQN
+# cohort uses default_rng(N*100+s) (paired with NN-FQI); the literal offset is
+# not otherwise hashed, so a seed-scheme change must bump this string or the
+# stale cache silently survives.
+DQN_HD_CONFIG = {**SHARED_CONFIG_HD, 'N_DQN_STEPS': N_DQN_STEPS, 'BATCH_SIZE_HD': BATCH_SIZE_HD,
+                 'seed_scheme': 'cohort_N100_paired_v2'}
 
 
 def generate_cohort_hd(N, rng):
