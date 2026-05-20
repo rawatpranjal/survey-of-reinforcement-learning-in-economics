@@ -91,7 +91,7 @@ With known manipulation cost matrix $A$, the strategic pricing algorithm achieve
 
 When $A$ is unknown, the seller can still recover $O(d\sqrt{T/\tau})$ regret by tracking repeat buyers across exploration and exploitation phases, where $\tau$ is the fraction of buyers who appear in both phases (Theorem 3). Higher repeat rates mean more matched pairs for estimating manipulation behavior.
 
-Incentive compatibility matters even in settings where the seller is ``just'' learning demand.\footnote{\citet{Agrawal2024ref} document a related phenomenon in pricing with reference effects. If consumers anchor on past prices, a static pricing policy that ignores reference dependence accumulates linear regret $\Omega(T)$. \citet{Chen2025fairness} show that imposing fairness constraints (requiring similar prices for similar customers) raises the regret floor to $\Theta(T^{2/3})$, a social cost of equitable treatment.}
+Incentive compatibility matters even in settings where the seller is ``just'' learning demand.\footnote{\citet{Agrawal2024ref} document a related phenomenon in pricing with reference effects. If consumers anchor on past prices, a static pricing policy that ignores reference dependence accumulates linear regret $\Omega(T)$. \citet{Cohen2025fairness} study dynamic pricing under group fairness constraints (prices may depend on context but must satisfy ex ante fairness across groups) and show, via an infrequently updated UCB algorithm with a matching lower bound, that the constrained problem retains $\tilde{\Theta}(\sqrt{T})$ minimax regret; fairness does not worsen the regret order relative to unconstrained contextual pricing.}
 
 \subsection{Comparison of Regret Rates}
 \label{sec:comparison}
