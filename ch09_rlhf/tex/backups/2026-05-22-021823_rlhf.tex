@@ -52,90 +52,32 @@ The growing family of DPO variants is best read economically by asking what part
 \label{fig:rlhf_dpo_pipeline}
 \end{figure}
 
-\subsection{Social Choice and Whose Preferences}
-\label{sec:social_choice}
+\subsection{AI Alignment as Economics}
+\label{sec:ai_alignment_economics}
 
 RLHF turns alignment into an economics problem: elicit preferences, aggregate them across people, design incentives for truthful feedback, and interpret the learned object. The phrase ``alignment tax'' appears in the assistant-alignment literature as a warning that optimizing for helpfulness, harmlessness, and honesty can trade off against other capabilities \citep{askell2021general}; \citet{ouyang2022training} provide concrete InstructGPT evidence of benchmark regressions on tasks such as SQuAD, DROP, and HellaSwag. That evidence should not be read as a law of nature. It is an empirical frontier of a particular training recipe, model class, and evaluation set.
 
+\subsubsection{Social Choice and Whose Preferences}
+
 The central welfare question is whose preferences are being aligned to. If one reward model is trained on pooled labels from a non-representative group of contractors, the resulting policy optimizes an implicit aggregation rule, not society's preferences. Social choice supplies the vocabulary for this problem: alternatives, voters, ranking rules, impossibility theorems, strategic reports, minority protection, and interpersonal aggregation \citep{conitzer2024socialchoice,mishra2023socialchoice}. Distributional preference learning and axiomatic analyses show that standard BTL aggregation can encode Borda-like rules or fail desirable fairness and consistency conditions \citep{siththaranjan2024distributional,ge2024axioms}. Alternatives such as personalization, MaxMin-RLHF, Nash learning from human feedback, and maximal-lottery alignment make the aggregation rule more explicit, though some of these connections remain preprint-level rather than settled practice \citep{park2024heterogeneous,chakraborty2024maxmin,munos2023nash,maurarivero2025maximal}.
 
-\subsection{Mechanism Design for Feedback}
-
-Feedback is not passively observed; it is elicited through a mechanism. Labelers may be inattentive, strategic, ideologically motivated, or selected by the platform's contracting process. Mechanism design therefore enters before the reward model is trained. VCG-style fine-tuning formulations ask how to aggregate multiple reward models when participants can benefit from manipulating the training rule \citep{sun2024mechanism}. Strategyproof RLHF studies the same issue for preference reports, with a tradeoff between incentive compatibility and the quality of the final policy \citep{kleinebuening2025strategyproof}. Older peer-prediction mechanisms such as Bayesian truth serum and output-agreement methods show how payments can elicit truthful subjective signals when no ground truth is immediately observable \citep{prelec2004bayesian,miller2005eliciting}. For RLHF, this means the data-generating process is not a nuisance detail; it determines which preferences are observed and how costly truthful feedback is.
-
-\subsection{Structural Identification}
-
-Finally, preference optimization is not welfare analysis unless the learned reward has a structural interpretation. Bradley-Terry and DPO identify reward differences only through observed pairwise comparisons, up to normalizations and only on the covered comparison support. IRL identification results show that many rewards can rationalize the same behavior or preferences, and that entropy regularization, extra environments, or downstream invariance restrictions are needed to recover sharper objects \citep{cao2021identifiability,skalse2023invariance,knox2022preference}. Economically, the genealogy runs from McFadden logit choice \citep{mcfadden:1973}, through Rust-style dynamic discrete choice \citep{rust1994structural,rust1996numerical}, to maximum-entropy IRL \citep{Ziebart2008}, and finally to DPO's log-odds reparameterization \citep{rafailov2023direct}. Recent econometric work makes this bridge explicit, but still as an emerging working-paper literature rather than a settled textbook synthesis \citep{vanderlaan2025efficient}. The practical lesson is conservative: RLHF can produce useful policies, but the reward object is partially identified, aggregation-dependent, and limited by the offline support of the comparison data.
-
-\subsection{Constitutional AI, RLAIF, and Scalable Oversight}
-
-Three departures from the canonical RLHF pipeline change the source of preference labels rather than the optimization objective. Constitutional AI \citep{bai2022constitutional} substitutes a short list of written principles for human harmlessness annotations, training the model to critique and revise its own outputs against the constitution and then distilling the resulting AI-generated comparisons into a preference model. RLAIF \citep{lee2023rlaif} pushes the substitution one step further, using an off-the-shelf language model to label preference pairs directly, with reported parity against human-labelled RLHF on summarization and dialogue tasks and a direct variant that scores responses online during reinforcement learning. Scalable oversight \citep{bowman2022oversight} operates one level up, asking whether human-model teams can supervise problems on which unaided humans underperform, with sandwiching experiments that bracket model capability between layperson and expert performance. Each method trades one cost for another, replacing large human-labelling budgets with the developer's specification of principles, the labeler-model's training distribution, or the design of human-AI interaction protocols. The substitution scrambles the identification question raised in the preceding subsections, since the encoded preferences no longer trace back to a labelled human-population sample but to whichever artifact is doing the labelling. Methodologically this sits in the same family as mechanism design with information acquisition, where the choice of signal technology changes which preferences are even observable.
-
-\subsection{Revealed Preference Tests and Axiom-Aware Aggregation}
-\label{sec:revealed_pref_axioms}
-
-\subsubsection{Revealed-preference tests of LLMs}
+\subsubsection{Revealed Preference Tests of LLMs}
 
 A related literature treats language models themselves as economic agents and asks whether their choices satisfy revealed-preference restrictions. Budget-allocation experiments, consumer-preference replications, moral-choice tasks, and Bayesian decision problems find that LLMs can look rational in some narrow domains and fragile in others \citep{chen2023rationalitygpt,golisingh2024preferences,seror2024moral,murawatrawat2025bayesian}. These tests are useful because they translate vague alignment claims into falsifiable restrictions, such as GARP consistency or proximity to a Bayes rule. But the results are prompt-, model-, version-, and domain-sensitive. They should be used as diagnostics of a trained system, not as evidence that an LLM has a stable utility function in the welfare-economics sense.
 
 The revealed-preference axioms invoked in these tests carry a long economics lineage. \citet{samuelson1938consumption} introduced the weak axiom for choice over budget sets, \citet{houthakker1950revealed} strengthened it to the strong axiom by closing transitivity over chains, \citet{afriat1967construction} proved that finite choice data admit a concave utility rationalization if and only if they satisfy GARP, and \citet{varian1982nonparametric} laid out the nonparametric testing procedures that empirical revealed-preference work still uses. Transporting this machinery to language models raises a translation question, since the classical theory presumes a single agent choosing across explicit budget sets while LLM tests treat prompt context as a budget analogue and generated token sequences as the chosen bundle. Standard RLHF further imposes Bradley-Terry pairwise consistency on the reward model, an assumption strictly stronger than GARP because it forces stochastic transitivity and a parametric latent reward \citep{raheja2026unification}. A recent wave of methods relaxes this assumption along different axes. \citet{liu2024comal} and \citet{zhang2025omd} cast alignment as a two-player constant-sum game over policies and converge to a Nash policy that drops transitivity, accommodating cyclic and population-aggregated preferences. \citet{tang2024gpo} unifies DPO, IPO, and SLiC inside a convex family of offline losses and shows that the effective regularization differs from a global KL anchor, which reframes the question of which preference axioms each loss actually encodes. \citet{golz2025distortion} imports Procaccia-style distortion bounds from social choice and proves that fitting a single Bradley-Terry reward model to heterogeneous user preferences incurs unavoidable welfare loss, while Nash Learning attains the minimax-optimal distortion bound. The empirical gap is that no current study runs GARP or SARP diagnostics directly on policies produced by these relaxed objectives, so the revealed-preference question for post-alignment language models is reopened rather than closed.
 
-\subsubsection{Linear social choice and the failure of Bradley-Terry MLE}
-\label{sec:linear_social_choice}
+\subsubsection{Mechanism Design for Feedback}
 
-\citet{ge2024axioms} cast the reward-modeling stage of RLHF as a social-choice problem in which a small set of candidates carry feature vectors and reward functions are linear in those features. Let $C = \{c_1, \ldots, c_m\}$ be the candidate set, $x_c \in \mathbb{R}^d$ the feature vector of candidate $c$, and a parameter $\theta \in \mathbb{R}^d$ define the reward $r_\theta(c) = \langle \theta, x_c \rangle$. Each voter $i$ has a private parameter $\theta_i$ whose induced ranking serves as their preference report; the aggregator observes pairwise comparisons sampled from these rankings and outputs a single $\theta^*$. Two axioms from voting theory carry over.
+Feedback is not passively observed; it is elicited through a mechanism. Labelers may be inattentive, strategic, ideologically motivated, or selected by the platform's contracting process. Mechanism design therefore enters before the reward model is trained. VCG-style fine-tuning formulations ask how to aggregate multiple reward models when participants can benefit from manipulating the training rule \citep{sun2024mechanism}. Strategyproof RLHF studies the same issue for preference reports, with a tradeoff between incentive compatibility and the quality of the final policy \citep{kleinebuening2025strategyproof}. Older peer-prediction mechanisms such as Bayesian truth serum and output-agreement methods show how payments can elicit truthful subjective signals when no ground truth is immediately observable \citep{prelec2004bayesian,miller2005eliciting}. For RLHF, this means the data-generating process is not a nuisance detail; it determines which preferences are observed and how costly truthful feedback is.
 
-\begin{definition}[Pareto optimality]
-\label{def:po_axiom}
-A linear rank aggregation rule satisfies \emph{Pareto optimality} (PO) if, whenever every voter ranks $a$ above $b$ in the input profile, the output ranking also places $a$ above $b$.
-\end{definition}
+\subsubsection{Structural Identification}
 
-\begin{definition}[Pairwise majority consistency]
-\label{def:pmc_axiom}
-A ranking $\sigma$ is the \emph{pairwise majority consistent} ranking for a profile if for every pair $(a, b)$, $\sigma$ ranks $a$ above $b$ if and only if a majority of voters does. A rule satisfies PMC if it outputs this ranking whenever one exists and is feasible.
-\end{definition}
+Finally, preference optimization is not welfare analysis unless the learned reward has a structural interpretation. Bradley-Terry and DPO identify reward differences only through observed pairwise comparisons, up to normalizations and only on the covered comparison support. IRL identification results show that many rewards can rationalize the same behavior or preferences, and that entropy regularization, extra environments, or downstream invariance restrictions are needed to recover sharper objects \citep{cao2021identifiability,skalse2023invariance,knox2022preference}. Economically, the genealogy runs from McFadden logit choice \citep{mcfadden:1973}, through Rust-style dynamic discrete choice \citep{rust1994structural,rust1996numerical}, to maximum-entropy IRL \citep{Ziebart2008}, and finally to DPO's log-odds reparameterization \citep{rafailov2023direct}. Recent econometric work makes this bridge explicit, but still as an emerging working-paper literature rather than a settled textbook synthesis \citep{vanderlaan2025efficient}. The practical lesson is conservative: RLHF can produce useful policies, but the reward object is partially identified, aggregation-dependent, and limited by the offline support of the comparison data.
 
-\begin{theorem}[Theorem 3.1 of \citet{ge2024axioms}]
-\label{thm:bt_mle_failure}
-Any loss-based linear rank aggregation rule whose loss function is weakly convex and nondecreasing, or strictly convex, with $\inf_x \ell(x) < \ell(0)$, fails both Pareto optimality and pairwise majority consistency. The standard Bradley-Terry maximum-likelihood reward model is one such rule.
-\end{theorem}
+\subsubsection{Constitutional AI, RLAIF, and Scalable Oversight}
 
-The construction in the proof uses six candidates with feature vectors $x_a = (2,1)$, $x_b = (1,1)$, $x_c = (0,0)$, $x_{a'} = x_a + (-\varepsilon, 0)$, $x_{b'} = x_b + (-\varepsilon, 0)$, $x_{c'} = x_c + (-\varepsilon, \delta\varepsilon)$, and two voter types whose linear parameters generate conflicting rankings. The PO violation appears at the pair $(c', c)$, on which both voter types agree but the BT-MLE optimum places $c$ above $c'$ for sufficiently small $\varepsilon$.
-
-\subsubsection{Leximax Copeland subject to Pareto optimality}
-\label{sec:lcpo}
-
-To repair the axiomatic failure, \citet{ge2024axioms} propose a rule that adapts the classical Copeland voting rule to the linear-feature setting. For a profile $\pi$ and pair $(a, b)$, let $w_{a \succ b}(\pi)$ denote the fraction of voters who rank $a$ above $b$. The Copeland score of $a$ is
-\[
-C(a) = |\{b \in \mathcal{C} : w_{a \succ b}(\pi) > 1/2 \}|.
-\]
-The leximax Copeland rule ranks candidates by descending Copeland score, breaking ties by lexicographic comparison of the sorted margin vectors. Because not every ranking is feasible in the linear setting, the rule is implemented sequentially. For position $r + 1$ it picks the unranked candidate with the highest Copeland score for which there exists a parameter $\theta$ consistent with the partial ranking so far. The variant \emph{leximax Copeland subject to PO} (LCPO) additionally enforces Pareto-dominance constraints, refusing to rank a Pareto-dominated candidate above its dominator. The whole rule reduces to a sequence of $\mathcal{O}(m^2)$ linear feasibility programs.
-
-\begin{theorem}[Theorem 4.3 of \citet{ge2024axioms}]
-\label{thm:lcpo}
-LCPO satisfies Pareto optimality, pairwise majority consistency, majority consistency, and winner monotonicity.
-\end{theorem}
-
-\subsubsection{Simulation Study: Axiom-Aware Aggregation on Heterogeneous Voters}
-\label{sec:sim_axiom_aware}
-
-We instantiate the construction above with $\varepsilon = 0.01$, $\delta = 2$, voter parameters $(1, 1)$ and $(-1, 0)$, population fractions $p = 0.6$ and $1 - p$, and Bradley-Terry label noise at scale $\beta = 50$. Two aggregators are compared. The BT-MLE aggregator fits a linear-in-features parameter $\theta$ by maximum likelihood on the pooled pairwise sample. The LCPO aggregator estimates pairwise majorities, computes Copeland scores, and applies the sequential feasibility procedure described above. We sweep $N \in \{5, 10, 20, 50, 100, 500, 2000\}$ comparisons per pair across thirty seeds, scoring outputs against the Pareto-dominance relation $\{(c', c)\}$ and the unique PMC ranking $a \succ a' \succ b \succ b' \succ c' \succ c$.
-
-Figure~\ref{fig:axiom_aware_aggregation} and Table~\ref{tab:axiom_aware_aggregation} report the results. As $N$ grows the BT-MLE aggregator violates both PO and PMC on every seed by $N = 2000$, exactly the asymptotic behavior predicted by Theorem~\ref{thm:bt_mle_failure}, while LCPO satisfies PO on every seed at every sample size and satisfies PMC on every seed by $N = 100$. The worst-group utility of the top-ranked candidate converges to $-2$ for both methods. The axiomatic differential is therefore not an efficiency gain in the dominant winner but a guarantee on consistency with the elementary social-choice criteria that BT-MLE silently abandons under heterogeneous preferences.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=\textwidth]{../ch09_rlhf/sims/axiom_aware_aggregation.png}
-\caption[Axiom violation rates and worst-group utility versus sample size]{Axiom violation rates (left) and worst-group utility of the top-ranked candidate (right) versus pairwise comparisons per pair $N$, mean and one standard error over thirty seeds. BT-MLE PO and PMC violation rates rise to one as $N$ grows, in line with Theorem~\ref{thm:bt_mle_failure}; LCPO violation rates remain at zero (PO by construction) or fall to zero (PMC by $N = 100$).}
-\label{fig:axiom_aware_aggregation}
-\end{figure}
-
-\begin{table}[htbp]
-\centering
-\caption[Aggregator comparison at $N=2000$ comparisons per pair]{Aggregator comparison at $N = 2000$ comparisons per pair, mean and standard error over thirty seeds. PO viol. and PMC viol. are fractions of seeds on which the output ranking violates the corresponding axiom. Worst-group util. is the type-two utility of the top-ranked candidate. Modal top names the candidate most frequently ranked first.}
-\label{tab:axiom_aware_aggregation}
-\input{../ch09_rlhf/sims/axiom_aware_aggregation.tex}
-\end{table}
+Three departures from the canonical RLHF pipeline change the source of preference labels rather than the optimization objective. Constitutional AI \citep{bai2022constitutional} substitutes a short list of written principles for human harmlessness annotations, training the model to critique and revise its own outputs against the constitution and then distilling the resulting AI-generated comparisons into a preference model. RLAIF \citep{lee2023rlaif} pushes the substitution one step further, using an off-the-shelf language model to label preference pairs directly, with reported parity against human-labelled RLHF on summarization and dialogue tasks and a direct variant that scores responses online during reinforcement learning. Scalable oversight \citep{bowman2022oversight} operates one level up, asking whether human-model teams can supervise problems on which unaided humans underperform, with sandwiching experiments that bracket model capability between layperson and expert performance. Each method trades one cost for another, replacing large human-labelling budgets with the developer's specification of principles, the labeler-model's training distribution, or the design of human-AI interaction protocols. The substitution scrambles the identification question raised in the preceding subsubsections, since the encoded preferences no longer trace back to a labelled human-population sample but to whichever artifact is doing the labelling. Methodologically this sits in the same family as mechanism design with information acquisition, where the choice of signal technology changes which preferences are even observable.
 
 \subsection{Simulation Study: Preference Learning in Job Search}
 

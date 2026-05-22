@@ -1,0 +1,19 @@
+  Cache hit: shared
+  Cache hit: BT_MLE
+  Cache hit: Leximax_Copeland
+  Figure: /Users/pranjal/Code/rl/ch09_rlhf/sims/axiom_aware_aggregation.png
+  Table: /Users/pranjal/Code/rl/ch09_rlhf/sims/axiom_aware_aggregation.tex
+
+Construction: 6 candidates, eps=0.01, delta=2.0, p=0.6, beta=50.0
+PMC (majority) ranking: ['a', 'ap', 'b', 'bp', 'cp', 'c']
+Pareto-dominance pairs (i dominates j): [('cp', 'c')]
+
+     N |   BT_PO  BT_PMC   CP_PO  CP_PMC |   BT_wu   CP_wu
+----------------------------------------------------------
+     5 |   0.600   0.833   0.000   0.500 |  -1.531  -1.328
+    10 |   0.533   0.700   0.000   0.467 |  -1.832  -1.462
+    20 |   0.400   0.500   0.000   0.367 |  -1.899  -1.596
+    50 |   0.600   0.633   0.000   0.133 |  -1.966  -1.865
+   100 |   0.767   0.767   0.000   0.000 |  -2.000  -2.000
+   500 |   0.933   0.933   0.000   0.000 |  -2.000  -2.000
+  2000 |   1.000   1.000   0.000   0.000 |  -2.000  -2.000
