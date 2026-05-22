@@ -387,21 +387,21 @@ percent of the return. Part of the gap between the LP value
 and the Q-learning returns is therefore truncation bias
 rather than policy suboptimality.}
 Unconstrained Q-learning converges
-near the DP optimum (return $254 \pm 6$ versus 273) but
+near the DP optimum (return $258 \pm 3$ versus 273) but
 violates the carbon budget by a factor of three
-(cost $95 \pm 5$ versus $d = 31$).
+(cost $99 \pm 3$ versus $d = 31$).
 The learned multiplier rises from zero and settles at
-$\lambda \approx 1.39$, near the analytical shadow price
-$\lambda^* = 1.20$. Across the five seeds the trajectory
-is nearly monotone: the peak value is $1.407 \pm 0.003$,
+$\lambda \approx 1.40$, near the analytical shadow price
+$\lambda^* = 1.20$. Across the ten seeds the trajectory
+is nearly monotone: the peak value is $1.405 \pm 0.002$,
 within one percent of the settling value, so naive dual
 ascent here exhibits little of the overshoot that
 \citet{Stooke2020}'s PID controller is designed to dampen.
-The final $\lambda$ sits about sixteen percent above
+The final $\lambda$ sits about seventeen percent above
 $\lambda^*$, and the corresponding policy holds emissions
-at $23 \pm 2$, below the budget of 31, leaving the
+at $28 \pm 4$, below the budget of 31, leaving the
 Lagrangian agent slightly too conservative
-(return $172 \pm 3$ versus the LP optimum of 186).
+(return $178 \pm 4$ versus the LP optimum of 186).
 The LP optimal policy is stochastic,
 mixing dirty and clean energy at a single state; Q-learning
 recovers a deterministic approximation.
@@ -410,7 +410,7 @@ recovers a deterministic approximation.
 \centering
 \caption{Carbon-constrained production results. Budget
 $d = 31.35$. Q-learning rows report means and standard
-errors over five seeds.}
+errors over ten seeds.}
 \label{tab:carbon_results}
 \input{../ch11_dist_robust_constrained/sims/carbon_constrained_production_table}
 \end{table}
@@ -422,7 +422,7 @@ errors over five seeds.}
 with the LP shadow price $\lambda^*$ as the dashed reference.
 (b) Mean discounted return for unconstrained and Lagrangian
 Q-learning, with the constrained LP optimum as the dashed reference.
-Solid lines are means over five seeds; shaded bands are
+Solid lines are means over ten seeds; shaded bands are
 $\pm 1$ standard error.}
 \label{fig:carbon_convergence}
 \end{figure}

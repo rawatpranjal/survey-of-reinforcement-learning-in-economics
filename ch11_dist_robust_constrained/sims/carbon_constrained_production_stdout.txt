@@ -8,7 +8,7 @@ States: 18, Actions: 8
   LP return: 186.40, LP cost: 31.35
   lambda*:   1.2000
 
---- Unconstrained Q-Learning (5 seeds) ---
+--- Unconstrained Q-Learning (10 seeds) ---
   seed 0:
     QL ep  10000: ret=259.4, cost=102.24
     QL ep  20000: ret=265.7, cost=102.47
@@ -34,10 +34,35 @@ States: 18, Actions: 8
     QL ep  20000: ret=232.5, cost=78.27
     QL ep  30000: ret=256.2, cost=98.31
     final return: 256.78, cost: 98.16
-  mean return: 253.74 +/- 5.74
-  mean cost:   95.03 +/- 4.65
+  seed 5:
+    QL ep  10000: ret=247.2, cost=92.63
+    QL ep  20000: ret=260.0, cost=106.33
+    QL ep  30000: ret=253.6, cost=100.40
+    final return: 255.46, cost: 100.68
+  seed 6:
+    QL ep  10000: ret=249.7, cost=88.03
+    QL ep  20000: ret=241.6, cost=91.92
+    QL ep  30000: ret=261.1, cost=105.66
+    final return: 262.60, cost: 105.61
+  seed 7:
+    QL ep  10000: ret=268.2, cost=101.73
+    QL ep  20000: ret=258.6, cost=100.13
+    QL ep  30000: ret=267.9, cost=104.98
+    final return: 269.38, cost: 105.10
+  seed 8:
+    QL ep  10000: ret=243.9, cost=92.12
+    QL ep  20000: ret=246.7, cost=95.90
+    QL ep  30000: ret=258.2, cost=101.95
+    final return: 259.99, cost: 102.23
+  seed 9:
+    QL ep  10000: ret=264.5, cost=104.80
+    QL ep  20000: ret=260.3, cost=101.71
+    QL ep  30000: ret=260.9, cost=102.04
+    final return: 261.96, cost: 102.06
+  mean return: 257.81 +/- 3.21
+  mean cost:   99.08 +/- 2.62
 
---- Lagrangian Q-Learning (5 seeds) ---
+--- Lagrangian Q-Learning (10 seeds) ---
   seed 0:
     QL-Lag ep  10000: ret=247.1, cost=88.27, lam=0.963
     QL-Lag ep  20000: ret=157.6, cost=17.03, lam=1.381
@@ -63,22 +88,47 @@ States: 18, Actions: 8
     QL-Lag ep  20000: ret=209.9, cost=56.96, lam=1.395
     QL-Lag ep  30000: ret=161.9, cost=20.43, lam=1.398
     final return: 163.06, cost: 20.45, lambda: 1.3983, lambda_peak: 1.4093
-  mean return: 172.47 +/- 3.07
-  mean cost:   23.41 +/- 2.38
-  mean lambda: 1.3938 +/- 0.0017
-  mean lambda peak: 1.4068 +/- 0.0030 (max over seeds: 1.4139)
+  seed 5:
+    QL-Lag ep  10000: ret=234.7, cost=76.37, lam=0.971
+    QL-Lag ep  20000: ret=171.6, cost=23.77, lam=1.382
+    QL-Lag ep  30000: ret=176.0, cost=24.98, lam=1.400
+    final return: 177.17, cost: 24.84, lambda: 1.4003, lambda_peak: 1.4037
+  seed 6:
+    QL-Lag ep  10000: ret=257.6, cost=96.32, lam=0.968
+    QL-Lag ep  20000: ret=172.9, cost=27.73, lam=1.398
+    QL-Lag ep  30000: ret=174.6, cost=23.84, lam=1.408
+    final return: 175.89, cost: 23.75, lambda: 1.4077, lambda_peak: 1.4101
+  seed 7:
+    QL-Lag ep  10000: ret=263.6, cost=104.36, lam=0.970
+    QL-Lag ep  20000: ret=188.7, cost=36.13, lam=1.390
+    QL-Lag ep  30000: ret=208.8, cost=55.02, lam=1.388
+    final return: 209.32, cost: 54.74, lambda: 1.3881, lambda_peak: 1.3953
+  seed 8:
+    QL-Lag ep  10000: ret=231.8, cost=83.90, lam=0.968
+    QL-Lag ep  20000: ret=165.0, cost=28.21, lam=1.392
+    QL-Lag ep  30000: ret=170.6, cost=22.84, lam=1.400
+    final return: 171.48, cost: 22.68, lambda: 1.3996, lambda_peak: 1.4013
+  seed 9:
+    QL-Lag ep  10000: ret=215.5, cost=58.96, lam=0.974
+    QL-Lag ep  20000: ret=174.7, cost=23.87, lam=1.377
+    QL-Lag ep  30000: ret=186.3, cost=41.13, lam=1.398
+    final return: 188.12, cost: 41.37, lambda: 1.3984, lambda_peak: 1.4079
+  mean return: 178.43 +/- 4.04
+  mean cost:   28.44 +/- 3.60
+  mean lambda: 1.3963 +/- 0.0019
+  mean lambda peak: 1.4052 +/- 0.0019 (max over seeds: 1.4139)
   Cache saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/cache/carbon_constrained_production.pkl
 
 Figure saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/carbon_constrained_production_convergence.png
 Table saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/carbon_constrained_production_table.tex
 
 ========================================================================
-Carbon budget d = 31.35   (5 seeds, mean +/- SE)
+Carbon budget d = 31.35   (10 seeds, mean +/- SE)
 Method                             Return           Cost  Budget         lambda
 ------------------------------------------------------------------------
 LP Oracle                           186.4          31.35       Y           1.20
-Unconstrained Q-learning      253.7+/-5.7     95.03+/-4.65       N             --
-Lagrangian Q-learning         172.5+/-3.1     23.41+/-2.38       Y     1.39+/-0.00
+Unconstrained Q-learning      257.8+/-3.2     99.08+/-2.62       N             --
+Lagrangian Q-learning         178.4+/-4.0     28.44+/-3.60       Y     1.40+/-0.00
 ------------------------------------------------------------------------
-Lagrangian lambda peak: mean 1.407 +/- 0.003, max over seeds 1.414
+Lagrangian lambda peak: mean 1.405 +/- 0.002, max over seeds 1.414
 ========================================================================
