@@ -58,7 +58,7 @@ EVAL_CONFIG = {
     'N_FINAL_EVAL': 5000,
 }
 
-SEEDS = [0, 1, 2, 3, 4]  # multi-seed: mean +/- SE reported over these seeds
+SEEDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]  # multi-seed: mean +/- SE reported over these seeds
 
 CONFIG = {**ENV_PARAMS, **QL_CONFIG, **EVAL_CONFIG, 'seeds': SEEDS, 'version': 13}
 
