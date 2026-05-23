@@ -9,7 +9,7 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-from sims.plot_style import apply_style, COLORS, BENCH_STYLE, FIG_SINGLE
+from sims.plot_style import apply_style, COLORS, BENCH_STYLE, FIG_SINGLE, FIG_DOUBLE
 from sims.sim_cache import compute_or_load, add_component_args, parse_force_set
 apply_style()
 import matplotlib.pyplot as plt
@@ -392,20 +392,28 @@ class MBPOPolicy(Paradigm):
 # Rollout + compute
 # ---------------------------------------------------------------------------
 
-def rollout(paradigm, params, T, gamma, seed):
+def rollout(paradigm, params, T, gamma, seed, track_traj=False):
     env = FisheryEnv(r=params['r'], K=params['K'], p=params['p'], c=params['c'],
                      sigma=params['sigma'], gamma=gamma, T=T, seed=seed)
     paradigm.reset(params, seed=seed)
     s = env.reset()
     rewards = np.zeros(T)
+    if track_traj:
+        s_traj = np.zeros(T)
+        h_traj = np.zeros(T)
     for t in range(T):
         h = paradigm.act(s, t)
+        if track_traj:
+            s_traj[t] = s
+            h_traj[t] = h
         s_next, r, done, _ = env.step(h)
         paradigm.observe(s, h, r, s_next)
         rewards[t] = r
         s = s_next
         if done:
             break
+    if track_traj:
+        return rewards, s_traj, h_traj
     return rewards
 
 
@@ -476,10 +484,16 @@ def compute_paradigm(config, shared, name):
     final_regret = np.zeros(N)
     r_hats = np.full(N, np.nan)
     K_hats = np.full(N, np.nan)
+    s_traj = None
+    h_traj = None
     for s in range(N):
         np.random.seed(s)
         paradigm = make_paradigm(name, config)
-        rewards = rollout(paradigm, params, T, config['GAMMA'], seed=s)
+        if s == 0:
+            rewards, s_traj, h_traj = rollout(
+                paradigm, params, T, config['GAMMA'], seed=s, track_traj=True)
+        else:
+            rewards = rollout(paradigm, params, T, config['GAMMA'], seed=s)
         est = _extract_param_estimates(paradigm)
         if est is not None:
             r_hats[s], K_hats[s] = est
@@ -493,6 +507,8 @@ def compute_paradigm(config, shared, name):
         se_curve=regret_curves.std(axis=0, ddof=1) / np.sqrt(N),
         final_mean=float(final_regret.mean()),
         final_se=float(final_regret.std(ddof=1) / np.sqrt(N)),
+        s_traj=s_traj,
+        h_traj=h_traj,
     )
     if not np.all(np.isnan(r_hats)):
         out['r_hats'] = r_hats
@@ -551,19 +567,49 @@ def generate_outputs(data):
     ranked = sorted(PARADIGM_ORDER,
                     key=lambda nm: data['results'][nm]['final_mean'])
 
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, (ax_reg, ax_traj) = plt.subplots(1, 2, figsize=FIG_DOUBLE)
+
+    # Left panel: cumulative regret (mean ± SE over 20 seeds)
     for name in ranked:
         res = data['results'][name]
         mean, se = res['mean_curve'], res['se_curve']
-        ax.plot(t_axis, mean, label=name, color=PARADIGM_COLORS[name], linewidth=1.7)
-        ax.fill_between(t_axis, mean - se, mean + se,
-                        color=PARADIGM_COLORS[name], alpha=0.15)
-    ax.axhline(0, **BENCH_STYLE)
-    ax.set_xlabel('environment step $t$')
-    ax.set_ylabel('cumulative regret')
-    ax.set_title('Fishery: cumulative regret across seven paradigms '
-                 '(20 seeds, mean $\\pm$ SE)')
-    ax.legend(loc='upper left', fontsize=9)
+        ax_reg.plot(t_axis, mean, label=name, color=PARADIGM_COLORS[name], linewidth=1.7)
+        ax_reg.fill_between(t_axis, mean - se, mean + se,
+                            color=PARADIGM_COLORS[name], alpha=0.15)
+    ax_reg.axhline(0, **BENCH_STYLE)
+    ax_reg.set_xlabel('environment step $t$')
+    ax_reg.set_ylabel('cumulative regret')
+    ax_reg.set_title('Cumulative regret (20 seeds, mean $\\pm$ SE)')
+    ax_reg.legend(loc='upper left', fontsize=8)
+
+    # Right panel: seed-0 stock and harvest trajectories
+    # Two line groups: solid = stock (left y-axis), dashed = harvest (right y-axis)
+    ax_h = ax_traj.twinx()
+    K_val = SHARED_CONFIG['K']
+    msy_val = SHARED_CONFIG['r'] * K_val / 4.0  # r*K/4 for logistic growth
+    for name in ranked:
+        res = data['results'][name]
+        s_tr = res.get('s_traj')
+        h_tr = res.get('h_traj')
+        if s_tr is None or h_tr is None:
+            continue
+        ax_traj.plot(t_axis, s_tr, color=PARADIGM_COLORS[name], linewidth=1.4,
+                     linestyle='-', alpha=0.85)
+        ax_h.plot(t_axis, h_tr, color=PARADIGM_COLORS[name], linewidth=1.0,
+                  linestyle='--', alpha=0.65)
+    ax_traj.axhline(K_val, **BENCH_STYLE, label=f'$K={K_val:.0f}$')
+    ax_h.axhline(msy_val, color=COLORS['gray'], linewidth=1.0, linestyle=':',
+                 label=f'MSY harvest $rK/4={msy_val:.1f}$')
+    ax_traj.set_xlabel('environment step $t$')
+    ax_traj.set_ylabel('stock $s_t$ (solid)')
+    ax_h.set_ylabel('harvest $h_t$ (dashed)')
+    ax_traj.set_title('Seed-0 trajectories: stock (solid) and harvest (dashed)')
+    # Combined legend from both axes
+    lines_s, labels_s = ax_traj.get_legend_handles_labels()
+    lines_h, labels_h = ax_h.get_legend_handles_labels()
+    ax_traj.legend(lines_s + lines_h, labels_s + labels_h, fontsize=7, loc='upper right')
+
+    fig.suptitle('Fishery paradigms: seven learning approaches', fontsize=11)
     fig.tight_layout()
     fig_path = os.path.join(OUTPUT_DIR, 'fishery_paradigms.png')
     fig.savefig(fig_path, dpi=300, bbox_inches='tight')
