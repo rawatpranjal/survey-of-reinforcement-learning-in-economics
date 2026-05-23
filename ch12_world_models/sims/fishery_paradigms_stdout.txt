@@ -2,14 +2,22 @@
 Paradigms: ['Oracle', 'RLS', 'Model-Based DP', 'Q-Learning', 'Naive', 'Arifovic GA', 'Myopic']
 N_SEEDS = 20, T_EPISODE = 500
 
-  Cache hit: shared
-  Cache hit: Oracle
-  Cache hit: Naive
-  Cache hit: Myopic
-  Cache hit: RLS
-  Cache hit: Q-Learning
-  Cache hit: Arifovic_GA
-  Cache hit: Model-Based_DP
+  Computing: shared
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__shared.pkl
+  Computing: Oracle
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__Oracle.pkl
+  Computing: Naive
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__Naive.pkl
+  Computing: Myopic
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__Myopic.pkl
+  Computing: RLS
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__RLS.pkl
+  Computing: Q-Learning
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__Q-Learning.pkl
+  Computing: Arifovic_GA
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__Arifovic_GA.pkl
+  Computing: Model-Based_DP
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__Model-Based_DP.pkl
   Figure saved: /Users/pranjal/Code/rl/ch12_world_models/sims/fishery_paradigms.png
   Table saved: /Users/pranjal/Code/rl/ch12_world_models/sims/fishery_paradigms_results.tex
 
