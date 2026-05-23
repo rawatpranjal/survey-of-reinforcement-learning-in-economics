@@ -1,33 +1,112 @@
-This concluding section develops concrete research agendas at the intersection of reinforcement learning and the applied sciences as well as lists the bottlenecks and open challenges.
+% ch99_conclusion/tex/conclusion.tex
+% Discussion / Conclusion chapter for the RL-in-Economics survey.
+% Expanded from 33-line stub to ~3pp tight synthesis. 2026-05-22.
 
-\subsection{How Domain Structure Improves Reinforcement Learning}
+\subsection{The Two Cultures, Revisited}
 
-The largest-scale RL successes (Atari, Go, protein folding) share a common ingredient: a cheap, fast, and accurate simulator that generates unlimited training data. Most applied domains lack this ingredient. Every application in Section~\ref{section:applications} demanded a custom environment, and the engineering cost of building these environments often dominated the cost of training the RL agent itself. Structural models can fill this gap: they encode variable selection, causal structure, and institutional constraints that determine how agents respond to interventions. The Lucas critique warns that correlational simulators, trained on observational data without structural assumptions, will break under policy changes (Section~\ref{section:causal_rl}). Building simulators that respect causal identification and correctly model agent responses to rule changes is an important problem.
+The opening of this survey (Section~\ref{section:language}) drew a line between two intellectual traditions.
+The inference tradition concentrates its effort on specifying the objective function and the law of motion that governs the environment; the optimal policy is a byproduct that falls out once the primitives have been identified.
+The control tradition inverts this emphasis: it takes the objective and the dynamics as given and asks whether the optimal policy can be computed, approximated, and deployed under real-time and robustness constraints.
+Dynamic programming stands at the intersection of the two cultures.
+Both \citet{Bellman1957} and the structural econometrics program of \citet{Rust1987} rest on the Bellman equation; they differ in what is treated as known and what must be estimated.
+Reinforcement learning enters this picture not as a third culture but as a computational toolkit that relaxes the information requirements of dynamic programming while preserving its mathematical foundations.
 
-Domain structure, when available, can dramatically reduce the sample complexity of learning. The knowledge ladder in Section~\ref{section:bandits} shows that imposing demand structure on a pricing problem can reduce cumulative regret from $\Theta(T)$ to $O(\log T)$. The pattern extends beyond bandits: structural assumptions yield similar gains in dynamic estimation (Section~\ref{section:rl_econ_models}) and preference learning (Section~\ref{section:offline_rl}). These reflect the difference between learning in an unstructured space and learning in one shaped by theory. Formalizing this intuition, identifying which structural assumptions yield which complexity reductions and under what conditions, is an active research frontier.
+The chapters of this survey have mapped how that toolkit interacts with the applied decision sciences.
+On one side, RL extends the reach of structural modeling to state spaces where traditional dynamic programming is infeasible, without requiring the analyst to abandon structural assumptions.
+On the other side, the inference tradition imposes constraints on RL problems, identification conditions, equilibrium concepts, and revealed-preference axioms, that sharpen what can be learned from data.
+What emerges from this exchange is not a merger of the two traditions but a productive division of labor in which each side contributes what it does best.
 
-The RLHF and DPO frameworks studied in Section~\ref{section:offline_rl} rely on the Bradley-Terry model, one of the simplest members of the discrete choice family. The discrete choice literature offers a rich toolkit for moving beyond it. Mixed logit models accommodate heterogeneous preferences across annotators. Revealed preference theory provides axiomatic consistency constraints, such as GARP and stochastic transitivity, that can serve as regularizers on learned reward models. The preference learning simulation in Section~\ref{section:offline_rl} illustrates the cost of misspecification (Figure~\ref{fig:preference_sample}). Integrating tools from econometrics for preference elicitation, model selection, and specification testing into the RLHF pipeline is a natural direction.
+\subsection{What Reinforcement Learning Adds}
 
-\subsection{How Reinforcement Learning Advances Applied Modeling}
+The most direct contribution of RL to economic modeling is computational.
+Dynamic discrete choice models face a curse of dimensionality that limits exact dynamic programming to relatively small, discrete state spaces \citep{rust2008dp}.
+TD-based methods make structural models tractable at scales where the nested fixed-point algorithm is infeasible, as the simulation in Section~\ref{section:rl_econ_models} demonstrates: a DQN trained on the bus-engine replacement environment matches the analytical optimum within two percent at state-space sizes where value iteration exhausts memory \citep{Rust1987}.
+This prescriptive capability, not just estimating model parameters but computing the policies those parameters imply, extends across the survey.
+The dispatch, revenue management, and inventory simulations of Section~\ref{section:applications} show that RL can compute practically deployable policies in domains where neither analytical solutions nor small-state DP are available.
 
-Dynamic programming has always offered a prescriptive capability: given a model, compute the optimal policy. In practice, this capability has been limited by the curse of dimensionality to models with small, discrete state spaces. RL relaxes this constraint. TD-based methods make structural models tractable at state-space scales where NFXP is infeasible (Section~\ref{section:rl_econ_models}), and real-world deployments confirm that RL can compute policies of practical value (Section~\ref{section:applications}). These results suggest a prescriptive role for RL: not merely estimating model parameters (the traditional estimation task), but computing the policies those parameters imply.
+Multi-agent settings expose a second contribution.
+Game-theoretic solution concepts are often intractable to compute directly; PPAD-hardness of Nash equilibrium \citep{Shapley1964} is a foundational obstacle.
+The simulations of Section~\ref{section:rl_games} show that independent Q-learning agents converge to Nash equilibrium in symmetric normal-form games through trial and error, providing ``as-if'' microfoundations for equilibrium play under bounded rationality \citep{FudenbergLevine1998}.
+The durable-goods monopoly simulation in that section reproduces the Coase conjecture limit as the horizon lengthens, confirming that RL recovers well-known theoretical predictions without any equilibrium concept being hard-coded.
+Where RL-trained agents actually operate in markets, the findings become empirically testable: \citet{Calvano2020} document that independent pricing algorithms sustain supra-competitive prices through reward-based learning without explicit communication, a result that competition authorities have since taken seriously.
 
-Social science and policy research work with vast quantities of observational data from settings where controlled experimentation is impossible or unethical. Offline RL, which learns policies from logged data without further interaction, is a natural fit. The simulation in Section~\ref{section:offline_rl} illustrates both the promise and the limits: algorithms with distributional shift correction exceed the behavioral baseline, while those without it degrade below it, and performance depends critically on data support (Table~\ref{tab:offline_main}, Figure~\ref{fig:offline_coverage}). Offline RL has clearly delineated conditions under which learning is possible, conditions that connect directly to familiar statistical concepts like overlap and common support. Developing standardized benchmarks and digital twins for offline RL can enable firms and policy-makers to design optimal policies from data generated under old ones.
+The bandit chapters (Section~\ref{section:bandits}) show that domain knowledge and RL interact multiplicatively.
+Imposing demand structure on a pricing problem can reduce cumulative regret from $\Theta(T)$ to $O(\log T)$, a reduction that neither structural estimation alone nor generic bandit algorithms alone achieves \citep{Agrawal2024ref}.
+The knowledge-ladder simulation in that section traces this hierarchy empirically, showing that each additional structural restriction uniformly improves the regret curve and that the gains are large relative to the baseline.
 
-RL also offers a descriptive model of how boundedly rational agents learn in strategic environments. The simulations in Section~\ref{section:rl_games} demonstrate that independent Q-learning agents converge to Nash equilibrium through trial and error, providing ``as-if'' microfoundations for equilibrium concepts: the equilibrium arises not from common knowledge of rationality, but from a simple adaptive process.
+Offline reinforcement learning (Section~\ref{section:offline_rl}) addresses the setting most familiar to economists: the analyst has a fixed dataset of historical decisions and must improve on the behavioral policy without further experimentation.
+Algorithms with distributional-shift correction, including conservative Q-learning \citep{Kumar2020} and behavior-constrained methods \citep{Fujimoto2019b}, exceed the behavioral baseline in the dynamic pricing simulation; algorithms without correction degrade below it.
+The dependence on data support documented in Table~\ref{tab:offline_main} connects directly to familiar econometric concepts: coverage is the RL analog of overlap in propensity-score methods, and the performance degradation under poor coverage is the RL analog of extrapolation bias in treatment-effect estimation.
 
-When RL-trained agents are actually deployed in markets, they become market actors subject to empirical scrutiny. Algorithmic pricing agents, for instance, have been shown to sustain supra-competitive prices through reward-based learning without explicit communication. Competition authorities in the EU, US, and UK are actively investigating whether algorithmic coordination constitutes tacit collusion.\footnote{The companion thesis \citep{Rawat2026collusion} develops a framework for evaluating algorithmic inefficiency and collusion risk in algorithmically mediated markets, combining simulators with factorial experimental designs.} As algorithmic agents proliferate in pricing, trading, content recommendation, and resource allocation, the empirical study of algorithmic market behavior is a growing area of research.
+The final RL contribution is in preference learning.
+RLHF and DPO (Section~\ref{section:rlhf}) extend the inverse problem of recovering latent utilities from observed choices to the setting where ``choices'' are comparative judgments between model outputs \citep{christiano:2017, ouyang2022training, rafailov2023direct}.
+The simulation in that section treats job-search as the preference environment and shows that DPO recovers the underlying utility ranking with substantially fewer samples than reward-model RLHF, but that both methods are sensitive to the number of preference pairs and to the Bradley-Terry assumption when annotator heterogeneity is large.
 
-World models, surveyed in Section~\ref{section:world_models}, are a third locus where reinforcement learning advances applied modeling. The cobweb and fishery simulations in that chapter show that a small learned dynamics model paired with planning can outperform model-free baselines on economic environments where the state space is modest and the dynamics are partially known to be self-referential or exogenous-stochastic. Read against the Lucas critique raised earlier in this conclusion, world-model methods make the model itself a first-class object the analyst can inspect and constrain, rather than a black-box simulator behind a policy. The cost is calibration. Value-aware losses give task-relevant accuracy where it matters for decisions but offer weaker guarantees against policy drift, a tension the literature on calibrated value-aware models is just beginning to address.
+\subsection{What Economics Adds to Reinforcement Learning}
+
+The contribution runs in both directions.
+The inference tradition imposes constraints on RL problems that sharpen identification and improve credibility.
+
+Causal inference for RL (Section~\ref{section:causal_rl}) addresses the obstacle that logged data in economic settings is observational: treatment assignment is confounded, and naive off-policy evaluation will estimate the counterfactual return inconsistently \citep{precup2000, pearl2009causality}.
+The confounded retail-pricing simulation in that section shows that a backdoor-adjusted importance-weighted estimator recovers the true policy value while the unadjusted estimator produces systematically optimistic estimates.
+Instrumental-variable and proxy-variable identification strategies, long standard in econometrics \citep{robins1994estimation}, extend naturally to the POMDP-to-causal formulation of Section~\ref{subsec:pomdp_to_causal}: the IV-RL estimator in the counterfactual OPE simulation achieves root-mean-squared error within ten percent of the oracle estimator, whereas the unadjusted double-robust estimator misses by a factor of three.
+
+Revealed-preference theory (Section~\ref{section:rlhf}, specifically the axiom-aware aggregation subsection) provides a second disciplinary check.
+The Bradley-Terry model implicitly assumes a cardinal, individually consistent preference ordering that need not hold when feedback comes from heterogeneous annotators.
+Axiom-aware aggregation, which tests for GARP violations and Condorcet cycles before constructing the reward model, outperforms naive aggregation in the simulation under annotator heterogeneity, with the performance gap widening as the degree of heterogeneity increases \citep{varian1982nonparametric, skalse2023invariance}.
+The broader lesson is that the axiomatic toolkit of revealed-preference theory can serve as a regularizer on reward learning, replacing the untestable parametric assumption with a testable behavioral constraint.
+
+Robust and constrained RL (Section~\ref{section:dist_robust_constrained}) is a third locus of cross-pollination.
+The ambiguity sets of robust MDPs formalize a notion of model uncertainty that is structurally related to the multiplier preferences of \citet{HansenSargent2001}: the decision-maker pessimizes over a neighborhood of probability measures rather than maximizing against a point prior.
+The consumption-savings simulation in that section shows that a distributional RL agent achieves better conditional value at risk under worst-case demand shocks than a standard expected-return agent, at a cost in expected payoff that can be analytically related to the ambiguity set radius.
+This connection between robust macroeconomic decision theory and distributional RL has received little formal treatment and represents a natural area for cross-disciplinary work.
+
+The macroeconomic chapter (Section~\ref{section:rl_macro}) documents a fourth exchange.
+The adaptive learning literature initiated by \citet{MarcetSargent1989} uses stochastic approximation algorithms, Robbins-Monro-type updates, to model how boundedly rational agents refine beliefs about equilibrium parameters.
+The convergence criterion in that literature, E-stability, is governed by an ordinary differential equation that is formally identical to the ODE used to prove convergence of Q-learning and actor-critic algorithms in RL \citep{borkar2000}.
+The bounded-rationality subsection of the macro chapter makes this connection concrete: Q-learning households in the Krusell-Smith environment converge to approximately rational expectations through the same stochastic approximation dynamics that the adaptive learning literature has studied for three decades \citep{KaplanMollViolante2018, MarimonMcGrattanSargent1990}.
+
+\subsection{Simulation Evidence}
+
+The computational experiments across the survey yield a consistent pattern.
+RL methods outperform the comparison baseline when the state space is too large for exact dynamic programming, when behavioral data is abundant but experimental variation is absent, and when the reward signal is dense enough to support sample-efficient exploration.
+The DDC scaling simulation (Section~\ref{section:rl_econ_models}) shows a break-even point at roughly two hundred state-action pairs, below which value iteration dominates and above which DQN becomes comparatively faster.
+The offline pricing simulation (Section~\ref{section:offline_rl}) shows that CQL and IQL match or exceed the behavioral policy whenever data coverage exceeds approximately forty percent of the state-action space, and fall below it otherwise.
+The knowledge-ladder simulation (Section~\ref{section:bandits}) confirms that regret reductions from structural assumptions are monotone and quantitatively large, roughly one order of magnitude in cumulative regret over one thousand rounds.
+
+RL does not uniformly dominate.
+In the RBC simulation (Section~\ref{section:rl_macro}), PPO and DDPG converge to the analytical optimum in three-dimensional continuous state spaces but require an order of magnitude more wall-clock time than calibrated value function iteration for the same accuracy.
+In the durable-goods simulation (Section~\ref{section:rl_games}), independent Q-learning converges to Nash equilibrium in symmetric settings but fails to coordinate on the Pareto-superior equilibrium in games with multiple equilibria, confirming known negative results on equilibrium selection under decentralized learning \citep{FudenbergKreps1993}.
+Seed sensitivity, documented systematically in Section~\ref{section:deeprl_practice}, means that any single simulation run is insufficient evidence of a systematic result; the standard adopted throughout this survey, at least ten independent seeds with reported means and standard errors, is a minimum rather than an aspiration.
 
 \subsection{Open Challenges}
 
-The deadly triad (function approximation, bootstrapping, off-policy learning) remains unresolved. Deep RL algorithms exhibit seed sensitivity, overestimation cascades, and plasticity loss that make reproducibility difficult even in controlled settings (Section~\ref{section:deeprl_practice}).
+Several concrete obstacles remain.
+Dynamic discrete choice with continuous action spaces and high-dimensional continuous state vectors is unsolved.
+The DDC simulation stops short of continuous actions; extending the Hotz-Miller inversion \citep{HotzMiller1993} to continuous choices requires density estimation in high dimensions, and the standard CCP-estimator breaks down.
+Policy gradient methods handle continuous actions but require simulation-based policy gradients that are noisy and sample-inefficient when the state space encodes high-frequency heterogeneity.
 
-Multi-agent RL faces fundamental problems (Section~\ref{section:rl_games}). Computing Nash equilibria is PPAD-complete, and RL does not escape this hardness. In games with multiple equilibria, agents performing Bellman backups may select different equilibria for different states, causing value iteration to cycle or diverge. The literature on equilibrium refinement, focal points, and coordination mechanisms may offer partial resolutions, but a general solution remains open.
+Bandit algorithms under non-stationary economic primitives pose a second open problem.
+Demand curves shift with macroeconomic conditions, competitor entry, and product innovations.
+Regret bounds in the non-stationary bandit literature grow with the number of change points, but identifying change points in economic demand is itself a statistical problem confounded by endogenous pricing.
+Consistent bandit algorithms under simultaneously non-stationary and endogenous environments are not yet available.
 
-The absence of standardized simulators is part of a broader infrastructure gap. Industrial RL deployments require dedicated engineering teams, GPU clusters, and months of hyperparameter tuning (Section~\ref{section:applications}, Section~\ref{section:deeprl_practice}). Reducing these barriers through shared simulation environments and accessible software libraries would accelerate adoption.
+Off-policy evaluation under unobserved confounding without instruments remains the most consequential gap.
+The sensitivity analysis of Section~\ref{subsec:alternative_identification} shows that partial identification bounds widen rapidly as the degree of unmeasured confounding increases.
+In many economic datasets, valid instruments for treatment assignment are unavailable, and proxy variables either do not exist or have not been collected.
+Methods that yield informative bounds in this fully unidentified regime, rather than arbitrarily wide ones, are an active area of research with direct policy relevance.
+
+The interaction between equilibrium and learning in multi-agent RL has no satisfactory general theory.
+When agents performing Bellman backups face multiple equilibria, value iteration can cycle or diverge, and the equilibrium selection is sensitive to initialization and learning rates.
+The equilibrium refinement literature provides focal-point concepts, but these require common knowledge of rationality that decentralized learning does not provide \citep{FudenbergLevine1998}.
+
+The survey's simulation evidence also points to an infrastructure gap.
+Industrial deployments described in Section~\ref{section:applications} required dedicated engineering teams and months of hyperparameter search; the academic simulations here required comparable effort at much smaller scale.
+Shared, well-documented simulation environments modeled on the economic problems studied in this survey, analogous to what ALE provided for game-playing \citep{mnih2015}, would accelerate the empirical research program substantially.
 
 \subsection{Conclusion}
 
-Reinforcement learning extends the reach of dynamic programming to problems that were previously intractable, and it connects to established statistical frameworks through shared mathematical foundations (Section~\ref{subsec:structural_equivalences}). The research agendas outlined above (structural simulators, the role of structural assumptions in sample complexity, inference procedures for learned policies) are concrete and tractable. They draw on domain knowledge for structure and institutional context and on RL for computation.
+Reinforcement learning and the applied decision sciences have arrived at a productive intersection.
+RL provides computational tools for solving high-dimensional dynamic programs and learning from observational data; economics provides structural discipline, identification theory, and institutional context that make those solutions credible.
+The structural equivalences documented in Section~\ref{subsec:structural_equivalences}, the softmax-logit identity, the Emax-soft-value correspondence, the Q-function-CCP duality, are not coincidences; they reflect the fact that optimal sequential decision-making under uncertainty is one problem, and the two traditions have been working toward it from opposite ends.
+Progress at the intersection requires researchers who are literate in both formal languages.
