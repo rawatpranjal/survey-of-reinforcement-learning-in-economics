@@ -1,37 +1,35 @@
-# Handoff — 2026-05-22 (late) — humanize-pass
+# Handoff — 2026-05-29 — humanize-pass
 
 ## Where we left off
-Phase A + Phase B + Phase C all landed in this autonomous session. main.pdf 232pp, 0 undefined refs. Phase D unblocked. humanize-pass: 77 commits ahead origin/main, pushed.
+Surgical de-AI ("humanizer") pass across all 17 chapters: done, accepted, committed (e79f828), pushed. ~112 prose edits + 5 caption de-bolds, each chapter independently check-PASSed. Edits swapped live into the chapter .tex; main.pdf rebuilt 230pp (was 232, removed closers/epigrams reflowed). Branch now 78 commits ahead of origin/main, not merged.
 
 ## Active streams (clustered)
 ```
-[content lock]  A1-A5 ALL DONE 2026-05-22                         — CLOSED
-[sim audits]    B1 + B2 ALL DONE 2026-05-22 (B1 re-audit pending) — CLOSED
-[polish]        C1-C4 ALL DONE 2026-05-22                         — CLOSED
-[submit D]      D1 merge humanize-pass → main, D2 full compile,
-                D3 arxiv tarball, D4 submit                        — READY
-[journals E]    deferred until D ships                             — POST-ARXIV
+[de-AI pass]  17 chapters DONE 2026-05-29, committed+pushed            — CLOSED
+[submit D]    D1 merge humanize-pass -> main, D2 full compile,
+              D3 arxiv tarball, D4 submit                              — READY
+[re-audit]    B1.6 fishery: Opus re-audit on fishery_paradigms.py <25% — PENDING
+[journals E]  deferred until D ships                                   — POST-ARXIV
 ```
 
 ## Decisions made this session
-- Autonomous mode: 5 parallel Sonnet agents (B1.6 + A1 + A2 + A3 + A4/A5) launched against disjoint chapters. Worked well; only the long-running sim (B1.6 fishery) needed main-thread babysitting for compile.
-- A4 + A5 already landed in prior session — agent confirmed by inspection, no re-work.
-- Thoeni key renamed (2026nmfg → 2025nmfg) to match body `year={2025}`; bib + macro_rl.tex updated together.
-- B1.6: cache-invalidation by file deletion (not version bump) because the change altered return shape, not config dict.
-- main.pdf compiled clean (0 undefined references) — every cross-chapter ref from session edits resolves.
+- De-AI = SURGICAL ONLY (egregious tells: colon-drumrolls, negative parallelism, aphoristic closers, em dashes incl Unicode). Wholesale + section-by-section rewrites both tried on ch07, REJECTED by user (prose too technical). Cap ~2 edits/section, 0 if clean.
+- Em-dash parenthetical pairs -> parentheses, not commas (commas garden-path). Table N/A "---" cells + caption N/A symbols preserved.
+- ch09 only: stripped 5 bold caption lead-ins (\textbf banned by CLAUDE.md; other 16 chapters had none).
+- Two-pass per chapter: Opus edit + independent Opus check (executor != verifier). Originals saved to each chapter's tex/backups/2026-05-29-* (committed).
+- Full before/after record: docs/humanizer_edits_report.md (committed).
+- Pushed branch only; did NOT merge to main (user's call; gates Phase D).
 
 ## Open questions
-- B1.6 re-audit: substance landed via Sonnet builder; CLAUDE.md adversarial rule says separate executor from verifier. Next session: spawn Opus re-audit on fishery_paradigms.py to confirm score now <25%. Spec.md notes "Re-audit recommended."
-- Merge humanize-pass → main now (Phase D1) or wait for arxiv tarball ready (D3)? Strict reading of Phase D ordering says D1 first.
-- 77 commits ahead is substantial. Optional: rebase/squash before merge for clean main history. Default: no, preserve provenance.
+- Merge humanize-pass -> main (Phase D1): now carries the de-AI edits too; still the gating step for arxiv.
+- B1.6 fishery re-audit still pending from the prior (2026-05-22) session.
+- search/ left untracked (pre-existing, not gitignored).
 
 ## Landmines / gotchas
-- ch12_world_models/sims/cache/ has all-fresh fishery caches (post code mtime 20:06:21). Do NOT delete unless re-running.
-- main.pdf compile takes ~3 min wall (3 passes + bibtex). Budget accordingly.
-- ch99 PDF (`docs/ch99_conclusion.pdf`) is UNTRACKED, not gitignored. Either commit or .gitignore.
-- ch99 standalone compile renders 9pp because of title-page wrapper; actual chapter content is ~3pp dense.
-- ch11_dist_robust_constrained.pdf mtime 17:45 (earlier session) — predates main.pdf rebuild but content was already current. No action needed.
-- Old fishery `audits/ch12_world_models__fishery_paradigms_reaudit_2026-05-22.md` says B1.6 missing — stale relative to current state (figure now landed). Re-audit will supersede.
+- compile_chapter.tex lacks `placeins` -> \FloatBarrier undefined when compiling any chapter STANDALONE (harmless, PDF still builds; main.tex loads placeins so the full build is clean).
+- main.pdf full build ~3 min (3 passes + bibtex); now 230pp.
+- ch12_world_models/sims/cache/ fishery caches still fresh — do NOT delete unless re-running.
+- This session's backups under each chapter's tex/backups/2026-05-29-*_original.tex (committed; full originals recoverable there or via git pre-e79f828).
 
 ## Suggested next move
-**Phase D1 merge** humanize-pass → main. Then D2 full compile sanity-check + page count verification + D3 arxiv tarball. Optional sidecar: Opus re-audit on fishery_paradigms.py to confirm B1.6 fix scores <25%.
+Phase D1: merge humanize-pass -> main (now includes the de-AI pass), then D2 full compile + page-count check, D3 arxiv tarball. Optional sidecar: Opus re-audit on fishery_paradigms.py to confirm B1.6 <25%.
