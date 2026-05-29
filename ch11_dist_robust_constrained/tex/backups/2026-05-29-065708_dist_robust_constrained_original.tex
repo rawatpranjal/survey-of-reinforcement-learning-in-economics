@@ -106,7 +106,7 @@ to risk-sensitive control.
 
 An agent that maximizes expected return is indifferent between a certain
 payoff of 100 and a coin flip paying 0 or 200. In many applications this
-is inadequate, since a portfolio manager, a robot near a cliff, or a firm
+is inadequate: a portfolio manager, a robot near a cliff, or a firm
 facing bankruptcy all care about the shape of the return distribution, not
 just its mean. Distributional RL provides the return distribution; what
 remains is a principled way to convert that distribution into a scalar
@@ -253,14 +253,14 @@ The dual problem is
 \end{equation}
 and the optimal dual variable $\lambda_k^*$ is the \emph{shadow price} of
 the $k$-th constraint. By the envelope theorem,
-$\partial V^* / \partial q_k = \lambda_k^*$, the marginal change in optimal
+$\partial V^* / \partial q_k = \lambda_k^*$: the marginal change in optimal
 value per unit relaxation of constraint $q_k$. This is the same shadow price
 that appears in the linear programming dual of resource allocation
 problems.
 
 \citet{Paternain2019} extended this result beyond the LP formulation.
 Despite the non-convexity of the objective in policy parameters, they proved
-that constrained RL has \emph{zero duality gap}, meaning the optimal dual value
+that constrained RL has \emph{zero duality gap}: the optimal dual value
 equals the primal. The proof exploits the convexity of the occupancy measure
 set and applies a minimax theorem. This means the CMDP can be solved
 exactly via dual ascent on the Lagrange multipliers, even when using
@@ -370,7 +370,7 @@ $h = 1$ is the holding cost, $\xi_e \in \{3.0, 0.5\}$ is the
 emission rate, $D_t$ is stochastic demand, and $\gamma = 0.95$.
 
 Table~\ref{tab:carbon_results} and
-Figure~\ref{fig:carbon_convergence} compare three methods,
+Figure~\ref{fig:carbon_convergence} compare three methods:
 the constrained LP oracle, unconstrained Q-learning, and
 Lagrangian Q-learning with dual ascent
 on~\eqref{eq:dual_update}. Each Q-learning variant is run
@@ -523,8 +523,8 @@ where $a_t^{\text{adv}}$ is the adversary's action. Training alternates
 between updating the agent policy $\pi_{\text{agent}}$ via TRPO or PPO
 with the adversary fixed, then updating the adversary
 $\pi_{\text{adv}}$ with the agent fixed. The adversary's action space is
-problem-specific (joint torques for locomotion, force perturbations for
-manipulation). The resulting agent policies are more conservative, with
+problem-specific: joint torques for locomotion, force perturbations for
+manipulation. The resulting agent policies are more conservative, with
 wider stability margins; in locomotion tasks, robust agents adopt lower
 center-of-gravity gaits. \citet{Pinto2017} demonstrated that policies
 trained against an adversary in simulation transferred to physical robots
@@ -605,9 +605,9 @@ $\theta = 2$ policy recovers about 4.5 percentage points of the 76\%
 degradation, whereas an oracle that knows the perturbed distribution
 recovers 37 points. KL-ball robustness hedges against a band of nearby
 distributions rather than fitting the realized one, so it closes only a
-fraction of the oracle gap, the expected price of not knowing the
-true model.
-Figure~\ref{fig:robust_consumption} shows the mechanism, where robust agents
+fraction of the oracle gap; this is the expected price of not knowing the
+true model, not a deficiency of the method.
+Figure~\ref{fig:robust_consumption} shows the mechanism: robust agents
 consume less at each wealth level, building a precautionary savings buffer
 against adverse income realizations.
 
