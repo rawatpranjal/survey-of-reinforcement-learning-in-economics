@@ -381,9 +381,10 @@ of deterministic policy gradient methods to hyperparameter and
 initialisation choices. Figure~\ref{fig:macro:rbc-curves} traces the
 learning curves of PPO and DDPG against the VFI and KPR horizontal
 benchmarks. Both RL methods approach the analytical benchmark within
-their respective training budgets. The simulation establishes that RL
-does not fail dynamic programming on this textbook case, rather than
-that RL replaces it.
+their respective training budgets. The result is what one would hope
+on a model this small. It is not a demonstration that RL replaces
+dynamic programming; it is a check that RL does not fail it on the
+textbook case.
 
 \begin{table}[ht]
 \centering
@@ -420,7 +421,7 @@ statistic; RSPG instead lets agents carry a recurrent memory of past
 observations, relaxing the Markov assumption and replacing restricted
 perceptions with a partially observable mean-field Nash equilibrium.
 The two are alternative solution concepts for the same underlying
-household problem.
+household problem, not competing claims about the same equilibrium.
 
 \subsubsection{Recurrent Structural Policy Gradient}
 \label{sec:macro:rspg}
@@ -546,9 +547,9 @@ trains both levels jointly under centralised training with
 decentralised execution. A Stackelberg mean-field Q-function
 $\widetilde Q^l(s^l, a^l, L)$ scores leader actions given the
 population state-action distribution; a follower-shared Q-network
-conditions on the same mean field. Best-response updates alternate.
-One step fixes the leader, trains followers to a $\varepsilon$-best-response and
-updates $L$; the next fixes followers and optimises the leader. The mean-field
+conditions on the same mean field. Best-response updates alternate:
+fix the leader, train followers to a $\varepsilon$-best-response and
+update $L$; then fix followers, optimise the leader. The mean-field
 approximation reduces the pairwise complexity of agent-agent and
 agent-government interactions from $O(N^2)$ to $O(N)$.
 
@@ -655,7 +656,7 @@ RL experiment rather than the structural mean-field update studied here.
 Table~\ref{tab:macro:lqmfg-results} reports exploitability, expected
 return, and training time across ten training seeds after sweeping the
 official learning-rate grid. RSPG has lower exploitability than SPG,
-which is the partial-observation lesson of the paper's LQ example;
+which is the partial-observation lesson of the paper's LQ example:
 history helps infer where the common-noise episode is headed.%
 \footnote{RSPG's mean final exploitability is non-monotone in the
 learning rate (1316, 60, 797 at $10^{-4}, 10^{-3}, 10^{-2}$), an
@@ -948,7 +949,7 @@ of equality and productivity. The schedule is non-monotonic, with
 highest marginal rates on middle income brackets. Emergent behaviour
 includes specialisation by skill into gatherers and builders and
 intertemporal tax avoidance by high-skill agents. The result is
-suggestive rather than decisive. The two-level RL planner discovers
+suggestive rather than decisive: the two-level RL planner discovers
 tax schedules that the analytical Saez framework does not, but the
 welfare ranking depends on the choice of SWF and on the absence of
 behavioural responses outside the modelled action
@@ -1015,8 +1016,8 @@ planner, is non-stationary from any one region's perspective, has a
 combinatorial negotiation action space, and is only partially
 observed; classical RICE sidesteps all four by computing a
 single-planner Nash equilibrium. The agents themselves remain
-utility-maximisers; RL is the method that finds their strategic
-policies and does not imply that regions are boundedly rational. The cost
+utility-maximisers; the RL is the method that finds their strategic
+policies, not a claim that regions are boundedly rational. The cost
 of the RL solution is the loss of the optimality certificate and the
 seed-independent reproducibility that the classical RICE optimum
 provides.
@@ -1234,7 +1235,9 @@ As a planner, RL discovers tax schedules, climate-cooperation
 mechanisms, and monetary-fiscal reaction functions that closed-form
 optimisation does not. The four roles share an algorithmic toolbox
 but answer different questions, and the empirical and theoretical
-literatures around each are at different stages of maturity.
+literatures around each are at different stages of maturity. The
+current state is best read as early progress rather than as a
+settled methodology.
 
 \subsubsection{Common methodological issues}
 \label{sec:macro:common_issues}

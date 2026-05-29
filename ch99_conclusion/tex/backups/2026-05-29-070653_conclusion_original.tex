@@ -20,7 +20,7 @@ What emerges from this exchange is not a merger of the two traditions but a prod
 
 The most direct contribution of RL to economic modeling is computational.
 Dynamic discrete choice models face a curse of dimensionality that limits exact dynamic programming to relatively small, discrete state spaces \citep{rust2008dp}.
-TD-based methods make structural models tractable at scales where the nested fixed-point algorithm is infeasible. As the simulation in Section~\ref{section:rl_econ_models} demonstrates, a DQN trained on the bus-engine replacement environment matches the analytical optimum within two percent at state-space sizes where value iteration exhausts memory \citep{Rust1987}.
+TD-based methods make structural models tractable at scales where the nested fixed-point algorithm is infeasible, as the simulation in Section~\ref{section:rl_econ_models} demonstrates: a DQN trained on the bus-engine replacement environment matches the analytical optimum within two percent at state-space sizes where value iteration exhausts memory \citep{Rust1987}.
 This prescriptive capability, not just estimating model parameters but computing the policies those parameters imply, extends across the survey.
 The dispatch, revenue management, and inventory simulations of Section~\ref{section:applications} show that RL can compute practically deployable policies in domains where neither analytical solutions nor small-state DP are available.
 
@@ -34,7 +34,7 @@ The bandit chapters (Section~\ref{section:bandits}) show that domain knowledge a
 Imposing demand structure on a pricing problem can reduce cumulative regret from $\Theta(T)$ to $O(\log T)$, a reduction that neither structural estimation alone nor generic bandit algorithms alone achieves \citep{Agrawal2024ref}.
 The knowledge-ladder simulation in that section traces this hierarchy empirically, showing that each additional structural restriction uniformly improves the regret curve and that the gains are large relative to the baseline.
 
-Offline reinforcement learning (Section~\ref{section:offline_rl}) addresses the setting most familiar to economists, in which the analyst has a fixed dataset of historical decisions and must improve on the behavioral policy without further experimentation.
+Offline reinforcement learning (Section~\ref{section:offline_rl}) addresses the setting most familiar to economists: the analyst has a fixed dataset of historical decisions and must improve on the behavioral policy without further experimentation.
 Algorithms with distributional-shift correction, including conservative Q-learning \citep{Kumar2020} and behavior-constrained methods \citep{Fujimoto2019b}, exceed the behavioral baseline in the dynamic pricing simulation; algorithms without correction degrade below it.
 The dependence on data support documented in Table~\ref{tab:offline_main} connects directly to familiar econometric concepts: coverage is the RL analog of overlap in propensity-score methods, and the performance degradation under poor coverage is the RL analog of extrapolation bias in treatment-effect estimation.
 
@@ -64,7 +64,7 @@ This connection between robust macroeconomic decision theory and distributional 
 The macroeconomic chapter (Section~\ref{section:rl_macro}) documents a fourth exchange.
 The adaptive learning literature initiated by \citet{MarcetSargent1989} uses stochastic approximation algorithms, Robbins-Monro-type updates, to model how boundedly rational agents refine beliefs about equilibrium parameters.
 The convergence criterion in that literature, E-stability, is governed by an ordinary differential equation that is formally identical to the ODE used to prove convergence of Q-learning and actor-critic algorithms in RL \citep{borkar2000}.
-The bounded-rationality subsection of the macro chapter shows that Q-learning households in the Krusell-Smith environment converge to approximately rational expectations through the same stochastic approximation dynamics that the adaptive learning literature has studied for three decades \citep{KaplanMollViolante2018, MarimonMcGrattanSargent1990}.
+The bounded-rationality subsection of the macro chapter makes this connection concrete: Q-learning households in the Krusell-Smith environment converge to approximately rational expectations through the same stochastic approximation dynamics that the adaptive learning literature has studied for three decades \citep{KaplanMollViolante2018, MarimonMcGrattanSargent1990}.
 
 \subsection{Simulation Evidence}
 
@@ -77,7 +77,7 @@ The knowledge-ladder simulation (Section~\ref{section:bandits}) confirms that re
 RL does not uniformly dominate.
 In the RBC simulation (Section~\ref{section:rl_macro}), PPO and DDPG converge to the analytical optimum in three-dimensional continuous state spaces but require an order of magnitude more wall-clock time than calibrated value function iteration for the same accuracy.
 In the durable-goods simulation (Section~\ref{section:rl_games}), independent Q-learning converges to Nash equilibrium in symmetric settings but fails to coordinate on the Pareto-superior equilibrium in games with multiple equilibria, confirming known negative results on equilibrium selection under decentralized learning \citep{FudenbergKreps1993}.
-Seed sensitivity, documented systematically in Section~\ref{section:deeprl_practice}, means that any single simulation run is insufficient evidence of a systematic result; the standard adopted throughout this survey, at least ten independent seeds with reported means and standard errors, is a minimum requirement.
+Seed sensitivity, documented systematically in Section~\ref{section:deeprl_practice}, means that any single simulation run is insufficient evidence of a systematic result; the standard adopted throughout this survey, at least ten independent seeds with reported means and standard errors, is a minimum rather than an aspiration.
 
 \subsection{Open Challenges}
 
@@ -108,5 +108,5 @@ Shared, well-documented simulation environments modeled on the economic problems
 
 Reinforcement learning and the applied decision sciences have arrived at a productive intersection.
 RL provides computational tools for solving high-dimensional dynamic programs and learning from observational data; economics provides structural discipline, identification theory, and institutional context that make those solutions credible.
-The structural equivalences documented in Section~\ref{subsec:structural_equivalences}, the softmax-logit identity, the Emax-soft-value correspondence, the Q-function-CCP duality, reflect the fact that optimal sequential decision-making under uncertainty is one problem, and the two traditions have been working toward it from opposite ends.
+The structural equivalences documented in Section~\ref{subsec:structural_equivalences}, the softmax-logit identity, the Emax-soft-value correspondence, the Q-function-CCP duality, are not coincidences; they reflect the fact that optimal sequential decision-making under uncertainty is one problem, and the two traditions have been working toward it from opposite ends.
 Progress at the intersection requires researchers who are literate in both formal languages.
