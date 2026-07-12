@@ -30,6 +30,10 @@ _Updated 2026-07-12._
   one chunk at a time, fresh-agent verify each before the next.
 - **Next executable chunk:** T0 (acquire + read theory sources) or S0 (number manifest).
   Both `[CRITICAL]` entry points, independent, can run in parallel.
+- **New workstreams added 2026-07-12 (items 14-26), not started.** W3 primary-source RAG
+  retrieval (infra), W4 wiki synthesis articles, W5 proof-source library, W6 hard oracle tests
+  for the sims. Dependencies: W3 is infra; W5 feeds Workstream 1; W6 reinforces Workstream 2;
+  W4 uses W3 + W5. Suggested order: W3 first, then W5 and W4, with W6 in parallel.
 - **Open handback for the user:** whether to merge `rl-rigor` → `main` (and push) now, or
   keep accumulating on `rl-rigor`.
 
@@ -108,6 +112,74 @@ or fresh-agent checkpoint before proceeding. Full detail in `docs/theory-rigor-r
 
 13. **Deferred** journal carve-outs (spec Phase E); reader-feedback citations promised by
     email: Moll (arXiv 2512.18892, 2602.20141), Weaver (Mksc 2022.0247).
+
+### Workstream 3 — Primary-source RAG retrieval tool (fast, simple, primary only)
+
+Infra the other workstreams lean on: fast pull-up of the actual paper text. Suggested to
+build first.
+
+14. **R0 [CRITICAL] Corpus inventory + reuse check.** List primary-source docs on disk
+    (chapter `papers/*.pdf` + their markdown conversions, arXiv sources in `docs/`). Check
+    existing tooling first (`websource` shared library, `/source` skill, any prior
+    embeddings) so acquisition is not reinvented. Scope: primary sources only, exclude our own
+    notes/audits. _Accept:_ a corpus manifest (path, title, format).
+15. **R1 Ingest + embed.** Convert PDF-only sources to markdown (docling/tomd), chunk
+    section-aware (~500-1000 tokens), embed with a local model, store vectors. Keep it simple:
+    one script plus a flat store (faiss, or cosine over a pickled matrix if faiss is overkill),
+    no server. _Accept:_ store built over the manifest; rebuild is one command.
+16. **R2 Query CLI.** `rl-retrieve "query" [--k 8] [--source FILTER]` returns top-k passages as
+    {paper, section/page, text} in under a second. _Accept:_ a known probe ("Bellman
+    contraction proof") returns the correct paper span.
+17. **R3 Wire into workflows (gate).** T0/T2 (proofs) and W4 (synthesis) call it; optional thin
+    MCP/skill wrapper. _Accept:_ one real retrieval used inside a W5 proof lookup.
+
+### Workstream 4 — Wiki build-out (secondary synthesis articles)
+
+Grow `docs/` from a few notes into a knowledge base of our own synthesis, distinct from the
+primary papers. Uses W3.
+
+18. **W4.0 Taxonomy + template.** Fix the wiki topic list (chapters + cross-cutting themes) and
+    a synthesis-article template (TLDR, key primary sources, synthesis, open questions,
+    cross-links to chapters/sims/proofs). _Accept:_ taxonomy + template in `docs/index.md`.
+19. **W4.1..W4.n One synthesis article per topic** (ranked): deadly-triad, offline-RL,
+    bandits-pricing, MFG-macro, RLHF-alignment, causal-OPE, world-models. Each built from the
+    W3 corpus, every claim quote-checkable against a primary source. _Accept per article:_
+    verifiable source spans; links resolve; indexed.
+20. **W4.crit Completeness critic (gate).** A pass that asks which topics/sources are missing;
+    findings become the next articles.
+
+### Workstream 5 — Proof-source library (Enoch-style explainers). Feeds Workstream 1.
+
+Find more proof-based explainers like Enoch's and mine them for the cleanest proofs to reuse
+(with attribution) in the theory chapter and wiki. Uses W3.
+
+21. **P0 [CRITICAL] Candidate list.** Assemble proof-carrying RL explainers / monographs /
+    notes: Agarwal-Jiang-Kakade-Sun (RL theory monograph), Szepesvari 2010 (Algorithms for
+    RL), Bertsekas (RL and Optimal Control), Meyn (Control Systems and RL), Sutton-Barto,
+    reputable RL-theory course notes, Enoch's `EK_RL_note.pdf`. _Accept:_ a ranked source list
+    with acquisition status.
+22. **P1 Acquire + convert + index.** Pull full text (`/source`), convert to markdown, index in
+    the W3 RAG. _Accept:_ each source is readable markdown on disk and retrievable.
+23. **P2 Proof library.** `docs/proof-library.md`: key results indexed by theorem, each with the
+    cleanest source proof + citation + page, for direct reuse in T2..Tn. _Accept:_ every entry
+    names a source with a quote-checkable span; covers the T2..Tn candidate results.
+
+### Workstream 6 — Hard oracle tests for every simulation. Reinforces Workstream 2.
+
+Guarantee each sim is correct on toy/analytical cases so the numbers carry zero hallucination,
+bugs, or mistakes. Complements the S5 numbers-gate and the 7-point sim audit in CLAUDE.md.
+Independent of the others.
+
+24. **H0 [CRITICAL] Oracle inventory.** For each live sim, identify a toy case with a known
+    closed-form / exact answer (2-state MDP with hand-computed $V^*/Q^*$; tiny bandit with known
+    optimal arm and regret; DP vs analytic; contraction rate; policy-improvement monotonicity).
+    _Accept:_ a table mapping each sim to its oracle.
+25. **H1..Hn Hard test per sim.** `tests/test_<sim>.py`: assert the algorithm hits the oracle
+    within tight tolerance on the toy case, plus invariants (monotone improvement, convergence,
+    never beats the oracle). One at a time. _Accept per test:_ fails if the algorithm is broken,
+    passes on the real code.
+26. **H.gate Runner + gate.** `pytest` over all sim tests, wired alongside the S5 numbers-gate.
+    _Accept:_ every live sim has at least one hard oracle test; runner green.
 
 ---
 
