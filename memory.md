@@ -35,6 +35,12 @@ session would get it wrong without it.
   A `scripts/trim_orphan_bib.py` prunes orphans, so an uncited entry added now (e.g.
   `Kang2025`) may be stripped until something cites it. Harmless for the build.
 
+- **Sync a non-checked-out branch with `git fetch origin <b>:<b>`, never `git branch -f`.**
+  `git fetch origin main:main` refuses a non-fast-forward instead of silently moving the shared
+  ref. `git branch -f main origin/main` force-moves the ref for every worktree and can discard
+  an unpushed commit; the global rules ban that form in a shared tree. (It was used twice on
+  2026-07-12 and was safe only because both moves happened to be fast-forwards.)
+
 ## Repo cleanup (2026-07-12, Workstream 0)
 
 - New work lives on the **`rl-rigor` worktree** (off `humanize-pass`); the primary checkout
