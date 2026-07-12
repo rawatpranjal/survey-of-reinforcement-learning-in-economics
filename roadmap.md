@@ -183,10 +183,30 @@ Independent of the others.
 
 ---
 
-## Conventions
+## Conventions and working preferences
 
-- One chunk at a time. Frame → build → fresh-agent verify → ship. 3-strike halt.
-- Every results number traces to generated output (the point of Workstream 2).
-- Writes happen in a worktree, never the primary checkout. Commit only when asked.
-- Reference research lives in the `docs/` wiki: `docs/index.md`, `docs/theory-rigor-rl.md`,
-  `docs/sim-automation-audit.md`.
+How the user wants this work run. These govern every chunk above.
+
+- **Go slow, one chunk at a time.** Frame → build → fresh-agent verify → ship. 3-strike halt.
+  Break work into small units; finish and verify one before starting the next.
+- **One decision at a time.** Surface open decisions singly, in plain chat, as numbered
+  options (1/2/3) with a recommendation. Do not batch questions; do not use a multiple-choice
+  form.
+- **Decide the small stuff; escalate only the load-bearing.** Assume sensible defaults and
+  repo convention for reversible calls. Bring the user only the directional or irreversible
+  choices. Never hand back a plan-to-do-it when the next action is obvious.
+- **Rigor, radical transparency.** Theorem then explicit, highlighted proof, citing the latest
+  source. Read the actual primary source (full text, not abstracts); quote-checkable spans, no
+  hallucinated claims.
+- **Zero manual numbers.** Every results number traces to generated simulation output; a build
+  gate fails on any hand-typed result number (Workstream 2). Hard oracle tests prove each sim
+  correct on toy cases (Workstream 6).
+- **Primary sources only** for the retrieval corpus and the reading (Workstream 3, 5).
+- **Never self-certify.** A fresh agent or a hard pass/fail gate confirms substantive work.
+  Report failures and real numbers plainly; open the live artifact before saying done.
+- **Worktree discipline.** All writes in a worktree, never the primary checkout. Commit under
+  the user's name, no AI mention, no co-author trailer, no em or en dashes in messages. Merge
+  to `main` by fast-forward; the protected-branch push to `main` is the user's to run.
+- **`docs/` is the wiki.** Research `.md` accumulates in `docs/` under `docs/index.md` and
+  grows over time: `docs/theory-rigor-rl.md`, `docs/sim-automation-audit.md`, plus the planned
+  `docs/proof-library.md` and synthesis articles.
