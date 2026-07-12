@@ -61,6 +61,7 @@ docs/superpowers/
 
 # arXiv build artifacts
 arxiv_submission/
+arxiv_submission 2/
 arxiv_submission.tar.gz
 
 # Cached simulation results (non-portable)
@@ -75,3 +76,13 @@ scripts/revert_dp_theory.sh
 
 # Internal notes
 ch10_conclusion/notes_for_conclusion.md
+
+# Timestamped tex backups (git history already covers these)
+**/tex/backups/
+
+# Compiled chapter PDFs are build outputs; keep only the assembled main.pdf
+docs/*.pdf
+!docs/main.pdf
+
+# /search skill scratch output
+search/
