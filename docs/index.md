@@ -43,3 +43,10 @@ organized under this index. Roadmap and long-term memory live at the repo root
 
 The `../audits/` directory holds dated per-simulation audit reports (one per sim, plus polish
 and re-audit passes). See [../audits/_INDEX.md](../audits/_INDEX.md).
+
+## Planned additions (roadmap W4, W5)
+
+Forthcoming, not yet written: `proof-library.md` (key RL results indexed by theorem, each with
+the cleanest source proof and citation; roadmap W5) and per-topic synthesis articles
+(deadly-triad, offline-RL, bandits-pricing, MFG-macro, RLHF-alignment, causal-OPE,
+world-models; roadmap W4). A primary-source RAG retrieval tool (roadmap W3) will back both.
