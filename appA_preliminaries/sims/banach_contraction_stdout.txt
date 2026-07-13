@@ -1,0 +1,35 @@
+======================================================================
+BANACH FIXED-POINT THEOREM: GEOMETRIC CONVERGENCE
+======================================================================
+
+Operator: policy-evaluation Bellman operator T V = r + gamma P V,
+  a gamma-contraction in the sup norm (P row-stochastic).
+  Fixed point V* = (I - gamma P)^{-1} r.
+
+  Computing: banach
+Banach fixed-point: policy-evaluation operator T V = r + gamma P V
+  States: 50, seeds: 30, iters: 120
+  gammas: [0.5, 0.7, 0.9, 0.99]
+
+  gamma=0.50: measured contraction factor = 0.4626 +/- 0.0026 (theory 0.50); iters to tol = 30.4
+  gamma=0.70: measured contraction factor = 0.6776 +/- 0.0018 (theory 0.70); iters to tol = 60.1
+  gamma=0.90: measured contraction factor = 0.8915 +/- 0.0008 (theory 0.90); iters to tol = nan
+  gamma=0.99: measured contraction factor = 0.9881 +/- 0.0003 (theory 0.99); iters to tol = nan
+  Cache saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/cache/banach_contraction__banach.pkl
+  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/banach_contraction.png
+  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/banach_contraction.tex
+
+Done.
+======================================================================
+BANACH FIXED-POINT THEOREM: GEOMETRIC CONVERGENCE
+======================================================================
+
+Operator: policy-evaluation Bellman operator T V = r + gamma P V,
+  a gamma-contraction in the sup norm (P row-stochastic).
+  Fixed point V* = (I - gamma P)^{-1} r.
+
+  Cache hit: banach
+  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/banach_contraction.png
+  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/banach_contraction.tex
+
+Done.
