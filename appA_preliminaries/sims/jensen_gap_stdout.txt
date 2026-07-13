@@ -1,0 +1,41 @@
+======================================================================
+JENSEN'S INEQUALITY: THE CONVEXITY GAP E[phi(X)] - phi(E[X]) >= 0
+======================================================================
+
+Estimator: plug-in gap (1/N) sum phi(X_i) - phi((1/N) sum X_i),
+  which never uses the true mean. For convex phi the gap is >= 0 and
+  converges to the closed-form value as N grows.
+
+  Computing: jensen
+Jensen gap: plug-in estimator of E[phi(X)] - phi(E[X]) for X ~ N(mu, sigma^2)
+  mu: 0.0, sigmas: [0.5, 1.0, 1.5, 2.0], seeds: 40
+  sample sizes: [10, 30, 100, 300, 1000, 3000, 10000, 30000, 100000]
+
+  square sigma=0.5: analytical gap = 0.2500, MC gap (N=100000) = 0.2500 +/- 0.0002, P(gap>=0) = 1.000
+  square sigma=1.0: analytical gap = 1.0000, MC gap (N=100000) = 1.0000 +/- 0.0007, P(gap>=0) = 1.000
+  square sigma=1.5: analytical gap = 2.2500, MC gap (N=100000) = 2.2501 +/- 0.0015, P(gap>=0) = 1.000
+  square sigma=2.0: analytical gap = 4.0000, MC gap (N=100000) = 4.0002 +/- 0.0026, P(gap>=0) = 1.000
+  exp    sigma=0.5: analytical gap = 0.1331, MC gap (N=100000) = 0.1331 +/- 0.0001, P(gap>=0) = 1.000
+  exp    sigma=1.0: analytical gap = 0.6487, MC gap (N=100000) = 0.6478 +/- 0.0007, P(gap>=0) = 1.000
+  exp    sigma=1.5: analytical gap = 2.0802, MC gap (N=100000) = 2.0714 +/- 0.0038, P(gap>=0) = 1.000
+  exp    sigma=2.0: analytical gap = 6.3891, MC gap (N=100000) = 6.3147 +/- 0.0220, P(gap>=0) = 1.000
+
+  concave contrast phi(x)=sqrt(x), X~U(0.5,1.5): gap = -0.0110 (<= 0)
+  Cache saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/cache/jensen_gap__jensen.pkl
+  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/jensen_gap.png
+  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/jensen_gap.tex
+
+Done.
+======================================================================
+JENSEN'S INEQUALITY: THE CONVEXITY GAP E[phi(X)] - phi(E[X]) >= 0
+======================================================================
+
+Estimator: plug-in gap (1/N) sum phi(X_i) - phi((1/N) sum X_i),
+  which never uses the true mean. For convex phi the gap is >= 0 and
+  converges to the closed-form value as N grows.
+
+  Cache hit: jensen
+  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/jensen_gap.png
+  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/jensen_gap.tex
+
+Done.

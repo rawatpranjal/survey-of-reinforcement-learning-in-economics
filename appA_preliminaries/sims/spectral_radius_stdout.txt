@@ -1,0 +1,16 @@
+======================================================================
+SPECTRAL RADIUS GOVERNS ASYMPTOTIC DECAY
+======================================================================
+
+  Computing: spectral
+Spectral radius vs norm: A = [[rho, 2.0], [0, rho]] (non-normal)
+  rhos: [0.5, 0.8, 0.95], iters: 200
+
+  rho=0.5: ||A||_2=2.118, transient peak=2.12 at k=1, tail decay ratio=0.5027 (-> rho)
+  rho=0.8: ||A||_2=2.281, transient peak=4.14 at k=4, tail decay ratio=0.8043 (-> rho)
+  rho=0.95: ||A||_2=2.379, transient peak=15.10 at k=19, tail decay ratio=0.9552 (-> rho)
+  Cache saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/cache/spectral_radius__spectral.pkl
+  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/spectral_radius.png
+  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/spectral_radius.tex
+
+Done.
