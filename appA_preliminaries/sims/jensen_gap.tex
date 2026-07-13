@@ -1,0 +1,20 @@
+\begin{table}[h]
+\centering
+\caption{Monte Carlo Jensen gap $E[\varphi(X)]-\varphi(E[X])$ for $X\sim N(0,\sigma^2)$, at the largest sample size $N=100{,}000$, against the closed-form value. The plug-in estimator converges to the exact gap; for $\varphi(x)=x^2$ and the small-$\sigma$ exponential cases the two agree within a standard error, while the heavy-tailed $\sigma\geq 1.5$ exponential rows converge more slowly and still sit a few standard errors low at this $N$. Every estimate is nonnegative, as convexity requires. Mean $\pm$ SE over 40 seeds.}
+\label{tab:prelim_jensen}
+\begin{tabular}{llccc}
+\hline
+$\varphi$ & $\sigma$ & Analytical gap & MC gap & $\Pr(\text{gap} \geq 0)$ \\
+\hline
+$x^2$ & 0.5 & 0.2500 & 0.2500 $\pm$ 0.0002 & 1.000 \\
+$x^2$ & 1.0 & 1.0000 & 1.0000 $\pm$ 0.0007 & 1.000 \\
+$x^2$ & 1.5 & 2.2500 & 2.2501 $\pm$ 0.0015 & 1.000 \\
+$x^2$ & 2.0 & 4.0000 & 4.0002 $\pm$ 0.0026 & 1.000 \\
+\hline
+$e^x$ & 0.5 & 0.1331 & 0.1331 $\pm$ 0.0001 & 1.000 \\
+$e^x$ & 1.0 & 0.6487 & 0.6478 $\pm$ 0.0007 & 1.000 \\
+$e^x$ & 1.5 & 2.0802 & 2.0714 $\pm$ 0.0038 & 1.000 \\
+$e^x$ & 2.0 & 6.3891 & 6.3147 $\pm$ 0.0220 & 1.000 \\
+\hline
+\end{tabular}
+\end{table}

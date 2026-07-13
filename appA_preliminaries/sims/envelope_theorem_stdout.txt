@@ -1,0 +1,22 @@
+======================================================================
+THE ENVELOPE (DANSKIN) THEOREM
+======================================================================
+
+V(theta) = max_a f(a, theta) has derivative dV/dtheta = f_theta(a*(theta), theta):
+the change in the maximizer contributes nothing to first order.
+
+  Computing: envelope
+Envelope (Danskin) theorem: dV/dtheta = f_theta(a*(theta), theta)
+
+(i) Smooth conjugate families f(a,theta) = theta*a - a^p/p:
+    p=2: max envelope residual |V'-f_theta(a*)| = 8.75e-05, max |V - V_analytic| = 3.83e-09, max |a* - a*_analytic| = 8.75e-05
+    p=4: max envelope residual |V'-f_theta(a*)| = 1.42e-04, max |V - V_analytic| = 2.37e-08, max |a* - a*_analytic| = 8.74e-05
+    p=6: max envelope residual |V'-f_theta(a*)| = 1.22e-04, max |V - V_analytic| = 4.23e-08, max |a* - a*_analytic| = 8.65e-05
+
+(ii) Line families V(theta) = max_a (alpha_a + beta_a theta):
+    over 15 seeds: mean identity-holds fraction (off kinks) = 1.0000, mean kinks per envelope = 1.0
+  Cache saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/cache/envelope_theorem__envelope.pkl
+  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/envelope_theorem.png
+  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/envelope_theorem.tex
+
+Done.
