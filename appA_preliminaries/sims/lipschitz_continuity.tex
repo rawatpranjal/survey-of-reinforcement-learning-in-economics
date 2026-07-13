@@ -1,0 +1,23 @@
+\begin{table}[h]
+\centering
+\caption{Lipschitz continuity, two checks. Top: the empirical Lipschitz constant $\hat L$ (largest difference quotient over sampled pairs) of four scalar functions rises to the analytic $L = \sup|f'|$ from below and never exceeds it. Bottom: the policy-evaluation Bellman operator $TV = r + \gamma P V$ is exactly $\gamma$-Lipschitz in the sup norm, and its fixed-point solve amplifies a reward perturbation by $\|(I-\gamma P)^{-1}\|_\infty = 1/(1-\gamma)$. Means over 12 sampling seeds and 20 random MDPs.}
+\label{tab:prelim_lipschitz}
+\begin{tabular}{lccc}
+\hline
+Function & Analytic $L$ & Measured $\hat L$ & $\hat L / L$ \\
+\hline
+$0.5x$ & 0.50 & 0.5000 & 1.0000 \\
+$\tanh x$ & 1.00 & 1.0000 & 1.0000 \\
+$|x|$ & 1.00 & 1.0000 & 1.0000 \\
+$\sin(3x)$ & 3.00 & 3.0000 & 1.0000 \\
+\hline
+$\gamma$ & Operator Lip.\ ($=\gamma$) & Amplification & Theory $1/(1-\gamma)$ \\
+\hline
+0.5 & 0.5000 & 2.0000 & 2.0000 \\
+0.7 & 0.7000 & 3.3333 & 3.3333 \\
+0.9 & 0.9000 & 10.0000 & 10.0000 \\
+0.95 & 0.9500 & 20.0000 & 20.0000 \\
+0.99 & 0.9900 & 100.0000 & 100.0000 \\
+\hline
+\end{tabular}
+\end{table}
