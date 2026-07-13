@@ -1,0 +1,16 @@
+\begin{table}[h]
+\centering
+\caption{The envelope theorem $dV/d\theta = f_\theta(a^\star(\theta),\theta)$ checked on smooth conjugate families $f(a,\theta)=\theta a - a^p/p$, for which $a^\star(\theta)=\theta^{1/(p-1)}$. A central-difference derivative of the numerically maximized $V$, which uses no knowledge of $a^\star$, reproduces the partial $f_\theta(a^\star,\theta)=a^\star$ to the finite-difference floor; the numerical $V$ and $a^\star$ match their closed forms. The last row reports the line-family envelope, where the identity holds at every $\theta$ off the measure-zero kinks.}
+\label{tab:prelim_envelope}
+\begin{tabular}{lccc}
+\hline
+Family & Max envelope residual & Max $|V-V_{\mathrm{exact}}|$ & Max $|a^\star - a^\star_{\mathrm{exact}}|$ \\
+\hline
+$p=2$ & 8.75e-05 & 3.83e-09 & 8.75e-05 \\
+$p=4$ & 1.42e-04 & 2.37e-08 & 8.74e-05 \\
+$p=6$ & 1.22e-04 & 4.23e-08 & 8.65e-05 \\
+\hline
+Lines (off kinks) & identity holds on 1.000 of $\theta$ & \multicolumn{2}{c}{1.0 kinks per envelope} \\
+\hline
+\end{tabular}
+\end{table}

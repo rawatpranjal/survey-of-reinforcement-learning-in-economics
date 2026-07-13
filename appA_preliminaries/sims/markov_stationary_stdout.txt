@@ -1,0 +1,16 @@
+======================================================================
+MARKOV STATIONARY DISTRIBUTION AND MIXING
+======================================================================
+
+  Computing: markov
+Markov stationary distribution: d* P = d*, power iteration d_k = d_0 P^k
+  states: 8, seeds: 30, iters: 150
+
+  slow   : |lambda_2|=0.8939, ||d*P - d*||=2.22e-16, iters to 1e-6 = 123
+  medium : |lambda_2|=0.6473, ||d*P - d*||=2.50e-16, iters to 1e-6 = 33
+  fast   : |lambda_2|=0.3742, ||d*P - d*||=2.22e-16, iters to 1e-6 = 16
+  Cache saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/cache/markov_stationary__markov.pkl
+  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/markov_stationary.png
+  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/markov_stationary.tex
+
+Done.

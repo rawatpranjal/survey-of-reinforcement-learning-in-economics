@@ -1,0 +1,14 @@
+\begin{table}[h]
+\centering
+\caption{Convergence of the state distribution $d_k = d_0 P^k$ to the stationary distribution $d^\star$ on random 8-state chains, at three mixing speeds. The total-variation distance falls at rate $|\lambda_2|$, the second-largest eigenvalue modulus. The residual confirms $d^\star P = d^\star$. Means over 30 seeds.}
+\label{tab:prelim_markov}
+\begin{tabular}{lccc}
+\hline
+Chain & $|\lambda_2|$ & $\|d^\star P - d^\star\|_\infty$ & Iters to $10^{-6}$ \\
+\hline
+slow & 0.8939 & 2.2e-16 & 123 \\
+medium & 0.6473 & 2.5e-16 & 33 \\
+fast & 0.3742 & 2.2e-16 & 16 \\
+\hline
+\end{tabular}
+\end{table}
