@@ -185,12 +185,32 @@ The logic of Q-learning is best understood as a Monte Carlo approximation of the
 
 Convergence requires two conditions. Exploration (visiting all state-action pairs infinitely often) ensures identification. The Robbins-Monro step-size conditions ($\sum_t \alpha_t = \infty$, $\sum_t \alpha_t^2 < \infty$) balance tracking versus noise suppression. These conditions turn the contraction of Theorem~\ref{thm:q_factor_contraction} into almost-sure convergence of the sampled iteration.
 
-\begin{restatable}[Q-learning convergence]{theorem}{QlearningConv}
+\begin{theorem}[Q-learning convergence]
 \label{thm:qlearning_convergence}
 Suppose the state and action spaces are finite, every state-action pair is visited infinitely often, rewards are bounded, and for each $(s,a)$ the step sizes satisfy $\sum_t \alpha_t(s,a) = \infty$ and $\sum_t \alpha_t^2(s,a) < \infty$. Then the Q-learning iterates~\eqref{eq:qlearning} converge to $Q^*$ with probability one.
-\end{restatable}
+\end{theorem}
 
-\citet{WatkinsDayan1992} and \citet{jaakkola1994} establish this; \citet{tsitsiklis1994} gives the general asynchronous stochastic-approximation framework. The proof, which realizes the update as stochastic approximation on the contraction $F$, is deferred to the chapter appendix (Section~\ref{sec:ch3_proofs}).
+\begin{proof}
+The plan is to recast the error $\Delta_t = Q_t - Q^*$ as a stochastic-approximation recursion, one whose conditional mean contracts by $\gamma$ and whose noise is mean-zero with controlled variance, then invoke a standard convergence lemma for such recursions. Write the update~\eqref{eq:qlearning} in incremental form. At the visited pair $(s,a) = (s_t, a_t)$,
+\[
+Q_{t+1}(s,a) = (1 - \alpha_t(s,a))\, Q_t(s,a) + \alpha_t(s,a)\big[\, \underbrace{(FQ_t)(s,a)}_{\text{target}} + \underbrace{w_t}_{\text{noise}} \big],
+\]
+where $\alpha_t(s,a) = 0$ for pairs not visited at step $t$ and the noise is the gap between the one-sample target and its expectation,
+\[
+w_t = \underbrace{r_t + \gamma \max_{a'} Q_t(s_{t+1}, a')}_{\text{sampled target}} - (FQ_t)(s,a).
+\]
+Given the history $\mathcal{F}_t$, the successor $s_{t+1}$ is drawn from $P(\cdot \mid s,a)$, so the sampled target is an unbiased draw of $(FQ_t)(s,a)$ and $\mathbb{E}[w_t \mid \mathcal{F}_t] = 0$.\footnote{$\mathbb{E}[\,r_t + \gamma \max_{a'} Q_t(s_{t+1},a') \mid \mathcal{F}_t] = r(s,a) + \gamma \sum_{s'} P(s'|s,a) \max_{a'} Q_t(s',a') = (FQ_t)(s,a)$ by the definition of $F$. So $w_t$ is a martingale difference, mean-zero given the past.} Because rewards are bounded and $\max_{a'} Q_t$ grows at most linearly in $\|Q_t - Q^*\|_\infty$ (since $Q^*$ is fixed and $|\max_{a'} Q_t(s',a') - \max_{a'} Q^*(s',a')| \leq \|\Delta_t\|_\infty$), the conditional variance obeys $\mathbb{E}[w_t^2 \mid \mathcal{F}_t] \leq C(1 + \|Q_t - Q^*\|_\infty^2)$ for a constant $C$. Subtracting $Q^*$ and writing $\Delta_t = Q_t - Q^*$,
+\[
+\Delta_{t+1}(s,a) = (1 - \alpha_t(s,a))\, \Delta_t(s,a) + \alpha_t(s,a)\big[\, \underbrace{(FQ_t)(s,a) - Q^*(s,a)}_{\text{contracts } \Delta_t} + w_t \big].
+\]
+Because $Q^* = FQ^*$, the Q-factor contraction (Theorem~\ref{thm:q_factor_contraction}) controls the conditional mean of the bracket,
+\[
+\big\|\mathbb{E}[(FQ_t) - Q^* \mid \mathcal{F}_t]\big\|_\infty = \|FQ_t - FQ^*\|_\infty \leq \gamma \|\Delta_t\|_\infty, \qquad \gamma < 1 .
+\]
+The process $\Delta_t$ therefore satisfies all the hypotheses of the stochastic-approximation lemma for contractive updates,\footnote{The lemma \citep[Theorem~1]{jaakkola1994}, a Q-learning-adapted form of the Dvoretzky stochastic-approximation theorem, states that a process $\Delta_{t+1}(x) = (1 - \alpha_t(x))\Delta_t(x) + \alpha_t(x) F_t(x)$ converges to $0$ with probability one provided (i) $\sum_t \alpha_t(x) = \infty$ and $\sum_t \alpha_t^2(x) < \infty$ at each $x$; (ii) $\|\mathbb{E}[F_t \mid \mathcal{F}_t]\|_\infty \leq \gamma \|\Delta_t\|_\infty$ with $\gamma < 1$; and (iii) $\mathrm{Var}[F_t \mid \mathcal{F}_t] \leq C(1 + \|\Delta_t\|_\infty^2)$. Here $F_t = (FQ_t - Q^*) + w_t$.} namely componentwise Robbins-Monro step sizes, a conditional mean that contracts $\Delta_t$ by $\gamma$ in the supremum norm, and conditional noise variance bounded by $C(1 + \|\Delta_t\|_\infty^2)$. The lemma yields $\Delta_t \to 0$ with probability one, so $Q_t \to Q^*$.
+\end{proof}
+
+\citet{WatkinsDayan1992} and \citet{jaakkola1994} establish this; \citet{tsitsiklis1994} gives the general asynchronous stochastic-approximation framework.
 
 The choice of step-size schedule has quantitative consequences. \citet{evendar2003} show that polynomial schedules $\alpha_t = 1/t^\omega$ with $\omega \in (1/2, 1)$ achieve convergence rate $O(1/t^{1-\omega})$, creating an explicit tradeoff between speed and stability. Recent work by \citet{li2024minimax} establishes that Q-learning with variance-reduced updates achieves minimax-optimal sample complexity $\tilde{O}(|\mathcal{S}||\mathcal{A}|/(1-\gamma)^3\epsilon^2)$, matching information-theoretic lower bounds.\footnote{Vanilla Q-learning (without variance reduction) has tight complexity $\tilde{\Theta}(|\mathcal{S}||\mathcal{A}|/(1-\gamma)^4\epsilon^2)$, worse by a factor of $1/(1-\gamma)$ due to maximization bias inflating variance. The optimal cubic rate requires variance-reduced updates \citep{wainwright2019,sidford2018}. By contrast, naive model-based RL (estimate $\hat{P}$ from samples, then solve by planning) achieves the optimal $(1-\gamma)^{-3}$ rate with no special tricks \citep{agarwalKakadeYang2020}, illustrating the statistical cost of discarding transition structure.} Model-free learning is possible. The optimal value function can be found without ever estimating the transition probabilities.\footnote{Model-free methods are essential when (a) the environment is a physical system with dynamics too complex to write down, or (b) the agent learns directly from interaction. Note that ``model-free'' does not mean ``atheoretical.'' The agent does not store $P(s'|s,a)$ explicitly, but the Q-function serves as an implicit model encoding long-run consequences.}
 
@@ -362,15 +382,38 @@ In the on-policy setting, $\Pi$ minimizes squared error weighted by $d^\pi$, the
 \end{equation}
 The same argument extends from TD(0) to TD($\lambda$) through the $\lambda$-averaged operator $T^{(\lambda)}$, whose $d^\pi$-contraction modulus is $\kappa_\lambda = \gamma(1-\lambda)/(1-\lambda\gamma) \leq \gamma$.
 
-\begin{restatable}[On-policy TD convergence]{theorem}{ProjBellman}
+\begin{theorem}[On-policy TD convergence]
 \label{thm:proj_bellman}
 Sample states from the stationary distribution $d^\pi$ and let $\Pi$ be the $d^\pi$-orthogonal projection onto $\mathrm{span}(\Phi)$. For each $\lambda \in [0,1]$ the projected operator $\Pi T^{(\lambda)}$ is a contraction in the $d^\pi$-norm with modulus $\kappa_\lambda = \gamma(1-\lambda)/(1-\lambda\gamma)$. It has a unique fixed point $\Phi\theta^*$, to which TD($\lambda$) converges with probability one, and
 \[
 \|\Phi\theta^* - V^\pi\|_{d^\pi} \leq \frac{1-\lambda\gamma}{1-\gamma}\, \|\Pi V^\pi - V^\pi\|_{d^\pi}.
 \]
-\end{restatable}
+\end{theorem}
 
-The $\lambda = 0$ contraction is exactly~\eqref{eq:on_policy_contraction}; the general case and the error bound are proved in the appendix (Section~\ref{sec:ch3_proofs}) \citep[Theorem~1]{tsitsiklis1997}. The bound equals the best achievable approximation error at $\lambda = 1$ and loosens as $\lambda$ falls.
+The $\lambda = 0$ contraction is exactly~\eqref{eq:on_policy_contraction}. The bound equals the best achievable approximation error at $\lambda = 1$ and loosens as $\lambda$ falls. The general case and the error bound follow \citep[Theorem~1]{tsitsiklis1997}.
+
+\begin{proof}
+Two facts drive the proof. The projection never lengthens a vector, and the $\lambda$-averaged Bellman operator contracts in the $d^\pi$-norm. Composing them contracts, and one triangle inequality converts that contraction into the error bound. The projection $\Pi$ is orthogonal in the $d^\pi$-weighted inner product,\footnote{The $d^\pi$-weighted norm is $\|v\|_{d^\pi}^2 = \sum_s d^\pi(s)\, v(s)^2$, weighting each state by how often the policy visits it. Orthogonal projection onto a subspace returns the closest point in that subspace under this norm.} hence nonexpansive,
+\[
+\|\Pi V\|_{d^\pi}^2 + \|V - \Pi V\|_{d^\pi}^2 = \|V\|_{d^\pi}^2 \;\;\Longrightarrow\;\; \|\Pi V\|_{d^\pi} \leq \|V\|_{d^\pi},
+\]
+by the Pythagorean identity. The $\lambda$-averaged Bellman operator\footnote{$T^{(\lambda)} = (1-\lambda)\sum_{m\geq0}\lambda^m (T^\pi)^{m+1}$ is the geometric average of the $m$-step Bellman operators TD($\lambda$) implicitly targets. Setting $\lambda = 0$ recovers the one-step $T^\pi$ and $\lambda \to 1$ the full-return Monte Carlo operator. Its fixed point is $V^\pi$ for every $\lambda$.} $T^{(\lambda)} = (1-\lambda)\sum_{m\geq0}\lambda^m (T^\pi)^{m+1}$ has linear part $(1-\lambda)\sum_{m\geq0}\lambda^m (\gamma P^\pi)^{m+1}$, and because $d^\pi$ is the stationary distribution of $P^\pi$, the transition operator is itself nonexpansive in this norm.\footnote{With $d^\pi P^\pi = d^\pi$, Jensen's inequality gives $\|P^\pi v\|_{d^\pi}^2 = \sum_s d^\pi(s)\big(\sum_{s'} P^\pi(s'|s) v(s')\big)^2 \leq \sum_s d^\pi(s) \sum_{s'} P^\pi(s'|s) v(s')^2 = \sum_{s'} d^\pi(s') v(s')^2 = \|v\|_{d^\pi}^2$, the last equality by stationarity.} Hence
+\begin{align*}
+\|T^{(\lambda)} V_1 - T^{(\lambda)} V_2\|_{d^\pi}
+  &\leq (1-\lambda)\sum_{m\geq0} \lambda^m \gamma^{m+1} \|V_1 - V_2\|_{d^\pi}
+    && \text{($\|P^\pi v\|_{d^\pi} \leq \|v\|_{d^\pi}$, term by term)} \\
+  &= \underbrace{\frac{\gamma(1-\lambda)}{1-\lambda\gamma}}_{=\,\kappa_\lambda}\, \|V_1 - V_2\|_{d^\pi}
+    && \text{(sum the geometric series $\sum_m (\lambda\gamma)^m$).}
+\end{align*}
+Composing with the nonexpansive $\Pi$ makes $\Pi T^{(\lambda)}$ a $\kappa_\lambda$-contraction ($\kappa_\lambda \leq \gamma < 1$), so Banach's theorem gives the unique fixed point $\Phi\theta^*$, and TD($\lambda$), which realizes $\theta_{k+1} = \Pi T^{(\lambda)} \theta_k$ as stochastic approximation, converges to it almost surely by the argument of Theorem~\ref{thm:qlearning_convergence}. For the error bound, the true value $V^\pi$ is the fixed point of $T^{(\lambda)}$ for every $\lambda$ (each $T^{(\lambda)}$ is built from operators that fix $V^\pi$), so $\Pi T^{(\lambda)} V^\pi = \Pi V^\pi$, and
+\begin{align*}
+\|\Phi\theta^* - \Pi V^\pi\|_{d^\pi}
+  &= \|\Pi T^{(\lambda)} \Phi\theta^* - \Pi T^{(\lambda)} V^\pi\|_{d^\pi} \\
+  &\leq \kappa_\lambda \|\Phi\theta^* - V^\pi\|_{d^\pi}
+    && \text{($\Pi T^{(\lambda)}$ is a $\kappa_\lambda$-contraction).}
+\end{align*}
+Combining with the triangle inequality $\|\Phi\theta^* - V^\pi\|_{d^\pi} \leq \|\Phi\theta^* - \Pi V^\pi\|_{d^\pi} + \|\Pi V^\pi - V^\pi\|_{d^\pi}$ gives $(1 - \kappa_\lambda)\|\Phi\theta^* - V^\pi\|_{d^\pi} \leq \|\Pi V^\pi - V^\pi\|_{d^\pi}$, and $1/(1-\kappa_\lambda) = (1-\lambda\gamma)/(1-\gamma)$ delivers the stated bound.
+\end{proof}
 
 \subsubsection{Why Off-Policy Learning Diverges}
 
@@ -380,12 +423,18 @@ This divergence differs from overfitting. Overfitting occurs when the approximat
 
 \citet{Baird1995} constructed a six-state star MDP that makes this failure concrete. All rewards are zero, so the true value is $V^*(s) = 0$ for every state. A lookup table learns this immediately. The MDP has a star topology: states 1 through 5 each transition to state 6, and state 6 transitions to itself. Linear function approximation gives each state's value as a combination of a shared weight, common to all states, and a state-specific weight, so that adjusting one state's estimate shifts its neighbors through the shared component. Training samples all transitions equally often (uniform distribution, not $d^\pi$). The dynamics are as follows.\footnote{\citet{Baird1995} also presents an MDP variant with two actions per state, demonstrating that Q-learning diverges under the same mechanism. The mechanism is identical: shared parameters create cross-state coupling that uniform sampling cannot counterbalance.} When $V(6)$ is large and positive, the TD target $\gamma V(6)$ exceeds $V(s)$ for states 1 through 5, producing positive TD errors that push the shared weight upward. At state 6, the TD target is $\gamma V(6) < V(6)$, producing a negative TD error that pushes it downward. But states 1 through 5 are each visited as often as state 6, so the shared weight receives five upward pushes for every one downward push. The shared weight diverges to $+\infty$. The on-policy distribution would concentrate mass on state 6 (the absorbing state), counterbalancing the upward pressure; uniform sampling destroys this balance.\footnote{The gradient of $\|Q - TQ\|^2$ requires two independent next-state samples from the same $(s,a)$, since $\nabla\mathbb{E}[(Q - \mathbb{E}[r + \gamma V(s')])^2]$ involves $\mathbb{E}[\cdot] \cdot \nabla\mathbb{E}[\cdot]$ and $\mathbb{E}[XY] \neq \mathbb{E}[X]\mathbb{E}[Y]$. This ``double-sampling'' requirement is impractical \citep{Baird1995}, so practitioners use semi-gradient TD, treating the bootstrap target as a constant. This semi-gradient structure makes off-policy TD vulnerable to projection mismatch.}
 
-\begin{restatable}[Off-policy divergence, \citealp{Baird1995}]{theorem}{BairdDivergence}
+\begin{theorem}[Off-policy divergence, \citealp{Baird1995}]
 \label{thm:baird}
 On the star MDP with zero rewards, whose linear features share a common weight across states and represent the true value $V^* \equiv 0$ exactly, semi-gradient TD(0) with all transitions sampled equally often diverges. There is an initialization, one in which the absorbing state's value is sufficiently larger than the others, from which the shared weight grows without bound, so the iterate leaves every bounded set even though $V^*$ lies in the representable class.
-\end{restatable}
+\end{theorem}
 
-The proof, which sums the epoch-wise weight changes to expose the five-to-one imbalance on the shared weight, is given in the appendix (Section~\ref{sec:ch3_proofs}).
+\begin{proof}
+The mechanism is a counting imbalance. The shared weight collects a positive push from each of the five spoke states and a single negative push from the absorbing state, so it drifts up without bound. Rewards are zero, so the semi-gradient TD(0) increment for a transition $s \to s'$ is $\alpha\, \delta(s)\, \nabla_\theta V(s)$ with temporal-difference error $\delta(s) = \gamma V(s') - V(s)$ and the bootstrap target held fixed under differentiation.\footnote{Semi-gradient TD treats the target $\gamma V(s')$ as a constant when differentiating, rather than as a function of the shared parameters it actually depends on. This is what breaks the descent interpretation and, off-policy, admits divergence. A true gradient step on the squared TD error would require two independent successor samples and does not diverge here.} States $1$ through $5$ each transition to the absorbing state $6$, and state $6$ transitions to itself. Let $g_s = \nabla_{w} V(s) > 0$ be the positive gradient component of the shared weight $w$ in each state's value. Summing one increment per transition over an epoch, the change in $w$ is proportional to
+\[
+\Delta w \;\propto\; \underbrace{\sum_{s=1}^{5} \big[\gamma V(6) - V(s)\big]\, g_s}_{>\,0 \text{ once } \gamma V(6) > V(s)} \;+\; \underbrace{(\gamma - 1) V(6)\, g_6}_{<\,0} .
+\]
+At an initialization where $V(6)$ is large enough that $\gamma V(6) > V(s)$ for $s \in \{1, \dots, 5\}$, the five spoke terms are each positive and the lone absorbing-state term is negative. The five upward contributions outweigh the one downward contribution,\footnote{The imbalance is sharp as $\gamma \to 1$. The single downward term $(\gamma-1) V(6)\, g_6$ is $O(1-\gamma)$ and vanishes in the limit, while each of the five upward terms tends to the strictly positive $[V(6) - V(s)]\, g_s$. So for $\gamma$ close enough to $1$ the positive terms dominate regardless of the exact feature magnitudes $g_s, g_6$; \citet{Baird1995} tracks the full weight-dynamics with the specific feature values.} so the epoch raises $w$, which raises $V(6)$ further and preserves $\gamma V(6) > V(s)$ into the next epoch. The configuration is self-sustaining, $w$ grows without bound, and the iterate diverges. Since $V^* \equiv 0$ lies in the span of the features, this is a failure of the off-policy semi-gradient iteration rather than of representability. The full weight-dynamics and the two-action MDP variant appear in \citet{Baird1995}.
+\end{proof}
 
 Each element of the triad is individually necessary for divergence. Without function approximation (tabular), the projection is the identity and Q-learning's contraction applies directly. Without bootstrapping (Monte Carlo returns), targets are independent of current value estimates and the problem reduces to supervised regression. Without off-policy learning, samples come from $d^\pi$, the projection is orthogonal, and the Tsitsiklis-Van Roy convergence guarantee holds.
 
@@ -693,66 +742,4 @@ Fourth, \emph{bias versus variance in advantage estimation}: REINFORCE uses the 
 \label{sec:ch2_conclusion}
 
 RL algorithms are asymptotic approximations to classical dynamic programming operators, justified by the mathematics of contractions, stochastic approximation, and gradient domination. Value iteration becomes Q-learning \citep{WatkinsDayan1992, tsitsiklis1994} when expectations are replaced by single samples. Policy iteration becomes the natural policy gradient \citep{Kakade2001, agarwal2021theory} when the greedy improvement step is approximated by gradient ascent, and NPG recovers PI exactly in the tabular case. The stochastic approximation framework, from the foundational work of \citet{Robbins1952} through the ODE method of \citet{borkar2000}, guarantees that under appropriate step-size conditions, noisy iterates converge to the same fixed points as their deterministic counterparts. Reinforcement learning extends dynamic programming. Tabular RL and RL with linear function approximation rest on solid theoretical foundations. Deep RL lacks comparable guarantees: convergence remains an open problem, and empirical successes remain case-specific.
-
-\subsection{Appendix: Proofs}
-\label{sec:ch3_proofs}
-
-This appendix collects the longer proofs of results stated in the main text. Each theorem is restated for convenience.
-
-\QlearningConv*
-
-\begin{proof}
-The plan is to recast the error $\Delta_t = Q_t - Q^*$ as a stochastic-approximation recursion, one whose conditional mean contracts by $\gamma$ and whose noise is mean-zero with controlled variance, then invoke a standard convergence lemma for such recursions. Write the update~\eqref{eq:qlearning} in incremental form. At the visited pair $(s,a) = (s_t, a_t)$,
-\[
-Q_{t+1}(s,a) = (1 - \alpha_t(s,a))\, Q_t(s,a) + \alpha_t(s,a)\big[\, \underbrace{(FQ_t)(s,a)}_{\text{target}} + \underbrace{w_t}_{\text{noise}} \big],
-\]
-where $\alpha_t(s,a) = 0$ for pairs not visited at step $t$ and the noise is the gap between the one-sample target and its expectation,
-\[
-w_t = \underbrace{r_t + \gamma \max_{a'} Q_t(s_{t+1}, a')}_{\text{sampled target}} - (FQ_t)(s,a).
-\]
-Given the history $\mathcal{F}_t$, the successor $s_{t+1}$ is drawn from $P(\cdot \mid s,a)$, so the sampled target is an unbiased draw of $(FQ_t)(s,a)$ and $\mathbb{E}[w_t \mid \mathcal{F}_t] = 0$.\footnote{$\mathbb{E}[\,r_t + \gamma \max_{a'} Q_t(s_{t+1},a') \mid \mathcal{F}_t] = r(s,a) + \gamma \sum_{s'} P(s'|s,a) \max_{a'} Q_t(s',a') = (FQ_t)(s,a)$ by the definition of $F$. So $w_t$ is a martingale difference, mean-zero given the past.} Because rewards are bounded and $\max_{a'} Q_t$ grows at most linearly in $\|Q_t - Q^*\|_\infty$ (since $Q^*$ is fixed and $|\max_{a'} Q_t(s',a') - \max_{a'} Q^*(s',a')| \leq \|\Delta_t\|_\infty$), the conditional variance obeys $\mathbb{E}[w_t^2 \mid \mathcal{F}_t] \leq C(1 + \|Q_t - Q^*\|_\infty^2)$ for a constant $C$. Subtracting $Q^*$ and writing $\Delta_t = Q_t - Q^*$,
-\[
-\Delta_{t+1}(s,a) = (1 - \alpha_t(s,a))\, \Delta_t(s,a) + \alpha_t(s,a)\big[\, \underbrace{(FQ_t)(s,a) - Q^*(s,a)}_{\text{contracts } \Delta_t} + w_t \big].
-\]
-Because $Q^* = FQ^*$, the Q-factor contraction (Theorem~\ref{thm:q_factor_contraction}) controls the conditional mean of the bracket,
-\[
-\big\|\mathbb{E}[(FQ_t) - Q^* \mid \mathcal{F}_t]\big\|_\infty = \|FQ_t - FQ^*\|_\infty \leq \gamma \|\Delta_t\|_\infty, \qquad \gamma < 1 .
-\]
-The process $\Delta_t$ therefore satisfies all the hypotheses of the stochastic-approximation lemma for contractive updates,\footnote{The lemma \citep[Theorem~1]{jaakkola1994}, a Q-learning-adapted form of the Dvoretzky stochastic-approximation theorem, states that a process $\Delta_{t+1}(x) = (1 - \alpha_t(x))\Delta_t(x) + \alpha_t(x) F_t(x)$ converges to $0$ with probability one provided (i) $\sum_t \alpha_t(x) = \infty$ and $\sum_t \alpha_t^2(x) < \infty$ at each $x$; (ii) $\|\mathbb{E}[F_t \mid \mathcal{F}_t]\|_\infty \leq \gamma \|\Delta_t\|_\infty$ with $\gamma < 1$; and (iii) $\mathrm{Var}[F_t \mid \mathcal{F}_t] \leq C(1 + \|\Delta_t\|_\infty^2)$. Here $F_t = (FQ_t - Q^*) + w_t$.} namely componentwise Robbins-Monro step sizes, a conditional mean that contracts $\Delta_t$ by $\gamma$ in the supremum norm, and conditional noise variance bounded by $C(1 + \|\Delta_t\|_\infty^2)$. The lemma yields $\Delta_t \to 0$ with probability one, so $Q_t \to Q^*$.
-\end{proof}
-
-\ProjBellman*
-
-\begin{proof}
-Two facts drive the proof. The projection never lengthens a vector, and the $\lambda$-averaged Bellman operator contracts in the $d^\pi$-norm. Composing them contracts, and one triangle inequality converts that contraction into the error bound. The projection $\Pi$ is orthogonal in the $d^\pi$-weighted inner product,\footnote{The $d^\pi$-weighted norm is $\|v\|_{d^\pi}^2 = \sum_s d^\pi(s)\, v(s)^2$, weighting each state by how often the policy visits it. Orthogonal projection onto a subspace returns the closest point in that subspace under this norm.} hence nonexpansive,
-\[
-\|\Pi V\|_{d^\pi}^2 + \|V - \Pi V\|_{d^\pi}^2 = \|V\|_{d^\pi}^2 \;\;\Longrightarrow\;\; \|\Pi V\|_{d^\pi} \leq \|V\|_{d^\pi},
-\]
-by the Pythagorean identity. The $\lambda$-averaged Bellman operator\footnote{$T^{(\lambda)} = (1-\lambda)\sum_{m\geq0}\lambda^m (T^\pi)^{m+1}$ is the geometric average of the $m$-step Bellman operators TD($\lambda$) implicitly targets. Setting $\lambda = 0$ recovers the one-step $T^\pi$ and $\lambda \to 1$ the full-return Monte Carlo operator. Its fixed point is $V^\pi$ for every $\lambda$.} $T^{(\lambda)} = (1-\lambda)\sum_{m\geq0}\lambda^m (T^\pi)^{m+1}$ has linear part $(1-\lambda)\sum_{m\geq0}\lambda^m (\gamma P^\pi)^{m+1}$, and because $d^\pi$ is the stationary distribution of $P^\pi$, the transition operator is itself nonexpansive in this norm.\footnote{With $d^\pi P^\pi = d^\pi$, Jensen's inequality gives $\|P^\pi v\|_{d^\pi}^2 = \sum_s d^\pi(s)\big(\sum_{s'} P^\pi(s'|s) v(s')\big)^2 \leq \sum_s d^\pi(s) \sum_{s'} P^\pi(s'|s) v(s')^2 = \sum_{s'} d^\pi(s') v(s')^2 = \|v\|_{d^\pi}^2$, the last equality by stationarity.} Hence
-\begin{align*}
-\|T^{(\lambda)} V_1 - T^{(\lambda)} V_2\|_{d^\pi}
-  &\leq (1-\lambda)\sum_{m\geq0} \lambda^m \gamma^{m+1} \|V_1 - V_2\|_{d^\pi}
-    && \text{($\|P^\pi v\|_{d^\pi} \leq \|v\|_{d^\pi}$, term by term)} \\
-  &= \underbrace{\frac{\gamma(1-\lambda)}{1-\lambda\gamma}}_{=\,\kappa_\lambda}\, \|V_1 - V_2\|_{d^\pi}
-    && \text{(sum the geometric series $\sum_m (\lambda\gamma)^m$).}
-\end{align*}
-Composing with the nonexpansive $\Pi$ makes $\Pi T^{(\lambda)}$ a $\kappa_\lambda$-contraction ($\kappa_\lambda \leq \gamma < 1$), so Banach's theorem gives the unique fixed point $\Phi\theta^*$, and TD($\lambda$), which realizes $\theta_{k+1} = \Pi T^{(\lambda)} \theta_k$ as stochastic approximation, converges to it almost surely by the argument of Theorem~\ref{thm:qlearning_convergence}. For the error bound, the true value $V^\pi$ is the fixed point of $T^{(\lambda)}$ for every $\lambda$ (each $T^{(\lambda)}$ is built from operators that fix $V^\pi$), so $\Pi T^{(\lambda)} V^\pi = \Pi V^\pi$, and
-\begin{align*}
-\|\Phi\theta^* - \Pi V^\pi\|_{d^\pi}
-  &= \|\Pi T^{(\lambda)} \Phi\theta^* - \Pi T^{(\lambda)} V^\pi\|_{d^\pi} \\
-  &\leq \kappa_\lambda \|\Phi\theta^* - V^\pi\|_{d^\pi}
-    && \text{($\Pi T^{(\lambda)}$ is a $\kappa_\lambda$-contraction).}
-\end{align*}
-Combining with the triangle inequality $\|\Phi\theta^* - V^\pi\|_{d^\pi} \leq \|\Phi\theta^* - \Pi V^\pi\|_{d^\pi} + \|\Pi V^\pi - V^\pi\|_{d^\pi}$ gives $(1 - \kappa_\lambda)\|\Phi\theta^* - V^\pi\|_{d^\pi} \leq \|\Pi V^\pi - V^\pi\|_{d^\pi}$, and $1/(1-\kappa_\lambda) = (1-\lambda\gamma)/(1-\gamma)$ delivers the stated bound.
-\end{proof}
-
-\BairdDivergence*
-
-\begin{proof}
-The mechanism is a counting imbalance. The shared weight collects a positive push from each of the five spoke states and a single negative push from the absorbing state, so it drifts up without bound. Rewards are zero, so the semi-gradient TD(0) increment for a transition $s \to s'$ is $\alpha\, \delta(s)\, \nabla_\theta V(s)$ with temporal-difference error $\delta(s) = \gamma V(s') - V(s)$ and the bootstrap target held fixed under differentiation.\footnote{Semi-gradient TD treats the target $\gamma V(s')$ as a constant when differentiating, rather than as a function of the shared parameters it actually depends on. This is what breaks the descent interpretation and, off-policy, admits divergence. A true gradient step on the squared TD error would require two independent successor samples and does not diverge here.} States $1$ through $5$ each transition to the absorbing state $6$, and state $6$ transitions to itself. Let $g_s = \nabla_{w} V(s) > 0$ be the positive gradient component of the shared weight $w$ in each state's value. Summing one increment per transition over an epoch, the change in $w$ is proportional to
-\[
-\Delta w \;\propto\; \underbrace{\sum_{s=1}^{5} \big[\gamma V(6) - V(s)\big]\, g_s}_{>\,0 \text{ once } \gamma V(6) > V(s)} \;+\; \underbrace{(\gamma - 1) V(6)\, g_6}_{<\,0} .
-\]
-At an initialization where $V(6)$ is large enough that $\gamma V(6) > V(s)$ for $s \in \{1, \dots, 5\}$, the five spoke terms are each positive and the lone absorbing-state term is negative. The five upward contributions outweigh the one downward contribution,\footnote{The imbalance is sharp as $\gamma \to 1$. The single downward term $(\gamma-1) V(6)\, g_6$ is $O(1-\gamma)$ and vanishes in the limit, while each of the five upward terms tends to the strictly positive $[V(6) - V(s)]\, g_s$. So for $\gamma$ close enough to $1$ the positive terms dominate regardless of the exact feature magnitudes $g_s, g_6$; \citet{Baird1995} tracks the full weight-dynamics with the specific feature values.} so the epoch raises $w$, which raises $V(6)$ further and preserves $\gamma V(6) > V(s)$ into the next epoch. The configuration is self-sustaining, $w$ grows without bound, and the iterate diverges. Since $V^* \equiv 0$ lies in the span of the features, this is a failure of the off-policy semi-gradient iteration rather than of representability. The full weight-dynamics and the two-action MDP variant appear in \citet{Baird1995}.
-\end{proof}
 
