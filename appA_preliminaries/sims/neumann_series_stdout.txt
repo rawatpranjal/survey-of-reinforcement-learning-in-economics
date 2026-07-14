@@ -1,0 +1,16 @@
+======================================================================
+NEUMANN SERIES / RESOLVENT
+======================================================================
+
+  Computing: neumann
+Neumann series: V = (I - gamma P)^-1 r = sum_m gamma^m P^m r
+  states: 40, seeds: 30, terms: 400, gammas: [0.5, 0.8, 0.95]
+
+  gamma=0.5: terms to 1e-6 = 17 (predicted 20)
+  gamma=0.8: terms to 1e-6 = 57 (predicted 68)
+  gamma=0.95: terms to 1e-6 = 276 (predicted 326)
+  Cache saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/cache/neumann_series__neumann.pkl
+  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/neumann_series.png
+  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/neumann_series.tex
+
+Done.
