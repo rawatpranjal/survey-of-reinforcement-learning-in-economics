@@ -10,7 +10,7 @@ Table~\ref{table:fc_supply_chain} reports cumulative regret against the oracle a
 \begin{figure}[ht]
   \centering
   \includegraphics[width=\textwidth]{../ch12_world_models/sims/multi_echelon_paradigms.png}
-  \caption{Left: cumulative regret against the Clark-Scarf oracle on the two-echelon serial supply chain for five paradigms, means and one-standard-error bands over twenty seeds. Right: the neural world model's one-step forecast mean-squared error over training, seed zero, on a log scale. The world-model and decentralized traces are near zero on the left panel at the scale set by the model-free and naive learners.}
+  \caption{Left: cumulative regret against the Clark-Scarf oracle for five paradigms, means and one-standard-error bands over twenty seeds; the world-model and decentralized traces are near zero at the scale set by the model-free and naive learners. Middle: per-period cost above the oracle over time for the three near-oracle methods, smoothed; the world model pays a large exploration cost early and then converges below the decentralized heuristic, the asymptotic advantage the terminal-cost column of Table~\ref{table:fc_supply_chain} records. Right: the neural world model's one-step forecast mean-squared error over training, seed zero, on a log scale.}
   \label{figure:fc_supply_chain}
 \end{figure}
 
