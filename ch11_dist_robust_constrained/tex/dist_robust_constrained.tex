@@ -158,9 +158,11 @@ $s \in \{0, \ldots, 15\}$ (current stock) and action $a \in \{0, \ldots, 5\}$
 $D \sim 0.8 \cdot \text{Poisson}(3) + 0.2 \cdot \text{Poisson}(10)$,
 creating occasional demand spikes that make risk preferences
 matter.\footnote{Per-step reward:
-$5 \cdot \min(s+a, D) - 2a - 1 \cdot (s+a-D)^+ - 8 \cdot (D-s-a)^+$.
-The stockout penalty (8) exceeds the holding cost (1), so risk-averse
-agents should carry more safety stock.}
+$5 \cdot \min(\tilde{s}, D) - 2a - 1 \cdot (\tilde{s}-D)^+ - 8 \cdot (D-\tilde{s})^+$
+with $\tilde{s} = \min(s+a, 15)$, the post-order stock after the
+capacity cap; the order cost is charged on $a$ even when the cap binds.
+The stockout penalty (8) exceeds the holding cost (1), which makes the
+demand risk consequential for ordering behavior.}
 A single IQN network is trained for 50{,}000 episodes with
 $\tau \sim U([0,1])$, then evaluated under two $\tau$-sampling
 distributions: $U([0,1])$ for risk-neutral and $U([0, 0.05])$ for
@@ -171,7 +173,9 @@ episodes, alongside the exact DP oracle.
 \begin{table}[h]
 \centering
 \caption{Risk-sensitive inventory management. Mean $\pm$ SE across ten
-training seeds, 50{,}000 evaluation episodes per seed.}
+training seeds, 50{,}000 evaluation episodes per seed. Avg.\ Order is
+the per-state mean order quantity averaged uniformly across inventory
+levels.}
 \label{tab:risk_inventory}
 \input{../ch11_dist_robust_constrained/sims/risk_sensitive_inventory_table}
 \end{table}
@@ -183,8 +187,8 @@ evaluation (CVaR$_{95}$ of $-55.3$ against $-57.5$) with no loss in
 mean return (36.4 against 34.9, a gap of under two standard errors),
 and its ordering policy tracks the oracle more closely at high
 inventory levels (Figure~\ref{fig:risk_inventory_policy}). Both learned
-policies order more than the oracle on average (2.99 and 3.21 units per
-period against 2.56).
+policies order more than the oracle, averaging order quantities across
+inventory levels (2.99 and 3.21 against the oracle's 2.56).
 
 \begin{figure}[h]
 \centering
