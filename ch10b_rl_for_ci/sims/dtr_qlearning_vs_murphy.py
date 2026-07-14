@@ -37,19 +37,23 @@ import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from sims.plot_style import (
-    apply_style, COLORS, BENCH_STYLE,
+    apply_style,
+    COLORS,
+    BENCH_STYLE,
 )
 from sims.sim_cache import (
-    compute_or_load, add_component_args, parse_force_set,
+    compute_or_load,
+    add_component_args,
+    parse_force_set,
 )
 
 apply_style()
 
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
-CACHE_DIR = os.path.join(OUTPUT_DIR, 'cache')
-SCRIPT_NAME = 'dtr_qlearning_vs_murphy'
+CACHE_DIR = os.path.join(OUTPUT_DIR, "cache")
+SCRIPT_NAME = "dtr_qlearning_vs_murphy"
 
 
 # ============================================================================
@@ -76,22 +80,34 @@ ALPHA_QLEARN = 0.1
 N_SEEDS = 50
 
 SHARED_CONFIG = {
-    'N_STATES': N_STATES, 'S_TREAT': S_TREAT,
-    'ALPHA_0': ALPHA_0, 'ALPHA_1': ALPHA_1,
-    'BETA_S': BETA_S, 'BETA_A': BETA_A, 'BETA_SA': BETA_SA,
-    'SIGMA_Y': SIGMA_Y,
-    'P_IMPROVE': P_IMPROVE, 'P_WORSEN': P_WORSEN, 'P_DRIFT': P_DRIFT,
-    'N_SEEDS': N_SEEDS,
+    "N_STATES": N_STATES,
+    "S_TREAT": S_TREAT,
+    "ALPHA_0": ALPHA_0,
+    "ALPHA_1": ALPHA_1,
+    "BETA_S": BETA_S,
+    "BETA_A": BETA_A,
+    "BETA_SA": BETA_SA,
+    "SIGMA_Y": SIGMA_Y,
+    "P_IMPROVE": P_IMPROVE,
+    "P_WORSEN": P_WORSEN,
+    "P_DRIFT": P_DRIFT,
+    "N_SEEDS": N_SEEDS,
 }
 ORACLE_CONFIG = {**SHARED_CONFIG}
-MURPHY_CONFIG = {**SHARED_CONFIG, 'N_GRID': N_GRID}
+MURPHY_CONFIG = {**SHARED_CONFIG, "N_GRID": N_GRID}
 QLEARN_N_CONFIG = {
-    **SHARED_CONFIG, 'N_GRID': N_GRID,
-    'N_EPOCHS': N_EPOCHS_DEFAULT, 'ALPHA_QLEARN': ALPHA_QLEARN,
+    **SHARED_CONFIG,
+    "N_GRID": N_GRID,
+    "N_EPOCHS": N_EPOCHS_DEFAULT,
+    "ALPHA_QLEARN": ALPHA_QLEARN,
+    "seed_scheme": "cohort_paired_v2",
 }
 QLEARN_EPOCHS_CONFIG = {
-    **SHARED_CONFIG, 'N_FIXED': N_AT_EPOCHS_PANEL,
-    'N_EPOCHS_GRID': N_EPOCHS_GRID, 'ALPHA_QLEARN': ALPHA_QLEARN,
+    **SHARED_CONFIG,
+    "N_FIXED": N_AT_EPOCHS_PANEL,
+    "N_EPOCHS_GRID": N_EPOCHS_GRID,
+    "ALPHA_QLEARN": ALPHA_QLEARN,
+    "seed_scheme": "cohort_paired_v2",
 }
 
 
@@ -140,10 +156,12 @@ def generate_cohort_tab(N, rng):
     S2 = np.empty(N, dtype=np.int32)
     mask_low_t = (S1 <= S_TREAT) & (A1 == 1)
     mask_low_n = (S1 <= S_TREAT) & (A1 == 0)
-    mask_high = (S1 > S_TREAT)
+    mask_high = S1 > S_TREAT
     n_lt = int(mask_low_t.sum())
     improve = rng.random(n_lt) < P_IMPROVE
-    S2[mask_low_t] = np.where(improve, np.minimum(N_STATES, S1[mask_low_t] + 1), S1[mask_low_t])
+    S2[mask_low_t] = np.where(
+        improve, np.minimum(N_STATES, S1[mask_low_t] + 1), S1[mask_low_t]
+    )
     n_ln = int(mask_low_n.sum())
     worsen = rng.random(n_ln) < P_WORSEN
     S2[mask_low_n] = np.where(worsen, np.maximum(1, S1[mask_low_n] - 1), S1[mask_low_n])
@@ -179,13 +197,22 @@ def compute_oracle_tab(cfg):
         a_star = 0 if q1[0] >= q1[1] else 1
         V1[s1] = q1[a_star]
         pi1_star[s1] = a_star
-    V_star = float(np.mean(V1[1:N_STATES + 1]))
+    V_star = float(np.mean(V1[1 : N_STATES + 1]))
     print(f"    Tabular Oracle V* = {V_star:.4f}")
-    print("    Optimal stage-1 policy: " + ", ".join(f's={s}: a={pi1_star[s]}' for s in range(1, N_STATES + 1)))
-    print("    Optimal stage-2 policy: " + ", ".join(f's2={s}: a={pi2_star[s]}' for s in range(1, N_STATES + 1)))
+    print(
+        "    Optimal stage-1 policy: "
+        + ", ".join(f"s={s}: a={pi1_star[s]}" for s in range(1, N_STATES + 1))
+    )
+    print(
+        "    Optimal stage-2 policy: "
+        + ", ".join(f"s2={s}: a={pi2_star[s]}" for s in range(1, N_STATES + 1))
+    )
     return {
-        'V_star': V_star, 'V1_star': V1.tolist(), 'V2_star': V2.tolist(),
-        'pi1_star': pi1_star, 'pi2_star': pi2_star,
+        "V_star": V_star,
+        "V1_star": V1.tolist(),
+        "V2_star": V2.tolist(),
+        "pi1_star": pi1_star,
+        "pi2_star": pi2_star,
     }
 
 
@@ -238,8 +265,10 @@ def qlearn_estimate_tab(S1, A1, S2, A2, Y, n_epochs, alpha, rng):
     for _ in range(n_epochs):
         order = rng.permutation(n)
         for idx in order:
-            s1 = int(S1[idx]); a1 = int(A1[idx])
-            s2 = int(S2[idx]); a2 = int(A2[idx])
+            s1 = int(S1[idx])
+            a1 = int(A1[idx])
+            s2 = int(S2[idx])
+            a2 = int(A2[idx])
             y = float(Y[idx])
             target1 = max(Q2[s1, a1, s2, 0], Q2[s1, a1, s2, 1])
             Q1[s1, a1] += alpha * (target1 - Q1[s1, a1])
@@ -257,46 +286,66 @@ def qlearn_estimate_tab(S1, A1, S2, A2, Y, n_epochs, alpha, rng):
 
 
 def run_murphy_sweep(cfg):
-    V = np.zeros((len(cfg['N_GRID']), cfg['N_SEEDS']))
-    for i, N in enumerate(cfg['N_GRID']):
-        for s in tqdm(range(cfg['N_SEEDS']), desc=f'  Murphy N={N}', leave=False,
-                      disable=not sys.stderr.isatty()):
+    V = np.zeros((len(cfg["N_GRID"]), cfg["N_SEEDS"]))
+    for i, N in enumerate(cfg["N_GRID"]):
+        for s in tqdm(
+            range(cfg["N_SEEDS"]),
+            desc=f"  Murphy N={N}",
+            leave=False,
+            disable=not sys.stderr.isatty(),
+        ):
             rng = np.random.default_rng(N * 1000 + s)
             S1, A1, S2, A2, Y = generate_cohort_tab(N, rng)
             pi1, pi2 = murphy_estimate_tab(S1, A1, S2, A2, Y)
             V[i, s] = evaluate_policy_tab(pi1, pi2)
-    return {'V': V, 'N_grid': list(cfg['N_GRID'])}
+    return {"V": V, "N_grid": list(cfg["N_GRID"])}
 
 
 def run_qlearn_N_sweep(cfg):
-    V = np.zeros((len(cfg['N_GRID']), cfg['N_SEEDS']))
-    for i, N in enumerate(cfg['N_GRID']):
-        for s in tqdm(range(cfg['N_SEEDS']), desc=f'  Q-learn N={N}', leave=False,
-                      disable=not sys.stderr.isatty()):
+    V = np.zeros((len(cfg["N_GRID"]), cfg["N_SEEDS"]))
+    for i, N in enumerate(cfg["N_GRID"]):
+        for s in tqdm(
+            range(cfg["N_SEEDS"]),
+            desc=f"  Q-learn N={N}",
+            leave=False,
+            disable=not sys.stderr.isatty(),
+        ):
             # Paired cohort with Murphy: same seed -> same (S1, A1, S2, A2, Y).
             cohort_rng = np.random.default_rng(N * 1000 + s)
             S1, A1, S2, A2, Y = generate_cohort_tab(N, cohort_rng)
             # Independent stream for Q-learning's epoch shuffles.
             train_rng = np.random.default_rng(N * 1000 + s + 7)
-            pi1, pi2 = qlearn_estimate_tab(S1, A1, S2, A2, Y, cfg['N_EPOCHS'], cfg['ALPHA_QLEARN'], train_rng)
+            pi1, pi2 = qlearn_estimate_tab(
+                S1, A1, S2, A2, Y, cfg["N_EPOCHS"], cfg["ALPHA_QLEARN"], train_rng
+            )
             V[i, s] = evaluate_policy_tab(pi1, pi2)
-    return {'V': V, 'N_grid': list(cfg['N_GRID']), 'n_epochs': cfg['N_EPOCHS']}
+    return {"V": V, "N_grid": list(cfg["N_GRID"]), "n_epochs": cfg["N_EPOCHS"]}
 
 
 def run_qlearn_epochs_sweep(cfg):
-    V = np.zeros((len(cfg['N_EPOCHS_GRID']), cfg['N_SEEDS']))
-    for i, ne in enumerate(cfg['N_EPOCHS_GRID']):
-        for s in tqdm(range(cfg['N_SEEDS']), desc=f'  Q-learn epochs={ne}', leave=False,
-                      disable=not sys.stderr.isatty()):
+    V = np.zeros((len(cfg["N_EPOCHS_GRID"]), cfg["N_SEEDS"]))
+    for i, ne in enumerate(cfg["N_EPOCHS_GRID"]):
+        for s in tqdm(
+            range(cfg["N_SEEDS"]),
+            desc=f"  Q-learn epochs={ne}",
+            leave=False,
+            disable=not sys.stderr.isatty(),
+        ):
             # Paired cohort with the Murphy reference at N=N_FIXED: same seed
             # -> identical cohort, so panel-2 Q-learning curves and the dashed
             # Murphy reference share Monte Carlo noise.
-            cohort_rng = np.random.default_rng(cfg['N_FIXED'] * 1000 + s)
-            S1, A1, S2, A2, Y = generate_cohort_tab(cfg['N_FIXED'], cohort_rng)
-            train_rng = np.random.default_rng(cfg['N_FIXED'] * 1000 + s + 13)
-            pi1, pi2 = qlearn_estimate_tab(S1, A1, S2, A2, Y, ne, cfg['ALPHA_QLEARN'], train_rng)
+            cohort_rng = np.random.default_rng(cfg["N_FIXED"] * 1000 + s)
+            S1, A1, S2, A2, Y = generate_cohort_tab(cfg["N_FIXED"], cohort_rng)
+            train_rng = np.random.default_rng(cfg["N_FIXED"] * 1000 + s + 13)
+            pi1, pi2 = qlearn_estimate_tab(
+                S1, A1, S2, A2, Y, ne, cfg["ALPHA_QLEARN"], train_rng
+            )
             V[i, s] = evaluate_policy_tab(pi1, pi2)
-    return {'V': V, 'epochs_grid': list(cfg['N_EPOCHS_GRID']), 'N_fixed': cfg['N_FIXED']}
+    return {
+        "V": V,
+        "epochs_grid": list(cfg["N_EPOCHS_GRID"]),
+        "N_fixed": cfg["N_FIXED"],
+    }
 
 
 # ============================================================================
@@ -307,8 +356,12 @@ T_DECAY = 0.5
 DELTA_HD = 0.5
 SIGMA_ETA_HD = 0.5
 SIGMA_Y_HD = 0.5
-BETA_OUTCOME = np.array([1.0, 0.5, -0.3, 0.2, -0.5, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
-GAMMA_BEH = np.array([0.5, -0.3, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
+BETA_OUTCOME = np.array(
+    [1.0, 0.5, -0.3, 0.2, -0.5, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32
+)
+GAMMA_BEH = np.array(
+    [0.5, -0.3, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32
+)
 ALPHA_A_HD = -0.3
 ALPHA_SA_HD = 1.5
 THRESHOLD_HD = 0.0
@@ -322,24 +375,33 @@ LR_NN = 1e-3
 HIDDEN_DIM = 64
 
 SHARED_CONFIG_HD = {
-    'P_FEAT': P_FEAT, 'T_DECAY': T_DECAY, 'DELTA_HD': DELTA_HD,
-    'SIGMA_ETA_HD': SIGMA_ETA_HD, 'SIGMA_Y_HD': SIGMA_Y_HD,
-    'BETA_OUTCOME': BETA_OUTCOME.tolist(),
-    'GAMMA_BEH': GAMMA_BEH.tolist(),
-    'ALPHA_A_HD': ALPHA_A_HD, 'ALPHA_SA_HD': ALPHA_SA_HD,
-    'THRESHOLD_HD': THRESHOLD_HD,
-    'N_SEEDS_HD': N_SEEDS_HD,
-    'N_GRID_HD': N_GRID_HD,
-    'HIDDEN_DIM': HIDDEN_DIM, 'LR_NN': LR_NN,
+    "P_FEAT": P_FEAT,
+    "T_DECAY": T_DECAY,
+    "DELTA_HD": DELTA_HD,
+    "SIGMA_ETA_HD": SIGMA_ETA_HD,
+    "SIGMA_Y_HD": SIGMA_Y_HD,
+    "BETA_OUTCOME": BETA_OUTCOME.tolist(),
+    "GAMMA_BEH": GAMMA_BEH.tolist(),
+    "ALPHA_A_HD": ALPHA_A_HD,
+    "ALPHA_SA_HD": ALPHA_SA_HD,
+    "THRESHOLD_HD": THRESHOLD_HD,
+    "N_SEEDS_HD": N_SEEDS_HD,
+    "N_GRID_HD": N_GRID_HD,
+    "HIDDEN_DIM": HIDDEN_DIM,
+    "LR_NN": LR_NN,
 }
 ORACLE_HD_CONFIG = {**SHARED_CONFIG_HD}
-FQI_HD_CONFIG = {**SHARED_CONFIG_HD, 'N_FQI_EPOCHS': N_FQI_EPOCHS}
+FQI_HD_CONFIG = {**SHARED_CONFIG_HD, "N_FQI_EPOCHS": N_FQI_EPOCHS}
 # 'seed_scheme' makes the per-seed RNG offset part of the cache key. The DQN
 # cohort uses default_rng(N*100+s) (paired with NN-FQI); the literal offset is
 # not otherwise hashed, so a seed-scheme change must bump this string or the
 # stale cache silently survives.
-DQN_HD_CONFIG = {**SHARED_CONFIG_HD, 'N_DQN_STEPS': N_DQN_STEPS, 'BATCH_SIZE_HD': BATCH_SIZE_HD,
-                 'seed_scheme': 'cohort_N100_paired_v2'}
+DQN_HD_CONFIG = {
+    **SHARED_CONFIG_HD,
+    "N_DQN_STEPS": N_DQN_STEPS,
+    "BATCH_SIZE_HD": BATCH_SIZE_HD,
+    "seed_scheme": "cohort_N100_paired_v2",
+}
 
 
 def generate_cohort_hd(N, rng):
@@ -347,7 +409,8 @@ def generate_cohort_hd(N, rng):
     S1 = rng.normal(size=(N, P_FEAT)).astype(np.float32)
     p1 = sigmoid(S1 @ GAMMA_BEH)
     A1 = (rng.random(N) < p1).astype(np.int32)
-    e0 = np.zeros(P_FEAT, dtype=np.float32); e0[0] = 1.0
+    e0 = np.zeros(P_FEAT, dtype=np.float32)
+    e0[0] = 1.0
     eta = SIGMA_ETA_HD * rng.normal(size=(N, P_FEAT)).astype(np.float32)
     S2 = T_DECAY * S1 + DELTA_HD * A1.reshape(-1, 1).astype(np.float32) * e0 + eta
     p2 = sigmoid(S2 @ GAMMA_BEH)
@@ -368,20 +431,28 @@ def compute_oracle_hd(cfg):
     #                  + (alpha_A + alpha_SA) * P(S_2[0] < c | S_1, A_1)
     # with S_2[0] | S_1, A_1 ~ N(0.5 * S_1[0] + delta * A_1, sigma_eta^2).
     from scipy.stats import norm
+
     common = 0.5 * S1 @ BETA_OUTCOME
     Q1_a0 = common + (ALPHA_A_HD + ALPHA_SA_HD) * norm.cdf(
-        (THRESHOLD_HD - 0.5 * S1[:, 0]) / SIGMA_ETA_HD)
-    Q1_a1 = (common + DELTA_HD * BETA_OUTCOME[0]
-             + (ALPHA_A_HD + ALPHA_SA_HD) * norm.cdf(
-                 (THRESHOLD_HD - 0.5 * S1[:, 0] - DELTA_HD) / SIGMA_ETA_HD))
+        (THRESHOLD_HD - 0.5 * S1[:, 0]) / SIGMA_ETA_HD
+    )
+    Q1_a1 = (
+        common
+        + DELTA_HD * BETA_OUTCOME[0]
+        + (ALPHA_A_HD + ALPHA_SA_HD)
+        * norm.cdf((THRESHOLD_HD - 0.5 * S1[:, 0] - DELTA_HD) / SIGMA_ETA_HD)
+    )
     A1_star = (Q1_a1 > Q1_a0).astype(np.int32)
     # Sample S_2 under A_1_star, then apply analytical optimal stage-2 (treat iff S_2[0] < threshold).
-    e0 = np.zeros(P_FEAT); e0[0] = 1.0
+    e0 = np.zeros(P_FEAT)
+    e0[0] = 1.0
     eta = SIGMA_ETA_HD * rng.normal(size=(M, P_FEAT))
     S2 = T_DECAY * S1 + DELTA_HD * A1_star.reshape(-1, 1) * e0 + eta
     A2_star = (S2[:, 0] < THRESHOLD_HD).astype(np.int32)
     indicator = (S2[:, 0] < THRESHOLD_HD).astype(float)
-    Y_mean = S2 @ BETA_OUTCOME + ALPHA_A_HD * A2_star + ALPHA_SA_HD * indicator * A2_star
+    Y_mean = (
+        S2 @ BETA_OUTCOME + ALPHA_A_HD * A2_star + ALPHA_SA_HD * indicator * A2_star
+    )
     V_star = float(Y_mean.mean())
     V_star_se = float(Y_mean.std() / np.sqrt(M))
     # Also compute V(behavior) for reference
@@ -394,15 +465,17 @@ def compute_oracle_hd(cfg):
     V_behavior = float(Y_b.mean())
     print(f"    High-dim Oracle V* = {V_star:.4f} (MC SE {V_star_se:.4f})")
     print(f"    High-dim V(behavior policy) = {V_behavior:.4f}")
-    return {'V_star': V_star, 'V_star_se': V_star_se, 'V_behavior': V_behavior}
+    return {"V_star": V_star, "V_star_se": V_star_se, "V_behavior": V_behavior}
 
 
 class QNet(nn.Module):
     def __init__(self, input_dim, hidden_dim):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim), nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim), nn.ReLU(),
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
             nn.Linear(hidden_dim, 1),
         )
 
@@ -419,7 +492,8 @@ def evaluate_policy_hd(Q1, Q2, M=50000, seed=42):
         q1_a0 = Q1(torch.cat([s1_t, torch.zeros(M, 1)], dim=1)).numpy()
         q1_a1 = Q1(torch.cat([s1_t, torch.ones(M, 1)], dim=1)).numpy()
     A1 = (q1_a1 > q1_a0).astype(np.int32)
-    e0 = np.zeros(P_FEAT, dtype=np.float32); e0[0] = 1.0
+    e0 = np.zeros(P_FEAT, dtype=np.float32)
+    e0[0] = 1.0
     eta = SIGMA_ETA_HD * rng.normal(size=(M, P_FEAT)).astype(np.float32)
     S2 = T_DECAY * S1 + DELTA_HD * A1.reshape(-1, 1).astype(np.float32) * e0 + eta
     s2_t = torch.from_numpy(S2)
@@ -469,7 +543,8 @@ def dqn_estimate(S1, A1, S2, A2, Y, n_steps, batch_size, lr, hidden_dim, seed, r
     Q2 = QNet(P_FEAT + 1, hidden_dim)
     opt = optim.Adam(list(Q1.parameters()) + list(Q2.parameters()), lr=lr)
     N = len(S1)
-    s1_all = torch.from_numpy(S1); s2_all = torch.from_numpy(S2)
+    s1_all = torch.from_numpy(S1)
+    s2_all = torch.from_numpy(S2)
     a1_all = torch.from_numpy(A1.reshape(-1, 1).astype(np.float32))
     a2_all = torch.from_numpy(A2.reshape(-1, 1).astype(np.float32))
     y_all = torch.from_numpy(Y)
@@ -492,36 +567,67 @@ def dqn_estimate(S1, A1, S2, A2, Y, n_steps, batch_size, lr, hidden_dim, seed, r
         loss = loss1 + loss2
         opt.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(list(Q1.parameters()) + list(Q2.parameters()), 5.0)
+        torch.nn.utils.clip_grad_norm_(
+            list(Q1.parameters()) + list(Q2.parameters()), 5.0
+        )
         opt.step()
     return Q1, Q2
 
 
 def run_fqi_hd_sweep(cfg):
-    V = np.zeros((len(cfg['N_GRID_HD']), cfg['N_SEEDS_HD']))
-    for i, N in enumerate(cfg['N_GRID_HD']):
-        for s in tqdm(range(cfg['N_SEEDS_HD']), desc=f'  NN-FQI N={N}', leave=False,
-                      disable=not sys.stderr.isatty()):
+    V = np.zeros((len(cfg["N_GRID_HD"]), cfg["N_SEEDS_HD"]))
+    for i, N in enumerate(cfg["N_GRID_HD"]):
+        for s in tqdm(
+            range(cfg["N_SEEDS_HD"]),
+            desc=f"  NN-FQI N={N}",
+            leave=False,
+            disable=not sys.stderr.isatty(),
+        ):
             rng = np.random.default_rng(N * 100 + s)
             S1, A1, S2, A2, Y = generate_cohort_hd(N, rng)
-            Q1, Q2 = neural_fqi_estimate(S1, A1, S2, A2, Y, cfg['N_FQI_EPOCHS'], cfg['LR_NN'], cfg['HIDDEN_DIM'], seed=s)
+            Q1, Q2 = neural_fqi_estimate(
+                S1,
+                A1,
+                S2,
+                A2,
+                Y,
+                cfg["N_FQI_EPOCHS"],
+                cfg["LR_NN"],
+                cfg["HIDDEN_DIM"],
+                seed=s,
+            )
             V[i, s] = evaluate_policy_hd(Q1, Q2, seed=s + 100)
-    return {'V': V, 'N_grid': list(cfg['N_GRID_HD'])}
+    return {"V": V, "N_grid": list(cfg["N_GRID_HD"])}
 
 
 def run_dqn_hd_sweep(cfg):
-    V = np.zeros((len(cfg['N_GRID_HD']), cfg['N_SEEDS_HD']))
-    for i, N in enumerate(cfg['N_GRID_HD']):
-        for s in tqdm(range(cfg['N_SEEDS_HD']), desc=f'  DQN N={N}', leave=False,
-                      disable=not sys.stderr.isatty()):
+    V = np.zeros((len(cfg["N_GRID_HD"]), cfg["N_SEEDS_HD"]))
+    for i, N in enumerate(cfg["N_GRID_HD"]):
+        for s in tqdm(
+            range(cfg["N_SEEDS_HD"]),
+            desc=f"  DQN N={N}",
+            leave=False,
+            disable=not sys.stderr.isatty(),
+        ):
             # Paired cohort with NN-FQI: same seed -> identical (S1, A1, S2, A2, Y).
             cohort_rng = np.random.default_rng(N * 100 + s)
             S1, A1, S2, A2, Y = generate_cohort_hd(N, cohort_rng)
             train_rng = np.random.default_rng(N * 100 + s + 7)
-            Q1, Q2 = dqn_estimate(S1, A1, S2, A2, Y, cfg['N_DQN_STEPS'], cfg['BATCH_SIZE_HD'],
-                                   cfg['LR_NN'], cfg['HIDDEN_DIM'], seed=s, rng=train_rng)
+            Q1, Q2 = dqn_estimate(
+                S1,
+                A1,
+                S2,
+                A2,
+                Y,
+                cfg["N_DQN_STEPS"],
+                cfg["BATCH_SIZE_HD"],
+                cfg["LR_NN"],
+                cfg["HIDDEN_DIM"],
+                seed=s,
+                rng=train_rng,
+            )
             V[i, s] = evaluate_policy_hd(Q1, Q2, seed=s + 100)
-    return {'V': V, 'N_grid': list(cfg['N_GRID_HD'])}
+    return {"V": V, "N_grid": list(cfg["N_GRID_HD"])}
 
 
 # ============================================================================
@@ -530,44 +636,76 @@ def run_dqn_hd_sweep(cfg):
 def compute_data(force=None):
     force = force or set()
     oracle = compute_or_load(
-        CACHE_DIR, SCRIPT_NAME, 'oracle', ORACLE_CONFIG,
-        compute_oracle_tab, ORACLE_CONFIG,
-        force=('oracle' in force),
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "oracle",
+        ORACLE_CONFIG,
+        compute_oracle_tab,
+        ORACLE_CONFIG,
+        force=("oracle" in force),
     )
     murphy = compute_or_load(
-        CACHE_DIR, SCRIPT_NAME, 'murphy', MURPHY_CONFIG,
-        run_murphy_sweep, MURPHY_CONFIG,
-        force=('murphy' in force),
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "murphy",
+        MURPHY_CONFIG,
+        run_murphy_sweep,
+        MURPHY_CONFIG,
+        force=("murphy" in force),
     )
     qlearn_N = compute_or_load(
-        CACHE_DIR, SCRIPT_NAME, 'qlearn_N', QLEARN_N_CONFIG,
-        run_qlearn_N_sweep, QLEARN_N_CONFIG,
-        force=('qlearn_N' in force),
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "qlearn_N",
+        QLEARN_N_CONFIG,
+        run_qlearn_N_sweep,
+        QLEARN_N_CONFIG,
+        force=("qlearn_N" in force),
     )
     qlearn_epochs = compute_or_load(
-        CACHE_DIR, SCRIPT_NAME, 'qlearn_epochs', QLEARN_EPOCHS_CONFIG,
-        run_qlearn_epochs_sweep, QLEARN_EPOCHS_CONFIG,
-        force=('qlearn_epochs' in force),
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "qlearn_epochs",
+        QLEARN_EPOCHS_CONFIG,
+        run_qlearn_epochs_sweep,
+        QLEARN_EPOCHS_CONFIG,
+        force=("qlearn_epochs" in force),
     )
     oracle_hd = compute_or_load(
-        CACHE_DIR, SCRIPT_NAME, 'oracle_hd', ORACLE_HD_CONFIG,
-        compute_oracle_hd, ORACLE_HD_CONFIG,
-        force=('oracle_hd' in force),
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "oracle_hd",
+        ORACLE_HD_CONFIG,
+        compute_oracle_hd,
+        ORACLE_HD_CONFIG,
+        force=("oracle_hd" in force),
     )
     fqi_hd = compute_or_load(
-        CACHE_DIR, SCRIPT_NAME, 'fqi_hd', FQI_HD_CONFIG,
-        run_fqi_hd_sweep, FQI_HD_CONFIG,
-        force=('fqi_hd' in force),
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "fqi_hd",
+        FQI_HD_CONFIG,
+        run_fqi_hd_sweep,
+        FQI_HD_CONFIG,
+        force=("fqi_hd" in force),
     )
     dqn_hd = compute_or_load(
-        CACHE_DIR, SCRIPT_NAME, 'dqn_hd', DQN_HD_CONFIG,
-        run_dqn_hd_sweep, DQN_HD_CONFIG,
-        force=('dqn_hd' in force),
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "dqn_hd",
+        DQN_HD_CONFIG,
+        run_dqn_hd_sweep,
+        DQN_HD_CONFIG,
+        force=("dqn_hd" in force),
     )
     return {
-        'oracle': oracle, 'murphy': murphy,
-        'qlearn_N': qlearn_N, 'qlearn_epochs': qlearn_epochs,
-        'oracle_hd': oracle_hd, 'fqi_hd': fqi_hd, 'dqn_hd': dqn_hd,
+        "oracle": oracle,
+        "murphy": murphy,
+        "qlearn_N": qlearn_N,
+        "qlearn_epochs": qlearn_epochs,
+        "oracle_hd": oracle_hd,
+        "fqi_hd": fqi_hd,
+        "dqn_hd": dqn_hd,
     }
 
 
@@ -575,54 +713,62 @@ def compute_data(force=None):
 # Outputs
 # ============================================================================
 def generate_outputs(data):
-    oracle = data['oracle']
-    murphy = data['murphy']
-    qlearn_N = data['qlearn_N']
-    qlearn_epochs = data['qlearn_epochs']
-    oracle_hd = data['oracle_hd']
-    fqi_hd = data['fqi_hd']
-    dqn_hd = data['dqn_hd']
-    V_star = oracle['V_star']
-    V_star_hd = oracle_hd['V_star']
+    oracle = data["oracle"]
+    murphy = data["murphy"]
+    qlearn_N = data["qlearn_N"]
+    qlearn_epochs = data["qlearn_epochs"]
+    oracle_hd = data["oracle_hd"]
+    fqi_hd = data["fqi_hd"]
+    dqn_hd = data["dqn_hd"]
+    V_star = oracle["V_star"]
+    V_star_hd = oracle_hd["V_star"]
 
     print()
-    print('=' * 72)
-    print('  Plug-in g-computation (Murphy reference) vs Q-learning')
-    print('=' * 72)
+    print("=" * 72)
+    print("  Plug-in g-computation (Murphy reference) vs Q-learning")
+    print("=" * 72)
     print()
-    print('  (Q1) Tabular V(pi_hat)/V* vs cohort size N '
-          f'[Q-learn 100 replays, alpha={ALPHA_QLEARN}]')
-    print(f'  Tabular Oracle V* = {V_star:.4f}')
+    print(
+        "  (Q1) Tabular V(pi_hat)/V* vs cohort size N "
+        f"[Q-learn 100 replays, alpha={ALPHA_QLEARN}]"
+    )
+    print(f"  Tabular Oracle V* = {V_star:.4f}")
     print(f"  {'N':>6}  {'Plug-in g-comp (SE)':>22}  {'Q-learn mean (SE)':>22}")
-    n_grid = murphy['N_grid']
+    n_grid = murphy["N_grid"]
     for i, N in enumerate(n_grid):
-        m_mean = murphy['V'][i].mean() / V_star
-        m_se = murphy['V'][i].std() / np.sqrt(N_SEEDS) / V_star
-        q_mean = qlearn_N['V'][i].mean() / V_star
-        q_se = qlearn_N['V'][i].std() / np.sqrt(N_SEEDS) / V_star
-        print(f'  {N:>6d}  {m_mean:>13.4f} ({m_se:.4f})  {q_mean:>13.4f} ({q_se:.4f})')
+        m_mean = murphy["V"][i].mean() / V_star
+        m_se = murphy["V"][i].std() / np.sqrt(N_SEEDS) / V_star
+        q_mean = qlearn_N["V"][i].mean() / V_star
+        q_se = qlearn_N["V"][i].std() / np.sqrt(N_SEEDS) / V_star
+        print(f"  {N:>6d}  {m_mean:>13.4f} ({m_se:.4f})  {q_mean:>13.4f} ({q_se:.4f})")
     print()
-    print(f'  (Q2) Tabular Q-learn V(pi_hat)/V* vs replay epochs at N={N_AT_EPOCHS_PANEL}')
+    print(
+        f"  (Q2) Tabular Q-learn V(pi_hat)/V* vs replay epochs at N={N_AT_EPOCHS_PANEL}"
+    )
     print(f"  {'epochs':>6}  {'Q-learn mean (SE)':>22}")
-    for i, ep in enumerate(qlearn_epochs['epochs_grid']):
-        m = qlearn_epochs['V'][i].mean() / V_star
-        s = qlearn_epochs['V'][i].std() / np.sqrt(N_SEEDS) / V_star
-        print(f'  {ep:>6d}  {m:>13.4f} ({s:.4f})')
+    for i, ep in enumerate(qlearn_epochs["epochs_grid"]):
+        m = qlearn_epochs["V"][i].mean() / V_star
+        s = qlearn_epochs["V"][i].std() / np.sqrt(N_SEEDS) / V_star
+        print(f"  {ep:>6d}  {m:>13.4f} ({s:.4f})")
     idx_panel = n_grid.index(N_AT_EPOCHS_PANEL)
-    m_panel = murphy['V'][idx_panel].mean() / V_star
-    print(f'  Plug-in g-computation reference at N={N_AT_EPOCHS_PANEL}: {m_panel:.4f}')
+    m_panel = murphy["V"][idx_panel].mean() / V_star
+    print(f"  Plug-in g-computation reference at N={N_AT_EPOCHS_PANEL}: {m_panel:.4f}")
     print()
-    print(f'  (Q3) High-dim V(pi_hat)/V* vs cohort size N '
-          f'[FQI {N_FQI_EPOCHS} full-batch epochs, DQN {N_DQN_STEPS} minibatch steps]')
-    print(f'  High-dim Oracle V* = {V_star_hd:.4f} '
-          f'(behavior policy {oracle_hd["V_behavior"]:.4f})')
+    print(
+        f"  (Q3) High-dim V(pi_hat)/V* vs cohort size N "
+        f"[FQI {N_FQI_EPOCHS} full-batch epochs, DQN {N_DQN_STEPS} minibatch steps]"
+    )
+    print(
+        f"  High-dim Oracle V* = {V_star_hd:.4f} "
+        f"(behavior policy {oracle_hd['V_behavior']:.4f})"
+    )
     print(f"  {'N':>6}  {'NN-FQI plug-in (SE)':>22}  {'DQN mean (SE)':>22}")
-    for i, N in enumerate(fqi_hd['N_grid']):
-        f_mean = fqi_hd['V'][i].mean() / V_star_hd
-        f_se = fqi_hd['V'][i].std() / np.sqrt(N_SEEDS_HD) / V_star_hd
-        d_mean = dqn_hd['V'][i].mean() / V_star_hd
-        d_se = dqn_hd['V'][i].std() / np.sqrt(N_SEEDS_HD) / V_star_hd
-        print(f'  {N:>6d}  {f_mean:>13.4f} ({f_se:.4f})  {d_mean:>13.4f} ({d_se:.4f})')
+    for i, N in enumerate(fqi_hd["N_grid"]):
+        f_mean = fqi_hd["V"][i].mean() / V_star_hd
+        f_se = fqi_hd["V"][i].std() / np.sqrt(N_SEEDS_HD) / V_star_hd
+        d_mean = dqn_hd["V"][i].mean() / V_star_hd
+        d_se = dqn_hd["V"][i].std() / np.sqrt(N_SEEDS_HD) / V_star_hd
+        print(f"  {N:>6d}  {f_mean:>13.4f} ({f_se:.4f})  {d_mean:>13.4f} ({d_se:.4f})")
     print()
 
     # ---- Figure: 1 x 3 panels ----
@@ -631,94 +777,145 @@ def generate_outputs(data):
     # Panel 1: tabular V vs N
     ax = axes[0]
     n_arr = np.array(n_grid)
-    m_means = murphy['V'].mean(axis=1) / V_star
-    m_ses = murphy['V'].std(axis=1) / np.sqrt(N_SEEDS) / V_star
-    q_means = qlearn_N['V'].mean(axis=1) / V_star
-    q_ses = qlearn_N['V'].std(axis=1) / np.sqrt(N_SEEDS) / V_star
-    ax.errorbar(n_arr, m_means, yerr=1.96 * m_ses, marker='o',
-                label='Plug-in g-computation', color=COLORS['blue'], capsize=3)
-    ax.errorbar(n_arr, q_means, yerr=1.96 * q_ses, marker='s',
-                label=fr'$Q$-learning', color=COLORS['orange'], capsize=3)
-    ax.axhline(1.0, **BENCH_STYLE, label=r'Oracle $V^*$')
-    ax.set_xscale('log')
-    ax.set_xlabel(r'Cohort size $N$')
-    ax.set_ylabel(r'$V(\hat\pi) / V^*$')
-    ax.set_title(r'(Q1) Tabular: same $V^*$ from both estimators')
-    ax.legend(frameon=False, loc='lower right', fontsize=9)
+    m_means = murphy["V"].mean(axis=1) / V_star
+    m_ses = murphy["V"].std(axis=1) / np.sqrt(N_SEEDS) / V_star
+    q_means = qlearn_N["V"].mean(axis=1) / V_star
+    q_ses = qlearn_N["V"].std(axis=1) / np.sqrt(N_SEEDS) / V_star
+    ax.errorbar(
+        n_arr,
+        m_means,
+        yerr=1.96 * m_ses,
+        marker="o",
+        label="Plug-in g-computation",
+        color=COLORS["blue"],
+        capsize=3,
+    )
+    ax.errorbar(
+        n_arr,
+        q_means,
+        yerr=1.96 * q_ses,
+        marker="s",
+        label=r"$Q$-learning",
+        color=COLORS["orange"],
+        capsize=3,
+    )
+    ax.axhline(1.0, **BENCH_STYLE, label=r"Oracle $V^*$")
+    ax.set_xscale("log")
+    ax.set_xlabel(r"Cohort size $N$")
+    ax.set_ylabel(r"$V(\hat\pi) / V^*$")
+    ax.set_title(r"(Q1) Tabular: same $V^*$ from both estimators")
+    ax.legend(frameon=False, loc="lower right", fontsize=9)
 
     # Panel 2: tabular V vs epochs at fixed N
     ax = axes[1]
-    ep_arr = np.array(qlearn_epochs['epochs_grid'])
-    qe_means = qlearn_epochs['V'].mean(axis=1) / V_star
-    qe_ses = qlearn_epochs['V'].std(axis=1) / np.sqrt(N_SEEDS) / V_star
-    ax.errorbar(ep_arr, qe_means, yerr=1.96 * qe_ses, marker='s',
-                label=fr'$Q$-learning', color=COLORS['orange'], capsize=3)
-    ax.axhline(m_panel, color=COLORS['blue'], linestyle='--', linewidth=1.2,
-               label=fr'Plug-in g-comp.\ at $N={N_AT_EPOCHS_PANEL}$')
-    ax.axhline(1.0, **BENCH_STYLE, label=r'Oracle $V^*$')
-    ax.set_xscale('log')
-    ax.set_xlabel(r'$Q$-learning replay epochs')
-    ax.set_ylabel(r'$V(\hat\pi) / V^*$')
-    ax.set_title(fr'(Q2) Tabular: budget matters at $N={N_AT_EPOCHS_PANEL}$')
-    ax.legend(frameon=False, loc='lower right', fontsize=9)
+    ep_arr = np.array(qlearn_epochs["epochs_grid"])
+    qe_means = qlearn_epochs["V"].mean(axis=1) / V_star
+    qe_ses = qlearn_epochs["V"].std(axis=1) / np.sqrt(N_SEEDS) / V_star
+    ax.errorbar(
+        ep_arr,
+        qe_means,
+        yerr=1.96 * qe_ses,
+        marker="s",
+        label=r"$Q$-learning",
+        color=COLORS["orange"],
+        capsize=3,
+    )
+    ax.axhline(
+        m_panel,
+        color=COLORS["blue"],
+        linestyle="--",
+        linewidth=1.2,
+        label=rf"Plug-in g-comp.\ at $N={N_AT_EPOCHS_PANEL}$",
+    )
+    ax.axhline(1.0, **BENCH_STYLE, label=r"Oracle $V^*$")
+    ax.set_xscale("log")
+    ax.set_xlabel(r"$Q$-learning replay epochs")
+    ax.set_ylabel(r"$V(\hat\pi) / V^*$")
+    ax.set_title(rf"(Q2) Tabular: budget matters at $N={N_AT_EPOCHS_PANEL}$")
+    ax.legend(frameon=False, loc="lower right", fontsize=9)
 
     # Panel 3: high-dim V vs N
     ax = axes[2]
-    n_hd_arr = np.array(fqi_hd['N_grid'])
-    f_means = fqi_hd['V'].mean(axis=1) / V_star_hd
-    f_ses = fqi_hd['V'].std(axis=1) / np.sqrt(N_SEEDS_HD) / V_star_hd
-    d_means = dqn_hd['V'].mean(axis=1) / V_star_hd
-    d_ses = dqn_hd['V'].std(axis=1) / np.sqrt(N_SEEDS_HD) / V_star_hd
-    ax.errorbar(n_hd_arr, f_means, yerr=1.96 * f_ses, marker='o',
-                label='Neural-FQI (plug-in)', color=COLORS['blue'], capsize=3)
-    ax.errorbar(n_hd_arr, d_means, yerr=1.96 * d_ses, marker='s',
-                label='DQN', color=COLORS['orange'], capsize=3)
-    ax.axhline(1.0, **BENCH_STYLE, label=r'Oracle $V^*$')
-    V_beh_norm = oracle_hd['V_behavior'] / V_star_hd
-    ax.axhline(V_beh_norm, color=COLORS['gray'], linestyle=':', linewidth=1.0,
-               label='Behavior policy')
-    ax.set_xscale('log')
-    ax.set_xlabel(r'Cohort size $N$')
-    ax.set_ylabel(r'$V(\hat\pi) / V^*$')
-    ax.set_title(fr'(Q3) High dim ($p={P_FEAT}$): NN analogues agree')
-    ax.legend(frameon=False, loc='lower right', fontsize=9)
+    n_hd_arr = np.array(fqi_hd["N_grid"])
+    f_means = fqi_hd["V"].mean(axis=1) / V_star_hd
+    f_ses = fqi_hd["V"].std(axis=1) / np.sqrt(N_SEEDS_HD) / V_star_hd
+    d_means = dqn_hd["V"].mean(axis=1) / V_star_hd
+    d_ses = dqn_hd["V"].std(axis=1) / np.sqrt(N_SEEDS_HD) / V_star_hd
+    ax.errorbar(
+        n_hd_arr,
+        f_means,
+        yerr=1.96 * f_ses,
+        marker="o",
+        label="Neural-FQI (plug-in)",
+        color=COLORS["blue"],
+        capsize=3,
+    )
+    ax.errorbar(
+        n_hd_arr,
+        d_means,
+        yerr=1.96 * d_ses,
+        marker="s",
+        label="DQN",
+        color=COLORS["orange"],
+        capsize=3,
+    )
+    ax.axhline(1.0, **BENCH_STYLE, label=r"Oracle $V^*$")
+    V_beh_norm = oracle_hd["V_behavior"] / V_star_hd
+    ax.axhline(
+        V_beh_norm,
+        color=COLORS["gray"],
+        linestyle=":",
+        linewidth=1.0,
+        label="Behavior policy",
+    )
+    ax.set_xscale("log")
+    ax.set_xlabel(r"Cohort size $N$")
+    ax.set_ylabel(r"$V(\hat\pi) / V^*$")
+    ax.set_title(rf"(Q3) High dim ($p={P_FEAT}$): NN analogues agree")
+    ax.legend(frameon=False, loc="lower right", fontsize=9)
 
     fig.tight_layout()
-    fig_path = os.path.join(OUTPUT_DIR, 'dtr_qlearning_vs_murphy.png')
-    fig.savefig(fig_path, dpi=300, bbox_inches='tight')
+    fig_path = os.path.join(OUTPUT_DIR, "dtr_qlearning_vs_murphy.png")
+    fig.savefig(fig_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    print(f'  Figure: {fig_path}')
+    print(f"  Figure: {fig_path}")
 
     # ---- LaTeX results table: rank-ordered by V(pi_hat)/V* at largest N ----
     N_tab_max = n_grid[-1]
-    N_hd_max = fqi_hd['N_grid'][-1]
+    N_hd_max = fqi_hd["N_grid"][-1]
     rows = [
-        ('Oracle $V^*$ (tabular)', 1.0, None),
-        ('Oracle $V^*$ (high-dim, $p={}$)'.format(P_FEAT), 1.0, None),
-        ('Plug-in g-computation (tabular, $N={}$)'.format(N_tab_max),
-         m_means[-1], m_ses[-1]),
-        ('$Q$-learning (tabular, $N={}$, {} replays)'.format(N_tab_max, N_EPOCHS_DEFAULT),
-         q_means[-1], q_ses[-1]),
-        ('Neural-FQI (high-dim, $N={}$)'.format(N_hd_max),
-         f_means[-1], f_ses[-1]),
-        ('DQN (high-dim, $N={}$)'.format(N_hd_max),
-         d_means[-1], d_ses[-1]),
+        ("Oracle $V^*$ (tabular)", 1.0, None),
+        ("Oracle $V^*$ (high-dim, $p={}$)".format(P_FEAT), 1.0, None),
+        (
+            "Plug-in g-computation (tabular, $N={}$)".format(N_tab_max),
+            m_means[-1],
+            m_ses[-1],
+        ),
+        (
+            "$Q$-learning (tabular, $N={}$, {} replays)".format(
+                N_tab_max, N_EPOCHS_DEFAULT
+            ),
+            q_means[-1],
+            q_ses[-1],
+        ),
+        ("Neural-FQI (high-dim, $N={}$)".format(N_hd_max), f_means[-1], f_ses[-1]),
+        ("DQN (high-dim, $N={}$)".format(N_hd_max), d_means[-1], d_ses[-1]),
     ]
     rows.sort(key=lambda r: -r[1])
     lines = [
-        r'\begin{tabular}{lcc}',
-        r'\toprule',
-        r'Method & $V(\hat\pi) / V^*$ & SE \\',
-        r'\midrule',
+        r"\begin{tabular}{lcc}",
+        r"\toprule",
+        r"Method & $V(\hat\pi) / V^*$ & SE \\",
+        r"\midrule",
     ]
     for name, mean, se in rows:
-        se_str = '({:.4f})'.format(se) if se is not None else '--'
-        lines.append('{} & {:.4f} & {} \\\\'.format(name, mean, se_str))
-    lines += [r'\bottomrule', r'\end{tabular}', '']
-    tab_path = os.path.join(OUTPUT_DIR, 'dtr_qlearning_vs_murphy_results.tex')
-    with open(tab_path, 'w') as f:
-        f.write('\n'.join(lines))
-    print(f'  Table:  {tab_path}')
+        se_str = "({:.4f})".format(se) if se is not None else "--"
+        lines.append("{} & {:.4f} & {} \\\\".format(name, mean, se_str))
+    lines += [r"\bottomrule", r"\end{tabular}", ""]
+    tab_path = os.path.join(OUTPUT_DIR, "dtr_qlearning_vs_murphy_results.tex")
+    with open(tab_path, "w") as f:
+        f.write("\n".join(lines))
+    print(f"  Table:  {tab_path}")
 
 
 def main():
@@ -726,18 +923,26 @@ def main():
     add_component_args(parser)
     args = parser.parse_args()
     force = parse_force_set(args)
-    print('Config:')
-    print(f'  TABULAR: N_seeds={N_SEEDS}, N_GRID={N_GRID}, '
-          f'N_EPOCHS_GRID={N_EPOCHS_GRID}, alpha_qlearn={ALPHA_QLEARN}, '
-          f'n_epochs_default={N_EPOCHS_DEFAULT}, N_panel={N_AT_EPOCHS_PANEL}')
-    print(f'  TABULAR DGP: S in 1..{N_STATES}, beta=({BETA_S},{BETA_A},{BETA_SA}), '
-          f'sigma_Y={SIGMA_Y}, S_TREAT={S_TREAT}')
-    print(f'  HIGH-DIM: p={P_FEAT}, N_seeds={N_SEEDS_HD}, N_GRID_HD={N_GRID_HD}, '
-          f'FQI epochs={N_FQI_EPOCHS}, DQN steps={N_DQN_STEPS}, hidden={HIDDEN_DIM}, lr={LR_NN}')
-    print(f'  HIGH-DIM DGP: T_decay={T_DECAY}, delta={DELTA_HD}, '
-          f'sigma_eta={SIGMA_ETA_HD}, sigma_Y={SIGMA_Y_HD}, threshold={THRESHOLD_HD}')
+    print("Config:")
+    print(
+        f"  TABULAR: N_seeds={N_SEEDS}, N_GRID={N_GRID}, "
+        f"N_EPOCHS_GRID={N_EPOCHS_GRID}, alpha_qlearn={ALPHA_QLEARN}, "
+        f"n_epochs_default={N_EPOCHS_DEFAULT}, N_panel={N_AT_EPOCHS_PANEL}"
+    )
+    print(
+        f"  TABULAR DGP: S in 1..{N_STATES}, beta=({BETA_S},{BETA_A},{BETA_SA}), "
+        f"sigma_Y={SIGMA_Y}, S_TREAT={S_TREAT}"
+    )
+    print(
+        f"  HIGH-DIM: p={P_FEAT}, N_seeds={N_SEEDS_HD}, N_GRID_HD={N_GRID_HD}, "
+        f"FQI epochs={N_FQI_EPOCHS}, DQN steps={N_DQN_STEPS}, hidden={HIDDEN_DIM}, lr={LR_NN}"
+    )
+    print(
+        f"  HIGH-DIM DGP: T_decay={T_DECAY}, delta={DELTA_HD}, "
+        f"sigma_eta={SIGMA_ETA_HD}, sigma_Y={SIGMA_Y_HD}, threshold={THRESHOLD_HD}"
+    )
     if force:
-        print(f'  forcing recompute of: {sorted(force)}')
+        print(f"  forcing recompute of: {sorted(force)}")
 
     if args.plots_only:
         data = compute_data()
@@ -747,5 +952,5 @@ def main():
         generate_outputs(data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
