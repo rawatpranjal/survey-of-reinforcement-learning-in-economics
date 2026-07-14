@@ -42,14 +42,9 @@ _Updated 2026-07-14._
   the footnote claim is pinned to the author's published abstract (saved at
   `ch03_theory/papers/curse_of_dimensionality/bray2022_abstract.json`).
 - **In-flight chunk.** None. Next: T0/S0 entry points.
-- **Open handback for the user:** merge `wind-farm` into `main` and push. Also two
-  permission-denied cleanups from this session: the primary checkout holds a stray staged
-  rename of the old sim script (this session's cwd accident; unstage, restore the
-  papers-path file, delete the stray `ch03_theory/sims/` copy), and an orphaned duplicate
-  sim process (pids 90531/90532) may still be running; it finished useful work and is
-  harmless, kill if still alive. Also update the gitignored CLAUDE.md master-plan row 3
-  (worktree isolation blocked the write): title gains "+ RL and the Curse of
-  Dimensionality (two sections)", main sim "Wind Farm Storage Control", sims 11 -> 12.
+- **Open handback for the user:** none. Wind-farm chunk merged to `main` and pushed
+  (09541eb) with user approval 2026-07-14; primary-checkout stray rename reverted; orphan
+  duplicate sim process exited on its own; CLAUDE.md master-plan row 3 updated.
 
 ---
 
