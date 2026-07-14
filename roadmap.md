@@ -8,34 +8,26 @@ research lives in the `docs/` wiki (indexed at `docs/index.md`).
 
 ## STATUS
 
-_Updated 2026-07-12._
+_Updated 2026-07-14._
 
-- **Where the paper is.** arXiv survey, Phases A-C closed (content lock, sim-audit fixes,
-  polish). de-AI prose pass done across 17 chapters (`main.pdf` ~232pp). The old tasklist
-  `spec.md` (2026-05-21) has been retired into this roadmap.
-- **Two workstreams opened 2026-07-10.** (1) RL theory chapter theorem+proof rigor;
-  (2) ruthless sim→table number automation. Research written up in the `docs/` wiki.
-- **Working branch.** All new work is on the `rl-rigor` worktree (branch `rl-rigor`, off
-  `humanize-pass` content). The primary checkout stays read-only. `main` is a clean
-  fast-forward of `humanize-pass`; the actual `main` pointer move + push is deferred to the
-  `rl-rigor` → `main` merge (which subsumes spec's Phase D1).
-- **Just landed (Workstream 0, repo cleanup).** Deleted dead trees `ch03a/` and
-  `arxiv_submission 2/`, dead `planning_learning_v2.tex`; untracked the 17 `tex/backups/`
-  dirs and 35 compiled chapter PDFs (kept `docs/main.pdf`); retired `spec.md`/`handoff.md`,
-  relocated `bloat.md`/`journal_target.md`/`CI_RL*.md` into `docs/`, moved the Ibarz paper
-  into a gitignored `papers/` home; salvaged the `Kang2025` bib key into `docs/refs.bib`
-  before deleting the forked bib. Build verified: all 53 `\input` files present, zero
-  cited-but-missing keys.
-- **In-flight chunk.** None of Workstream 1/2 started. Reference docs written. Take it slow,
-  one chunk at a time, fresh-agent verify each before the next.
-- **Next executable chunk:** T0 (acquire + read theory sources) or S0 (number manifest).
-  Both `[CRITICAL]` entry points, independent, can run in parallel.
-- **New workstreams added 2026-07-12 (items 14-26), not started.** W3 primary-source RAG
-  retrieval (infra), W4 wiki synthesis articles, W5 proof-source library, W6 hard oracle tests
-  for the sims. Dependencies: W3 is infra; W5 feeds Workstream 1; W6 reinforces Workstream 2;
-  W4 uses W3 + W5. Suggested order: W3 first, then W5 and W4, with W6 in parallel.
-- **Open handback for the user:** whether to merge `rl-rigor` → `main` (and push) now, or
-  keep accumulating on `rl-rigor`.
+- **Where the paper is.** arXiv survey, Phases A-C closed. `main.pdf` builds at 265pp with
+  zero undefined references. The 2026-07-14 judge-audit triage cycle
+  (`audits/_TRIAGE_2026-07-14.md`) is fully closed: all 20 ranked items fixed or decided.
+- **Landed 2026-07-14 (triage close-out, commits 3b84e25..610d949 on `main`).** Ranks 1-9,
+  12, 13 were fixed earlier in the cycle. This session closed the rest: rank 19 ch09 legacy
+  archive (41 files) + registry fixes; rank 8 job_search full 54-min rerun, ablation footnote
+  now artifact-backed; rank 11 kuhn wired into ch06 after fixing a real exploitability-metric
+  bug and a Nash-family bug (corrected results reverse the method ranking, FP stalls at 0.33);
+  rank 17 bairds rewritten to the true six-state Baird 1995 star, fresh audit 12%; rank 15
+  orphan sweep (64 more files archived, landmines deleted, bus-engine table wired); rank 14
+  regen wave; rank 16 appA polish across all 13 sims; rank 18 master-plan table; rank 10
+  risk_sensitive rerun at 10 seeds (March single-seed numbers did not reproduce, story
+  inverted) and wired into ch11 with SE column + policy figure.
+- **Workstream side-effects.** Backlog S1 (ch11 reconnect + orphan triage) and S4 (runner
+  registry + dead write paths) are effectively done via the triage fixes. S6 partially done
+  (stale-stdout wave). Registry now 59 scripts, all paths verified.
+- **In-flight chunk.** None. Next: wind-farm chunk (below) or T0/S0 entry points.
+- **Open handback for the user:** none blocking; wind-farm chunk is user-approved and specced.
 
 ---
 
@@ -104,6 +96,27 @@ or fresh-agent checkpoint before proceeding. Full detail in `docs/theory-rigor-r
 
 11. **S6 Full rebuild + hash check.** Rerun all sims; confirm every consumed number matches
     fresh output; full build; page count.
+
+### Wind-farm curse-of-dimensionality chunk (user-approved 2026-07-14, triage rank 20)
+
+Compile `ch03_theory/tex/curse_of_dimensionality.tex` into the survey and bring its sim to
+standard. Sequenced as one chunk with internal gates:
+
+- **WF1 Bibliography.** 14 of the section's 15 citation keys are missing from `docs/refs.bib`
+  (chow1989complexity, papadimitriou1987, traub1988, du2021, liu2022deep, lu2025, jin2020,
+  jin2021, ayoub2020, zanette2020, kearns1999, hotz1993, bray2022comment, rust1997). Verify
+  near-miss existing keys (`HotzMiller1993`, `AyoubVTR2020`, `kearns2002`, `rust1996numerical`)
+  before adding duplicates. _Accept:_ zero cited-but-missing keys for the section.
+- **WF2 Sim refactor + 10-seed run.** Move `wind_farm_curse_study.py` from the nested
+  `papers/curse_of_dimensionality/sims/` to `ch03_theory/sims/`; house conventions (sim_cache,
+  plot_style, argparse flags, compute/output split); `n_seeds` 1 → 10 for the RL methods
+  (~2h run); runner registry entry. _Accept:_ mean ± SE table, no "± 0" cells.
+- **WF3 Tex rewrite + compile.** Sim subsection to 2 paragraphs / 1 table / 1 figure
+  (keep computation_times.png); strip first person; de-overclaim the three theory-pathway
+  framings (implementations are illustrative analogies, not the papers' algorithms); regenerate
+  all prose numbers from the new run; `\input` slot at `docs/main.tex:163`. _Accept:_ full
+  build clean; every number traces to generated output.
+- **WF4 Audit (gate).** Full 7-point sim audit + judge report. _Accept:_ <50%, findings fixed.
 
 ### Inherited — arXiv submission (from retired `spec.md`)
 
