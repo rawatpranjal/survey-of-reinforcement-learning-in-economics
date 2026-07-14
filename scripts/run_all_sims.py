@@ -30,19 +30,15 @@ REGISTRY = [
     ("ch02", "ch02_rl_algorithms/sims/algorithm_architectures.py", "B"),
     # ch03_theory
     ("ch03_theory", "ch03_theory/sims/brock_mirman_newton.py", "A"),
-    ("ch03_theory", "ch03_theory/sims/lqr_convergence.py", "A"),
     ("ch03_theory", "ch03_theory/sims/lqc_fvi_fqi.py", "A"),
     ("ch03_theory", "ch03_theory/sims/trust_region_lqc.py", "A"),
     ("ch03_theory", "ch03_theory/sims/gridworld_study.py", "A"),
-    ("ch03_theory", "ch03_theory/sims/theory_validation.py", "A"),
-    ("ch03_theory", "ch03_theory/sims/ssp_gridworld_20x20.py", "A"),
     ("ch03_theory", "ch03_theory/sims/deadly_triad_geometry.py", "B"),
     ("ch03_theory", "ch03_theory/sims/qlearning_geometry.py", "B"),
     ("ch03_theory", "ch03_theory/sims/info_geometry_npg.py", "B"),
     ("ch03_theory", "ch03_theory/sims/mm_surrogate_trpo.py", "B"),
     ("ch03_theory", "ch03_theory/sims/td_lambda_corridor.py", "A"),
     # ch03a_bm
-    ("ch03a_bm", "ch03a_bm/sims/bm_illustrated.py", "A"),
     ("ch03a_bm", "ch03a_bm/sims/bm_fvi_fqi.py", "A"),
     # ch03b
     ("ch03b", "ch03b_deeprl_practice/sims/bellman_vs_return.py", "A"),
@@ -65,12 +61,8 @@ REGISTRY = [
     ("ch06", "ch06_games/sims/coase_stress_tests.py", "A"),
     ("ch06", "ch06_games/sims/cournot_bertrand_marl.py", "A"),
     # ch07
-    ("ch07", "ch07_bandits/sims/bandit_fundamentals.py", "A"),
-    ("ch07", "ch07_bandits/sims/strategic_pricing.py", "A"),
-    ("ch07", "ch07_bandits/sims/auction_reserve_price.py", "A"),
     ("ch07", "ch07_bandits/sims/knowledge_ladder.py", "A"),
     ("ch07", "ch07_bandits/sims/curve_learning_pricing.py", "A"),
-    ("ch07", "ch07_bandits/sims/structural_pricing_misra.py", "A"),
     ("ch07", "ch07_bandits/sims/regret_rates.py", "B"),
     ("ch07", "ch07_bandits/sims/uninformative_price.py", "B"),
     # ch08 (Offline RL)
