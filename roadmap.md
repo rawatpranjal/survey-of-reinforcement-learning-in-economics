@@ -47,7 +47,9 @@ _Updated 2026-07-14._
   rename of the old sim script (this session's cwd accident; unstage, restore the
   papers-path file, delete the stray `ch03_theory/sims/` copy), and an orphaned duplicate
   sim process (pids 90531/90532) may still be running; it finished useful work and is
-  harmless, kill if still alive.
+  harmless, kill if still alive. Also update the gitignored CLAUDE.md master-plan row 3
+  (worktree isolation blocked the write): title gains "+ RL and the Curse of
+  Dimensionality (two sections)", main sim "Wind Farm Storage Control", sims 11 -> 12.
 
 ---
 
