@@ -947,9 +947,10 @@ def generate_outputs(data):
                 if d in [dd for dd in DIMS if not data["DP"][dd]["completed"]]
                 else ""
             )
+            hours = f" = {pred[d] / 3600:.1f} hours" if pred[d] >= 3600 else ""
             print(
                 f"  extrapolated DP time d={d}: {pred[d]:.0f}s "
-                f"({pred[d] / 60:.1f} min) [{status}]"
+                f"({pred[d] / 60:.1f} min{hours}) [{status}]"
             )
 
     print()
