@@ -50,6 +50,7 @@ CHAPTERS=(
     "ch12_world_models/tex/s04_deep_mbrl.tex"
     "ch12_world_models/tex/s06_objectives_convergence.tex"
     "ch12_world_models/tex/s09_dual_sim.tex"
+    "ch12_world_models/tex/s11_high_dim_sims.tex"
     "ch12_world_models/tex/s10_synthesis.tex"
     "ch99_conclusion/tex/conclusion.tex"
     "appA_preliminaries/tex/preliminaries.tex"
@@ -109,6 +110,7 @@ FIGURES=(
     "ch12_world_models/sims/cobweb_paradigms_param_recovery.png"
     "ch12_world_models/sims/cobweb_paradigms_policy_distance.png"
     "ch12_world_models/sims/fishery_paradigms.png"
+    "ch12_world_models/sims/multi_echelon_paradigms.png"
     "ch06_games/sims/durable_goods_coase_collapse.png"
     "ch06_games/sims/durable_goods_coase_price_paths.png"
     "ch09_rlhf/sims/axiom_aware_aggregation.png"
@@ -163,6 +165,7 @@ TABLES=(
     "ch12_world_models/sims/dyna_maze_results.tex"
     "ch12_world_models/sims/fishery_paradigms_results.tex"
     "ch12_world_models/sims/fishery_paradigms_recovery.tex"
+    "ch12_world_models/sims/multi_echelon_paradigms_results.tex"
     "ch06_games/sims/durable_goods_coase_results.tex"
     "ch09_rlhf/sims/axiom_aware_aggregation.tex"
     "ch10b_rl_for_ci/sims/causal_bandit_mabuc_results.tex"
@@ -238,6 +241,7 @@ noop ch12_world_models/sims/cobweb_paradigms_final_recovery.tex
 noop ch12_world_models/sims/cobweb_paradigms_results.tex
 noop ch12_world_models/sims/dyna_maze_results.tex
 noop ch12_world_models/sims/fishery_paradigms_results.tex
+noop ch12_world_models/sims/multi_echelon_paradigms_results.tex
 noop ch07_bandits/sims/curve_learning_pricing_summary.tex
 noop ch06_games/sims/durable_goods_coase_results.tex
 noop ch09_rlhf/sims/axiom_aware_aggregation.tex

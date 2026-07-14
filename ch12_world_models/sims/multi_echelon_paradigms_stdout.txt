@@ -1,0 +1,41 @@
+=== multi_echelon_paradigms ===
+Paradigms: ['Oracle', 'NN World Model', 'Model-Free DQN', 'Decentralized', 'Naive']
+N_SEEDS = 20, T_EPISODE = 500
+
+  Computing: shared
+    Oracle base-stock S* = [14 20], per-period cost = 6.902
+  Cache saved: /Users/pranjal/Code/rl-ch12-highdim-sims/ch12_world_models/sims/cache/multi_echelon_paradigms__shared.pkl
+  Computing: Oracle
+  Cache saved: /Users/pranjal/Code/rl-ch12-highdim-sims/ch12_world_models/sims/cache/multi_echelon_paradigms__Oracle.pkl
+  Computing: Naive
+  Cache saved: /Users/pranjal/Code/rl-ch12-highdim-sims/ch12_world_models/sims/cache/multi_echelon_paradigms__Naive.pkl
+  Computing: Decentralized
+  Cache saved: /Users/pranjal/Code/rl-ch12-highdim-sims/ch12_world_models/sims/cache/multi_echelon_paradigms__Decentralized.pkl
+  Computing: Model-Free_DQN
+  Cache saved: /Users/pranjal/Code/rl-ch12-highdim-sims/ch12_world_models/sims/cache/multi_echelon_paradigms__Model-Free_DQN.pkl
+  Computing: NN_World_Model
+  Cache saved: /Users/pranjal/Code/rl-ch12-highdim-sims/ch12_world_models/sims/cache/multi_echelon_paradigms__NN_World_Model.pkl
+  Figure saved: /Users/pranjal/Code/rl-ch12-highdim-sims/ch12_world_models/sims/multi_echelon_paradigms.png
+  Table saved: /Users/pranjal/Code/rl-ch12-highdim-sims/ch12_world_models/sims/multi_echelon_paradigms_results.tex
+
+=== Regret vs oracle at T=500 and terminal per-period cost (last 80 steps), mean ± SE, 20 seeds ===
+
+Paradigm              Cumulative regret   Terminal cost/period
+--------------------------------------------------------------
+Oracle                     0.0 ±   0.0          6.61 ±  0.17
+Decentralized           1964.8 ±  50.8          9.84 ±  0.26
+NN World Model          3879.4 ± 406.5          8.00 ±  0.88
+Naive                  29485.4 ± 6777.2        106.05 ± 29.04
+Model-Free DQN         44137.1 ± 5593.1        210.79 ± 53.76
+
+=== Order variance by stage (seed 0; bullwhip) ===
+
+Paradigm             stage 1   stage 2
+--------------------------------------
+Oracle                  6.30      4.75
+Decentralized          10.15      5.01
+NN World Model         11.49     10.64
+Naive                   0.08      0.08
+Model-Free DQN         47.18     42.49
+
+  Oracle base-stock S* = [14 20]
