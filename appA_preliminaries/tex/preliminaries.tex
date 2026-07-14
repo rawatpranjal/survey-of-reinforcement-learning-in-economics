@@ -10,9 +10,11 @@ The value of a policy is a vector, the Bellman update is a matrix acting on it, 
 
 \subsubsection{Spectral Radius and Decay of Matrix Powers}
 
+A tiny case first. The diagonal matrix $A = \operatorname{diag}(0.9, 0.5)$ has powers $A^k = \operatorname{diag}(0.9^k, 0.5^k)$. Both entries sit below one, so both shrink to zero, and the larger entry $0.9$ sets the pace. Now tilt one entry off the diagonal, $A = \left[\begin{smallmatrix} 0.9 & 5 \\ 0 & 0.9 \end{smallmatrix}\right]$. This matrix is large, so its powers grow at first. They still vanish in the end, because the eigenvalues are still $0.9$. The eigenvalues, not the size of the entries, decide the fate of the powers.
+
 \begin{theorem}[Spectral radius governs decay, \citet{hornjohnson2013}]
 \label{thm:prelim_spectral}
-Let $A$ be a square matrix with spectral radius $\rho(A) = \max_i |\lambda_i|$, the largest modulus among its eigenvalues.\footnote{An \emph{eigenvalue} $\lambda$ of $A$ is a number for which $Av = \lambda v$ has a nonzero solution $v$, the \emph{eigenvector}. Applying $A$ to $v$ just rescales it by $\lambda$. The \emph{spectral radius} is the largest such $|\lambda|$.} Then the matrix powers vanish, $A^k \to 0$ as $k \to \infty$, if and only if $\rho(A) < 1$. In that case $\|A^k\|^{1/k} \to \rho(A)$.
+Let $A$ be a square matrix with spectral radius $\rho(A) = \max_i |\lambda_i|$, the largest modulus, or size, among its eigenvalues.\footnote{An \emph{eigenvalue} $\lambda$ of $A$ is a number for which $Av = \lambda v$ has a nonzero solution $v$, the \emph{eigenvector}. Applying $A$ to $v$ just rescales it by $\lambda$. The \emph{spectral radius} is the largest such $|\lambda|$.} Then the matrix powers vanish, $A^k \to 0$ as $k \to \infty$, if and only if $\rho(A) < 1$. In that case $\|A^k\|^{1/k} \to \rho(A)$.
 \end{theorem}
 
 \begin{proof}
@@ -29,7 +31,7 @@ J_i^k = (\lambda I + N)^k
 Each term is a polynomial in $k$ times $|\lambda|^k$. Since $|\lambda| < 1$, the exponential $|\lambda|^k$ beats every polynomial, so each term tends to $0$. Thus $J_i^k \to 0$, hence $A^k = S J^k S^{-1} \to 0$. The rate claim $\|A^k\|^{1/k} \to \rho(A)$ follows because the dominant term above grows like $k^{m-1} \rho(A)^k$, whose $k$-th root tends to $\rho(A)$.
 \end{proof}
 
-The distinction between $\rho(A)$ and the norm $\|A\|$ matters in practice.\footnote{The spectral radius sets the target-network and composed-operator stability conditions of Section~\ref{sec:planning_learning} and the low-rank and manipulation-cost arguments of Section~\ref{section:bandits}.} A matrix can have $\|A\| > 1$, so its powers grow at first, yet still decay because $\rho(A) < 1$. Figure~\ref{fig:prelim_spectral} shows this transient for a non-normal matrix. The powers rise to a peak, then fall, and the per-step decay ratio settles at $\rho(A)$ (Table~\ref{tab:prelim_spectral_radius}).
+The distinction between $\rho(A)$ and the norm $\|A\|$ matters in practice.\footnote{The spectral radius sets the target-network and composed-operator stability conditions of Section~\ref{sec:planning_learning} and the low-rank and manipulation-cost arguments of Section~\ref{section:bandits}.} A matrix can have $\|A\| > 1$, so its powers grow at first. They still decay in the end, because $\rho(A) < 1$. The powers behave like a swing given an extra push, rising higher for one arc before the drag brings it back to rest. Figure~\ref{fig:prelim_spectral} shows this transient for a non-normal matrix, one whose eigenvectors are not orthogonal. The powers rise to a peak, then fall, and the per-step decay ratio settles at $\rho(A)$ (Table~\ref{tab:prelim_spectral_radius}).
 
 \begin{figure}[t]
 \centering
@@ -41,6 +43,8 @@ The distinction between $\rho(A)$ and the norm $\|A\|$ matters in practice.\foot
 \input{../appA_preliminaries/sims/spectral_radius.tex}
 
 \subsubsection{The Neumann Series and the Resolvent}
+
+Start with one state. Then $P = [1]$, and $I - \gamma P$ is just the number $1 - \gamma$, so its inverse is $(1-\gamma)^{-1} = 1 + \gamma + \gamma^2 + \cdots$. The value of that single state is $r/(1-\gamma)$, the reward collected now, then again discounted by $\gamma$, then by $\gamma^2$, and so on forever. The theorem is this same geometric series, with the matrix $\gamma P$ standing in for the number $\gamma$.
 
 \begin{theorem}[Neumann series, \citet{hornjohnson2013}]
 \label{thm:prelim_neumann}
@@ -74,7 +78,7 @@ Taking norms and using $\|(I - \gamma P)^{-1}\|_\infty = \bigl\| \sum_m (\gamma 
 which is~\eqref{eq:prelim_neumann_bound}.
 \end{proof}
 
-This identity is why the value function is a discounted sum of rewards.\footnote{The resolvent $(I - \gamma P^\pi)^{-1}$ is the policy-evaluation solve $V = (I - \gamma P^\pi)^{-1} r^\pi$ of Section~\ref{sec:planning_learning} and the fixed-policy value of Section~\ref{section:dist_robust_constrained}. Truncating the series is the same as truncating the planning horizon.} The exact value $V = (I - \gamma P^\pi)^{-1} r^\pi$ equals $\sum_m \gamma^m (P^\pi)^m r^\pi$, the expected discounted return. Truncating at $M$ terms is a finite-horizon approximation, and~\eqref{eq:prelim_neumann_bound} says the error falls at rate $\gamma$. Figure~\ref{fig:prelim_neumann} confirms this decay, and Table~\ref{tab:prelim_neumann} reports the terms needed for a fixed accuracy.
+This identity is why the value function is a discounted sum of rewards.\footnote{The resolvent, the inverse $(I - \gamma P^\pi)^{-1}$, is the policy-evaluation solve $V = (I - \gamma P^\pi)^{-1} r^\pi$ of Section~\ref{sec:planning_learning} and the fixed-policy value of Section~\ref{section:dist_robust_constrained}. Truncating the series is the same as truncating the planning horizon.} The exact value $V = (I - \gamma P^\pi)^{-1} r^\pi$ equals $\sum_m \gamma^m (P^\pi)^m r^\pi$, the expected discounted return. Truncating at $M$ terms is a finite-horizon approximation. Equation~\eqref{eq:prelim_neumann_bound} says the error then falls at rate $\gamma$. Figure~\ref{fig:prelim_neumann} confirms this decay, and Table~\ref{tab:prelim_neumann} reports the terms needed for a fixed accuracy.
 
 \begin{figure}[t]
 \centering
@@ -87,9 +91,11 @@ This identity is why the value function is a discounted sum of rewards.\footnote
 
 \subsubsection{The Stationary Distribution of a Markov Chain}
 
+Take two states with a $30\%$ chance of flipping between them each step, and start all the probability on state one. After one step the split is $(0.7, 0.3)$, after another $(0.58, 0.42)$, and it keeps sliding toward the balance point $d^\star = (0.5, 0.5)$, then stops. Where the chain began is forgotten. The theorem says every such chain has exactly one balance point, reaches it from any start, and it pins down the speed.
+
 \begin{theorem}[Perron-Frobenius and mixing, \citet{levinperes2017}]
 \label{thm:prelim_markov}
-Let $P$ be the transition matrix of an irreducible, aperiodic Markov chain on a finite state space.\footnote{\emph{Irreducible} means every state can eventually reach every other state. \emph{Aperiodic} means the chain does not cycle with a fixed period. Together they make the chain \emph{primitive}: some power $P^k$ has all entries positive.} Then $P$ has a unique stationary distribution $d^\star$, meaning $d^\star P = d^\star$ with $d^\star \geq 0$ and $\sum_s d^\star_s = 1$. For every initial distribution $d_0$, the iterates $d_k = d_0 P^k$ converge to $d^\star$, and the total-variation distance obeys
+Let $P$ be the transition matrix of an irreducible, aperiodic Markov chain on a finite state space.\footnote{\emph{Irreducible} means every state can eventually reach every other state. \emph{Aperiodic} means the chain does not cycle with a fixed period. Together they make the chain \emph{primitive}: some power $P^k$ has all entries positive.} Then $P$ has a unique stationary distribution $d^\star$, meaning $d^\star P = d^\star$ with $d^\star \geq 0$ and $\sum_s d^\star_s = 1$. For every initial distribution $d_0$, the iterates $d_k = d_0 P^k$ converge to $d^\star$, and the total-variation distance, the largest gap between the probabilities the two distributions assign to any single event, obeys
 \begin{equation}
 \| d_0 P^k - d^\star \|_{\mathrm{TV}} \leq C\, |\lambda_2|^k,
 \label{eq:prelim_markov_rate}
@@ -111,7 +117,7 @@ The leading coefficient is $c_1 = 1$, because $d_0$ and $d^\star$ are both proba
 Collecting the bracket into a constant $C$ gives~\eqref{eq:prelim_markov_rate}.
 \end{proof}
 
-This is the fact behind on-policy sampling.\footnote{The stationary distribution $d^\pi$ is the sampling distribution under which the projected Bellman operator contracts (Section~\ref{sec:planning_learning}), the ergodic distribution of the exogenous and heterogeneous-agent chains of Section~\ref{section:rl_macro}, and the state occupancy that model-based rollouts must respect (Section~\ref{section:world_models}). The mixing rate $1 - |\lambda_2|$ sets how fast a simulated chain forgets its start.} Figure~\ref{fig:prelim_markov} runs the power iteration $d_k = d_0 P^k$ for chains with three mixing speeds. The total-variation distance falls at rate $|\lambda_2|$, and slower-mixing chains take proportionally longer to forget the start (Table~\ref{tab:prelim_markov}).
+This is the fact behind on-policy sampling.\footnote{The stationary distribution $d^\pi$ is the sampling distribution under which the projected Bellman operator contracts (Section~\ref{sec:planning_learning}), the ergodic distribution of the exogenous and heterogeneous-agent chains of Section~\ref{section:rl_macro}, and the state occupancy that model-based rollouts must respect (Section~\ref{section:world_models}). The mixing rate $1 - |\lambda_2|$ sets how fast a simulated chain forgets its start.} Figure~\ref{fig:prelim_markov} runs the power iteration $d_k = d_0 P^k$ for chains with three mixing speeds. The total-variation distance falls at rate $|\lambda_2|$, and slower-mixing chains take proportionally longer to forget the start, much as a lazily shuffled deck keeps its original order far longer than a thoroughly shuffled one (Table~\ref{tab:prelim_markov}).
 
 \begin{figure}[t]
 \centering
@@ -123,6 +129,8 @@ This is the fact behind on-policy sampling.\footnote{The stationary distribution
 \input{../appA_preliminaries/sims/markov_stationary.tex}
 
 \subsubsection{Orthogonal Projection is Nonexpansive}
+
+Take the point $x = (1, 1)$ in the plane and drop it straight down onto the horizontal axis. The projection is $\Pi x = (1, 0)$, and the leftover $x - \Pi x = (0, 1)$ points straight up, at a right angle to the axis. The three vectors form a right triangle with $x$ as the hypotenuse, so $\Pi x$ is a leg and cannot be longer than $x$. A projection never lengthens a vector. The theorem repeats this in any number of dimensions.
 
 \begin{theorem}[Projection geometry, \citet{luenberger1969}]
 \label{thm:prelim_hilbert}
@@ -144,7 +152,7 @@ The plan is to split $x$ into its projection and its residual, use that the two 
 which is~\eqref{eq:prelim_pythagoras}. Since $\|x - \Pi x\|^2 \geq 0$, dropping it gives $\|\Pi x\|^2 \leq \|x\|^2$, so $\|\Pi x\| \leq \|x\|$. Projection is linear, so applying this to $x - y$ gives $\|\Pi x - \Pi y\| = \|\Pi(x - y)\| \leq \|x - y\|$, which is nonexpansiveness.\footnote{The Cauchy-Schwarz inequality $|\langle a, b \rangle| \leq \|a\|\,\|b\|$ is the same statement in disguise. It says the projection of $a$ onto the line through $b$ is no longer than $a$ itself.}
 \end{proof}
 
-Nonexpansiveness is what keeps linear function approximation stable.\footnote{Composing the nonexpansive $\Pi$ with the $\gamma$-contraction $T^\pi$ gives the projected Bellman operator $\Pi T^\pi$, a $\gamma$-contraction whose fixed point is the temporal-difference solution (Section~\ref{sec:planning_learning}). When sampling is off-policy the projection is oblique rather than orthogonal, it can lengthen vectors, and the contraction can fail.} Under on-policy sampling the projection onto the space of representable value functions cannot lengthen a vector, so the projected Bellman operator remains a contraction. Figure~\ref{fig:prelim_hilbert} draws the geometry, and Table~\ref{tab:prelim_hilbert} checks the identity numerically.
+Nonexpansiveness is what keeps linear function approximation stable.\footnote{Composing the nonexpansive $\Pi$ with the $\gamma$-contraction $T^\pi$ gives the projected Bellman operator $\Pi T^\pi$, a $\gamma$-contraction whose fixed point is the temporal-difference solution (Section~\ref{sec:planning_learning}). When sampling is off-policy the projection is oblique rather than orthogonal, it can lengthen vectors, and the contraction can fail.} Under on-policy sampling the projection onto the space of representable value functions cannot lengthen a vector, so the projected Bellman operator remains a contraction. The projection acts like a shadow cast straight down onto the floor, and a shadow is never longer than the object that casts it. Figure~\ref{fig:prelim_hilbert} draws the geometry, and Table~\ref{tab:prelim_hilbert} checks the identity numerically.
 
 \begin{figure}[t]
 \centering
@@ -158,9 +166,11 @@ Nonexpansiveness is what keeps linear function approximation stable.\footnote{Co
 \subsection{Probability}
 \label{prelim:probability}
 
-Reinforcement learning estimates expectations from samples and then acts on them. Three probability facts make that safe. The first says a nonlinear objective and an expectation do not commute, and fixes the direction of the error. The second says a sample average converges to the mean it estimates, and quantifies the fluctuation around it. The third says a sequence of running estimates that drifts the right way in conditional mean settles down almost surely, the tool that turns a single noisy trajectory into a convergence proof.
+Reinforcement learning estimates expectations from samples and then acts on them. Three probability facts make that safe. The first says that applying a nonlinear function and taking an average cannot be swapped for free, and it fixes the direction of the error. The second says a sample average converges to the mean it estimates, and it quantifies the fluctuation around it. The third says that a running estimate settles down almost surely, as long as on average it drifts the right way. This is the tool that turns a single noisy trajectory into a convergence proof.
 
 \subsubsection{Jensen's Inequality}
+
+A two-point example makes it obvious. Let $\varphi(x) = x^2$, and let $X$ be $0$ or $2$ with equal chance. The mean is $\mathbb{E}[X] = 1$, so $\varphi(\mathbb{E}[X]) = 1$. The average of the squares is $\mathbb{E}[\varphi(X)] = (0 + 4)/2 = 2$. Squaring after averaging gives $1$, averaging after squaring gives $2$, and the gap of $1$ is exactly the variance of $X$. Convexity is what forces the second number above the first.
 
 \begin{theorem}[Jensen's inequality, \citet{durrett}]
 \label{thm:prelim_jensen}
@@ -169,7 +179,7 @@ Let $\varphi : \mathbb{R} \to \mathbb{R}$ be convex and let $X$ be an integrable
 \varphi\bigl(\mathbb{E}[X]\bigr) \leq \mathbb{E}\bigl[\varphi(X)\bigr].
 \label{eq:prelim_jensen}
 \end{equation}
-The inequality reverses when $\varphi$ is concave, and holds with equality when $\varphi$ is affine.
+The inequality reverses when $\varphi$ is concave, and holds with equality when $\varphi$ is affine, that is a straight-line function.
 \end{theorem}
 
 \begin{proof}
@@ -182,7 +192,7 @@ The plan is to trap $\varphi$ below by a straight line that touches it at the me
 which is~\eqref{eq:prelim_jensen}. The concave case applies this to $-\varphi$, and an affine $\varphi$ meets its own supporting line everywhere, so the inequality is an equality.
 \end{proof}
 
-Jensen's inequality is why an expectation and a nonlinear objective cannot be swapped for free.\footnote{The convexity of the maximum drives the overestimation bias of Q-learning and its double-estimator corrections in Section~\ref{sec:planning_learning}, where the expected maximum of noisy action values exceeds the maximum of their means. The convexity of the exponential and of coherent risk measures supports the entropic-risk and distributionally robust value operators of Section~\ref{section:dist_robust_constrained}.} The clearest reinforcement-learning instance is the maximization bias. The maximum is a convex function, so the expected maximum of noisy action-value estimates sits above the maximum of their means, and a bootstrapped target that maximizes over sampled values overestimates. The same inequality, applied to the exponential, is behind the risk-sensitive and distributionally robust objectives that penalize the spread of returns. Figure~\ref{fig:prelim_jensen} estimates the gap for two convex functions, and Table~\ref{tab:prelim_jensen} confirms it matches the closed form and never turns negative.
+Jensen's inequality is why an expectation and a nonlinear objective cannot be swapped for free.\footnote{The convexity of the maximum drives the overestimation bias of Q-learning and its double-estimator corrections in Section~\ref{sec:planning_learning}, where the expected maximum of noisy action values exceeds the maximum of their means. The convexity of the exponential and of coherent risk measures supports the entropic-risk and distributionally robust value operators of Section~\ref{section:dist_robust_constrained}.} The clearest reinforcement-learning instance is the maximization bias. The maximum is a convex function. So the expected maximum of noisy action-value estimates sits above the maximum of their means. A bootstrapped target, one that plugs in its own current estimates, then overestimates when it maximizes over sampled values. The intuition is that keeping the best of several noisy estimates tends to keep the one that got lucky, so the best looks better than the truth. The same inequality, applied to the exponential, sits behind the risk-sensitive and distributionally robust objectives that penalize the spread of returns. Figure~\ref{fig:prelim_jensen} estimates the gap for two convex functions, and Table~\ref{tab:prelim_jensen} confirms it matches the closed form and never turns negative.
 
 \begin{figure}[t]
 \centering
@@ -194,6 +204,8 @@ Jensen's inequality is why an expectation and a nonlinear objective cannot be sw
 \input{../appA_preliminaries/sims/jensen_gap.tex}
 
 \subsubsection{The Law of Large Numbers and the Central Limit Theorem}
+
+Flip a fair coin over and over and track the running fraction of heads. Early on it swings around, then it settles down and hugs $1/2$. That settling is the law of large numbers. Now rescale the leftover wobble around $1/2$ by $\sqrt{n}$. The rescaled wobble does not vanish. It fills out a fixed bell-shaped spread, and that fixed shape is the central limit theorem.
 
 \begin{theorem}[Law of large numbers and central limit theorem, \citet{durrett}]
 \label{thm:prelim_lln_clt}
@@ -226,7 +238,7 @@ which is convergence in probability.\footnote{This gives the \emph{weak} law. Th
 The limit $e^{-t^2/2}$ is the characteristic function of $N(0,1)$, so by the continuity theorem $S_n \Rightarrow N(0,1)$, and undoing the standardization gives $\sqrt{n}(\bar X_n - \mu) \Rightarrow N(0, \sigma^2)$, which is~\eqref{eq:prelim_clt}.
 \end{proof}
 
-These two results are why learning from samples works and how fast.\footnote{The $\sqrt{n}$ rate is the width of the bandit confidence bounds of Section~\ref{section:bandits}, the standard error attached to every Monte Carlo value estimate in Section~\ref{sec:planning_learning}, and the large-sample distribution of the simulation-based structural estimators of Section~\ref{section:rl_econ_models}.} The law of large numbers is the license to replace an expectation by a sample average, the operation underneath every Monte Carlo return estimate and every empirical Bellman backup. The central limit theorem fixes the price of doing so. The error shrinks at rate $1/\sqrt{n}$ and is asymptotically Gaussian, which is what turns a raw estimate into a confidence interval. Figure~\ref{fig:prelim_lln_clt} shows the sample mean of skewed exponential draws settling on its mean, and the rescaled fluctuation taking the Gaussian shape at a moderate sample size. Table~\ref{tab:prelim_lln_clt} checks that the variance of the rescaled mean matches $\sigma^2$ and that its skewness and excess kurtosis approach the normal values of zero across three non-normal sources, the discrete Bernoulli approaching more slowly through its lattice.
+These two results are why learning from samples works and how fast.\footnote{The $\sqrt{n}$ rate is the width of the bandit confidence bounds of Section~\ref{section:bandits}, the standard error attached to every Monte Carlo value estimate in Section~\ref{sec:planning_learning}, and the large-sample distribution of the simulation-based structural estimators of Section~\ref{section:rl_econ_models}.} The law of large numbers is the license to replace an expectation by a sample average, the operation underneath every Monte Carlo return estimate and every empirical Bellman backup. The central limit theorem fixes the price of doing so. The error shrinks at rate $1/\sqrt{n}$ and is asymptotically Gaussian, which is what turns a raw estimate into a confidence interval. The Gaussian shape appears whatever the individual draws look like. It is the Galton-board effect, where many small independent bounces add up to a bell curve. Figure~\ref{fig:prelim_lln_clt} shows the sample mean of skewed exponential draws settling on its mean, and the rescaled fluctuation taking the Gaussian shape at a moderate sample size. Table~\ref{tab:prelim_lln_clt} checks that the variance of the rescaled mean matches $\sigma^2$. It also checks that the skewness and excess kurtosis approach their normal values of zero, across three non-normal sources. The discrete Bernoulli source approaches most slowly, because its values sit on a lattice, a fixed grid of possible outcomes.
 
 \begin{figure}[t]
 \centering
@@ -239,9 +251,11 @@ These two results are why learning from samples works and how fast.\footnote{The
 
 \subsubsection{Martingale Convergence}
 
+Picture a gambler in a fair game. The expected fortune next round equals the fortune now, no edge either way, so the fortune is a martingale. Suppose it is also capped and can never leave a fixed range. Then it has no room to drift. A quantity with no drift and no room to run must eventually stop swinging and settle. The theorem makes that precise, and the Robbins-Siegmund version allows a little leakage each step, as long as the leaks are small enough to add up to a finite total.
+
 \begin{theorem}[Martingale convergence, \citet{williamsprob1991}; \citet{robbinssiegmund1971}]
 \label{thm:prelim_martingale}
-Let $(M_n)$ be a supermartingale adapted to a filtration $(\mathcal{F}_n)$, meaning $\mathbb{E}[M_{n+1} \mid \mathcal{F}_n] \leq M_n$, and suppose it is bounded in $L^1$, $\sup_n \mathbb{E}|M_n| < \infty$.\footnote{A \emph{filtration} $(\mathcal{F}_n)$ is the growing record of information through time. A process is a \emph{martingale} if $\mathbb{E}[M_{n+1} \mid \mathcal{F}_n] = M_n$, a \emph{supermartingale} if the conditional mean can only fall, $\mathbb{E}[M_{n+1} \mid \mathcal{F}_n] \leq M_n$. A martingale bounded in $[a,b]$ is automatically $L^1$-bounded.} Then $M_n$ converges almost surely to a finite limit $M_\infty$. Moreover, if $(Z_n)$ is a nonnegative adapted process with
+Let $(M_n)$ be a supermartingale adapted to a filtration $(\mathcal{F}_n)$, meaning $\mathbb{E}[M_{n+1} \mid \mathcal{F}_n] \leq M_n$, and suppose it is bounded in $L^1$, meaning its expected absolute value stays bounded, $\sup_n \mathbb{E}|M_n| < \infty$.\footnote{A \emph{filtration} $(\mathcal{F}_n)$ is the growing record of information through time. A process is a \emph{martingale} if $\mathbb{E}[M_{n+1} \mid \mathcal{F}_n] = M_n$, a \emph{supermartingale} if the conditional mean can only fall, $\mathbb{E}[M_{n+1} \mid \mathcal{F}_n] \leq M_n$. A martingale bounded in $[a,b]$ is automatically $L^1$-bounded.} Then $M_n$ converges almost surely to a finite limit $M_\infty$. Moreover, if $(Z_n)$ is a nonnegative adapted process with
 \begin{equation}
 \mathbb{E}[Z_{n+1} \mid \mathcal{F}_n] \leq (1 + a_n) Z_n - b_n + c_n,
 \label{eq:prelim_robbins_siegmund}
@@ -255,10 +269,10 @@ The plan is to bound how often the process can cross a fixed band, since a finit
 (b - a)\, \mathbb{E}\bigl[U_n[a,b]\bigr]
   &\leq \mathbb{E}\bigl[(M_n - a)^-\bigr] \leq |a| + \sup_n \mathbb{E}|M_n| && \text{(upcrossing inequality).}
 \end{align*}
-The right side is finite and does not grow with $n$, so the total number of upcrossings $U[a,b] = \lim_n U_n[a,b]$ is finite almost surely, and this holds simultaneously for every band with rational endpoints. A real sequence that upcrosses every rational band only finitely often cannot oscillate, so $M_n$ converges almost surely to some limit $M_\infty \in [-\infty, +\infty]$. Fatou's lemma with the $L^1$ bound gives $\mathbb{E}|M_\infty| \leq \liminf_n \mathbb{E}|M_n| < \infty$, so the limit is finite almost surely. For the almost-supermartingale, divide out the multiplicative drift and add the additive tail. The process $Z_n' = Z_n / \prod_{k<n}(1 + a_k) + \sum_{k \geq n} \tilde c_k$, with $\tilde c_k$ the discounted $c_k$, is a nonnegative supermartingale, so the first part applies and $Z_n'$ converges.\footnote{Adding the future $c$-tail is what cancels the upward push $c_n$ each step, leaving only the downward decrement $-\tilde b_n$; subtracting it would double the push.} Unwinding the two summable corrections returns the convergence of $Z_n$ and, from the accumulated decrements, $\sum_n b_n < \infty$ almost surely.\footnote{The bookkeeping is carried out in full by \citet{robbinssiegmund1971}. The two summability conditions on $a_n$ and $c_n$ are exactly what keep the discounting and the tail correction finite.}
+The right side is finite and does not grow with $n$, so the total number of upcrossings $U[a,b] = \lim_n U_n[a,b]$ is finite almost surely, and this holds simultaneously for every band with rational endpoints. A real sequence that upcrosses every rational band only finitely often cannot oscillate, so $M_n$ converges almost surely to some limit $M_\infty \in [-\infty, +\infty]$. Fatou's lemma with the $L^1$ bound gives $\mathbb{E}|M_\infty| \leq \liminf_n \mathbb{E}|M_n| < \infty$, so the limit is finite almost surely. For the almost-supermartingale, divide out the multiplicative drift and add the additive tail. The process $Z_n' = Z_n / \prod_{k<n}(1 + a_k) + \sum_{k \geq n} \tilde c_k$, with $\tilde c_k$ the $c_k$ discounted by that same product, is a nonnegative supermartingale, so the first part applies and $Z_n'$ converges.\footnote{Adding the future $c$-tail is what cancels the upward push $c_n$ each step, leaving only the downward decrement $-\tilde b_n$; subtracting it would double the push.} Unwinding the two summable corrections returns the convergence of $Z_n$ and, from the accumulated decrements, $\sum_n b_n < \infty$ almost surely.\footnote{The bookkeeping is carried out in full by \citet{robbinssiegmund1971}. The two summability conditions on $a_n$ and $c_n$ are exactly what keep the discounting and the tail correction finite.}
 \end{proof}
 
-Martingale convergence is what turns a single noisy run into a convergence proof.\footnote{The almost-supermartingale form~\eqref{eq:prelim_robbins_siegmund} is the engine of the Robbins-Monro proof (Theorem~\ref{thm:prelim_robbins_monro}), and through it of the almost-sure convergence of Q-learning and $\mathrm{TD}(\lambda)$ in Section~\ref{sec:planning_learning} and the Nash-Q backup of Section~\ref{section:rl_games}.} A learning algorithm sees one trajectory, not an ensemble, so the guarantee it needs is almost-sure convergence of that path. Doob's theorem delivers exactly this once the running estimate is a bounded martingale or supermartingale, and the Robbins-Siegmund extension covers the case where the update contracts only up to summable perturbations, which is the shape every stochastic-approximation error takes. Figure~\ref{fig:prelim_martingale} follows a bounded martingale, the fraction of red balls in a P\'olya urn, and Table~\ref{tab:prelim_martingale} confirms the martingale property, the settling of every path, and that the random limits follow the predicted law.
+Martingale convergence is what turns a single noisy run into a convergence proof.\footnote{The almost-supermartingale form~\eqref{eq:prelim_robbins_siegmund} is the engine of the Robbins-Monro proof (Theorem~\ref{thm:prelim_robbins_monro}), and through it of the almost-sure convergence of Q-learning and $\mathrm{TD}(\lambda)$ in Section~\ref{sec:planning_learning} and the Nash-Q backup of Section~\ref{section:rl_games}.} A learning algorithm sees one trajectory, not an ensemble, so the guarantee it needs is almost-sure convergence of that path. Doob's theorem delivers exactly this, once the running estimate is a bounded martingale or supermartingale. The Robbins-Siegmund extension covers the harder case, where the update contracts only up to small, summable perturbations. That is the shape every stochastic-approximation error takes. Figure~\ref{fig:prelim_martingale} follows a bounded martingale, the fraction of red balls in a P\'olya urn, and Table~\ref{tab:prelim_martingale} confirms the martingale property, the settling of every path, and that the random limits follow the predicted law.
 
 \begin{figure}[t]
 \centering
@@ -272,9 +286,11 @@ Martingale convergence is what turns a single noisy run into a convergence proof
 \subsection{Calculus and Convex Analysis}
 \label{prelim:convex}
 
-Policy optimization, reward-model fitting, and constrained control all reduce to minimizing a function, usually by following its gradient. Four facts from convex analysis govern when that works and how fast. The first sets the convergence rate of gradient descent. The second turns a constrained problem into an unconstrained saddle point. The third differentiates an optimized value through its optimizer. The fourth is the continuity condition that ties this section back to the contraction arguments.
+Policy optimization, reward-model fitting, and constrained control all reduce to minimizing a function, usually by following its gradient. Four facts from convex analysis govern when that works and how fast. The first sets the convergence rate of gradient descent. The second turns a constrained problem into an unconstrained saddle point. The third differentiates a value that is itself the outcome of an optimization. The fourth is the continuity condition that ties this section back to the contraction arguments.
 
 \subsubsection{Convexity and Gradient Descent}
+
+Minimize $f(x) = x^2$. The slope is $2x$, so $f$ is $L$-smooth with $L = 2$, and gradient descent with step $1/L = 1/2$ updates $x \leftarrow x - \tfrac{1}{2}(2x) = 0$. One step lands exactly on the minimum. A rounder bowl could not exist. All the difficulty in the general case comes from bowls that are stretched and lopsided, and the theorem measures exactly how much that stretching costs.
 
 \begin{theorem}[Gradient descent convergence, \citet{nesterov2018}]
 \label{thm:prelim_gd}
@@ -283,7 +299,7 @@ Let $f$ be convex and $L$-smooth, and let $x^\star$ minimize $f$.\footnote{A dif
 f(x_k) - f(x^\star) \leq \frac{L\,\|x_0 - x^\star\|^2}{2k}.
 \label{eq:prelim_gd_sublinear}
 \end{equation}
-If in addition $f$ is $\mu$-strongly convex, with condition number $\kappa = L/\mu$, the iterates converge geometrically,
+If in addition $f$ is $\mu$-strongly convex, with condition number $\kappa = L/\mu$, the iterates converge geometrically, shrinking by a constant factor each step,
 \begin{equation}
 \|x_k - x^\star\| \leq \Bigl(1 - \tfrac{\mu}{L}\Bigr)^{k} \|x_0 - x^\star\|.
 \label{eq:prelim_gd_linear}
@@ -306,7 +322,7 @@ so each step strictly decreases $f$ unless the gradient is zero. Convexity bound
 and iterating gives~\eqref{eq:prelim_gd_linear}.
 \end{proof}
 
-The split between the two rates is the split between hard and easy problems.\footnote{Gradient methods are the workhorse of policy optimization, the policy-gradient ascent of Section~\ref{sec:policy_gradient} and the actor-critic updates of Section~\ref{sec:actor_critic}, and of the reward-model and policy fitting in the alignment objective of Section~\ref{sec:lcpo}. The condition number $\kappa = L/\mu$ is what separates a fast-training objective from a slow one.} On a general smooth convex objective gradient descent closes the gap at the sublinear rate $O(1/k)$. Strong convexity, the curvature that keeps the objective from flattening near the optimum, upgrades this to the geometric rate $(1 - \mu/L)^k$, so the iteration count to a fixed accuracy scales with the condition number $\kappa = L/\mu$. The linear rate is exactly the Banach contraction applied to the gradient map, and it holds for any strongly convex smooth objective, not only the quadratics used here to make the constant sharp. Figure~\ref{fig:prelim_gd} shows the geometric decay at three condition numbers and the general bound holding for the worst-conditioned case, and Table~\ref{tab:prelim_gd} confirms the measured per-step contraction equals $1 - \mu/L$.
+The split between the two rates is the split between hard and easy problems.\footnote{Gradient methods are the workhorse of policy optimization, the policy-gradient ascent of Section~\ref{sec:policy_gradient} and the actor-critic updates of Section~\ref{sec:actor_critic}, and of the reward-model and policy fitting in the alignment objective of Section~\ref{sec:lcpo}. The condition number $\kappa = L/\mu$ is what separates a fast-training objective from a slow one.} On a general smooth convex objective gradient descent closes the gap at the sublinear rate $O(1/k)$. Strong convexity, the curvature that keeps the objective from flattening near the optimum, upgrades this to the geometric rate $(1 - \mu/L)^k$. The number of iterations to a fixed accuracy then scales with the condition number $\kappa = L/\mu$. A well-conditioned objective is a round bowl, where gradient descent rolls straight to the bottom. An ill-conditioned one is a long narrow valley, where the steps zig-zag across the walls and crawl along the floor. The linear rate is exactly the Banach contraction applied to the gradient map, and it holds for any strongly convex smooth objective, not only the quadratics used here to make the constant sharp. Figure~\ref{fig:prelim_gd} shows the geometric decay at three condition numbers and the general bound holding for the worst-conditioned case, and Table~\ref{tab:prelim_gd} confirms the measured per-step contraction equals $1 - \mu/L$.
 
 \begin{figure}[t]
 \centering
@@ -318,6 +334,8 @@ The split between the two rates is the split between hard and easy problems.\foo
 \input{../appA_preliminaries/sims/gradient_descent.tex}
 
 \subsubsection{Lagrangian Duality}
+
+Take the tiny program $\min x^2$ subject to $x \geq 1$. The constraint binds, so the answer is $x^\star = 1$ with value $p^\star = 1$. Now attach a price $\lambda \geq 0$ to the constraint and minimize $x^2 + \lambda(1 - x)$ over $x$ with no constraint. The minimizer is $x = \lambda/2$, giving the lower bound $q(\lambda) = \lambda - \lambda^2/4$. This bound is largest at $\lambda^\star = 2$, where $q = 1$. The best price reproduces the true optimum exactly, with no gap. The theorem says this always happens for a convex problem that has a feasible interior.
 
 \begin{theorem}[Weak and strong duality, \citet{boydvandenberghe2004}; \citet{sion1958}]
 \label{thm:prelim_duality}
@@ -342,7 +360,7 @@ q(\lambda) = \inf_{x'} L(x', \lambda) \leq L(x, \lambda) = f(x) + \sum_i \lambda
 Taking the infimum over feasible $x$ gives $q(\lambda) \leq p^\star$, and the supremum over $\lambda \geq 0$ gives~\eqref{eq:prelim_weak_duality}, with no convexity used. For strong duality consider the value set $\mathcal{A} = \{(u, t) : g_i(x) \leq u_i,\ f(x) \leq t \text{ for some } x\}$, which is convex when $f$ and the $g_i$ are convex.\footnote{The point $(0, p^\star)$ lies on the boundary of $\mathcal{A}$. A supporting hyperplane there has a normal $(\lambda^\star, \mu)$, pointing into $\mathcal{A}$, with $\lambda^\star \geq 0$ and $\mu \geq 0$; Slater's strictly feasible point forces $\mu > 0$, so the hyperplane is nonvertical and can be normalized to $\mu = 1$. The full separation argument is in \citet{boydvandenberghe2004}.} The supporting hyperplane at $(0, p^\star)$ yields multipliers $\lambda^\star \geq 0$ with $q(\lambda^\star) = p^\star$, so $d^\star = p^\star$. The optimal pair then satisfies~\eqref{eq:prelim_saddle}, equivalently the minimax identity $\min_x \max_{\lambda \geq 0} L(x, \lambda) = \max_{\lambda \geq 0} \min_x L(x, \lambda)$. Strong duality establishes this identity here; for a convex-concave payoff it holds generally once one of the two domains is compact, which is the minimax theorem of \citet{sion1958}.
 \end{proof}
 
-Duality is how a constrained problem becomes an unconstrained one.\footnote{Lagrangian duality turns the constrained and robust value problems of Section~\ref{section:dist_robust_constrained} into unconstrained saddle points solved by primal-dual iteration, and it is the mechanism behind the KL-regularized alignment objective of Section~\ref{sec:lcpo}, where the constraint multiplier trades reward against divergence from the reference policy.} Rather than optimize subject to constraints, one forms the Lagrangian and searches for its saddle point, ascending in the multipliers and descending in the variables. Weak duality guarantees every setting of the multipliers certifies a lower bound on the optimum, and strong duality, which the convex constrained problems in reinforcement learning enjoy under a feasibility condition, guarantees the bound is tight. Figure~\ref{fig:prelim_duality} solves a convex quadratic program through its dual, and Table~\ref{tab:prelim_duality} confirms the dual value stays below the primal optimum throughout and closes to it, with complementary slackness holding at the solution.
+Duality is how a constrained problem becomes an unconstrained one.\footnote{Lagrangian duality turns the constrained and robust value problems of Section~\ref{section:dist_robust_constrained} into unconstrained saddle points solved by primal-dual iteration, and it is the mechanism behind the KL-regularized alignment objective of Section~\ref{sec:lcpo}, where the constraint multiplier trades reward against divergence from the reference policy.} Rather than optimize subject to constraints, one forms the Lagrangian and searches for its saddle point, ascending in the multipliers and descending in the variables. Weak duality guarantees that every setting of the multipliers certifies a lower bound on the optimum. Strong duality guarantees that bound is actually tight. The convex constrained problems in reinforcement learning enjoy strong duality, as long as a feasibility condition holds. Figure~\ref{fig:prelim_duality} solves a convex quadratic program through its dual, and Table~\ref{tab:prelim_duality} confirms the dual value stays below the primal optimum throughout and closes to it, with complementary slackness holding at the solution.
 
 \begin{figure}[t]
 \centering
@@ -354,6 +372,8 @@ Duality is how a constrained problem becomes an unconstrained one.\footnote{Lagr
 \input{../appA_preliminaries/sims/lagrangian_duality.tex}
 
 \subsubsection{The Envelope Theorem}
+
+Take $V(\theta) = \max_a (\theta a - \tfrac{1}{2}a^2)$. The best $a$ solves $\theta - a = 0$, so $a^\star(\theta) = \theta$ and $V(\theta) = \tfrac{1}{2}\theta^2$. Differentiate directly and $V'(\theta) = \theta$. Now instead differentiate only the inside, $\partial_\theta(\theta a - \tfrac{1}{2}a^2) = a$, and plug in the winner $a^\star = \theta$, giving $\theta$ again. The two answers agree, and getting the second one never required differentiating $a^\star(\theta)$ at all. That shortcut is the envelope theorem.
 
 \begin{theorem}[Envelope theorem, \citet{milgromsegal2002}; \citet{danskin1967}]
 \label{thm:prelim_envelope}
@@ -373,10 +393,10 @@ V(\theta') - V(\theta)
 V(\theta') - V(\theta)
   &\leq f(a^\star(\theta'), \theta') - f(a^\star(\theta'), \theta) && \text{($a^\star(\theta')$ feasible at $\theta$).}
 \end{align*}
-Dividing by $\theta' - \theta > 0$ and letting $\theta' \to \theta$, the lower bound tends to $\partial_\theta f(a^\star(\theta), \theta)$ by differentiability of $f$ in $\theta$, and the upper bound tends to the same limit because the argmax is upper hemicontinuous by Berge's maximum theorem, a unique maximizer upgrades this to $a^\star(\theta') \to a^\star(\theta)$, and $\partial_\theta f$ is jointly continuous. The two bounds squeeze the difference quotient, giving~\eqref{eq:prelim_envelope}. The same sandwich from the left matches the one-sided derivatives, and when the maximizer is not unique the two sides settle on the extreme maximizer slopes, which is Danskin's statement.
+Divide by $\theta' - \theta > 0$ and let $\theta' \to \theta$. The lower bound tends to $\partial_\theta f(a^\star(\theta), \theta)$ by differentiability of $f$ in $\theta$. The upper bound tends to the same limit for three reasons. The argmax is upper hemicontinuous by Berge's maximum theorem, so the set of maximizers cannot jump outward as $\theta$ moves. A unique maximizer upgrades this to $a^\star(\theta') \to a^\star(\theta)$. And $\partial_\theta f$ is jointly continuous. The two bounds squeeze the difference quotient, giving~\eqref{eq:prelim_envelope}. The same sandwich from the left matches the one-sided derivatives, and when the maximizer is not unique the two sides settle on the extreme maximizer slopes, which is Danskin's statement.
 \end{proof}
 
-The envelope theorem is why one can differentiate an optimized value without tracking the optimizer.\footnote{Danskin's form supplies the gradient of the inner maximization in the robust value operators of Section~\ref{section:dist_robust_constrained}, where the derivative of the worst-case value is the derivative at the worst-case model. The envelope identity underlies the policy-gradient theorem of Section~\ref{sec:policy_gradient} and the sensitivity of estimated value functions to structural parameters in Section~\ref{section:rl_econ_models}.} In dynamic programming the derivative of the value with respect to a state or a parameter equals the derivative of the one-step return at the optimal action, the Benveniste-Scheinkman identity, which is what makes marginal-value conditions tractable. In robust and minimax control, Danskin's form gives the gradient of a worst-case objective as the gradient evaluated at the worst case, so the inner maximization can be treated as fixed when differentiating. Figure~\ref{fig:prelim_envelope} shows the value as the upper envelope of a family of curves, tangent to each where that member is optimal, and Table~\ref{tab:prelim_envelope} confirms that differentiating a numerically maximized value reproduces the partial derivative at the maximizer.
+The envelope theorem is why one can differentiate an optimized value without tracking the optimizer.\footnote{Danskin's form supplies the gradient of the inner maximization in the robust value operators of Section~\ref{section:dist_robust_constrained}, where the derivative of the worst-case value is the derivative at the worst-case model. The envelope identity underlies the policy-gradient theorem of Section~\ref{sec:policy_gradient} and the sensitivity of estimated value functions to structural parameters in Section~\ref{section:rl_econ_models}.} In dynamic programming the derivative of the value with respect to a state or a parameter equals the derivative of the one-step return at the optimal action. Economists know this as the Benveniste-Scheinkman identity. It is what makes marginal-value conditions tractable. The maximizer's own movement drops out because at a peak you already stand at the top, so a small tilt of the ground changes your height only through how the ground moved under your feet, not through any scramble to re-pick where to stand. In robust and minimax control, Danskin's form gives the gradient of a worst-case objective as the gradient evaluated at the worst case, so the inner maximization can be treated as fixed when differentiating. Figure~\ref{fig:prelim_envelope} shows the value as the upper envelope of a family of curves, tangent to each where that member is optimal, and Table~\ref{tab:prelim_envelope} confirms that differentiating a numerically maximized value reproduces the partial derivative at the maximizer.
 
 \begin{figure}[t]
 \centering
@@ -388,6 +408,8 @@ The envelope theorem is why one can differentiate an optimized value without tra
 \input{../appA_preliminaries/sims/envelope_theorem.tex}
 
 \subsubsection{Lipschitz Continuity}
+
+The Lipschitz constant is just the steepest slope a function ever reaches. The line $f(x) = 2x$ has slope $2$ everywhere, so it is $2$-Lipschitz. The wave $\sin x$ has slope at most $1$, so it is $1$-Lipschitz. A contraction is the case where the steepest slope stays below one. That is exactly what makes an iteration pull points together instead of driving them apart.
 
 \begin{theorem}[Lipschitz continuity, \citet{nesterov2018}]
 \label{thm:prelim_lipschitz}
@@ -413,7 +435,7 @@ so $L \leq \sup_z \|\nabla f(z)\|$; letting $y \to x$ along the gradient directi
 For the resolvent, $(I - \gamma P)^{-1} = \sum_m (\gamma P)^m \geq 0$ entrywise and $(I - \gamma P)^{-1}\mathbf{1} = \tfrac{1}{1-\gamma}\mathbf{1}$, so every row sums to $\tfrac{1}{1-\gamma}$ and the supremum-norm operator norm is exactly $\tfrac{1}{1-\gamma}$.
 \end{proof}
 
-Lipschitz continuity is the condition every contraction argument in the survey rests on.\footnote{The $\gamma$-Lipschitz property of the Bellman operator is the contraction behind value iteration and temporal-difference learning (Section~\ref{sec:planning_learning}), and the $\tfrac{1}{1-\gamma}$ Lipschitz constant of the resolvent is the error-amplification factor in the approximate dynamic programming and robust value bounds of Section~\ref{sec:planning_learning} and Section~\ref{section:dist_robust_constrained}.} A learning update inherits a convergence rate only if the operator it applies does not stretch distances, which is exactly a Lipschitz bound with a constant below one. The Bellman operator supplies this with constant $\gamma$, the same $\gamma$ that reappears as the $\tfrac{1}{1-\gamma}$ amplification of any error fed into the value solve, which is precisely the Neumann-series bound of Theorem~\ref{thm:prelim_neumann}. Figure~\ref{fig:prelim_lipschitz} recovers the Lipschitz constant of several functions as the largest difference quotient and shows the Bellman error amplification tracking $\tfrac{1}{1-\gamma}$, and Table~\ref{tab:prelim_lipschitz} reports both to machine precision.
+Lipschitz continuity is the condition every contraction argument in the survey rests on.\footnote{The $\gamma$-Lipschitz property of the Bellman operator is the contraction behind value iteration and temporal-difference learning (Section~\ref{sec:planning_learning}), and the $\tfrac{1}{1-\gamma}$ Lipschitz constant of the resolvent is the error-amplification factor in the approximate dynamic programming and robust value bounds of Section~\ref{sec:planning_learning} and Section~\ref{section:dist_robust_constrained}.} A learning update inherits a convergence rate only if the operator it applies does not stretch distances, which is exactly a Lipschitz bound with a constant below one. The Bellman operator supplies this with constant $\gamma$. That same $\gamma$ reappears as the $\tfrac{1}{1-\gamma}$ amplification of any error fed into the value solve. This is precisely the Neumann-series bound of Theorem~\ref{thm:prelim_neumann}. Figure~\ref{fig:prelim_lipschitz} recovers the Lipschitz constant of several functions as the largest difference quotient and shows the Bellman error amplification tracking $\tfrac{1}{1-\gamma}$, and Table~\ref{tab:prelim_lipschitz} reports both to machine precision.
 
 \begin{figure}[t]
 \centering
@@ -430,6 +452,8 @@ Lipschitz continuity is the condition every contraction argument in the survey r
 Dynamic programming, temporal-difference learning, and their function-approximation variants all reduce to iterating an operator until it stops moving. Two results make that iteration converge. The Banach theorem handles the exact, deterministic operator. The Robbins-Monro theory handles its sampled, stochastic counterpart.
 
 \subsubsection{The Banach Fixed-Point Theorem}
+
+Take $T(x) = \tfrac{1}{2}x + 1$ on the real line. Solving $x = \tfrac{1}{2}x + 1$ gives the fixed point $x^\star = 2$. Start anywhere, say $x_0 = 0$, and the iterates are $1, 1.5, 1.75, \ldots$, each closing half the remaining gap to $2$. The distance to $x^\star$ halves every step, which is $\gamma^k$ with $\gamma = \tfrac{1}{2}$. The theorem is that any map which shrinks distances by a fixed factor below one behaves this way.
 
 \begin{theorem}[Banach fixed-point theorem, \citet{banach1922}]
 \label{thm:prelim_banach}
@@ -485,6 +509,8 @@ The dynamic-programming operators of the survey are all contractions in the supr
 \subsubsection{Robbins-Monro Stochastic Approximation}
 
 The Banach theorem governs the exact operator. Reinforcement learning almost never has the exact operator. It sees a single noisy sample of the Bellman target at each step. Stochastic approximation is what rescues convergence. It replaces the deterministic contraction with a noisy update whose conditional mean still contracts.
+
+The simplest instance is estimating an unknown mean. You see noisy samples one at a time and nudge a running guess by $x \leftarrow x + \alpha_t(\text{sample} - x)$. With a shrinking step like $\alpha_t = 1/t$ this is exactly the running average, and it converges to the true mean. The two conditions below are what keep such an update honest, steps big enough to reach any target and small enough to average the noise away.
 
 \begin{theorem}[Robbins-Monro convergence, \citet{Robbins1952}]
 \label{thm:prelim_robbins_monro}
