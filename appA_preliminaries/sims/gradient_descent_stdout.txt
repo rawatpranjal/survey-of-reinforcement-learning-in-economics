@@ -6,29 +6,15 @@ GD with step 1/L on f(x) = 1/2 x^T Q x, Q = diag in [mu, L], x* = 0.
 Strongly convex => linear rate (1 - mu/L) per step on the iterate error.
 General smooth-convex => f(x_k) - f* <= L||x0 - x*||^2 / (2k).
 
-Force recompute: ['gd']
   Computing: gd
 Gradient descent, step 1/L, on strongly convex quadratics f = 1/2 x^T Q x
   L=1.0, kappas=[10, 100, 1000], dim=50, iters=20000, seeds=20
 
-  kappa=   10: mu/L=0.1000, measured iterate factor=0.90000 +/- 4.1e-08 (theory 0.90000); O(1/k) bound ratio=0.105 (<=1); iters to 1e-08=49
-  kappa=  100: mu/L=0.0100, measured iterate factor=0.99000 +/- 7.4e-17 (theory 0.99000); O(1/k) bound ratio=0.122 (<=1); iters to 1e-08=390
-  kappa= 1000: mu/L=0.0010, measured iterate factor=0.99900 +/- 2.5e-17 (theory 0.99900); O(1/k) bound ratio=0.120 (<=1); iters to 1e-08=2792
-  Cache saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/cache/gradient_descent__gd.pkl
-  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/gradient_descent.png
-  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/gradient_descent.tex
-
-Done.
-======================================================================
-CONVEXITY AND GRADIENT DESCENT
-======================================================================
-
-GD with step 1/L on f(x) = 1/2 x^T Q x, Q = diag in [mu, L], x* = 0.
-Strongly convex => linear rate (1 - mu/L) per step on the iterate error.
-General smooth-convex => f(x_k) - f* <= L||x0 - x*||^2 / (2k).
-
-  Cache hit: gd
-  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/gradient_descent.png
-  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/gradient_descent.tex
+  kappa=   10: mu/L=0.1000, asymptotic per-step factor=0.90000 +/- 4.1e-08 (theory 0.90000); O(1/k) bound ratio=0.105 (<=1); iters to 1e-08=49
+  kappa=  100: mu/L=0.0100, asymptotic per-step factor=0.99000 +/- 7.4e-17 (theory 0.99000); O(1/k) bound ratio=0.122 (<=1); iters to 1e-08=390
+  kappa= 1000: mu/L=0.0010, asymptotic per-step factor=0.99900 +/- 2.5e-17 (theory 0.99900); O(1/k) bound ratio=0.120 (<=1); iters to 1e-08=2792
+  Cache saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/cache/gradient_descent__gd.pkl
+  Figure saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/gradient_descent.png
+  Table saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/gradient_descent.tex
 
 Done.

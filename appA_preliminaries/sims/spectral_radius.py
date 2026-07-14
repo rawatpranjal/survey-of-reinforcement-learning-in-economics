@@ -2,7 +2,9 @@
 # Appendix A - Mathematical Preliminaries
 # Powers of a matrix decay to zero exactly when its spectral radius is below 1. The decay
 # rate is the spectral radius, not the norm: a non-normal matrix can have ||A|| > 1 yet
-# still decay, after a transient. Illustrates Gelfand's formula ||A^k||^{1/k} -> rho(A).
+# still decay, after a transient. Illustrates that the consecutive-power ratio
+# ||A^{k+1}||/||A^k|| approaches rho(A), the same limit Gelfand's formula
+# ||A^k||^{1/k} -> rho(A) predicts.
 
 import argparse
 import os

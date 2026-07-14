@@ -109,6 +109,9 @@ def _run_experiment():
             else:
                 ratio = np.nan
             factors[si] = ratio
+            # Note: because the trajectory is the closed-form geometric sequence
+            # x0*contract^k, this "factor" is the analytic base 1 - lam[0]/L read
+            # back off the tail, not an independent empirical measurement.
             # O(1/k) upper-bound ratio (k >= 1); bound is f_k <= L ||x0||^2 / (2k)
             bound = L * errs[0] ** 2 / (2.0 * kk)
             bound_ratio[si] = float(np.max(fs[1:] / bound))
@@ -130,7 +133,7 @@ def _run_experiment():
         }
         r = results[str(kappa)]
         print(
-            f"  kappa={kappa:5d}: mu/L={mu / L:.4f}, measured iterate factor="
+            f"  kappa={kappa:5d}: mu/L={mu / L:.4f}, asymptotic per-step factor="
             f"{r['factor_mean']:.5f} +/- {r['factor_se']:.1e} (theory {1 - mu / L:.5f}); "
             f"O(1/k) bound ratio={r['bound_ratio_max']:.3f} (<=1); "
             f"iters to {tol:g}={r['iters_to_tol']:.0f}"
@@ -232,8 +235,9 @@ def generate_outputs(data):
         f.write("\\begin{table}[h]\n\\centering\n")
         f.write(
             "\\caption{Gradient descent with step $1/L$ on strongly convex quadratics "
-            "at three condition numbers $\\kappa = L/\\mu$. The measured asymptotic per-step "
-            "contraction of the iterate error matches the exact linear rate $1 - \\mu/L$, so "
+            "at three condition numbers $\\kappa = L/\\mu$. The asymptotic per-step "
+            "contraction of the iterate error, read off the tail of the closed-form "
+            "trajectory, equals the linear rate $1 - \\mu/L$ by construction, so "
             "the iteration count to a fixed tolerance grows with $\\kappa$. The "
             "general smooth-convex bound $f(x_k) - f^\\star \\leq L\\|x_0 - x^\\star\\|^2/(2k)$ "
             "holds throughout (ratio $\\leq 1$). Mean $\\pm$ SE over "
@@ -243,7 +247,7 @@ def generate_outputs(data):
         f.write("\\label{tab:prelim_gd}\n")
         f.write("\\begin{tabular}{ccccc}\n\\hline\n")
         f.write(
-            "$\\kappa$ & $\\mu/L$ & Measured factor & Theory $1-\\mu/L$ & "
+            "$\\kappa$ & $\\mu/L$ & Per-step factor & Theory $1-\\mu/L$ & "
             "$O(1/k)$ bound ratio \\\\\n\\hline\n"
         )
         for kappa in kappas:

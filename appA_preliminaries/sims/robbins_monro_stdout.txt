@@ -14,8 +14,8 @@ Robbins-Monro SA: noisy fixed point of x = gamma x + b, x* = 2.0
   $1/t^{0.6}$       : final RMS error = 0.0766  [sum a = inf: True, sum a^2 < inf: True]
   constant $0.1$    : final RMS error = 0.3488  [sum a = inf: True, sum a^2 < inf: False]
   $1/t^{2}$         : final RMS error = 1.0827  [sum a = inf: False, sum a^2 < inf: True]
-  Cache saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/cache/robbins_monro__rm.pkl
-  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/robbins_monro.png
-  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/robbins_monro.tex
+  Cache saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/cache/robbins_monro__rm.pkl
+  Figure saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/robbins_monro.png
+  Table saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/robbins_monro.tex
 
 Done.

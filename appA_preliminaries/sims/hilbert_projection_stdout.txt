@@ -2,7 +2,11 @@
 HILBERT-SPACE PROJECTION GEOMETRY (diagram-only)
 ======================================================================
 
-  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/hilbert_projection.png
-  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/hilbert_projection.tex
+  Figure saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/hilbert_projection.png
+  ||x||^2 = 5.4500
+  ||Pi x||^2 + ||x - Pi x||^2 = 5.4500
+  ||Pi x|| = 2.1169
+  ||x|| = 2.3345
+  Table saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/hilbert_projection.tex
 
 Done.

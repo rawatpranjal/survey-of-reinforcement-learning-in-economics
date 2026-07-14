@@ -99,10 +99,11 @@ def _run_experiment():
         errs = np.zeros((n_seeds, n_steps))
         for si in range(n_seeds):
             errs[si] = run_sa(gamma, b, sigma, x0, alphas, seed=7 + si)
-        rmse = np.sqrt(np.mean(errs**2, axis=0))  # RMS error across seeds
-        # the two Robbins-Monro conditions for this schedule
-        sum_a = np.sum(alphas)
-        sum_a2 = np.sum(alphas**2)
+        mse = np.mean(errs**2, axis=0)
+        mse_se = np.std(errs**2, axis=0) / np.sqrt(n_seeds)
+        rmse = np.sqrt(mse)  # RMS error across seeds
+        # the two Robbins-Monro conditions for this schedule are analytic properties
+        # of the schedule exponent p, not read off a finite partial sum
         # a schedule with p <= 1 has sum alpha -> inf; p > 0.5 has sum alpha^2 < inf
         if const is not None:
             cond1 = True  # constant: sum alpha = inf
@@ -112,6 +113,8 @@ def _run_experiment():
             cond2 = p > 0.5  # sum 1/t^{2p} converges iff 2p > 1
         results[label] = {
             "rmse": rmse,
+            "mse": mse,
+            "mse_se": mse_se,
             "final_rmse": float(rmse[-1]),
             "sum_alpha_diverges": bool(cond1),
             "sum_alpha2_converges": bool(cond2),
@@ -142,15 +145,21 @@ def generate_outputs(data):
     config = data["config"]
     schedules = config["schedules"]
 
-    # --- Figure: RMS error vs step, log-log ---
+    # --- Figure: RMS error vs step, log-log, with a +/-1 SE band on the MSE ---
     fig, ax = plt.subplots(figsize=FIG_SINGLE)
     for label, _p, _c in schedules:
         rmse = results[label]["rmse"]
+        mse = results[label]["mse"]
+        mse_se = results[label]["mse_se"]
         t = np.arange(1, len(rmse) + 1)
-        ax.loglog(t, rmse, color=SCHED_COLORS[label], linewidth=1.8, label=label)
+        color = SCHED_COLORS[label]
+        ax.loglog(t, rmse, color=color, linewidth=1.8, label=label)
+        lower = np.sqrt(np.maximum(mse - mse_se, 0.0))
+        upper = np.sqrt(mse + mse_se)
+        ax.fill_between(t, lower, upper, color=color, alpha=0.2, linewidth=0)
 
     ax.set_xlabel("Step $t$")
-    ax.set_ylabel(r"RMS error $\|x_t - x^\star\|$")
+    ax.set_ylabel(r"RMS error $|x_t - x^\star|$")
     ax.set_title("Robbins-Monro: convergence needs both step-size conditions")
     ax.legend(loc="lower left", title="step size $\\alpha_t$")
 

@@ -116,7 +116,7 @@ def generate_outputs(data):
     ax.set_xlabel("Terms kept $M$")
     ax.set_ylabel(r"$\|V - V_M\|_\infty$")
     ax.set_title("Neumann truncation error decays geometrically")
-    ax.set_ylim(1e-10, None)
+    ax.set_ylim(1e-10, 1e2)
     ax.legend(loc="upper right", title="solid: error, dashed: bound")
     fig_path = os.path.join(OUTPUT_DIR, "neumann_series.png")
     fig.savefig(fig_path, dpi=300, bbox_inches="tight")
