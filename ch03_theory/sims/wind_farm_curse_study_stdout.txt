@@ -1,0 +1,72 @@
+======================================================================
+WIND FARM STORAGE CONTROL: CURSE OF DIMENSIONALITY STUDY
+======================================================================
+  Cache hit: linear_ac_d3
+  Cache hit: linear_ac_d4
+  Cache hit: linear_ac_d5
+  Cache hit: linear_ac_d6
+  Cache hit: factored_d3
+  Cache hit: factored_d4
+  Cache hit: factored_d5
+  Cache hit: factored_d6
+  Cache hit: DP_d3
+  Cache hit: DP_d4
+  Cache hit: DP_d5
+  Cache hit: DP_d6
+  Cache hit: dqn_d3
+  Cache hit: dqn_d4
+  Cache hit: dqn_d5
+  Cache hit: dqn_d6
+
+======================================================================
+RESULTS
+======================================================================
+Horizon: 24, Discount: 0.95, Dims: [3, 4, 5, 6]
+RL: 3000 episodes, 10 seeds; eval: seed 99, 50 episodes, greedy
+DP: n_bins=7, n_mc=20, timeout=10min, seed=42
+
+DP results:
+dim   states     time_s     return    
+3     343        36.7       1110.2    
+4     2,401      317.5      1113.2    
+5     16,807     603.5      TIMEOUT   
+6     117,649    602.7      TIMEOUT   
+
+DP exponential fit: growth rate 2.157 per dim (x8.6 per added dimension)
+  extrapolated DP time d=3: 37s (0.6 min) [completed]
+  extrapolated DP time d=4: 317s (5.3 min) [completed]
+  extrapolated DP time d=5: 2744s (45.7 min) [TIMEOUT]
+  extrapolated DP time d=6: 23723s (395.4 min = 6.6 hours) [TIMEOUT]
+
+RL results (mean +/- SE over 10 seeds; train time mean):
+method      d=3                 d=4                 d=5                 d=6                 
+factored    1090.7 +/- 4.2       1082.8 +/- 4.1       1093.7 +/- 1.8       1083.6 +/- 4.9       
+dqn         1107.6 +/- 0.4       1107.4 +/- 0.7       1106.5 +/- 0.2       1100.1 +/- 0.4       
+linear_ac   1001.6 +/- 29.4      1016.0 +/- 33.9      1023.0 +/- 25.4      1008.9 +/- 30.7      
+
+RL train times (mean seconds per seed):
+factored    15.1      19.6      24.9      29.2      
+dqn         41.5      42.5      43.2      41.6      
+linear_ac   1.8       2.1       2.4       2.7       
+
+Per-seed returns:
+  factored d=3: [1093.6, 1083.3, 1096.1, 1082.9, 1102.3, 1065.4, 1075.1, 1103.3, 1103.5, 1101.3]
+  factored d=4: [1064.5, 1072.0, 1094.7, 1071.5, 1091.1, 1075.0, 1082.9, 1105.5, 1076.0, 1094.3]
+  factored d=5: [1095.5, 1094.2, 1097.5, 1086.0, 1098.7, 1087.2, 1094.5, 1104.2, 1087.6, 1091.8]
+  factored d=6: [1094.0, 1085.2, 1095.3, 1073.7, 1092.3, 1074.1, 1096.9, 1075.1, 1099.4, 1049.5]
+  dqn d=3: [1107.4, 1107.4, 1108.4, 1107.4, 1107.4, 1106.5, 1110.6, 1107.4, 1107.4, 1106.2]
+  dqn d=4: [1109.0, 1110.0, 1107.9, 1109.8, 1106.5, 1105.6, 1105.9, 1106.7, 1109.0, 1103.5]
+  dqn d=5: [1106.0, 1105.8, 1106.7, 1106.6, 1107.5, 1106.5, 1106.8, 1106.6, 1106.6, 1106.0]
+  dqn d=6: [1099.1, 1100.7, 1100.7, 1101.1, 1101.7, 1100.7, 1100.7, 1099.1, 1096.9, 1099.9]
+  linear_ac d=3: [915.3, 946.9, 977.6, 915.3, 1107.4, 1107.4, 1107.4, 1107.4, 916.6, 915.3]
+  linear_ac d=4: [894.0, 1038.9, 1109.0, 894.0, 1109.0, 1109.0, 1109.0, 1109.0, 894.0, 894.0]
+  linear_ac d=5: [928.3, 1106.6, 1044.9, 983.0, 1106.6, 1106.6, 1106.6, 990.3, 928.3, 928.3]
+  linear_ac d=6: [911.8, 1100.7, 911.8, 937.9, 1100.7, 1100.7, 1100.7, 1100.7, 911.8, 911.8]
+
+Rank order (by mean return at d=3): ['Tabular DP', 'DQN', 'Factored RL', 'Linear AC']
+Saved: /Users/pranjal/Code/rl-wind-farm/ch03_theory/sims/wind_farm_curse_study_times.png
+Saved: /Users/pranjal/Code/rl-wind-farm/ch03_theory/sims/wind_farm_curse_study_results.tex
+
+Output files:
+  - /Users/pranjal/Code/rl-wind-farm/ch03_theory/sims/wind_farm_curse_study_times.png
+  - /Users/pranjal/Code/rl-wind-farm/ch03_theory/sims/wind_farm_curse_study_results.tex
