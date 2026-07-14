@@ -86,6 +86,20 @@ MB_PATHWISE_CONFIG = {
     "N_ROLLOUTS": 20,
     "POLICY_LR": 0.05,
 }
+# MB-LG-VR: identical to MB_LG_REINFORCE_CONFIG (same rollout budget, same
+# learning rate) so the comparison isolates the variance-reduction machinery
+# (antithetic rollout pairs + state-dependent baseline), not the hypers.
+MB_VR_CONFIG = {
+    **SHARED_CONFIG,
+    "EXPLORE_STD": 0.15,
+    "WARMUP": 5,
+    "ENSEMBLE_SIZE": 5,
+    "ROLLOUT_HORIZON": 5,
+    "N_ROLLOUTS": 10,
+    "POLICY_LR": 0.005,
+    "BASELINE_WINDOW": 200,
+}
+MB_VR_DIAG_CONFIG = {**MB_VR_CONFIG, "N_DRAWS": 2000}
 NAIVE_CONFIG = {**SHARED_CONFIG}
 ORACLE_CONFIG = {**SHARED_CONFIG}
 
@@ -986,6 +1000,204 @@ class MBPathwisePolicy(Paradigm):
 
 
 # ---------------------------------------------------------------------------
+# MB-LG-VR: variance-reduced REINFORCE. Same ensemble model learning, policy
+# class, rollout budget, and learning rate as MBPOPolicy; the only changes are
+# to the gradient estimator: (i) rollouts are simulated in antithetic pairs
+# (mirrored Gaussian draws for both action and price noise), and (ii) the
+# scalar moving-average baseline is replaced by a state-dependent quadratic
+# baseline b(q0) fitted by least squares on PAST rollout returns only (no
+# lookahead into the current batch). Uses no true parameters anywhere.
+# ---------------------------------------------------------------------------
+
+
+class MBVRPolicy(MBPOPolicy):
+    """Variance-reduced MB-LG-REINFORCE: antithetic rollout pairs plus a
+    state-dependent baseline.
+
+    Identical to MBPOPolicy (same _fit_ensemble, act, observe, buffer,
+    n_rollouts = 10 simulated rollouts per real step, policy_lr = 0.005)
+    except for how the policy gradient is estimated:
+
+    - Antithetic pairs: the n_rollouts budget is spent as n_rollouts/2 pairs.
+      Each pair shares one buffer-sampled initial state and one ensemble
+      member; the second rollout replays the first one's Gaussian draws
+      (eps_a, eps_p sequences) with the sign flipped. Because both noise
+      sources are symmetric around zero, the paired estimates are negatively
+      correlated and their average has lower variance than two independent
+      rollouts at identical cost.
+    - State-dependent baseline: b(q0) = w0 + w1 q0 + w2 q0^2, refit by least
+      squares on a rolling window of (q0, return) pairs from PREVIOUS update
+      calls. The current batch's advantages use the previous fit, so the
+      baseline never sees the returns it is subtracted from (no bias, no
+      lookahead). Falls back to the window's running mean until 10 points
+      accumulate, and to 0 before that.
+
+    Labeled 'MB-LG-VR' in figures and tables.
+    """
+
+    name = "MB-LG-VR"
+
+    def __init__(self, *args, baseline_window=200, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.baseline_window = baseline_window
+        self.baseline_pts = []  # (q0, return) pairs from past update calls
+        self.baseline_w = None  # (w0, w1, w2) or None until 10 points seen
+
+    def reset(self, regime_params, seed=0):
+        super().reset(regime_params, seed=seed)
+        self.baseline_pts = []
+        self.baseline_w = None
+
+    def _noise_rollout(self, q_prev_init, member, eps_a_seq, eps_p_seq):
+        """One H-step rollout consuming pre-drawn noise sequences.
+
+        Same dynamics, reward, and score accumulation as MBPOPolicy._rollout,
+        but the Gaussian draws are supplied by the caller so a mirrored twin
+        can be simulated. Returns (grad_K0, grad_Kq, total_return).
+        """
+        q_prev = float(q_prev_init)
+        gamma_t = 1.0
+        total_return = 0.0
+        grad_K0 = 0.0
+        grad_Kq = 0.0
+        for h in range(self.rollout_horizon):
+            mean = self.K0 + self.Kq * q_prev
+            a_unclipped = mean + eps_a_seq[h]
+            a = float(np.clip(a_unclipped, self.q_min, self.q_max))
+            p = member["a_hat"] - member["b_hat"] * a + eps_p_seq[h]
+            r = p * a - 0.5 * self.c_hat * a**2 - 0.5 * self.phi_hat * (a - q_prev) ** 2
+            total_return += gamma_t * r
+            score = (a_unclipped - mean) / (self.explore_std**2)
+            grad_K0 += score
+            grad_Kq += score * q_prev
+            q_prev = a
+            gamma_t *= self.gamma
+        return grad_K0, grad_Kq, total_return
+
+    def _baseline_value(self, q0):
+        if self.baseline_w is not None:
+            w0, w1, w2 = self.baseline_w
+            return w0 + w1 * q0 + w2 * q0**2
+        if self.baseline_pts:
+            return float(np.mean([r for _, r in self.baseline_pts]))
+        return 0.0
+
+    def _refit_baseline(self):
+        if len(self.baseline_pts) < 10:
+            self.baseline_w = None
+            return
+        q0 = np.array([q for q, _ in self.baseline_pts])
+        ret = np.array([r for _, r in self.baseline_pts])
+        X = np.column_stack([np.ones(len(q0)), q0, q0**2])
+        w, *_ = np.linalg.lstsq(X, ret, rcond=None)
+        self.baseline_w = (float(w[0]), float(w[1]), float(w[2]))
+
+    def _update_policy(self):
+        if len(self.buffer) < 1 or len(self.ensemble) == 0:
+            return
+        n_pairs = self.n_rollouts // 2
+        m = 2 * n_pairs
+        returns = np.zeros(m)
+        grads_K0 = np.zeros(m)
+        grads_Kq = np.zeros(m)
+        q0s = np.zeros(m)
+        for k in range(n_pairs):
+            init_idx = self.rng.integers(0, len(self.buffer))
+            q0 = self.buffer[init_idx][0]
+            member = self.ensemble[self.rng.integers(0, len(self.ensemble))]
+            eps_a = self.rng.normal(0, self.explore_std, self.rollout_horizon)
+            eps_p = self.rng.normal(0, member["sigma"], self.rollout_horizon)
+            for j, sign in enumerate((1.0, -1.0)):
+                g0, gq, ret = self._noise_rollout(
+                    q0, member, sign * eps_a, sign * eps_p
+                )
+                i = 2 * k + j
+                grads_K0[i] = g0
+                grads_Kq[i] = gq
+                returns[i] = ret
+                q0s[i] = q0
+        # Advantages against the PAST-fitted state baseline.
+        advantages = returns - np.array([self._baseline_value(q) for q in q0s])
+        self.K0 += self.policy_lr * float(np.mean(grads_K0 * advantages))
+        self.Kq += self.policy_lr * float(np.mean(grads_Kq * advantages))
+        # Only now does the current batch enter the baseline data.
+        self.baseline_pts.extend(zip(q0s.tolist(), returns.tolist()))
+        self.baseline_pts = self.baseline_pts[-self.baseline_window :]
+        self._refit_baseline()
+
+
+def _diag_fitted_policy(cls, config, seed=0):
+    """Deterministic fitted policy for the estimator-variance diagnostic:
+    fixed synthetic buffer from the stable-regime model, fixed (K0, Kq)."""
+    rp = config["REGIMES"]["stable"]
+    kwargs = dict(
+        gamma=config["GAMMA"],
+        explore_std=config["EXPLORE_STD"],
+        warmup=config["WARMUP"],
+        ensemble_size=config["ENSEMBLE_SIZE"],
+        rollout_horizon=config["ROLLOUT_HORIZON"],
+        n_rollouts=config["N_ROLLOUTS"],
+        policy_lr=config["POLICY_LR"],
+        q_min=config["Q_MIN"],
+        q_max=config["Q_MAX"],
+    )
+    if cls is MBVRPolicy:
+        kwargs["baseline_window"] = config["BASELINE_WINDOW"]
+    pol = cls(**kwargs)
+    pol.reset(rp, seed=seed)
+    rng = np.random.default_rng(11)
+    q_prev = 1.0
+    for _ in range(12):
+        q = float(rng.uniform(0.5, 3.0))
+        p = rp["a"] - rp["b"] * q + float(rng.normal(0, rp["sigma"]))
+        r = p * q - 0.5 * rp["c"] * q**2 - 0.5 * rp["phi"] * (q - q_prev) ** 2
+        pol.buffer.append((q_prev, q, p, r))
+        q_prev = q
+    pol._fit_ensemble()
+    pol.K0, pol.Kq = 0.4, 0.25
+    return pol
+
+
+def compute_vr_diagnostic(config):
+    """Estimator-variance comparison at a fixed policy and fixed fitted model.
+
+    Draws N_DRAWS one-step gradient estimates for MB-LG-VR and for plain
+    MB-LG-REINFORCE (zero baseline, matching VR's first call) from identical
+    RNG streams and reports the variance of the applied K0 update direction.
+    """
+    import copy
+
+    template_vr = _diag_fitted_policy(MBVRPolicy, config)
+    template_rf = _diag_fitted_policy(MBPOPolicy, config)
+    n = config["N_DRAWS"]
+    draws_vr = np.zeros(n)
+    draws_rf = np.zeros(n)
+    for i in range(n):
+        pv = copy.deepcopy(template_vr)
+        pv.rng = np.random.default_rng(1000 + i)
+        k = pv.K0
+        pv._update_policy()
+        draws_vr[i] = (pv.K0 - k) / pv.policy_lr
+
+        pr = copy.deepcopy(template_rf)
+        pr.rng = np.random.default_rng(1000 + i)
+        pr.baseline = 0.0
+        k = pr.K0
+        pr._update_policy()
+        draws_rf[i] = (pr.K0 - k) / pr.policy_lr
+    var_vr = float(np.var(draws_vr))
+    var_rf = float(np.var(draws_rf))
+    return dict(
+        n_draws=n,
+        var_vr=var_vr,
+        var_rf=var_rf,
+        ratio=var_rf / var_vr,
+        mean_vr=float(np.mean(draws_vr)),
+        mean_rf=float(np.mean(draws_rf)),
+    )
+
+
+# ---------------------------------------------------------------------------
 # Single rollout
 # ---------------------------------------------------------------------------
 
@@ -1116,6 +1328,19 @@ def make_paradigm(name, config):
             q_min=config["Q_MIN"],
             q_max=config["Q_MAX"],
         )
+    if name == "MB-LG-VR":
+        return MBVRPolicy(
+            gamma=config["GAMMA"],
+            explore_std=config["EXPLORE_STD"],
+            warmup=config["WARMUP"],
+            ensemble_size=config["ENSEMBLE_SIZE"],
+            rollout_horizon=config["ROLLOUT_HORIZON"],
+            n_rollouts=config["N_ROLLOUTS"],
+            policy_lr=config["POLICY_LR"],
+            q_min=config["Q_MIN"],
+            q_max=config["Q_MAX"],
+            baseline_window=config["BASELINE_WINDOW"],
+        )
     raise ValueError(name)
 
 
@@ -1223,6 +1448,7 @@ PARADIGM_REGISTRY = {
     "Model-Based LQ": (compute_paradigm, MBLQ_CONFIG),
     "MB-LG-REINFORCE": (compute_paradigm, MB_LG_REINFORCE_CONFIG),
     "MB-LG-Pathwise": (compute_paradigm, MB_PATHWISE_CONFIG),
+    "MB-LG-VR": (compute_paradigm, MB_VR_CONFIG),
 }
 
 
@@ -1253,7 +1479,16 @@ def compute_data(force=None):
             name,
             force=(name in force or "shared" in force),
         )
-    return dict(shared=shared, results=results)
+    vr_diag = compute_or_load(
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "vr_diagnostic",
+        MB_VR_DIAG_CONFIG,
+        compute_vr_diagnostic,
+        MB_VR_DIAG_CONFIG,
+        force=("vr_diagnostic" in force),
+    )
+    return dict(shared=shared, results=results, vr_diagnostic=vr_diag)
 
 
 # ---------------------------------------------------------------------------
@@ -1264,6 +1499,7 @@ PARADIGM_ORDER = [
     "Oracle",
     "RLS",
     "Model-Based LQ",
+    "MB-LG-VR",
     "MB-LG-Pathwise",
     "Arifovic GA",
     "Naive",
@@ -1279,6 +1515,7 @@ PARADIGM_COLORS = {
     "Model-Based LQ": COLORS["purple"],
     "MB-LG-REINFORCE": COLORS["orange"],
     "MB-LG-Pathwise": COLORS["cyan"],
+    "MB-LG-VR": COLORS["brown"],
 }
 REGIME_ORDER = ["stable", "borderline", "unstable"]
 
@@ -1511,6 +1748,17 @@ def _print_summary(data):
             r = data["results"][name][regime]
             row += f"  {r['policy_distance_mean'][-1]:>8.3f} ± {r['policy_distance_se'][-1]:>5.3f}  "
         print(row)
+
+    d = data["vr_diagnostic"]
+    print(
+        "\n=== Gradient-estimator variance at a fixed policy "
+        f"(n={d['n_draws']} draws, stable-regime fitted model, K0=0.4, Kq=0.25) ===\n"
+    )
+    print(f"{'Estimator':<22}{'mean':>10}{'variance':>14}")
+    print("-" * 46)
+    print(f"{'MB-LG-REINFORCE':<22}{d['mean_rf']:>10.3f}{d['var_rf']:>14.3f}")
+    print(f"{'MB-LG-VR':<22}{d['mean_vr']:>10.3f}{d['var_vr']:>14.3f}")
+    print(f"Variance ratio (REINFORCE / VR): {d['ratio']:.2f}")
 
 
 def generate_outputs(data):
