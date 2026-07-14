@@ -147,6 +147,9 @@ def _run_experiment():
         f"(pred {dev_pred[0]:.4f}); at n={n_grid[-1]}: {dev_mean[-1]:.5f} "
         f"(pred {dev_pred[-1]:.5f})"
     )
+    print(f"  KS distance to N(0,sigma^2) vs n ({primary}, rate check):")
+    for n, ks in zip(n_grid, ks_by_n):
+        print(f"    n={n:6d}: D_KS={ks:.4f}")
 
     # --- CLT: distribution of sqrt(n)(Xbar_n - mu) at fixed n, per dist -------
     clt = {}
@@ -258,6 +261,11 @@ def generate_outputs(data):
     print(f"  Figure saved: {fig_path}")
 
     # --- LaTeX table: per distribution, CLT variance vs sigma^2 + shape ------
+    n_rep = config["n_replicates"]
+    n_rep_tex = f"{n_rep:,}".replace(",", "{,}")
+    se_var_ratio = float(np.sqrt(2.0 / (n_rep - 1)))
+    se_skew = float(np.sqrt(6.0 / n_rep))
+    se_exkurt = float(np.sqrt(24.0 / n_rep))
     tex_path = os.path.join(OUTPUT_DIR, "lln_clt.tex")
     with open(tex_path, "w") as f:
         f.write("\\begin{table}[h]\n\\centering\n")
@@ -266,12 +274,15 @@ def generate_outputs(data):
             "$\\sqrt{n}(\\bar X_n - \\mu)$ at $n="
             + str(config["n_clt"])
             + "$, over "
-            + f"{config['n_replicates']:,}".replace(",", "{,}")
+            + n_rep_tex
             + " replicates, for three non-normal base distributions. The empirical "
             "variance matches $\\sigma^2$ (ratio near one), and the skewness and excess "
             "kurtosis are near the normal values of zero, so the rescaled mean is "
             "approximately $N(0,\\sigma^2)$ despite the skewed or discrete source. "
-            "$D_{\\mathrm{KS}}$ is the Kolmogorov-Smirnov distance to $N(0,\\sigma^2)$.}\n"
+            "$D_{\\mathrm{KS}}$ is the Kolmogorov-Smirnov distance to $N(0,\\sigma^2)$. "
+            "With " + n_rep_tex + " replicates the Monte Carlo standard error is about "
+            f"{se_var_ratio:.3f} on the variance ratio, {se_skew:.3f} on skewness, and "
+            f"{se_exkurt:.3f} on excess kurtosis (under approximate normality).}}\n"
         )
         f.write("\\label{tab:prelim_lln_clt}\n")
         f.write("\\begin{tabular}{lccccc}\n\\hline\n")

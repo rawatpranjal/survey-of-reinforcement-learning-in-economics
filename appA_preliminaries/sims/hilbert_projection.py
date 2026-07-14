@@ -112,6 +112,10 @@ def generate_outputs():
     nx = np.linalg.norm(X)
     npx = np.linalg.norm(px)
     nres = np.linalg.norm(resid)
+    print(f"  ||x||^2 = {nx**2:.4f}")
+    print(f"  ||Pi x||^2 + ||x - Pi x||^2 = {npx**2 + nres**2:.4f}")
+    print(f"  ||Pi x|| = {npx:.4f}")
+    print(f"  ||x|| = {nx:.4f}")
     tex_path = os.path.join(OUTPUT_DIR, "hilbert_projection.tex")
     with open(tex_path, "w") as f:
         f.write("\\begin{table}[h]\n\\centering\n")

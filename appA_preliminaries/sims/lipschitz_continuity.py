@@ -91,17 +91,19 @@ def _run_experiment():
                 curve[si, j] = _empirical_lipschitz(fn, dom, n, rng)
         mean_curve = curve.mean(axis=0)
         Lhat = float(mean_curve[-1])
+        Lhat_se = float(curve[:, -1].std() / np.sqrt(pair_seeds))
         over = float(np.max(curve))  # any pair ever exceeded L?
         lip[name] = {
             "L": L,
             "mean_curve": mean_curve,
             "Lhat": Lhat,
+            "Lhat_se": Lhat_se,
             "ratio": Lhat / L,
             "max_ever": over,
             "exceeds": bool(over > L + 1e-9),
         }
         print(
-            f"    {name:8s}: analytic L={L:.3f}, measured L_hat={Lhat:.4f} "
+            f"    {name:8s}: analytic L={L:.3f}, measured L_hat={Lhat:.4f} +/- {Lhat_se:.1e} "
             f"(ratio {Lhat / L:.4f}), max over all pairs={over:.4f}, exceeds L={lip[name]['exceeds']}"
         )
 
@@ -233,10 +235,11 @@ def generate_outputs(data):
         f.write(
             "\\caption{Lipschitz continuity, two checks. Top: the empirical Lipschitz "
             "constant $\\hat L$ (largest difference quotient over sampled pairs) of four scalar "
-            "functions rises to the analytic $L = \\sup|f'|$ from below and never exceeds it. "
+            "functions approaches the analytic $L = \\sup|f'|$ from below and never exceeds it, "
+            "attaining $L$ exactly for the two piecewise-linear cases. "
             "Bottom: the policy-evaluation Bellman operator $TV = r + \\gamma P V$ is exactly "
             "$\\gamma$-Lipschitz in the sup norm, and its fixed-point solve amplifies a reward "
-            "perturbation by $\\|(I-\\gamma P)^{-1}\\|_\\infty = 1/(1-\\gamma)$. Means over "
+            "perturbation by $\\|(I-\\gamma P)^{-1}\\|_\\infty = 1/(1-\\gamma)$. Means $\\pm$ SE over "
             + str(config["pair_seeds"])
             + " sampling seeds and "
             + str(config["n_mdp_seeds"])
@@ -258,7 +261,8 @@ def generate_outputs(data):
         for name in FUNCS:
             r = lip[name]
             f.write(
-                f"{tex_name[name]} & {r['L']:.2f} & {r['Lhat']:.4f} & {r['ratio']:.4f} \\\\\n"
+                f"{tex_name[name]} & {r['L']:.2f} & {r['Lhat']:.4f} $\\pm$ {r['Lhat_se']:.1e} "
+                f"& {r['ratio']:.4f} \\\\\n"
             )
         f.write("\\hline\n")
         f.write(

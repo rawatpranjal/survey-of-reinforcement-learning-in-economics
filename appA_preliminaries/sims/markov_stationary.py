@@ -94,17 +94,19 @@ def _run():
             errs[si] = power_iterate(P, d_star, n_iters, 900 + si)
         mean_err = errs.mean(axis=0)
         lam2 = float(lam2s.mean())
+        lam2_se = float(lam2s.std() / np.sqrt(n_seeds))
         below = np.where(mean_err < 1e-6)[0]
         k_to_tol = int(below[0]) if len(below) else -1
         results[name] = {
             "mean_err": mean_err,
             "lam2": lam2,
+            "lam2_se": lam2_se,
             "resid": float(resid.max()),
             "k_to_tol": k_to_tol,
         }
         print(
-            f"  {name:7s}: |lambda_2|={lam2:.4f}, ||d*P - d*||={resid.max():.2e}, "
-            f"iters to 1e-6 = {k_to_tol}"
+            f"  {name:7s}: |lambda_2|={lam2:.4f} +/- {lam2_se:.1e}, "
+            f"||d*P - d*||={resid.max():.2e}, iters to 1e-6 = {k_to_tol}"
         )
     return {"results": results, "config": CONFIG}
 
@@ -156,7 +158,7 @@ def generate_outputs(data):
             "\\caption{Convergence of the state distribution $d_k = d_0 P^k$ to the stationary "
             "distribution $d^\\star$ on random 8-state chains, at three mixing speeds. The total-"
             "variation distance falls at rate $|\\lambda_2|$, the second-largest eigenvalue "
-            "modulus. The residual confirms $d^\\star P = d^\\star$. Means over 30 seeds.}\n"
+            "modulus. The residual confirms $d^\\star P = d^\\star$. Means $\\pm$ SE over 30 seeds.}\n"
         )
         f.write("\\label{tab:prelim_markov}\n")
         f.write("\\begin{tabular}{lccc}\n\\hline\n")
@@ -167,7 +169,8 @@ def generate_outputs(data):
         for name, _eps in chains:
             r = results[name]
             f.write(
-                f"{name} & {r['lam2']:.4f} & {r['resid']:.1e} & {r['k_to_tol']} \\\\\n"
+                f"{name} & {r['lam2']:.4f} $\\pm$ {r['lam2_se']:.1e} & {r['resid']:.1e} "
+                f"& {r['k_to_tol']} \\\\\n"
             )
         f.write("\\hline\n\\end{tabular}\n\\end{table}\n")
     print(f"  Table saved: {tex_path}")

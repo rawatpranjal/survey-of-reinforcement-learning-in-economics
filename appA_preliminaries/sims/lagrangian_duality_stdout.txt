@@ -3,10 +3,9 @@ LAGRANGIAN DUALITY: WEAK AND STRONG DUALITY FOR A CONVEX QP
 ======================================================================
 
 Primal: min 1/2 x'Q x + c'x s.t. Ax <= b (Q positive definite).
-Dual:   g(l) = -1/2 (c + A'l)' Q^{-1} (c + A'l) - l'b, l >= 0.
-Weak duality: g(l) <= p* always. Strong duality (Slater): max_l g(l) = p*.
+Dual:   q(l) = -1/2 (c + A'l)' Q^{-1} (c + A'l) - l'b, l >= 0.
+Weak duality: q(l) <= p* always. Strong duality (Slater): max_l q(l) = p*.
 
-Force recompute: ['duality']
   Computing: duality
 Lagrangian duality: convex QP solved via its dual (projected gradient ascent)
   vars=8, constraints=5, seeds=15, dual iters=1500
@@ -30,8 +29,8 @@ Lagrangian duality: convex QP solved via its dual (projected gradient ascent)
   mean final duality gap: -6.26e-14 +/- 7.2e-14
   weak duality held on all iterates for 15/15 seeds
   mean complementary-slackness residual: 3.36e-15
-  Cache saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/cache/lagrangian_duality__duality.pkl
-  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/lagrangian_duality.png
-  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/lagrangian_duality.tex
+  Cache saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/cache/lagrangian_duality__duality.pkl
+  Figure saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/lagrangian_duality.png
+  Table saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/lagrangian_duality.tex
 
 Done.

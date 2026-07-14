@@ -15,8 +15,8 @@ Envelope (Danskin) theorem: dV/dtheta = f_theta(a*(theta), theta)
 
 (ii) Line families V(theta) = max_a (alpha_a + beta_a theta):
     over 15 seeds: mean identity-holds fraction (off kinks) = 1.0000, mean kinks per envelope = 1.0
-  Cache saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/cache/envelope_theorem__envelope.pkl
-  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/envelope_theorem.png
-  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/envelope_theorem.tex
+  Cache saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/cache/envelope_theorem__envelope.pkl
+  Figure saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/envelope_theorem.png
+  Table saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/envelope_theorem.tex
 
 Done.
