@@ -1,0 +1,96 @@
+Solving DP oracle...
+  DP average initial value: 40.44
+
+Seed 1/10
+  Training IQN...
+  DP Oracle: mean=40.4, CVaR95=-52.6
+  IQN-Neutral: mean=31.8, CVaR95=-61.2
+  IQN-CVaR95: mean=37.4, CVaR95=-54.7
+  IQN-CVaR99: mean=22.8, CVaR95=-75.7
+  IQN-CPT: mean=33.7, CVaR95=-57.7
+
+Seed 2/10
+  Training IQN...
+  DP Oracle: mean=40.2, CVaR95=-51.2
+  IQN-Neutral: mean=33.7, CVaR95=-55.7
+  IQN-CVaR95: mean=36.2, CVaR95=-53.1
+  IQN-CVaR99: mean=29.9, CVaR95=-59.9
+  IQN-CPT: mean=34.7, CVaR95=-54.8
+
+Seed 3/10
+  Training IQN...
+  DP Oracle: mean=40.3, CVaR95=-51.6
+  IQN-Neutral: mean=36.8, CVaR95=-55.4
+  IQN-CVaR95: mean=36.7, CVaR95=-59.7
+  IQN-CVaR99: mean=34.8, CVaR95=-55.0
+  IQN-CPT: mean=36.8, CVaR95=-55.5
+
+Seed 4/10
+  Training IQN...
+  DP Oracle: mean=40.5, CVaR95=-51.6
+  IQN-Neutral: mean=29.0, CVaR95=-66.8
+  IQN-CVaR95: mean=32.6, CVaR95=-59.3
+  IQN-CVaR99: mean=18.5, CVaR95=-84.6
+  IQN-CPT: mean=32.1, CVaR95=-61.0
+
+Seed 5/10
+  Training IQN...
+  DP Oracle: mean=40.3, CVaR95=-51.1
+  IQN-Neutral: mean=36.1, CVaR95=-53.2
+  IQN-CVaR95: mean=36.6, CVaR95=-52.6
+  IQN-CVaR99: mean=17.6, CVaR95=-82.0
+  IQN-CPT: mean=36.9, CVaR95=-52.4
+
+Seed 6/10
+  Training IQN...
+  DP Oracle: mean=40.5, CVaR95=-51.9
+  IQN-Neutral: mean=35.8, CVaR95=-58.3
+  IQN-CVaR95: mean=37.8, CVaR95=-55.4
+  IQN-CVaR99: mean=35.0, CVaR95=-54.9
+  IQN-CPT: mean=36.4, CVaR95=-57.2
+
+Seed 7/10
+  Training IQN...
+  DP Oracle: mean=40.5, CVaR95=-51.6
+  IQN-Neutral: mean=36.8, CVaR95=-57.4
+  IQN-CVaR95: mean=36.4, CVaR95=-56.0
+  IQN-CVaR99: mean=32.6, CVaR95=-62.2
+  IQN-CPT: mean=36.8, CVaR95=-57.7
+
+Seed 8/10
+  Training IQN...
+  DP Oracle: mean=40.4, CVaR95=-50.9
+  IQN-Neutral: mean=37.2, CVaR95=-55.3
+  IQN-CVaR95: mean=36.6, CVaR95=-53.5
+  IQN-CVaR99: mean=21.4, CVaR95=-72.8
+  IQN-CPT: mean=37.2, CVaR95=-56.6
+
+Seed 9/10
+  Training IQN...
+  DP Oracle: mean=40.6, CVaR95=-50.1
+  IQN-Neutral: mean=35.4, CVaR95=-57.7
+  IQN-CVaR95: mean=36.7, CVaR95=-53.2
+  IQN-CVaR99: mean=32.4, CVaR95=-57.7
+  IQN-CPT: mean=35.7, CVaR95=-57.1
+
+Seed 10/10
+  Training IQN...
+  DP Oracle: mean=40.4, CVaR95=-52.2
+  IQN-Neutral: mean=36.7, CVaR95=-54.1
+  IQN-CVaR95: mean=36.4, CVaR95=-55.4
+  IQN-CVaR99: mean=25.8, CVaR95=-71.9
+  IQN-CPT: mean=37.2, CVaR95=-54.3
+  Cache saved: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/cache/risk_sensitive_inventory.pkl
+
+========================================================================
+RESULTS
+========================================================================
+Policy               Mean     SE   CVaR95   CVaR99  Avg Ord
+------------------------------------------------------------------------
+DP Oracle            40.4    0.0    -51.5    -95.6     2.56
+IQN-Neutral          34.9    0.8    -57.5    -98.0     3.21
+IQN-CVaR95           36.4    0.4    -55.3    -97.8     2.99
+
+Table: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/risk_sensitive_inventory_table.tex
+Figure 1: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/risk_sensitive_inventory_returns.png
+Figure 2: /Users/pranjal/Code/rl/ch11_dist_robust_constrained/sims/risk_sensitive_inventory_policy.png
