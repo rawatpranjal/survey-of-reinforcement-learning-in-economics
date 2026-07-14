@@ -17,7 +17,7 @@ mkdir -p "$BUILD_DIR"
 
 # --- 1. Copy and rewrite main.tex ---
 # Change ../chXX/ to chXX/ since main.tex will be at the root
-sed 's|\.\./ch|ch|g' "$REPO_ROOT/docs/main.tex" > "$BUILD_DIR/main.tex"
+sed 's|\.\./ch|ch|g; s|\.\./appA|appA|g' "$REPO_ROOT/docs/main.tex" > "$BUILD_DIR/main.tex"
 echo "  Copied main.tex (rewrote paths)"
 
 # --- 2. Copy bibliography (.bbl for arXiv, .bib as backup) ---
@@ -45,22 +45,19 @@ CHAPTERS=(
     "ch10b_rl_for_ci/tex/rl_for_ci.tex"
     "ch11_dist_robust_constrained/tex/dist_robust_constrained.tex"
     "ch12_world_models/tex/world_models.tex"
-    "ch12_world_models/tex/s01_paradigms.tex"
-    "ch12_world_models/tex/s02_origins_1990.tex"
+    "ch12_world_models/tex/s01_intro.tex"
     "ch12_world_models/tex/s03_dyna_q.tex"
-    "ch12_world_models/tex/s04_ha_schmidhuber.tex"
-    "ch12_world_models/tex/s05_rssm_line.tex"
-    "ch12_world_models/tex/s06_value_aware.tex"
-    "ch12_world_models/tex/s07_mbpo_ensembles.tex"
-    "ch12_world_models/tex/s08_tdmpc2.tex"
+    "ch12_world_models/tex/s04_deep_mbrl.tex"
+    "ch12_world_models/tex/s06_objectives_convergence.tex"
     "ch12_world_models/tex/s09_dual_sim.tex"
     "ch12_world_models/tex/s10_synthesis.tex"
     "ch99_conclusion/tex/conclusion.tex"
+    "appA_preliminaries/tex/preliminaries.tex"
 )
 
 for f in "${CHAPTERS[@]}"; do
     mkdir -p "$BUILD_DIR/$(dirname "$f")"
-    sed 's|\.\./ch|ch|g' "$REPO_ROOT/$f" > "$BUILD_DIR/$f"
+    sed 's|\.\./ch|ch|g; s|\.\./appA|appA|g' "$REPO_ROOT/$f" > "$BUILD_DIR/$f"
 done
 echo "  Copied ${#CHAPTERS[@]} chapter tex files (rewrote paths)"
 
@@ -114,6 +111,20 @@ FIGURES=(
     "ch12_world_models/sims/fishery_paradigms.png"
     "ch06_games/sims/durable_goods_coase_collapse.png"
     "ch06_games/sims/durable_goods_coase_price_paths.png"
+    "ch09_rlhf/sims/axiom_aware_aggregation.png"
+    "appA_preliminaries/sims/banach_contraction.png"
+    "appA_preliminaries/sims/envelope_theorem.png"
+    "appA_preliminaries/sims/gradient_descent.png"
+    "appA_preliminaries/sims/hilbert_projection.png"
+    "appA_preliminaries/sims/jensen_gap.png"
+    "appA_preliminaries/sims/lagrangian_duality.png"
+    "appA_preliminaries/sims/lipschitz_continuity.png"
+    "appA_preliminaries/sims/lln_clt.png"
+    "appA_preliminaries/sims/markov_stationary.png"
+    "appA_preliminaries/sims/martingale_convergence.png"
+    "appA_preliminaries/sims/neumann_series.png"
+    "appA_preliminaries/sims/robbins_monro.png"
+    "appA_preliminaries/sims/spectral_radius.png"
 )
 
 for f in "${FIGURES[@]}"; do
@@ -151,7 +162,23 @@ TABLES=(
     "ch12_world_models/sims/cobweb_paradigms_results.tex"
     "ch12_world_models/sims/dyna_maze_results.tex"
     "ch12_world_models/sims/fishery_paradigms_results.tex"
+    "ch12_world_models/sims/fishery_paradigms_recovery.tex"
     "ch06_games/sims/durable_goods_coase_results.tex"
+    "ch09_rlhf/sims/axiom_aware_aggregation.tex"
+    "ch10b_rl_for_ci/sims/causal_bandit_mabuc_results.tex"
+    "appA_preliminaries/sims/banach_contraction.tex"
+    "appA_preliminaries/sims/envelope_theorem.tex"
+    "appA_preliminaries/sims/gradient_descent.tex"
+    "appA_preliminaries/sims/hilbert_projection.tex"
+    "appA_preliminaries/sims/jensen_gap.tex"
+    "appA_preliminaries/sims/lagrangian_duality.tex"
+    "appA_preliminaries/sims/lipschitz_continuity.tex"
+    "appA_preliminaries/sims/lln_clt.tex"
+    "appA_preliminaries/sims/markov_stationary.tex"
+    "appA_preliminaries/sims/martingale_convergence.tex"
+    "appA_preliminaries/sims/neumann_series.tex"
+    "appA_preliminaries/sims/robbins_monro.tex"
+    "appA_preliminaries/sims/spectral_radius.tex"
 )
 
 for f in "${TABLES[@]}"; do
@@ -213,6 +240,22 @@ noop ch12_world_models/sims/dyna_maze_results.tex
 noop ch12_world_models/sims/fishery_paradigms_results.tex
 noop ch07_bandits/sims/curve_learning_pricing_summary.tex
 noop ch06_games/sims/durable_goods_coase_results.tex
+noop ch09_rlhf/sims/axiom_aware_aggregation.tex
+noop ch10b_rl_for_ci/sims/causal_bandit_mabuc_results.tex
+noop ch12_world_models/sims/fishery_paradigms_recovery.tex
+noop appA_preliminaries/sims/banach_contraction.tex
+noop appA_preliminaries/sims/envelope_theorem.tex
+noop appA_preliminaries/sims/gradient_descent.tex
+noop appA_preliminaries/sims/hilbert_projection.tex
+noop appA_preliminaries/sims/jensen_gap.tex
+noop appA_preliminaries/sims/lagrangian_duality.tex
+noop appA_preliminaries/sims/lipschitz_continuity.tex
+noop appA_preliminaries/sims/lln_clt.tex
+noop appA_preliminaries/sims/markov_stationary.tex
+noop appA_preliminaries/sims/martingale_convergence.tex
+noop appA_preliminaries/sims/neumann_series.tex
+noop appA_preliminaries/sims/robbins_monro.tex
+noop appA_preliminaries/sims/spectral_radius.tex
 READMEEOF
 echo "  Created 00README.XXX (prevents arXiv file deletion)"
 
