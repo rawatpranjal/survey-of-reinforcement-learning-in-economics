@@ -233,7 +233,7 @@ def generate_outputs(data):
         )
     axB.set_xlabel(r"$\theta$")
     axB.set_ylabel(r"$|\,dV/d\theta - f_\theta(a^\star,\theta)\,|$")
-    axB.set_title("Envelope identity holds (finite-difference floor)")
+    axB.set_title("Envelope residual at the numerical floor")
     axB.legend(loc="best", title=r"$f=\theta a - a^p/p$")
 
     fig_path = os.path.join(OUTPUT_DIR, "envelope_theorem.png")

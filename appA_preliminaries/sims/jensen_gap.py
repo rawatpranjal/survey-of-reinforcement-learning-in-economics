@@ -214,18 +214,16 @@ def generate_outputs(data):
             "N(0,\\sigma^2)$, at the largest sample size $N="
             + f"{max_n:,}".replace(",", "{,}")
             + "$, against the closed-form value. The plug-in estimator converges to the exact gap; "
-            "for $\\varphi(x)=x^2$ and the small-$\\sigma$ exponential cases the two agree within a "
-            "standard error, while the heavy-tailed $\\sigma\\geq 1.5$ exponential rows converge more "
-            "slowly and still sit a few standard errors low at this $N$. Every estimate is "
-            "nonnegative, as convexity requires. Mean $\\pm$ SE over "
-            + str(config["n_seeds"])
-            + " seeds.}\n"
+            "for $\\varphi(x)=x^2$ it agrees with the closed-form value to within about one "
+            "standard error at every $\\sigma$, while for $\\varphi(x)=e^x$ agreement is close at "
+            "$\\sigma=0.5$ and the $\\sigma\\geq 1.0$ rows sit an increasing number of standard "
+            "errors below the closed-form gap as $\\sigma$ grows, reflecting slower convergence "
+            "for heavier tails. Every estimate is nonnegative, as convexity requires. Mean $\\pm$ "
+            "SE over " + str(config["n_seeds"]) + " seeds.}\n"
         )
         f.write("\\label{tab:prelim_jensen}\n")
-        f.write("\\begin{tabular}{llccc}\n\\hline\n")
-        f.write(
-            "$\\varphi$ & $\\sigma$ & Analytical gap & MC gap & $\\Pr(\\text{gap} \\geq 0)$ \\\\\n"
-        )
+        f.write("\\begin{tabular}{llcc}\n\\hline\n")
+        f.write("$\\varphi$ & $\\sigma$ & Analytical gap & MC gap \\\\\n")
         f.write("\\hline\n")
         tex_name = {"square": "$x^2$", "exp": "$e^x$"}
         for fname in ["square", "exp"]:
@@ -233,8 +231,7 @@ def generate_outputs(data):
                 r = results[fname][str(sigma)]
                 f.write(
                     f"{tex_name[fname]} & {sigma} & {r['analytical']:.4f} & "
-                    f"{r['gap_at_max']:.4f} $\\pm$ {r['se_at_max']:.4f} & "
-                    f"{r['frac_nonneg']:.3f} \\\\\n"
+                    f"{r['gap_at_max']:.4f} $\\pm$ {r['se_at_max']:.4f} \\\\\n"
                 )
             f.write("\\hline\n")
         f.write("\\end{tabular}\n\\end{table}\n")

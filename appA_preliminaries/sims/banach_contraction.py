@@ -28,10 +28,10 @@ SCRIPT_NAME = "banach_contraction"
 CONFIG = {
     "n_states": 50,
     "gammas": [0.5, 0.7, 0.9, 0.99],
-    "n_iters": 120,
+    "n_iters": 3000,
     "n_seeds": 30,
     "tol": 1e-10,
-    "version": 1,
+    "version": 2,
 }
 
 OUTPUT_DIR = os.path.dirname(__file__)
@@ -187,23 +187,25 @@ def generate_outputs(data):
             "\\caption{Banach fixed-point convergence of the policy-evaluation operator "
             "$TV = r + \\gamma P V$ on a random "
             + str(config["n_states"])
-            + "-state chain. Measured contraction factor is the geometric mean of "
-            "$\\|V_{k+1}-V^*\\|_\\infty / \\|V_k-V^*\\|_\\infty$, which approaches $\\gamma$ "
-            "from below as the transient sub-dominant modes decay. Mean $\\pm$ SE over "
-            + str(config["n_seeds"])
-            + " random MDPs.}\n"
+            + "-state Markov reward process. Measured contraction factor is the geometric mean of "
+            "$\\|V_{k+1}-V^*\\|_\\infty / \\|V_k-V^*\\|_\\infty$. Iterations to $10^{-10}$ are "
+            "reported both as measured (mean over the seeds that reach tolerance within "
+            + str(config["n_iters"])
+            + " iterations) and as predicted from $\\log(\\text{tol}/\\text{err}_0)/\\log\\gamma$. "
+            "Mean $\\pm$ SE over " + str(config["n_seeds"]) + " random MDPs.}\n"
         )
         f.write("\\label{tab:prelim_banach}\n")
-        f.write("\\begin{tabular}{cccc}\n\\hline\n")
+        f.write("\\begin{tabular}{ccccc}\n\\hline\n")
         f.write(
-            "$\\gamma$ & Measured factor & Theory ($\\gamma$) & Iterations to $10^{-10}$ (predicted) \\\\\n"
+            "$\\gamma$ & Measured factor & Theory ($\\gamma$) & "
+            "Iterations to $10^{-10}$ (measured) & (predicted) \\\\\n"
         )
         f.write("\\hline\n")
         for gamma in gammas:
             r = results[str(gamma)]
             f.write(
                 f"{gamma} & {r['ratio_mean']:.4f} $\\pm$ {r['ratio_se']:.4f} & "
-                f"{gamma:.2f} & {r['iters_pred']:.0f} \\\\\n"
+                f"{gamma:.2f} & {r['iters_to_tol_mean']:.1f} & {r['iters_pred']:.0f} \\\\\n"
             )
         f.write("\\hline\n\\end{tabular}\n\\end{table}\n")
     print(f"  Table saved: {tex_path}")

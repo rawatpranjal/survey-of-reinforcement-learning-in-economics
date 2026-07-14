@@ -122,8 +122,8 @@ def _run_experiment():
     tail_osc = np.max(np.abs(tail_block - traj_rec[:, -1:]), axis=1)
     frac_settled = float(np.mean(tail_osc < CONFIG["tail_eps"]))
     print(
-        f"  tail oscillation (last {int(CONFIG['tail_frac'] * 100)}% of steps): "
-        f"mean {tail_osc.mean():.4f}, max {tail_osc.max():.4f}; "
+        f"  tail oscillation (last {int(CONFIG['tail_frac'] * 100)}% of the log-spaced "
+        f"record grid): mean {tail_osc.mean():.4f}, max {tail_osc.max():.4f}; "
         f"fraction of paths settled (< {CONFIG['tail_eps']}): {frac_settled:.3f}"
     )
 
@@ -248,7 +248,8 @@ def generate_outputs(data):
             + str(sr)
             + ","
             + str(sb)
-            + ")$ start. The one-step increment has mean zero (the martingale property), "
+            + ")$ start. The one-step increment has mean zero, consistent with the "
+            "martingale property (the theorem's conditional statement is proved analytically), "
             "every path settles (tail oscillation below "
             + f"{config['tail_eps']}"
             + " for the reported fraction of paths), and the "

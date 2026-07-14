@@ -211,7 +211,7 @@ def generate_outputs(data):
     g = ex["g_hist"]
     k = np.arange(len(g))
     axA.plot(
-        k, g, color=COLORS["blue"], linewidth=1.8, label=r"dual value $g(\lambda_k)$"
+        k, g, color=COLORS["blue"], linewidth=1.8, label=r"dual value $q(\lambda_k)$"
     )
     axA.axhline(ex["p_star"], **BENCH_STYLE, label=r"primal optimum $p^\star$")
     axA.set_xlabel("Dual ascent iteration $k$")
@@ -237,7 +237,7 @@ def generate_outputs(data):
         label=r"mean $|$gap$|$",
     )
     axB.set_xlabel("Dual ascent iteration $k$")
-    axB.set_ylabel(r"duality gap $|p^\star - g(\lambda_k)|$")
+    axB.set_ylabel(r"duality gap $|p^\star - q(\lambda_k)|$")
     axB.set_title("Gap closes to zero (Slater)")
     axB.legend(loc="upper right")
 
@@ -266,7 +266,7 @@ def generate_outputs(data):
         f.write("\\begin{tabular}{lc}\n\\hline\n")
         f.write("Quantity & Value \\\\\n\\hline\n")
         f.write(
-            f"Final duality gap $|p^\\star - g(\\lambda)|$ & "
+            f"Final duality gap $|p^\\star - q(\\lambda)|$ & "
             f"$\\leq {data['final_gap_abs_max']:.1e}$ (solver precision) \\\\\n"
         )
         f.write(
@@ -301,8 +301,8 @@ def main():
     print("=" * 70)
     print()
     print("Primal: min 1/2 x'Q x + c'x s.t. Ax <= b (Q positive definite).")
-    print("Dual:   g(l) = -1/2 (c + A'l)' Q^{-1} (c + A'l) - l'b, l >= 0.")
-    print("Weak duality: g(l) <= p* always. Strong duality (Slater): max_l g(l) = p*.")
+    print("Dual:   q(l) = -1/2 (c + A'l)' Q^{-1} (c + A'l) - l'b, l >= 0.")
+    print("Weak duality: q(l) <= p* always. Strong duality (Slater): max_l q(l) = p*.")
     print()
 
     if force:
