@@ -105,3 +105,11 @@ The polish pass was mostly reviewer-2-level form (captions, footnotes, label con
 - `Chen2025fairness` bib/claim mismatch (pattern #4) — user decision needed.
 - `dtr_qlearning_vs_murphy`: the high-dim DQN cache (`dqn_hd.pkl`) predates the paired-seed edit; the polish report flags two options — re-run with `--force dqn_hd`, or narrow the caption to "tabular paired; high-dim independent".
 - Substantive reimplementations deliberately deferred across all passes: continuous BCQ (VAE + perturbation), advantage-weighted IQL, three-token DT, MARL-based Coase. All are disclosed in tex footnotes as simplifications.
+
+## Addendum (2026-07-14): wind_farm_curse_study joins the paper
+
+New sim wired into ch03_theory (curse-of-dimensionality section, triage rank 20). Full 7-point audit: `ch03_theory__wind_farm_curse_study_2026-07-14.md`.
+
+| Sim | Score | Notes |
+|---|---|---|
+| ch03_theory/wind_farm_curse_study | 25% | All 7 points PASS; 10 seeds + SE; cache hash-verified; env verified against Lu 2025 source text. Reviewer-2 items, all disclosed in tex: two-point DP extrapolation, payoff-irrelevant aux dims by construction, factored learner given reward-relevant dims. Separate PDF judge: 17 quantitative claims traced, one marginal wording fix applied ("roughly two to three percent"). |

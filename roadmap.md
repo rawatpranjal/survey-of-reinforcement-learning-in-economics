@@ -26,8 +26,28 @@ _Updated 2026-07-14._
 - **Workstream side-effects.** Backlog S1 (ch11 reconnect + orphan triage) and S4 (runner
   registry + dead write paths) are effectively done via the triage fixes. S6 partially done
   (stale-stdout wave). Registry now 59 scripts, all paths verified.
-- **In-flight chunk.** None. Next: wind-farm chunk (below) or T0/S0 entry points.
-- **Open handback for the user:** none blocking; wind-farm chunk is user-approved and specced.
+- **Wind-farm chunk (rank 20) DONE 2026-07-14 on branch `wind-farm`.** WF1: 3 cite keys
+  remapped to existing entries, 12 added, bibtex clean. WF2: sim moved to
+  `ch03_theory/sims/`, refactored to house conventions (16 per-(method,dim) cache
+  components, per-unit re-seeding, training-only timing), 10-seed run. The February
+  single-seed story did not survive: "Bilinear AC matches DP" was a lucky seed; the honest
+  10-seed ranking is DP > DQN (within 1%) > Factored (roughly 2-3% below) > Linear AC
+  (bimodal across seeds, SE 25-34). WF3: section rewritten (Chow-Tsitsiklis restated as
+  worst-case deterministic complexity with discount dependence, verified against the Rust
+  1996 survey p.114; sim subsection 2 paragraphs/1 table/1 figure; the three pathway
+  implementations disclosed as illustrative analogies), wired at `docs/main.tex:163`, full
+  build clean at 271pp, every results number traced to generated output. WF4: 7-point
+  audit 25% all-PASS (`audits/ch03_theory__wind_farm_curse_study_2026-07-14.md`), separate
+  PDF judge traced 17 claims (1 wording fix applied). Bray 2022 full text is paywalled;
+  the footnote claim is pinned to the author's published abstract (saved at
+  `ch03_theory/papers/curse_of_dimensionality/bray2022_abstract.json`).
+- **In-flight chunk.** None. Next: T0/S0 entry points.
+- **Open handback for the user:** merge `wind-farm` into `main` and push. Also two
+  permission-denied cleanups from this session: the primary checkout holds a stray staged
+  rename of the old sim script (this session's cwd accident; unstage, restore the
+  papers-path file, delete the stray `ch03_theory/sims/` copy), and an orphaned duplicate
+  sim process (pids 90531/90532) may still be running; it finished useful work and is
+  harmless, kill if still alive.
 
 ---
 
