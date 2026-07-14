@@ -164,28 +164,36 @@ agents should carry more safety stock.}
 A single IQN network is trained for 50{,}000 episodes with
 $\tau \sim U([0,1])$, then evaluated under two $\tau$-sampling
 distributions: $U([0,1])$ for risk-neutral and $U([0, 0.05])$ for
-CVaR$_{95}$. Table~\ref{tab:risk_inventory} reports results over
-50{,}000 evaluation episodes alongside the exact DP oracle.
+CVaR$_{95}$. Table~\ref{tab:risk_inventory} reports means and standard
+errors across ten training seeds, each evaluated over 50{,}000
+episodes, alongside the exact DP oracle.
 
 \begin{table}[h]
 \centering
-\caption{Risk-sensitive inventory management.}
+\caption{Risk-sensitive inventory management. Mean $\pm$ SE across ten
+training seeds, 50{,}000 evaluation episodes per seed.}
 \label{tab:risk_inventory}
-\begin{tabular}{lcccc}
-\hline
-Policy & Mean Return & CVaR$_{95}$ & CVaR$_{99}$ & Avg.\ Order \\
-\hline
-DP Oracle & 40.4 & $-52.6$ & $-98.3$ & 2.56 \\
-IQN-Neutral & 37.4 & $-57.8$ & $-104.0$ & 2.44 \\
-IQN-CVaR$_{95}$ & 35.8 & $-55.0$ & $-97.5$ & 3.30 \\
-\hline
-\end{tabular}
+\input{../ch11_dist_robust_constrained/sims/risk_sensitive_inventory_table}
 \end{table}
 
-The IQN-Neutral policy recovers 93\% of the DP oracle's mean return.
-Switching to CVaR$_{95}$ at decision time trades 1.6 points of mean
-return for 2.8 points of improved tail performance, achieved by
-ordering more safety stock (3.30 versus 2.44 units per period).
+The IQN-Neutral policy recovers 86\% of the DP oracle's mean return and
+IQN-CVaR$_{95}$ recovers 90\%. Across ten seeds the CVaR$_{95}$
+evaluation improves the average left tail relative to the risk-neutral
+evaluation (CVaR$_{95}$ of $-55.3$ against $-57.5$) with no loss in
+mean return (36.4 against 34.9, a gap of under two standard errors),
+and its ordering policy tracks the oracle more closely at high
+inventory levels (Figure~\ref{fig:risk_inventory_policy}). Both learned
+policies order more than the oracle on average (2.99 and 3.21 units per
+period against 2.56).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{../ch11_dist_robust_constrained/sims/risk_sensitive_inventory_policy.png}
+\caption{Average order quantity by inventory level for the DP oracle
+and the two IQN evaluation policies. Mean across ten training seeds
+with $\pm 1$ SE bands, 50{,}000 evaluation episodes per seed.}
+\label{fig:risk_inventory_policy}
+\end{figure}
 
 
 %% ===================================================================
