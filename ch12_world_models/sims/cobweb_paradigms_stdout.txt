@@ -1,6 +1,6 @@
 === cobweb_paradigms ===
 Regimes: ['stable', 'borderline', 'unstable']
-Paradigms: ['Oracle', 'RLS', 'Model-Based LQ', 'MB-LG-Pathwise', 'Arifovic GA', 'Naive', 'MB-LG-REINFORCE', 'Q-Learning']
+Paradigms: ['Oracle', 'RLS', 'Model-Based LQ', 'MB-LG-VR', 'MB-LG-Pathwise', 'Arifovic GA', 'Naive', 'MB-LG-REINFORCE', 'Q-Learning']
 N_SEEDS = 20, T_EPISODE = 500
 
   Cache hit: shared
@@ -12,6 +12,8 @@ N_SEEDS = 20, T_EPISODE = 500
   Cache hit: Model-Based_LQ
   Cache hit: MB-LG-REINFORCE
   Cache hit: MB-LG-Pathwise
+  Cache hit: MB-LG-VR
+  Cache hit: vr_diagnostic
   Figure saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cobweb_paradigms.png
   Figure saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cobweb_paradigms_param_recovery.png
   Figure saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cobweb_paradigms_policy_distance.png
@@ -25,6 +27,7 @@ Paradigm                         stable            borderline              unsta
 Oracle                   0.00 ±  0.00            0.00 ±  0.00            0.00 ±  0.00    
 RLS                      5.89 ±  1.04            4.38 ±  0.43            5.87 ±  0.18    
 Model-Based LQ          11.65 ±  0.93           18.96 ±  1.73           42.90 ±  3.75    
+MB-LG-VR                38.42 ±  1.86           30.26 ±  1.86           43.59 ±  3.33    
 MB-LG-Pathwise          47.07 ±  0.97           35.43 ±  1.68           47.46 ±  4.04    
 Arifovic GA             92.89 ± 11.69          133.43 ±  8.65          308.88 ± 29.16    
 Naive                  179.73 ±  0.34            3.37 ±  0.04          450.34 ±  0.34    
@@ -60,8 +63,17 @@ Paradigm                     stable        borderline          unstable
 -----------------------------------------------------------------------
 RLS                   0.057 ± 0.010       0.027 ± 0.005       0.010 ± 0.002  
 Model-Based LQ        0.031 ± 0.005       0.012 ± 0.002       0.004 ± 0.001  
+MB-LG-VR              0.056 ± 0.010       0.025 ± 0.004       0.010 ± 0.002  
 MB-LG-Pathwise        0.053 ± 0.004       0.030 ± 0.003       0.012 ± 0.002  
 Arifovic GA           0.177 ± 0.035       0.077 ± 0.013       0.062 ± 0.012  
 Naive                 0.600 ± 0.000       0.067 ± 0.000       0.600 ± 0.000  
 MB-LG-REINFORCE       1.462 ± 0.539       0.232 ± 0.207       0.016 ± 0.002  
 Q-Learning            1.117 ± 0.157       0.883 ± 0.096       0.610 ± 0.042  
+
+=== Gradient-estimator variance at a fixed policy (n=2000 draws, stable-regime fitted model, K0=0.4, Kq=0.25) ===
+
+Estimator                   mean      variance
+----------------------------------------------
+MB-LG-REINFORCE           14.160      1850.862
+MB-LG-VR                  15.120        96.916
+Variance ratio (REINFORCE / VR): 19.10
