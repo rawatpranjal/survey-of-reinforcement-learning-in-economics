@@ -87,6 +87,7 @@ REGISTRY = [
     ("ch12", "ch12_world_models/sims/dyna_maze.py", "A"),
     ("ch12", "ch12_world_models/sims/cobweb_paradigms.py", "A"),
     ("ch12", "ch12_world_models/sims/fishery_paradigms.py", "A"),
+    ("ch12", "ch12_world_models/sims/multi_echelon_paradigms.py", "A"),
     ("ch12", "ch12_world_models/sims/draw_maze_layout.py", "B"),
     # appA (Mathematical Preliminaries) -- linear algebra, probability, convex analysis, fixed points
     ("appA", "appA_preliminaries/sims/spectral_radius.py", "A"),
