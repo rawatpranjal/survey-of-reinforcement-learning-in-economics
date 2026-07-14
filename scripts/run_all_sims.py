@@ -69,18 +69,15 @@ REGISTRY = [
     ("ch07", "ch07_bandits/sims/strategic_pricing.py", "A"),
     ("ch07", "ch07_bandits/sims/auction_reserve_price.py", "A"),
     ("ch07", "ch07_bandits/sims/knowledge_ladder.py", "A"),
+    ("ch07", "ch07_bandits/sims/curve_learning_pricing.py", "A"),
     ("ch07", "ch07_bandits/sims/structural_pricing_misra.py", "A"),
     ("ch07", "ch07_bandits/sims/regret_rates.py", "B"),
     ("ch07", "ch07_bandits/sims/uninformative_price.py", "B"),
     # ch08 (Offline RL)
     ("ch08_offline", "ch08_offline_rl/sims/offline_rl_pricing.py", "A"),
     # ch09 (RLHF)
-    ("ch09", "ch09_rlhf/sims/job_search_rlhf.py", "A"),
-    ("ch09", "ch09_rlhf/sims/job_search_dpo.py", "A"),
     ("ch09", "ch09_rlhf/sims/job_search_preference_learning.py", "A"),
-    ("ch09", "ch09_rlhf/sims/preference_learning.py", "A"),
-    ("ch09", "ch09_rlhf/sims/nfxp_vs_rlhf.py", "A"),
-    ("ch09", "ch09_rlhf/sims/gridworld_rlhf.py", "A"),
+    ("ch09", "ch09_rlhf/sims/axiom_aware_aggregation.py", "A"),
     ("ch09", "ch09_rlhf/sims/rlhf_dpo_pipeline.py", "B"),
     # ch10
     ("ch10", "ch10_causal/sims/confounded_ope.py", "A"),
