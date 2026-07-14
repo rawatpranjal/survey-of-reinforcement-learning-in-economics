@@ -374,7 +374,7 @@ Figure~\ref{fig:carbon_convergence} compare three methods,
 the constrained LP oracle, unconstrained Q-learning, and
 Lagrangian Q-learning with dual ascent
 on~\eqref{eq:dual_update}. Each Q-learning variant is run
-over five seeds; the table reports means and standard
+over ten seeds. The table reports means and standard
 errors.\footnote{The LP oracle value is computed by exact
 policy evaluation
 $V = (I - \gamma P_\pi)^{-1} R_\pi$, an infinite-horizon
@@ -397,7 +397,7 @@ is nearly monotone: the peak value is $1.405 \pm 0.002$,
 within one percent of the settling value, so naive dual
 ascent here exhibits little of the overshoot that
 \citet{Stooke2020}'s PID controller is designed to dampen.
-The final $\lambda$ sits about seventeen percent above
+The final $\lambda$ sits about sixteen percent above
 $\lambda^*$, and the corresponding policy holds emissions
 at $28 \pm 4$, below the budget of 31, leaving the
 Lagrangian agent slightly too conservative
