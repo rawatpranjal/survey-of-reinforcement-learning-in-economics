@@ -41,8 +41,6 @@ REGISTRY = [
     ("ch03_theory", "ch03_theory/sims/info_geometry_npg.py", "B"),
     ("ch03_theory", "ch03_theory/sims/mm_surrogate_trpo.py", "B"),
     ("ch03_theory", "ch03_theory/sims/td_lambda_corridor.py", "A"),
-    # ch03a
-    ("ch03a", "ch03a/sims/gridworld_illustrated.py", "A"),
     # ch03a_bm
     ("ch03a_bm", "ch03a_bm/sims/bm_illustrated.py", "A"),
     ("ch03a_bm", "ch03a_bm/sims/bm_fvi_fqi.py", "A"),
@@ -57,6 +55,10 @@ REGISTRY = [
     ("ch05", "ch05_econ_models/sims/bus_engine_dp_vs_dqn.py", "A"),
     ("ch05", "ch05_econ_models/sims/nfxp_ccp_td.py", "A"),
     ("ch05", "ch05_econ_models/sims/estimation_flowcharts.py", "B"),
+    # ch06_macro
+    ("ch06_macro", "ch06_macro/sims/rbc_dp_vs_drl.py", "A"),
+    ("ch06_macro", "ch06_macro/sims/lq_mfg.py", "B"),
+    ("ch06_macro", "ch06_macro/sims/mfax_lq_run_grid.py", "A"),
     # ch06
     ("ch06", "ch06_games/sims/durable_goods_monopoly.py", "A"),
     ("ch06", "ch06_games/sims/kuhn_poker_equilibrium.py", "A"),
@@ -83,10 +85,19 @@ REGISTRY = [
     # ch10
     ("ch10", "ch10_causal/sims/confounded_ope.py", "A"),
     ("ch10", "ch10_causal/sims/identification_dags.py", "B"),
+    # ch10b (RL for causal inference)
+    ("ch10b", "ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy.py", "A"),
+    ("ch10b", "ch10b_rl_for_ci/sims/dynamic_dml_snmm.py", "A"),
+    ("ch10b", "ch10b_rl_for_ci/sims/causal_bandit_parallel.py", "A"),
     # ch11 (Quantile, Robust, Constrained)
     ("ch11", "ch11_dist_robust_constrained/sims/risk_sensitive_inventory.py", "A"),
     ("ch11", "ch11_dist_robust_constrained/sims/robust_consumption_savings.py", "A"),
     ("ch11", "ch11_dist_robust_constrained/sims/carbon_constrained_production.py", "A"),
+    # ch12 (World Models and Model-Based RL)
+    ("ch12", "ch12_world_models/sims/dyna_maze.py", "A"),
+    ("ch12", "ch12_world_models/sims/cobweb_paradigms.py", "A"),
+    ("ch12", "ch12_world_models/sims/fishery_paradigms.py", "A"),
+    ("ch12", "ch12_world_models/sims/draw_maze_layout.py", "B"),
     # appA (Mathematical Preliminaries) -- linear algebra, probability, convex analysis, fixed points
     ("appA", "appA_preliminaries/sims/spectral_radius.py", "A"),
     ("appA", "appA_preliminaries/sims/neumann_series.py", "A"),
