@@ -52,6 +52,9 @@ MBLQ_CONFIG   = {**SHARED_CONFIG, 'EXPLORE_STD': 0.15, 'FIT_EVERY': 1,
 MB_LG_REINFORCE_CONFIG = {**SHARED_CONFIG, 'EXPLORE_STD': 0.15, 'WARMUP': 5,
                           'ENSEMBLE_SIZE': 5, 'ROLLOUT_HORIZON': 5,
                           'N_ROLLOUTS': 10, 'POLICY_LR': 0.005}
+MB_PATHWISE_CONFIG = {**SHARED_CONFIG, 'EXPLORE_STD': 0.15, 'WARMUP': 5,
+                      'ENSEMBLE_SIZE': 5, 'ROLLOUT_HORIZON': 5,
+                      'N_ROLLOUTS': 20, 'POLICY_LR': 0.05}
 NAIVE_CONFIG  = {**SHARED_CONFIG}
 ORACLE_CONFIG = {**SHARED_CONFIG}
 
@@ -664,6 +667,219 @@ class MBPOPolicy(Paradigm):
 
 
 # ---------------------------------------------------------------------------
+# MB-LG-Pathwise: same ensemble model learning as MBPOPolicy, but plans by
+# analytic (pathwise) gradients instead of REINFORCE score functions.
+# The forward sensitivity recursion is exact for the deterministic skeleton
+# (noise eps_p enters only as zero-mean additive noise to each reward step;
+# dropping it from the gradient is unbiased and eliminates score-function
+# variance). Gradient clipping is applied with max-norm 1.0 for stability.
+# policy_lr = 0.05 and n_rollouts = 20 (vs 0.005 and 10 for REINFORCE); the
+# larger step is safe because the pathwise gradient is low-variance. All other
+# hypers match REINFORCE.
+# ---------------------------------------------------------------------------
+
+class MBPathwisePolicy(Paradigm):
+    """Model-based learner with pathwise (analytic) policy gradients.
+
+    Identical to MBPOPolicy in all respects except the gradient estimator:
+    - Model learning: bootstrap linear-Gaussian ensemble fit of (a_hat, b_hat,
+      sigma) plus OLS regression for (c_hat, phi_hat) from the replay buffer.
+      Uses ONLY learned parameters. Does NOT read true regime params.
+      Does NOT call solve_oracle_lq.
+    - Policy class: linear q_t = K0 + Kq * q_{t-1}, identical to MBPOPolicy.
+    - Planning: forward sensitivity recursion differentiates the expected
+      discounted model-rollout return analytically. For a rollout starting at
+      q_0 (sampled from buffer) with deterministic lag q_{t+1} = a_t:
+
+        Expected reward:
+          r_t = a_hat * a_t - b_hat * a_t^2 - (c_hat/2)*a_t^2
+                - (phi_hat/2)*(a_t - q_t)^2
+        where a_t = K0 + Kq * q_t  (mean action; noise eps_a only adds
+        zero-mean terms to dr/da, so E[grad] equals the deterministic gradient).
+
+        Forward sensitivity (theta in {K0, Kq}):
+          dq_0/dtheta = 0  (buffer initial state is fixed)
+          da_t/dK0 = 1    + Kq * dq_t/dK0
+          da_t/dKq = q_t  + Kq * dq_t/dKq
+          dq_{t+1}/dtheta = da_t/dtheta  (because q_{t+1} = a_t)
+          dr_t/da_t = a_hat - 2*b_hat*a_t - c_hat*a_t - phi_hat*(a_t - q_t)
+          dr_t/dq_t = phi_hat*(a_t - q_t)
+          dJ/dtheta = sum_t gamma^t [ dr_t/da_t * da_t/dtheta
+                                      + dr_t/dq_t * dq_t/dtheta ]
+
+      Averaged over ensemble members and buffer-sampled initial states, then
+      gradient-ascent: K0 += lr * dJ/dK0, Kq += lr * dJ/dKq.
+      Gradient clipped to max L2-norm 1.0 before the update.
+
+    Labeled 'MB-LG-Pathwise' in figures and tables.
+    """
+    name = 'MB-LG-Pathwise'
+
+    def __init__(self, gamma, explore_std, warmup,
+                 ensemble_size=5, rollout_horizon=5, n_rollouts=20,
+                 policy_lr=0.05, q_min=0.0, q_max=4.0):
+        self.gamma = gamma
+        self.explore_std = explore_std
+        self.warmup = warmup
+        self.ensemble_size = ensemble_size
+        self.rollout_horizon = rollout_horizon
+        self.n_rollouts = n_rollouts
+        self.policy_lr = policy_lr
+        self.q_min, self.q_max = q_min, q_max
+        self.K0 = 0.0
+        self.Kq = 0.0
+        self.ensemble = []
+        self.c_hat = 1.0
+        self.phi_hat = 0.2
+        self.buffer = []
+        self.rng = None
+
+    def reset(self, regime_params, seed=0):
+        self.rng = np.random.default_rng(seed + 24680)
+        self.K0 = 0.0
+        self.Kq = 0.0
+        self.ensemble = []
+        self.c_hat = 1.0
+        self.phi_hat = 0.2
+        self.buffer = []
+
+    def _fit_ensemble(self):
+        # Identical to MBPOPolicy._fit_ensemble: bootstrap OLS on replay buffer.
+        if len(self.buffer) < 4:
+            return
+        q = np.array([x[1] for x in self.buffer])
+        qprev = np.array([x[0] for x in self.buffer])
+        p = np.array([x[2] for x in self.buffer])
+        r = np.array([x[3] for x in self.buffer])
+        n = len(q)
+        self.ensemble = []
+        for _ in range(self.ensemble_size):
+            idx = self.rng.integers(0, n, size=n)
+            X = np.column_stack([np.ones(n), q[idx]])
+            coef, *_ = np.linalg.lstsq(X, p[idx], rcond=None)
+            a_h, neg_b = coef
+            b_h = max(0.05, float(-neg_b))
+            pred = a_h - b_h * q[idx]
+            sigma = float(np.std(p[idx] - pred, ddof=1)) if n > 2 else 0.1
+            sigma = max(0.01, sigma)
+            self.ensemble.append({'a_hat': float(a_h), 'b_hat': b_h, 'sigma': sigma})
+        resid = r - p * q
+        feats = np.column_stack([-0.5 * q ** 2, -0.5 * (q - qprev) ** 2])
+        coef2, *_ = np.linalg.lstsq(feats, resid, rcond=None)
+        self.c_hat = max(0.05, float(coef2[0]))
+        self.phi_hat = max(0.0, float(coef2[1]))
+
+    def _pathwise_rollout(self, q_prev_init, member):
+        """One H-step pathwise gradient rollout under a single ensemble member.
+
+        Uses the deterministic skeleton (no eps_p noise in gradient).
+        Returns (dJ_dK0, dJ_dKq, total_return).
+        """
+        a_hat = member['a_hat']
+        b_hat = member['b_hat']
+        c_hat = self.c_hat
+        phi_hat = self.phi_hat
+
+        q_t = float(q_prev_init)
+        # Forward sensitivity: dq_t/dtheta, initialised at 0 (q_0 is fixed).
+        dq_dK0 = 0.0
+        dq_dKq = 0.0
+
+        gamma_t = 1.0
+        total_return = 0.0
+        dJ_dK0 = 0.0
+        dJ_dKq = 0.0
+
+        for _ in range(self.rollout_horizon):
+            # Mean action under current policy (deterministic skeleton).
+            a_t = self.K0 + self.Kq * q_t
+
+            # Sensitivity of a_t w.r.t. theta.
+            da_dK0 = 1.0 + self.Kq * dq_dK0
+            da_dKq = q_t  + self.Kq * dq_dKq
+
+            # Expected reward (E[eps_p] = 0 so noise drops out).
+            # r_t = a_hat*a_t - b_hat*a_t^2 - (c_hat/2)*a_t^2
+            #       - (phi_hat/2)*(a_t - q_t)^2
+            r_t = (a_hat * a_t
+                   - b_hat * a_t ** 2
+                   - 0.5 * c_hat * a_t ** 2
+                   - 0.5 * phi_hat * (a_t - q_t) ** 2)
+            total_return += gamma_t * r_t
+
+            # Partial derivatives of r_t.
+            dr_da = (a_hat - 2.0 * b_hat * a_t - c_hat * a_t
+                     - phi_hat * (a_t - q_t))
+            dr_dq = phi_hat * (a_t - q_t)
+
+            dJ_dK0 += gamma_t * (dr_da * da_dK0 + dr_dq * dq_dK0)
+            dJ_dKq += gamma_t * (dr_da * da_dKq + dr_dq * dq_dKq)
+
+            # Advance state: q_{t+1} = a_t (deterministic lag).
+            q_t = a_t
+            dq_dK0 = da_dK0
+            dq_dKq = da_dKq
+            gamma_t *= self.gamma
+
+        return dJ_dK0, dJ_dKq, total_return
+
+    def _update_policy(self):
+        if len(self.buffer) < 1 or len(self.ensemble) == 0:
+            return
+        grad_K0_total = 0.0
+        grad_Kq_total = 0.0
+        for k in range(self.n_rollouts):
+            # Sample initial state from buffer (same as MBPOPolicy).
+            init_idx = self.rng.integers(0, len(self.buffer))
+            q_prev_init = self.buffer[init_idx][0]
+            # Sample a random ensemble member.
+            member = self.ensemble[self.rng.integers(0, len(self.ensemble))]
+            g0, gq, _ = self._pathwise_rollout(q_prev_init, member)
+            grad_K0_total += g0
+            grad_Kq_total += gq
+        grad_K0 = grad_K0_total / self.n_rollouts
+        grad_Kq = grad_Kq_total / self.n_rollouts
+        # Gradient clipping (L2 norm, max 1.0) for numerical stability.
+        grad_norm = np.sqrt(grad_K0 ** 2 + grad_Kq ** 2) + 1e-12
+        if grad_norm > 1.0:
+            grad_K0 /= grad_norm
+            grad_Kq /= grad_norm
+        self.K0 += self.policy_lr * grad_K0
+        self.Kq += self.policy_lr * grad_Kq
+
+    def act(self, state, t):
+        # Identical to MBPOPolicy.act: mean action + decaying exploration noise.
+        q_prev = state[0]
+        if t < self.warmup:
+            return float(self.rng.uniform(self.q_min, self.q_max))
+        mean = self.K0 + self.Kq * q_prev
+        decay = max(0.1, 1.0 - t / 250.0)
+        q = mean + self.rng.normal(0, self.explore_std * decay)
+        return float(np.clip(q, self.q_min, self.q_max))
+
+    def observe(self, state, action, reward, next_state):
+        q_prev = state[0]
+        q_t = action
+        p_t = next_state[1]
+        self.buffer.append((q_prev, q_t, p_t, reward))
+        self._fit_ensemble()
+        if len(self.ensemble) > 0:
+            self._update_policy()
+
+    def get_params(self):
+        if not self.ensemble:
+            return dict(a_hat=1.0, b_hat=1.0,
+                        c_hat=self.c_hat, phi_hat=self.phi_hat)
+        a_mean = float(np.mean([m['a_hat'] for m in self.ensemble]))
+        b_mean = float(np.mean([m['b_hat'] for m in self.ensemble]))
+        return dict(a_hat=a_mean, b_hat=b_mean,
+                    c_hat=self.c_hat, phi_hat=self.phi_hat)
+
+    def greedy_action(self, q_ref, p_ref):
+        return float(self.K0 + self.Kq * q_ref)
+
+
+# ---------------------------------------------------------------------------
 # Single rollout
 # ---------------------------------------------------------------------------
 
@@ -755,6 +971,16 @@ def make_paradigm(name, config):
         )
     if name == 'MB-LG-REINFORCE':
         return MBPOPolicy(
+            gamma=config['GAMMA'], explore_std=config['EXPLORE_STD'],
+            warmup=config['WARMUP'],
+            ensemble_size=config['ENSEMBLE_SIZE'],
+            rollout_horizon=config['ROLLOUT_HORIZON'],
+            n_rollouts=config['N_ROLLOUTS'],
+            policy_lr=config['POLICY_LR'],
+            q_min=config['Q_MIN'], q_max=config['Q_MAX'],
+        )
+    if name == 'MB-LG-Pathwise':
+        return MBPathwisePolicy(
             gamma=config['GAMMA'], explore_std=config['EXPLORE_STD'],
             warmup=config['WARMUP'],
             ensemble_size=config['ENSEMBLE_SIZE'],
@@ -868,6 +1094,7 @@ PARADIGM_REGISTRY = {
     'Arifovic GA':      (compute_paradigm, GA_CONFIG),
     'Model-Based LQ':   (compute_paradigm, MBLQ_CONFIG),
     'MB-LG-REINFORCE':  (compute_paradigm, MB_LG_REINFORCE_CONFIG),
+    'MB-LG-Pathwise':   (compute_paradigm, MB_PATHWISE_CONFIG),
 }
 
 
@@ -895,16 +1122,17 @@ def compute_data(force=None):
 # Outputs: figure + table + stdout
 # ---------------------------------------------------------------------------
 
-PARADIGM_ORDER = ['Oracle', 'RLS', 'Model-Based LQ', 'Arifovic GA',
-                  'Naive', 'MB-LG-REINFORCE', 'Q-Learning']
+PARADIGM_ORDER = ['Oracle', 'RLS', 'Model-Based LQ', 'MB-LG-Pathwise',
+                  'Arifovic GA', 'Naive', 'MB-LG-REINFORCE', 'Q-Learning']
 PARADIGM_COLORS = {
-    'Oracle':          COLORS['black'],
-    'Naive':           COLORS['gray'],
-    'RLS':             COLORS['red'],
-    'Q-Learning':      COLORS['blue'],
-    'Arifovic GA':     COLORS['green'],
-    'Model-Based LQ':  COLORS['purple'],
-    'MB-LG-REINFORCE': COLORS['orange'],
+    'Oracle':           COLORS['black'],
+    'Naive':            COLORS['gray'],
+    'RLS':              COLORS['red'],
+    'Q-Learning':       COLORS['blue'],
+    'Arifovic GA':      COLORS['green'],
+    'Model-Based LQ':   COLORS['purple'],
+    'MB-LG-REINFORCE':  COLORS['orange'],
+    'MB-LG-Pathwise':   COLORS['cyan'],
 }
 REGIME_ORDER = ['stable', 'borderline', 'unstable']
 
@@ -937,9 +1165,12 @@ def _plot_regret_curves(data):
     print(f"  Figure saved: {fig_path}")
 
 
+PARAM_RECOVERY_LEARNERS = ['RLS', 'Model-Based LQ', 'MB-LG-REINFORCE', 'MB-LG-Pathwise']
+
+
 def _plot_param_recovery(data):
     """3 rows x 2 cols: a_hat and b_hat trajectories for the parametric
-    learners (RLS, Model-Based LQ, MB-LG-REINFORCE) per regime."""
+    learners (RLS, Model-Based LQ, MB-LG-REINFORCE, MB-LG-Pathwise) per regime."""
     T = SHARED_CONFIG['T_EPISODE']
     t_axis = np.arange(1, T + 1)
     fig, axes = plt.subplots(3, 2, figsize=(12, 9), sharex=True)
@@ -947,7 +1178,7 @@ def _plot_param_recovery(data):
         rp = data['shared'][regime]['params']
         ax_a = axes[r_idx, 0]
         ax_b = axes[r_idx, 1]
-        for name in ['RLS', 'Model-Based LQ', 'MB-LG-REINFORCE']:
+        for name in PARAM_RECOVERY_LEARNERS:
             traj = data['results'][name][regime]['param_trajectories']
             if 'a_hat' in traj:
                 m, s = traj['a_hat']['mean'], traj['a_hat']['se']
@@ -967,8 +1198,8 @@ def _plot_param_recovery(data):
             ax_b.set_title(f"$\\hat b_t$ (true b varies)")
     axes[-1, 0].set_xlabel('environment step $t$')
     axes[-1, 1].set_xlabel('environment step $t$')
-    fig.suptitle("Parameter recovery for RLS, Model-Based LQ, and "
-                 "MB-LG-REINFORCE (20 seeds, mean $\\pm$ SE; "
+    fig.suptitle("Parameter recovery for RLS, Model-Based LQ, MB-LG-REINFORCE, "
+                 "and MB-LG-Pathwise (20 seeds, mean $\\pm$ SE; "
                  "dashed lines mark the true values)", fontsize=11)
     fig.tight_layout()
     fig_path = os.path.join(OUTPUT_DIR, 'cobweb_paradigms_param_recovery.png')
@@ -1036,7 +1267,7 @@ def _write_table_recovery(data):
         f.write('\\toprule\n')
         f.write('Paradigm & Regime & $|\\hat a - a|$ & $|\\hat b - b|$ & $|\\hat c - c|$ & $|\\hat\\phi - \\phi|$ \\\\\n')
         f.write('\\midrule\n')
-        for name in ['RLS', 'Model-Based LQ', 'MB-LG-REINFORCE']:
+        for name in PARAM_RECOVERY_LEARNERS:
             for regime in REGIME_ORDER:
                 rp = data['shared'][regime]['params']
                 traj = data['results'][name][regime]['param_trajectories']
@@ -1069,7 +1300,7 @@ def _print_summary(data):
         print(row)
 
     print("\n=== Final |hat - true| parameter recovery (n=20 seeds) ===\n")
-    for name in ['RLS', 'Model-Based LQ', 'MB-LG-REINFORCE']:
+    for name in PARAM_RECOVERY_LEARNERS:
         print(f"\n  {name}:")
         for regime in REGIME_ORDER:
             rp = data['shared'][regime]['params']
