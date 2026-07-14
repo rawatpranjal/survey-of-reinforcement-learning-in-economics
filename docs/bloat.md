@@ -110,6 +110,72 @@ The bloat: using near-synonyms in pairs or triplets for emphasis. "Each and ever
 
 The fix: pick one word.
 
+## Phase 3: Plain Construction (De-Strain)
+
+Micro-trimming removes fat. This pass removes *strain*. A sentence can be short and still read strange, because it leans on writerly scaffolding instead of naming things plainly. These constructions read as over-written or "AI-ish" even when every fact is correct. Fix them by saying the thing directly.
+
+### Rule P1: Kill Frame-Noun Scaffolding
+
+The bloat: filler nouns that frame content instead of carrying it. "instance", "line" (of work), "slot", "foil", "lens", "the X that occupies the rest of the chapter".
+
+The fix: name the thing, or delete the frame.
+
+- Strained: "the reinforcement-learning line that occupies the rest of the chapter is the same loop pursued at scale."
+- Plain: "The rest of the chapter runs the same loop in reinforcement learning, at larger scale."
+- Strained: "This is the architectural slot that subsequent work fills with deep ensembles..."
+- Plain: "This open design is what subsequent work fills with deep ensembles..."
+- Strained: "the reinforcement-learning instances of the model-based loop, with the model-free schemes as their foil."
+- Plain: "the reinforcement-learning versions of the model-based loop." (drop the foil; the contrast is already drawn)
+
+### Rule P2: No Imperative Math-Speak
+
+The bloat: "Write X as Y", "Let us denote", "Consider the object Z" used as connective tissue rather than genuine setup.
+
+The fix: state the definition as fact.
+
+- Strained: "Write the agent's model at date $t$ as a parameter $\theta_t$ indexing..."
+- Plain: "The agent's model at date $t$ is a parameter $\theta_t$ that indexes..."
+
+### Rule P3: Do Not Personify the Argument
+
+The bloat: making an abstraction the subject of an active verb, or narrating the text's own moves. "Two questions decide whether...", "the examples answer one question each", "This is the economic statement of...", "the section isolates the commitments that survive".
+
+The fix: put the real actor first, or state the claim plainly.
+
+- Strained: "Two questions decide whether the learner succeeds."
+- Plain: "Success hinges on two questions."
+- Strained: "This is the economic statement of the world-model failure the synthesis returns to."
+- Plain: "This is the economic version of the world-model failure discussed in the synthesis."
+
+### Rule P4: Unpack Terse Appositions
+
+The bloat: cramming a contrast into a comma-apposition the reader has to decode.
+
+The fix: use two plain sentences.
+
+- Strained: "The model class differs, a tabular Dirac in Dyna against a differentiable network in Schmidhuber."
+- Plain: "The model class differs. Dyna uses a tabular Dirac, Schmidhuber a differentiable network."
+- Strained: "differ in two places and agree in a third."
+- Plain: "differ in two ways and agree in one."
+
+### Rule P5: No Idioms or Cliches
+
+The bloat: stock phrases that read as filler. "not a free lunch", "the whole point", "at the end of the day", "when it comes to".
+
+The fix: state the mechanism.
+
+- Strained: "The sample-efficiency claim that follows is not a free lunch."
+- Plain: "This sample efficiency is not free."
+
+### Rule P6: Cross-Reference, Never Re-Derive
+
+The bloat: restating a theorem, operator definition, or proof already established earlier (a special case of Rule M5). The Watkins-Dayan Q-learning convergence result, the Bellman operator, and its $\gamma$-contraction were spelled out in full inside a later chapter that had already cited them.
+
+The fix: cite the first statement.
+
+- Strained: "...who prove that under $\sum_t \alpha_t = \infty$ and $\sum_t \alpha_t^2 < \infty$..., $Q$ converges to $Q^\star$, the fixed point of $\mathcal{T}^\star$ defined by... . The operator is a $\gamma$-contraction in the sup norm."
+- Plain: "It converges to $Q^\star$ under the standard step-size and visitation conditions, with the $\gamma$-contraction of the Bellman operator supplying the argument (Theorem~\ref{thm:qlearning_convergence}, Section~\ref{sec:planning_learning})."
+
 ## The 10% Constraint (Final Test)
 
 When a section appears fully edited, force a further 10% word count reduction without losing any fact or argument. This constraint shifts attention from what is being said to how it is being said, exposing hidden bloat invisible during content-focused editing.
@@ -120,6 +186,7 @@ When performing an editing pass on a chapter:
 
 1. First pass (macro): scan for structural bloat using Rules M1-M5. Delete whole paragraphs, merge redundant subsection openers, collapse serialized literature reviews.
 2. Second pass (micro): tighten remaining prose using Rules S1-S6. This is line-by-line work.
-3. Final pass: apply the 10% constraint to any section that still feels heavy.
+3. Third pass (de-strain): apply Rules P1-P6 to remove strained, writerly constructions (frame-noun scaffolding, imperative math-speak, personified arguments, terse appositions, idioms) and any re-derived result that should be a cross-reference. Prose can pass Phase 2 and still read strange; this pass catches that.
+4. Final pass: apply the 10% constraint to any section that still feels heavy.
 
 This guide works in conjunction with the Chapter Editing Pass rules in `CLAUDE.md` (one canonical location, cross-references over restatement, footnotes for details, figure/table caption discipline, no re-motivation in section openings).
