@@ -1,0 +1,39 @@
+======================================================================
+LIPSCHITZ CONTINUITY
+======================================================================
+
+|f(x) - f(y)| <= L ||x - y||. For differentiable f, the least L is sup|f'|.
+The Bellman operator is gamma-Lipschitz; the resolvent solve amplifies
+a reward error by 1/(1-gamma).
+
+  Computing: lipschitz
+(i) Empirical Lipschitz constant of scalar functions on [-D, D]:
+    0.5x    : analytic L=0.500, measured L_hat=0.5000 (ratio 1.0000), max over all pairs=0.5000, exceeds L=False
+    tanh    : analytic L=1.000, measured L_hat=1.0000 (ratio 1.0000), max over all pairs=1.0000, exceeds L=False
+    |x|     : analytic L=1.000, measured L_hat=1.0000 (ratio 1.0000), max over all pairs=1.0000, exceeds L=False
+    sin(3x) : analytic L=3.000, measured L_hat=3.0000 (ratio 1.0000), max over all pairs=3.0000, exceeds L=False
+
+(ii) Bellman operator T V = r + gamma P V (policy evaluation):
+    gamma=0.50: operator Lipschitz=0.5000 (theory 0.50); reward->value amplification=2.0000 (theory 1/(1-gamma)=2.0000)
+    gamma=0.70: operator Lipschitz=0.7000 (theory 0.70); reward->value amplification=3.3333 (theory 1/(1-gamma)=3.3333)
+    gamma=0.90: operator Lipschitz=0.9000 (theory 0.90); reward->value amplification=10.0000 (theory 1/(1-gamma)=10.0000)
+    gamma=0.95: operator Lipschitz=0.9500 (theory 0.95); reward->value amplification=20.0000 (theory 1/(1-gamma)=20.0000)
+    gamma=0.99: operator Lipschitz=0.9900 (theory 0.99); reward->value amplification=100.0000 (theory 1/(1-gamma)=100.0000)
+  Cache saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/cache/lipschitz_continuity__lipschitz.pkl
+  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/lipschitz_continuity.png
+  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/lipschitz_continuity.tex
+
+Done.
+======================================================================
+LIPSCHITZ CONTINUITY
+======================================================================
+
+|f(x) - f(y)| <= L ||x - y||. For differentiable f, the least L is sup|f'|.
+The Bellman operator is gamma-Lipschitz; the resolvent solve amplifies
+a reward error by 1/(1-gamma).
+
+  Cache hit: lipschitz
+  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/lipschitz_continuity.png
+  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/lipschitz_continuity.tex
+
+Done.

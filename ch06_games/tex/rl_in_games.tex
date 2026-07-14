@@ -36,12 +36,32 @@ Minimax-Q converges to the minimax Q-values under Robbins-Monro learning rates (
 \citet{hu2003nash} extended the framework to general-sum stochastic games, where players may have aligned, opposed, or mixed incentives. Each agent $i$ maintains a Q-function over the joint action space $Q_i(s, a_1, \ldots, a_n)$ and updates via
 \begin{equation}
 Q_i(s, \mathbf{a}) \leftarrow (1-\alpha)\, Q_i(s, \mathbf{a}) + \alpha\left[r_i + \gamma\, \text{Nash}_i\bigl(Q_1(s'), \ldots, Q_n(s')\bigr)\right],
+\label{eq:nash_q_update}
 \end{equation}
 where $\text{Nash}_i(\cdot)$ denotes player $i$'s payoff under a Nash equilibrium of the stage game defined by the current Q-values $(Q_1(s'), \ldots, Q_n(s'))$. At each backup, the algorithm treats the Q-values as payoff matrices, computes a Nash equilibrium of this matrix game, and uses the equilibrium payoffs for the value estimate.
 
 \begin{theorem}[\citet{hu2003nash}]
-Nash-Q converges to Nash Q-values under Robbins-Monro learning rates and infinite exploration, provided every stage game encountered during learning has either (a) a global optimal point (all agents receive their highest payoff at the same joint action) or (b) a unique saddle-point Nash equilibrium.
+\label{thm:nash_q}
+Nash-Q converges to Nash Q-values under Robbins-Monro learning rates and infinite exploration, provided either (a) every stage game encountered during learning has a global optimal point (all agents receive their highest payoff at the same joint action), or (b) every such stage game has a saddle-point Nash equilibrium, with agents consistently updating at the corresponding equilibrium.
 \end{theorem}
+
+\begin{proof}
+The argument recasts the joint tuple of Q-factors as a stochastic-approximation recursion driven by the Nash backup, shows that this backup fixes the equilibrium values and contracts toward them under the stage-game condition, and then applies the same pseudo-contraction lemma that delivers single-agent Q-learning convergence (Theorem~\ref{thm:qlearning_convergence}). Collect the agents' tables into a tuple $Q = (Q_1, \ldots, Q_n)$ and write the Nash-backup operator
+\[
+(P_t Q)_i(s, \mathbf{a}) = r_i(s, \mathbf{a}) + \gamma\, \mathrm{Nash}_i\bigl(Q_1(s'), \ldots, Q_n(s')\bigr), \qquad s' \sim P(\cdot \mid s, \mathbf{a}),
+\]
+so the update~\eqref{eq:nash_q_update} is the exponential moving average $Q_i^{t+1}(s,\mathbf{a}) = (1-\alpha_t)\, Q_i^t(s,\mathbf{a}) + \alpha_t\, (P_t Q^t)_i(s,\mathbf{a})$, applied only at the visited tuple. Measure distance between tuples in the supremum norm $\|Q - \hat{Q}\| = \max_i \max_s \max_{\mathbf{a}} |Q_i(s,\mathbf{a}) - \hat{Q}_i(s,\mathbf{a})|$.
+
+The backup fixes the equilibrium values. A general-sum discounted stochastic game admits a stationary Nash equilibrium, and its equilibrium action values $Q^* = (Q_1^*, \ldots, Q_n^*)$ satisfy $Q_i^*(s,\mathbf{a}) = r_i(s,\mathbf{a}) + \gamma \sum_{s'} P(s'|s,\mathbf{a})\, \mathrm{Nash}_i\bigl(Q^*(s')\bigr)$ \citep{hu2003nash}. Taking the conditional expectation of $P_t$ over the sampled successor therefore returns $\mathbb{E}[P_t Q^*]_i(s,\mathbf{a}) = Q_i^*(s,\mathbf{a})$, so $Q^*$ is the fixed point of the mean backup and the one-sample noise $P_t Q^* - \mathbb{E}[P_t Q^*]$ is mean-zero given the history.
+
+The backup contracts, provided every stage game encountered has a global optimum or a saddle and agents update at that equilibrium. The only nonlinearity in $P_t$ is the map from a stage game's payoff matrices to its Nash value; rewards are fixed and the discount is $\gamma$, so it suffices that this map be nonexpansive. Let $\sigma$ and $\hat{\sigma}$ be the selected equilibria of the stage games $Q(s')$ and $\hat{Q}(s')$, and write $\sigma Q_i$ for the expected payoff of the joint profile $\sigma$ under $Q_i$. When both are global optima, $\hat{\sigma}$ gives every agent its highest payoff under $\hat{Q}$, so $\hat{\sigma} \hat{Q}_i \geq \sigma \hat{Q}_i$, and
+\[
+\sigma Q_i - \hat{\sigma} \hat{Q}_i \;\leq\; \sigma Q_i - \sigma \hat{Q}_i \;=\; \sum_{\mathbf{a}} \sigma(\mathbf{a})\bigl[Q_i(s',\mathbf{a}) - \hat{Q}_i(s',\mathbf{a})\bigr] \;\leq\; \|Q_i(s') - \hat{Q}_i(s')\|;
+\]
+the symmetric bound gives $|\mathrm{Nash}_i(Q(s')) - \mathrm{Nash}_i(\hat{Q}(s'))| \leq \|Q(s') - \hat{Q}(s')\|$.\footnote{The saddle case is identical after replacing the global-optimum inequalities with the two saddle inequalities, using that all saddle points of a stage game carry the same value \citep[Lemma~14]{hu2003nash}. Both arguments require the selected equilibria to be value-unique; where a stage game has multiple non-equivalent equilibria the Nash-value selection is neither single-valued nor nonexpansive, the contraction fails, and different agents backing up different equilibria can drive the iterates apart. This is the divergence documented above.} Hence $\|P_t Q - P_t \hat{Q}\| \leq \gamma \|Q - \hat{Q}\|$, so $P_t$ is a $\gamma$-contraction in the supremum norm.
+
+With $\mathbb{E}[P_t Q^*] = Q^*$ and the $\gamma$-contraction established, the stochastic-approximation lemma for pseudo-contractive updates \citep[Lemma~8]{hu2003nash}, the joint-space counterpart of the single-agent result behind Theorem~\ref{thm:qlearning_convergence}, yields $Q^t \to Q^*$ with probability one under infinite visitation of every $(s,\mathbf{a})$ and Robbins-Monro step sizes.
+\end{proof}
 
 These conditions are restrictive. When stage games have multiple Nash equilibria, agents may select different equilibria for their backups, causing divergence.\footnote{In the experiments of \citet{hu2003nash}, a grid game with a unique equilibrium Q-function converged in 100\% of trials under Nash-Q versus 20\% under independent Q-learning; a game with three equilibrium Q-functions converged in only 68--90\% of trials. Nash-Q requires each agent to observe all other agents' rewards and to maintain Q-values over the joint action space $\mathcal{A}_1 \times \cdots \times \mathcal{A}_n$, with storage $O(n |\mathcal{S}| \prod_i |\mathcal{A}_i|)$, exponential in the number of players.} Nash-Q reduces to standard Q-learning in the single-agent case.
 

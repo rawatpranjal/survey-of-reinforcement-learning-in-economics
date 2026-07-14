@@ -239,7 +239,7 @@ convex combination of at most $K+1$ vertices.}
 optimal CMDP policies mix at most $K+1$ deterministic policies for $K$
 constraints.
 
-The LP formulation yields \emph{strong duality} under Slater's
+The LP formulation yields \emph{strong duality} (Theorem~\ref{thm:prelim_duality}) under Slater's
 condition.\footnote{Slater's condition requires the existence of a feasible
 policy $\pi'$ satisfying all constraints with strict inequality:
 $\mathbb{E}^{\pi'}[\sum_t \gamma^t c_k(S_t,A_t)] < q_k$ for all $k$.}
@@ -252,7 +252,7 @@ The dual problem is
   \label{eq:cmdp_lagrangian}
 \end{equation}
 and the optimal dual variable $\lambda_k^*$ is the \emph{shadow price} of
-the $k$-th constraint. By the envelope theorem,
+the $k$-th constraint. By the envelope theorem (Theorem~\ref{thm:prelim_envelope}),
 $\partial V^* / \partial q_k = \lambda_k^*$, the marginal change in optimal
 value per unit relaxation of constraint $q_k$. This is the same shadow price
 that appears in the linear programming dual of resource allocation
