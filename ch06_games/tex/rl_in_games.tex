@@ -139,6 +139,27 @@ The average strategy $\bar{\sigma}^T$ converges to $\varepsilon$-Nash with $\var
 
 CFR+ \citep{tammelin2014solving} replaces standard regret matching with Regret Matching+, which truncates cumulative regrets to zero after each update rather than only at action selection. The update becomes $R^{T+1}(I, a) = \max(R^T(I, a) + r^{T+1}(I, a),\, 0)$, where $r^{T+1}(I,a) = v^{\sigma^{T+1}}(I,a) - v^{\sigma^{T+1}}(I)$ is the instantaneous counterfactual regret. CFR+ also weights iteration $t$ by $t$ when computing the average strategy. While vanilla CFR converges at $O(1/\sqrt{T})$, CFR+ empirically converges at $O(1/T)$.\footnote{The $O(1/T)$ rate for CFR+ is empirically observed but not yet proven in full generality. \citet{tammelin2014solving} conjectured this rate based on extensive experiments across poker variants.} CFR+ enabled \citet{bowling2015heads} to essentially solve heads-up limit Texas hold'em, a game with $3.16 \times 10^{17}$ states, the first non-trivial imperfect-information game played competitively by humans to be essentially solved. Their program Cepheus achieved exploitability below 1 mbb/g (milli-big-blind per game).
 
+\subsubsection{Simulation Study: Equilibrium Computation in Kuhn Poker}
+\label{sec:kuhn_poker}
+
+Kuhn poker is a three-card simplified poker with twelve information sets, six per player, and a known one-parameter family of Nash equilibria; player 0's equilibrium strategies are indexed by a bluffing probability $\alpha \in [0, 1/3]$ while player 1's equilibrium strategy is unique. The simulation compares vanilla CFR, CFR+, and fictitious play \citep{Brown1951}, a classical learning rule in which each player best responds to the opponent's empirical average strategy. Each method runs for 2{,}000 iterations, and exploitability is computed exactly as the sum of both players' best-response values, obtained by enumerating each player's $2^6$ pure strategies.\footnote{The fictitious play variant operates at the information-set level and computes each best response with uniform weights over the opponent's cards rather than reach-weighted posteriors. All three algorithms are deterministic given the game, so exploitability trajectories are exact; wall-clock times are averaged over ten runs.}
+
+Table~\ref{tab:kuhn_poker} and Figure~\ref{fig:kuhn_poker} report the results. CFR+ reaches exploitability below $0.01$ within 340 iterations and vanilla CFR within 930, with values of $0.0076$ and $0.0090$ after 2{,}000 iterations; both trajectories oscillate as the average strategy drifts along the equilibrium family. Fictitious play plateaus at exploitability $0.33$. The classical convergence result for fictitious play in two-player zero-sum games applies to the normal form, and the information-set implementation here, which weights opponent cards uniformly when computing best responses, stalls away from equilibrium. Regret matching with counterfactual reach-weighting is exactly the machinery CFR adds to make information-set-level updates sound.
+
+\begin{table}[htbp]
+\centering
+\caption{Exploitability in Kuhn poker at selected iterations, first iteration below $\varepsilon = 0.01$, and wall-clock time (mean $\pm$ standard deviation over ten runs).}
+\label{tab:kuhn_poker}
+\input{../ch06_games/sims/kuhn_poker_results}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{../ch06_games/sims/kuhn_poker_exploitability.png}
+\caption{Exploitability versus iteration (log scale) for CFR+, vanilla CFR, and fictitious play in Kuhn poker. The dashed reference line marks $\varepsilon = 0.01$.}
+\label{fig:kuhn_poker}
+\end{figure}
+
 \subsection{Neural Extensions}
 
 Tabular CFR stores regrets at every information set, infeasible when $|\mathcal{I}| > 10^{14}$. Two neural approaches scale to large games.
@@ -154,7 +175,7 @@ A separate network $\Pi_\phi$ approximates the average strategy, trained via wei
 
 \subsubsection{Neural Fictitious Self-Play}
 
-NFSP \citep{heinrich2016deep} combines \emph{fictitious play}\footnote{Fictitious play \citep{Brown1951} is a classical learning rule where each player best-responds to the empirical distribution of opponents' past actions. Under certain conditions (e.g., two-player zero-sum games), the time-average strategies converge to Nash equilibrium.} \citep{Brown1951} with deep Q-learning.\footnote{Deep Q-Network (DQN) \citep{mnih2015} approximates the Q-function with a neural network, using experience replay and a target network to stabilize training. The target network $\theta^-$ in the loss function is a delayed copy of the main network, updated periodically.} Each player maintains two networks: a best-response network $Q_\theta$ trained via DQN, and an average strategy network $\bar{\pi}_\phi$ trained via supervised learning on the best-response actions:
+NFSP \citep{heinrich2016deep} combines fictitious play (Section~\ref{sec:kuhn_poker}) with deep Q-learning.\footnote{Deep Q-Network (DQN) \citep{mnih2015} approximates the Q-function with a neural network, using experience replay and a target network to stabilize training. The target network $\theta^-$ in the loss function is a delayed copy of the main network, updated periodically.} Each player maintains two networks: a best-response network $Q_\theta$ trained via DQN, and an average strategy network $\bar{\pi}_\phi$ trained via supervised learning on the best-response actions:
 \begin{equation}
 L_{\text{RL}}(\theta) = \mathbb{E}\left[ \left( r + \gamma \max_{a'} Q_{\theta^-}(I', a') - Q_\theta(I, a) \right)^2 \right], \quad
 L_{\text{SL}}(\phi) = \mathbb{E}\left[ -\log \bar{\pi}_\phi(a | I) \right].
