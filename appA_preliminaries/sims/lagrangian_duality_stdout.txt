@@ -1,0 +1,37 @@
+======================================================================
+LAGRANGIAN DUALITY: WEAK AND STRONG DUALITY FOR A CONVEX QP
+======================================================================
+
+Primal: min 1/2 x'Q x + c'x s.t. Ax <= b (Q positive definite).
+Dual:   g(l) = -1/2 (c + A'l)' Q^{-1} (c + A'l) - l'b, l >= 0.
+Weak duality: g(l) <= p* always. Strong duality (Slater): max_l g(l) = p*.
+
+Force recompute: ['duality']
+  Computing: duality
+Lagrangian duality: convex QP solved via its dual (projected gradient ascent)
+  vars=8, constraints=5, seeds=15, dual iters=1500
+
+  seed  0: p*= 29.8068, dual g_final= 29.8068, final gap=-7.18e-13, weak duality holds=True, active=2, compl.slack=8.0e-15
+  seed  1: p*= 12.6918, dual g_final= 12.6918, final gap=-7.44e-13, weak duality holds=True, active=1, compl.slack=1.1e-14
+  seed  2: p*=  3.5450, dual g_final=  3.5450, final gap=-2.58e-14, weak duality holds=True, active=2, compl.slack=2.0e-15
+  seed  3: p*= 15.6786, dual g_final= 15.6786, final gap=2.97e-13, weak duality holds=True, active=1, compl.slack=1.9e-14
+  seed  4: p*=  7.7077, dual g_final=  7.7077, final gap=-8.17e-14, weak duality holds=True, active=2, compl.slack=2.6e-16
+  seed  5: p*= -0.7310, dual g_final= -0.7310, final gap=2.33e-14, weak duality holds=True, active=0, compl.slack=0.0e+00
+  seed  6: p*=  0.7490, dual g_final=  0.7490, final gap=-5.55e-15, weak duality holds=True, active=1, compl.slack=9.1e-16
+  seed  7: p*=  4.9667, dual g_final=  4.9667, final gap=1.63e-13, weak duality holds=True, active=2, compl.slack=1.0e-15
+  seed  8: p*= -0.1421, dual g_final= -0.1421, final gap=9.15e-14, weak duality holds=True, active=2, compl.slack=3.7e-17
+  seed  9: p*=  3.6147, dual g_final=  3.6147, final gap=1.36e-13, weak duality holds=True, active=2, compl.slack=1.8e-15
+  seed 10: p*=  0.2256, dual g_final=  0.2256, final gap=-4.44e-16, weak duality holds=True, active=1, compl.slack=2.5e-16
+  seed 11: p*=  2.7259, dual g_final=  2.7259, final gap=-1.55e-14, weak duality holds=True, active=2, compl.slack=5.0e-16
+  seed 12: p*= 28.8881, dual g_final= 28.8881, final gap=-2.84e-14, weak duality holds=True, active=3, compl.slack=3.1e-15
+  seed 13: p*=  6.1534, dual g_final=  6.1534, final gap=-3.02e-14, weak duality holds=True, active=1, compl.slack=2.1e-15
+  seed 14: p*= -0.2239, dual g_final= -0.2239, final gap=-2.78e-17, weak duality holds=True, active=0, compl.slack=0.0e+00
+
+  mean final duality gap: -6.26e-14 +/- 7.2e-14
+  weak duality held on all iterates for 15/15 seeds
+  mean complementary-slackness residual: 3.36e-15
+  Cache saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/cache/lagrangian_duality__duality.pkl
+  Figure saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/lagrangian_duality.png
+  Table saved: /Users/pranjal/Code/rl-theory-proofs/appA_preliminaries/sims/lagrangian_duality.tex
+
+Done.
