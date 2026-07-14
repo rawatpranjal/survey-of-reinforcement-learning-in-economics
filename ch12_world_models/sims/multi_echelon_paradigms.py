@@ -30,7 +30,7 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from sims.plot_style import apply_style, COLORS, BENCH_STYLE, FIG_DOUBLE
+from sims.plot_style import apply_style, COLORS, BENCH_STYLE, FIG_TRIPLE
 from sims.sim_cache import compute_or_load, add_component_args, parse_force_set
 
 apply_style()
@@ -836,7 +836,7 @@ def generate_outputs(data):
     t_axis = np.arange(1, T + 1)
     ranked = sorted(PARADIGM_ORDER, key=lambda nm: data["results"][nm]["final_mean"])
 
-    fig, (ax_reg, ax_fc) = plt.subplots(1, 2, figsize=FIG_DOUBLE)
+    fig, (ax_reg, ax_pp, ax_fc) = plt.subplots(1, 3, figsize=FIG_TRIPLE)
 
     for name in ranked:
         res = data["results"][name]
@@ -852,6 +852,31 @@ def generate_outputs(data):
     ax_reg.set_ylabel("cumulative regret (cost above oracle)")
     ax_reg.set_title("Cumulative regret (20 seeds, mean $\\pm$ SE)")
     ax_reg.legend(loc="upper left", fontsize=8)
+
+    # Middle panel: per-period cost above the oracle over time, for the three
+    # near-oracle methods only (the two failing methods are off-scale). The
+    # per-period regret is the increment of the cumulative curve; it shows the
+    # world model paying a high exploration cost early and then converging below
+    # the decentralized heuristic, the asymptotic win the table reports as a
+    # lower terminal cost.
+    near_oracle = ["Oracle", "Decentralized", "NN World Model"]
+    kpp = max(1, T // 25)  # rolling-mean window
+    for name in near_oracle:
+        pp = np.diff(data["results"][name]["mean_curve"], prepend=0.0)
+        sm = np.convolve(pp, np.ones(kpp) / kpp, mode="valid")
+        ax_pp.plot(
+            t_axis[: len(sm)],
+            sm,
+            label=name,
+            color=PARADIGM_COLORS[name],
+            linewidth=1.7,
+        )
+    ax_pp.axhline(0, **BENCH_STYLE)
+    ax_pp.set_ylim(bottom=-1.0)
+    ax_pp.set_xlabel("environment step $t$")
+    ax_pp.set_ylabel("per-period cost above oracle")
+    ax_pp.set_title("Per-period regret, near-oracle methods")
+    ax_pp.legend(loc="upper right", fontsize=8)
 
     # Right panel: NN world-model one-step forecast error over training,
     # showing the learned model sharpens as interaction data accumulates.
