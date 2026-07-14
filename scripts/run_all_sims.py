@@ -38,6 +38,7 @@ REGISTRY = [
     ("ch03_theory", "ch03_theory/sims/info_geometry_npg.py", "B"),
     ("ch03_theory", "ch03_theory/sims/mm_surrogate_trpo.py", "B"),
     ("ch03_theory", "ch03_theory/sims/td_lambda_corridor.py", "A"),
+    ("ch03_theory", "ch03_theory/sims/wind_farm_curse_study.py", "A"),
     # ch03a_bm
     ("ch03a_bm", "ch03a_bm/sims/bm_fvi_fqi.py", "A"),
     # ch03b
