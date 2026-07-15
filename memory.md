@@ -53,13 +53,17 @@ session would get it wrong without it.
 
 ## Reference PDFs: 16 were the wrong paper (2026-07-15)
 
-- **The `scripts/download_chXX_*.sh` scripts fabricated arXiv IDs, and curl saved whatever
-  was at that ID under the intended filename.** They were auto-generated (by a
-  `generate_download_scripts.py` that is not in the repo) from metadata that was itself
-  invented: the Bennett-Kallus entry read `Authors: Bennett, Daniel T.` (the real author is
-  Andrew Bennett) and pointed at arXiv 2306.12351, which is a paper on the union-closed
-  conjecture. The real paper is 2110.15332. `curl` cannot tell the difference, so the repo
-  accumulated astronomy, fluid-dynamics and pure-maths papers wearing RL filenames.
+- **The cause was a hand-typed arXiv-ID lookup table, `KNOWN_ARXIV_IDS` in
+  `scripts/generate_download_scripts.py`.** It mapped bib keys to arXiv IDs that were simply
+  invented; the generator emitted `scripts/download_chXX_*.sh` from it, and `curl` fetched a
+  real but unrelated paper and saved it under the intended filename. Two confirmed against
+  the arXiv API: `"Kakade2001": "cs/0106005"` is *The Representation of Legal Contracts*, and
+  `"bennettkallus2023": "2306.12351"` is *Progress on the union-closed conjecture* (the real
+  Bennett-Kallus is 2110.15332). The generator's metadata was invented too, naming
+  `Bennett, Daniel T.` when the author is Andrew Bennett. `curl` cannot tell the difference,
+  so the repo accumulated astronomy, fluid-dynamics and pure-maths papers wearing RL
+  filenames. **Never hand-write an ID table. Resolve a title through Crossref/OpenAlex
+  (`websource`) and check page 1.**
 - A sweep of all 658 PDFs under `chXX/papers/` found **16 that were a different paper
   entirely**; 6 were cited in the survey. `tamar2015_coherent_risk.pdf` was the TRPO paper,
   so a coherent-risk citation pointed at trust-region optimization. `ch03b_deeprl_practice`
@@ -69,9 +73,9 @@ session would get it wrong without it.
   is this repo's own corrupted copy, so it appears to name no real paper).
 - Seven of the corrupted `.md` extractions were **tracked and public on GitHub**, not just
   local. The `.pdf` files are gitignored but the `.md` are not, so a bad download ships.
-- The download scripts were untracked local files and have been deleted. **Do not regenerate
-  them.** Use `websource "<title>"` (it resolves via Crossref/OpenAlex rather than a
-  guessed ID) and verify page 1 before trusting the file.
+- The generator and the 8 download scripts were untracked local files (never committed, so
+  they are not recoverable from git history) and have been deleted. 7 of the 8 pointed at
+  chapter directories that no longer exist after the renames. **Do not regenerate them.**
 - `scripts/check_paper_pdfs.py` re-runs the sweep. It compares filename tokens against the
   first two pages and errs toward flagging: the ~24 standing flags are the Bertsekas book
   split into section-labelled chunks, which the heuristic cannot judge. **It cannot catch a
