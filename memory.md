@@ -77,7 +77,10 @@ session would get it wrong without it.
   they are not recoverable from git history) and have been deleted. 7 of the 8 pointed at
   chapter directories that no longer exist after the renames. **Do not regenerate them.**
 - `scripts/check_paper_pdfs.py` re-runs the sweep. It compares filename tokens against the
-  first two pages and errs toward flagging: the ~24 standing flags are the Bertsekas book
-  split into section-labelled chunks, which the heuristic cannot judge. **It cannot catch a
-  right-title/wrong-version PDF**, which is how a Charpentier 2020 preprint sat behind a 2021
-  journal citation.
+  first two pages and errs heavily toward flagging: **78 of 658 flag today and all 78 are
+  false positives**, being the Bertsekas book split into section-labelled chunks (28) plus
+  filenames the heuristic cannot read, either concatenated surnames like
+  `lu2018deconfoundingrl` or short codes like `EffMFCG` (the rest). Treat a flag as a
+  candidate and open the file. Run it from the primary checkout, since a worktree lacks the
+  gitignored PDFs and will under-report. **It cannot catch a right-title/wrong-version PDF**,
+  which is how a Charpentier 2020 preprint sat behind a 2021 journal citation.
