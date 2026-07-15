@@ -1,188 +1,3600 @@
-## Progress on the union-closed conjecture and offsprings in winter 2022-2023
-
-Stijn Cambie ∗
-
-June 22, 2023
-
-Mathematicians had little idea whether the easy-to-state union-closed conjecture was true or false even after 40 years. However, last winter saw a surge of interest in the conjecture and its variants, initiated by the contribution of a researcher at Google. Justin Gilmer made a significant breakthrough by discovering a first constant lower bound for the proportion of the most common element in a unionclosed family.
-
-## 1 Introduction of the Union-Closed conjecture
-
-The union-closed conjecture is due to Peter Frankl 1 , who constructed the elegant statement in 1979 after observing many implications of the statement. Before fully stating it, we need to define crucial concepts from set theory.
-
-The ground set is generally denoted with [ n ] = { 1 , 2 , . . . , n } , where n ∈ N is a finite number. A subset A ⊆ [ n ] is nothing more than a set containing integers between 1 and n , e.g., A = { 2 , 4 , 6 } ⊂ [7].
-
-A family F ⊆ 2 [ n ] is a collection of subsets of [ n ]. Here 2 [ n ] contains all 2 n possible subsets of [ n ], which includes the empty set ∅ as well.
-
-A family F is called union-closed if for every A,B ∈ F , the union A ∪ B belongs to F . This can be written as F = F ∪ F , where the latter equals exactly { A ∪ B | A,B ∈ F} . An example of such a family is presented in Figure 1. An other example, for every m ∈ N , is the family F m = { A | A ⊆ [ m ] ∨ A = [ k ] for some m +1 ≤ k ≤ m 2 } which consists of the 2 m subsets of [ m ], as well as m 2 -m intervals consisting of the first k natural numbers.
-
-Figure 1: Example of union-closed family
-
-<!-- image -->
-
-∗ Extremal Combinatorics and Probability Group (ECOPRO), Institute for Basic Science (IBS), Daejeon, South Korea, supported by the Institute for Basic Science (IBS-R029-C4), E-mail: stijn.cambie@hotmail.com
-
-1 See also https://en.wikipedia.org/wiki/P%C3%A9ter\_Frankl and https://www.nrc.nl/nieuws/2023/01/20/na-wiskundige-opwinding-o
-
-The Union-closed conjecture can now be formally stated as follows.
-
-Conjecture 1 (Union-closed conjecture) . If F /negationslash = {∅} is a union-closed family with ground set [ n ] , then there exists an element i ∈ [ n ] such that at least half of the sets in F contain i .
-
-Considering our previous example F m for large m , one can verify that it might be that only a small fraction of the elements of the ground set are abundant (belong to at least half of the sets) and their average proportion of sets to which they belong can tend to zero. Note that this conjecture would be (arguably) false when taking an infinite ground set N , e.g. by considering the (union-closed) family of finite subsets of N .
-
-This conjecture can also be formulated in many different ways. For example, one can consider bitstrings in { 0 , 1 } n with the element-wise OR -operation. For instance, when n = 4 and F = { 0011 , 1100 , 1111 } , we note that 0011 + 1100 = 1111. This family is closed under the OR -operation, which corresponds to being union-closed in the initial formulation.
-
-Taking the complements of the set, one obtains the Intersection-closed sets conjecture, which states that an intersection-closed family has an element in its ground set appearing in at most half of the sets. In [3, Sec. 3], one can also find a lattice-, graph-, and Salzborn-formulation.
-
-On November 17, 2022, Justin Gilmer [10], a researcher at Google working in machine learning, made a breakthrough by proving a first constant fraction for Conjecture 1. Soon thereafter, as fast as a few days, his result made others put improvements and related results on the preprint server Arxiv. In this note, we summarize the contributions and progress that was made in the winter of 2022-2023. We explain the main ideas of Gilmer's approach (Section 2), mention the forthcoming extensions of his method (Sections 3 and 4), as well as an unsuccessful attempt (Section 5) and discuss other work related to the Union-closed conjecture (Section 6).
-
-## 2 The observations and key elements in the proof by Gilmer
-
-A first elementary observation by Gilmer is that one can always prove a statement by proving the contrapositive of that statement. Since the statement of the union-closed conjecture is that simple already, it might be no one considered that before. The contraposition of Conjecture 1 can be stated as follows. If a non-empty family F has no element appearing in at least half of the sets of F , then F is not a union-closed family. By remarking that A ∪ A = A for every set A , one knows that F ⊆ F ∪F , and thus |F ∪ F| &gt; |F| whenever F is not a union-closed family. While posing related questions and studying counterexamples to variants of Conjecture 1 similar to the ones in [8], Gilmer noted that the entropy of a family might play a role. 2 The entropy H ( X ) of a discrete random variable X equals the Shannon entropy of its probability distribution. The latter can be purely presented with a formula. If each possible outcome x belongs to a (finite) set A , and has probability p x , then
-
-<!-- formula-not-decoded -->
-
-When sampling uniformly at random from F , the entropy will equal log 2 |F| and no higher entropy is possible. If one can sample from F ∪ F in such a way that the entropy is larger than log 2 |F| , then one can conclude that |F ∪ F| &gt; |F| . This is exactly the core of Gilmer's approach.
-
-More precisely, he proved the following statement.
-
-Theorem 2. Let A and B denote independent and identically distributed random variables that sample from a common distribution over subsets of [ n ] . Assume that for all i ∈ [ n ] , P [ i ∈ A ] ≤ 0 . 01 . Then H ( A ∪ B ) ≥ 1 . 26 H ( A ) .
-
-As a corollary, by taking the uniform distribution over the subsets of [ n ], one knows that if F ⊂ 2 [ n ] is a family for which every element is contained in no more than 1% of the sets, then |F ∪F| ≥ |F| 1 . 26 . 3
-
-2 More details on his journey/ thought process can be found in 3 As a corollary of later work by Sawin, this is at least |Φ| 1 . 74
-
-https://www.youtube.com/watch?v=AZaP0EwjR\_I&amp;t
-
-This implies that whenever |F| ≥ 2, either |F ∪ F| &gt; |F| (and so the family is not union-closed) or there is an element appearing in at least a 0 . 01 fraction of the sets in F . From this, one can conclude that Conjecture 1 is true for a half replaced by 0 . 01 .
-
-example 3. Let F = {{ 1 } , { 2 }} and thus F ∪ F = {{ 1 } , { 2 } , { 1 , 2 }} . Let A and B be i.i.d. random variables that output a set of F uniformly at random. Then P ( A = { 1 } ) = P ( A = { 2 } ) and analogously for B , which implies
-
-<!-- formula-not-decoded -->
-
-<!-- formula-not-decoded -->
-
-Now H ( A ) = 2 · 1 2 log 2 2 = 1 and H ( A ∪ B ) = 2 · 1 4 log 2 4 + 1 2 log 2 = 3 2 ( &lt; log 2 3) . Since log 2 (2) &lt; H ( A ∪ B ) , we conclude that it is impossible that A ∪ B takes values in a family with only 2 elements and thus |F ∪ F| &gt; |F| , i.e. Gilmer's method verifies that F is not union-closed.
-
-example 4. Let F = ( [3] ≤ 2 ) and thus F ∪ F = 2 [3] . Note that |F| = 7 and every 1 ≤ i ≤ 3 appears in exactly 3 sets and thus in a 3 7 fraction. Let A,B be i.i.d. random variables that output a set of F uniformly at random. Then
-
-<!-- formula-not-decoded -->
-
-<!-- formula-not-decoded -->
-
-<!-- formula-not-decoded -->
-
-and thus H ( A ) &gt; H ( A ∪ B ). We conclude that this is an example for which Gilmer's method does not provide evidence that the family is not union-closed, even while the maximum fraction of occurence of an element is 3 7 .
-
-Note: Analogously, when F = ( [5] ≤ 3 ) , one can verify that H ( A ) = log 2 (26) ∼ 4 . 7 and H ( A ∪ B ) ∼ 4 . 54 . Every element appears in a 11 26 fraction in this case.
-
-## 3 Quick refinement of Gilmer's idea
-
-The binary entropy function h ( p ) = -( p log 2 p +(1 -p ) log 2 (1 -p )) plays a role in the computations in the work of Gilmer. Noting that h ( p ) ≤ h (2 p -p 2 ) whenever p ≤ ψ := 3 - √ 5 2 , Gilmer claimed that his ideas could be extended to prove a fraction equal to ψ. The authors of [1, 5, 18, 15] quickly implemented this approach. All four of these papers essentially reduced Conjecture 1 for the constant ψ to the following key lemma, an inequality in one variable.
-
-Now
-
-<!-- formula-not-decoded -->
-
-The validity of this lemma was established in two different ways by [1] and Sawin [18]. The former used accurate computer calculations and applied interval arithmetic on three intervals, while the latter utilized a purely calculus-based approach. Thanks to some communication between the authors of [1] and [5], in [5] a reference to the formal proof of [1] was added. In [15] the lemma was split in two parts without formal proof, but both can be verified easily.
-
-A short and more elegant proof for Lemma 5 was given later by Boppana [2], even while the proof itself would originate from 1989. This proof relies on the following extension of the classical Rolle's theorem, which follows from observations in e.g. [12].
-
-Theorem 6. Let f be a differentiable function on a interval I . Let m ( f ) be the sum of multiplicities of the roots of f in I . Then m ( f ′ ) ≥ m ( f ) -1 .
-
-By iterating the theorem three times, one finds m ( f ) ≤ m ( f ′′′ ) + 3. Applying this result on the function f ( x ) = h ( x 2 ) -φxh ( x ) and counting the multiplicities of the roots 0 , 1 φ and 1 of f , the conclusion that f is nonnegative on [0 , 1] follows quickly. Once Lemma 5 is derived, the proof for Conjecture 1 for constant ψ (instead of 0 . 5) is rather short in each of the papers [1, 5, 15, 18], indicated e.g. by the total length of the paper by Chase and Lovett [5]. Their work has three steps. First, they extended the analytic claim (Lemma 5) to the two-variate function f ( x, y ) := h ( xy ) h ( x ) y + h ( y ) x . Next they prove a strengthened inequality between the entropy of A ∪ B and the one of A and B , for random variables A and B (not necessarily identical) on { 0 , 1 } n for which every bit is 1 with a bounded probability. Finally, they finish the proof of their slightly more general statement that holds for approximate union-closed families. The latter being families for which the union of two random drawn sets belong to the family with a high probability.
-
-One example which certifies the sharpness of their proof can be derived from F 1 + F 2 = { A | A ∈ F 1 ∨ A ∈ F 2 } where F 1 = ( [ n ] ψn + n 2 / 3 ) and F 2 = ( [ n ] ≥ (1 -ψ ) n ) . For this, one need to note that |F 1 | &gt;&gt; |F 2 | and that the union of two (iid uniform sampled) random sets from F 1 belongs with very high probability to F 2 . The expected size of the union is slightly larger (with an additional term of the order n 2 / 3 , i.e. Θ( n 2 / 3 )) than n -(1 -ψ ) 2 n = (1 -ψ ) n , and since the variance on the size is O ( n 1 / 2 ), the union almost surely belongs to F 2 as well. The conclusion is still valid when replacing the term n 2 / 3 by any function g ( n ) for which n &gt;&gt; g ( n ) &gt;&gt; n 1 / 2 .
-
-Figure 2: An approximate union-closed family whose elements appear in at most a ψ + o (1) fraction.
-
-<!-- image -->
-
-In a different direction, in his paper, Gilmer included some ideas for a full resolution of Conjecture 1, but some of these directions were immediately proven not to hold by Sawin and Ellis [18, 7].
-
-## 4 Further refinements and extensions related to Gilmer's work
-
-Sawin [18] gave a suggestion to improve the bound further, which given the sharpness of the form for union-closed families may be considered surprising. Hereby the essence is in a question purely stated in terms of probability distributions. His suggestion was worked out by Yu [20] and Cambie [4]. Yu [20] considered the approach in a slightly more general form initially and made a lower bound computable by restricting to the suggestion of Sawin and applying [1, Lem. 5] and the Krein-Milman theorem [13] to bound the support (number of values with nonzero probability) of a joint distribution by 4. A numerical computation then yield a bound equal to (roughly) 0 . 38234 . In parallel, Cambie [4] found an upper bound for Sawin's approach which indicates that the improvement is way smaller than expected and one would hope for. The construction is a discrete probability distribution with only two values having nonzero probability, with the values determined by a system of equations involving the entropy function. Additionally he proved that this value is sharp, by first reducing the support to 3 elements, where one of the elements equals 1 . Finally, the conclusion is derived from the combination of 3-dimensional plots, a numerical minimization problem and a more precise solution for the case where the support has exactly two elements, one of which equals 1.
-
-Finally, building upon the work of [5], Yuster [21] considered families that are almost k -unionclosed, meaning that the union of k independent uniform random sets from F belongs to F with high probability. He conjectured a tight version for the minimum frequency (the proportion of sets containing the element) of some element in such families, with the threshold for this frequency being the unique real root in [0 , 1] of (1 -x ) k = x , denoted by ψ k . To understand the sharpness of his conjecture and the intuition behind the choice of ψ k , consider the union of F 1 = ( [ n ] ψ k n + n 2 / 3 ) and F 2 = ( [ n ] ≥ (1 -ψ k ) n ) . If at least one set from F 2 is included among the k sets drawn, the union is guaranteed to belong to F 2 . If all k sets belong to F 1 , the expected size of the union is n -(1 -ψ k ) k n +Θ( n 2 / 3 ), and since the variance is O ( n 1 / 2 ), the union almost surely belongs to F 2 as well. The conjecture is proven to be true for k ≤ 4, while for larger values of k a weaker bound is established.
-
-## 5 The final Eureka moment, not yet
-
-When Scandone [19] uploaded a preprint claiming the full resolution of the union-closed conjecture, there arose initially excitement. However, upon closer examination it became clear that Scandone's proposed solution had several issues, including a significant flaw that requires revising the underlying construction. This was communicated to Scandone by Terence Tao, and the details of this issue are briefly explained later in this section.
-
-Nevertheless, Scandone's underlying idea holds potential and is worth mentioning for the valuable intuition it provides for Gilmer's approach. Let F be a family which is not union-closed, so F∪F /negationslash = F . A random variable taking values in F has entropy at most log 2 |F| and equality occurs only for uniform sampling from F . By considering various examples, e.g. F = {{ 1 } , { 2 }} , the reader can verify that there is no strategy to choose two random variables A,B which sample sets from F , such that A ∪ B samples uniformly random from F ∪ F . On the other hand, if for every set A ∈ F the probability of obtaining it is almost equal to the original probability and a few other sets from ( F ∪ F ) \F happen with a small probability, the entropy can increase. The reason for this is that the derivative of h (plotted in Figure 3) is a continuously decreasing function on the interval (0 , 1), with h ′ (0) = + ∞ . To provide a more explicit explanation of Scandone's idea, we describe his proposed construction in detail.
-
-Let A,B be independent random variables that take any set of F uniformly at random. Define a P ([ n ])-valued random variable A δ (depending on δ ) through the relation
-
-<!-- formula-not-decoded -->
-
-For every X ∈ F , Pr[ A δ = X ] ≥ (1 -δ ) Pr[ A = X ] and thus for δ sufficiently small, we have
-
-h (Pr[ A δ = X ]) -h (Pr[ A = X ]) /greaterorsimilar δ/ |F| h ′ (1 / |F| ) . 4 On the other hand, for X ∈ ( F ∪ F ) \F , let the probability p := Pr[ A ∪ B = X ]. We have that h ( δp ) ∼ -δp (log δ +log p -1). By choosing δ to be sufficiently small such that -log δ is much greater than 1 p h ′ (1 / |F| ), we can ensure that H ( A δ ) &gt; H ( A ) holds.
-
-Figure 3: Plot of the binary entropy function h
-
-<!-- image -->
-
-Equivalently, the variable A δ can be obtained by considering, in addition to A and B , a Bernoulli random variable of parameter δ , Z δ , which determines whether we take A ∪ B or only A . The flaw in the argument is that, in the process of revealing all the digits of A δ (computed using the chain rule for the entropy), the indeterminacy provided by Z δ (and the consequent improvement of the bounds) is lost after the first step. More precisely, there is step in the computations in which a conditional probability distribution has been erroneously replaced by its expected value, and this produces the aforementioned flaw in the argument. The comment of Tao can be rephrased as follows, 'the idea of modifying the union operation by Gilmer is promising, but a single global bit Z δ is not sufficient to do the job, and a more involved construction is needed'.
-
-## 6 A better understanding by progress in a different direction
-
-In this final section, we conclude with the essence of a recent paper and two preprints on the unionclosed conjecture, which consider different aspects and angles of attack on Conjecture 1.
-
-While Frankl's conjecture is about the existence of one abundant element (element that appears in at least half of the sets) in the family, it is also natural to wonder if there are more abundant elements, assuming that all sets in the family are sufficiently large. The following conjecture by Cui and Hu [6] would imply Conjecture 1.
-
-Conjecture 7. If F is a finite union-closed family of sets whose smallest set is of size at least 2 , then there are at least two elements such that each belong to more than half of the sets of F .
-
-At the end of 2022, the three authors of [11] considered this different direction and proved that Conjecture [6] is not true when replacing 2 by a larger integer. They proved (among other results) that there are families all of whose sets have size at least k , where k can be arbitrary large, which do only have 2 abundant elements. The main construction is the family P 12 4 . The family P 12 4 consists of all subsets S of { 0 , 1 , . . . , 11 } of size at least 4 such that either { 0 , 1 } ⊂ S , or 0 ∈ S and S ⊆ { 0 , 2 , . . . , 10 } , or 1 ∈ S and S ⊆ { 1 , 3 , . . . , 11 } . The reader can verify that |P 12 4 | = (2 10 -11) + 2 · 16 = 1045, while every element 2 ≤ i ≤ 11 only appears 2 9 -1+11 = 522 times. One way to increase the size of sets in families with non-abundant elements is to duplicate an element within the sets. However, this creates blocks of size at least 2. A block is defined by Poonen [16] as a maximum set of elements that all belong to the exact same sets of a family. Poonen also noted that to prove Conjecture 1, it is sufficient to focus on families for which no block is a singleton. Due to this, it is interesting to note that the
-
-4 To be precise, we assume |Φ| ≥ 3 and 2 |Φ| + δ &lt; 1 .
-
-construction of the family P 12 4 in [11] can be extended to such families.Let k ≥ 3 be a fixed integer and let n be a sufficiently large even integer as a function of k ( n ≥ 10 k works). Let E n = { i ∈ [ n ] | i ≡ 0 (mod 2) } and O n = { i ∈ [ n ] | i ≡ 1 (mod 2) } be the set of even and odd integers in [ n ] respectively. Consider the family P n k consisting of subsets S of [ n ] of size at least k , such that either
-
-- { 1 , 2 } ⊂ S ,
-- S ⊂ E n and 2 ∈ S , or
-- S ⊂ O n and 1 ∈ S .
-
-It is clear that 1 and 2 are abundant elements. Now the other elements appear all equally often (by symmetry) and by a small bijection and counting argument, we conclude that these elements are not abundant whenever
-
-<!-- formula-not-decoded -->
-
-Since this is the case for n sufficiently large, the conclusion is clear.
-
-Another result related with union-closed families and the smallest set size, was published early 2023. Ellis, Ivan and Leader [9] proved that for every k ∈ N , there exists a union-closed family in which the (unique) smallest set has size k , but where each element of this set has frequency (1 + o (1)) log k 2 k . As such, proving that focusing on the smallest set cannot work in the strongest possible sense. They also proposed the problem of verifying the union-closed conjecture for a family for which they were unable to verify the statement. The latter was verified by Pulaj and Wood [17]. They also proved new bounds on the least number m (given k and n ) such that every union-closed family F containing any A ⊆ [ n ] k with |A| = m as a subfamily, satisfies Conjecture 1.
-
-Note added: In June 2023, Liu [14] improved the constant slightly with a different method of coupling.
-
-( ) We can conclude that despite the progress that originates from the breakthrough of Justin Gilmer, the exact version of Conjecture 1 is still not proven. Mathematicians are still thinking about other directions or modifications of the strategy and hope to resolve Conjecture 1 in the future. Taking into account that the improvement by taking combinations suggested by Sawin [18] turned out to be tinier than expected and hoped for, as illustrated by the example in [4], it seems that the focus should go towards essential new ideas. In particular, the union-closed conjecture might be a distraction of a more general behaviour that |F ∪ F| &gt; |F| c for some c ( ε ) &gt; 1 when every element of [ n ] appears in less than a 1 2 -ε fraction of the sets in F . 5
-
-## Acknowledgements
-
-We thank Zachary Chase, Justin Gilmer, Raffaele Scandone and Lei Yu for internal communication while writing this manuscript.
-
-## References
-
-- [1] R. Alweiss, B. Huang, and M. Sellke. Improved Lower Bound for the Union-Closed Sets Conjecture. arXiv e-prints , page arXiv:2211.11731, Nov. 2022.
-- [2] R. B. Boppana. A Useful Inequality for the Binary Entropy Function. arXiv e-prints , page arXiv:2301.09664, Jan. 2023.
-- [3] H. Bruhn and O. Schaudt. The journey of the union-closed sets conjecture. Graphs Combin. , 31(6):2043-2074, 2015.
-
-5 communicated by Zachary Chase
-
-- [4] S. Cambie. Better bounds for the union-closed sets conjecture using the entropy approach. arXiv e-prints , page arXiv:2212.12500, Dec. 2022.
-- [5] Z. Chase and S. Lovett. Approximate union closed conjecture. arXiv e-prints , page arXiv:2211.11689, Nov. 2022.
-- [6] Z. Cui and Z. Hu. Two stronger versions of the union-closed sets conjecture. Adv. Math. (China) , 50(6):829-851, 2021.
-- [7] D. Ellis. Note: a counterexample to a conjecture of Gilmer which would imply the union-closed conjecture. arXiv e-prints , page arXiv:2211.12401, Nov. 2022.
-- [8] D. Ellis. Union-closed families with small average overlap densities. Electron. J. Combin. , 29(1):Paper No. 1.11, 5, 2022.
-- [9] D. Ellis, I. Leader, and M.-R. Ivan. Small Sets in Union-Closed Families. Electron. J. Combin. , 30(1):Paper No. 1.8-, 2023.
-- [10] J. Gilmer. A constant lower bound for the union-closed sets conjecture. arXiv e-prints , page arXiv:2211.09055, Nov. 2022.
-- [11] A. Kabela, M. Polák, and J. Teska. The number of abundant elements in union-closed families without small sets. arXiv e-prints , page arXiv:2212.09279, Dec. 2022.
-- [12] V. P. Kostov. On arrangements of real roots of a real polynomial and its derivatives. Serdica Math. J. , 29(1):65-74, 2003.
-- [13] M. Krein and D. Milman. On extreme points of regular convex sets. Studia Math. , 9:133-138, 1940.
-- [14] J. Liu. Improving the Lower Bound for the Union-closed Sets Conjecture via Conditionally IID Coupling. arXiv e-prints , page arXiv:2306.08824, June 2023.
-- [15] L. Pebody. Extension of a Method of Gilmer. arXiv e-prints , page arXiv:2211.13139, Nov. 2022.
-- [16] B. Poonen. Union-closed families. J. Combin. Theory Ser. A , 59(2):253-268, 1992.
-- [17] J. Pulaj and K. Wood. Local Configurations in Union-Closed Families. arXiv e-prints , page arXiv:2301.01331, Jan. 2023.
-- [18] W. Sawin. An improved lower bound for the union-closed set conjecture. arXiv e-prints , page arXiv:2211.11504, Nov. 2022.
-- [19] R. Scandone. A proof of the union-closed sets conjecture. arXiv e-prints , page arXiv:2302.03484, Feb. 2023.
-- [20] L. Yu. Dimension-Free Bounds for the Union-Closed Sets Conjecture. arXiv e-prints , page arXiv:2212.00658, Dec. 2022.
-- [21] R. Yuster. Almost k -union closed set systems. arXiv e-prints , page arXiv:2302.12276, Feb. 2023.
+                                         Proximal Reinforcement Learning: Efficient Off-Policy Evaluation
+                                                in Partially Observed Markov Decision Processes
+                                                                           Andrew Bennett and Nathan Kallus
+
+                                                                                             Abstract
+
+
+
+
+arXiv:2110.15332v2 [cs.LG] 22 Mar 2023
+                                                  In applications of offline reinforcement learning to observational data, such as in healthcare or
+                                              education, a general concern is that observed actions might be affected by unobserved factors, inducing
+                                              confounding and biasing estimates derived under the assumption of a perfect Markov decision process
+                                              (MDP) model. Here we tackle this by considering off-policy evaluation in an partially observed MDP
+                                              (POMDP). Specifically, we consider estimating the value of a given target policy in an unknown POMDP
+                                              given observations of trajectories with only partial state observations and generated by a different and
+                                              unknown policy that may depend on the unobserved state. We tackle two questions: what conditions
+                                              allow us to identify the target policy value from the observed data and, given identification, how to best
+                                              estimate it. To answer these, we extend the framework of proximal causal inference to our POMDP setting,
+                                              providing a variety of settings where identification is made possible by the existence of so-called bridge
+                                              functions. We term the resulting framework proximal reinforcement learning (PRL). We then show how
+                                              to construct estimators in these settings and prove they are semiparametrically efficient. We demonstrate
+                                              the benefits of PRL in an extensive simulation study and on the problem of sepsis management.
+
+
+                                         1    Introduction
+                                         An important problem in reinforcement learning (RL) is off policy evaluation (OPE), which is defined as
+                                         estimating the average reward generated by a target evaluation policy, given observations of data generated by
+                                         running some different behavior policy. This problem is particularly important in many application areas such
+                                         as healthcare, education, or robotics, where experimenting with new policies may be expensive, impractical,
+                                         or unethical. In such applications OPE may be used in order to estimate the benefit of proposed policy
+                                         changes by decision makers, or as a building block for the related problem of policy optimization. At the same
+                                         time, in the same applications, unobservables can make this task difficult due to the lack of experimentation.
+                                             As an example, consider the problem of evaluating a newly proposed policy for assigning personalized
+                                         curricula to students semester by semester, where the curriculum assignment each semester is decided based
+                                         on observed student covariates, such as course outcomes and aptitude tests, with the goal of maximizing
+                                         student outcomes as measured, e.g., by standardized test scores. Since it may be unethical to experiment with
+                                         potentially detrimental curriculum plans, we may wish to evaluate such policies based on passively collected
+                                         data where the targeted curriculum was decided by teachers. However, there may be factors unobserved in the
+                                         data that jointly influence the observed student covariates, curriculum assignments, and student outcomes;
+                                         this may arise for example because the teacher can perceive subjective aspects of the students’ personalities or
+                                         aptitudes and take these into account in their decisions. While such confounding breaks the usual Markovian
+                                         assumptions that underlie standard approaches to OPE, the process may well be modeled by a partially
+                                         observed Markov decision process (POMDP). Two key questions for OPE in POMDPs are: when is policy
+                                         value still identifiable despite confounding due to partial observation and, when it is, how can we estimate it
+                                         most efficiently.
+                                             In this paper we tackle these two questions, expanding the range of settings that enable identification and
+                                         providing efficient estimators in these settings. First, we extend an existing identification result for OPE in
+                                         tabular POMDPs [Tennenholtz et al., 2020] to the continuous setting, which provides some novel insight
+                                         on this existing approach but also highlights its limitations. To break these limitations, motivated by these
+                                         insights, we provide a new general identification result based on extending the proximal causal inference
+                                         framework [Miao et al., 2018a, Cui et al., 2020, Kallus et al., 2022] to the dynamic, longitudinal setting.
+                                         This permits identification in more general settings. And, unlike the previous results, this one expresses the
+
+
+                                                                                                  1
+value of the evaluation policy as the mean of some score function under the distribution over trajectories
+induced by the logging policy, which allows for natural estimators with good qualities. In particular, we prove
+appropriate conditions under which the estimators arising from this result are consistent, asymptotically
+normal, and semiparametrically efficient. In addition, we provide a tractable algorithm for computing the
+nuisance functions that allow such estimators to be computed, based on recent state-of-the-art methods
+for solving conditional moment problems. We term this framework proximal reinforcement learning (PRL),
+highlighting the connection to proximal causal inference. We finally provide a series of experiments, on both
+a synthetic toy scenario and a complex scenario based on a sepsis simulator, which empirically validate our
+theoretical results and demonstrate the benefits of PRL.
+
+
+2    Related Work
+First, there is an extensive line of recent work on OPE under unmeasured confounding. This line of work
+considers many different forms of confounding, including confounding that is i.i.d. at each time step [Wang
+et al., 2021, Bennett et al., 2021, Liao et al., 2021], occurs only at a single time step [Namkoong et al., 2020],
+satisfies a “memorylessness” property [Kallus and Zhou, 2020], follows a POMDP structure [Tennenholtz et al.,
+2020, Nair and Jiang, 2021, Oberst and Sontag, 2019, Killian et al., 2022], may take an arbitrary form [Chen
+and Zhang, 2021, Chandak et al., 2021], or is in fact not a confounder [Hu and Wager, 2023]. These works
+have varying foci: Namkoong et al. [2020], Kallus and Zhou [2020], Chen and Zhang [2021] focus on computing
+intervals comprising the partial identification set of all hypothetical policy values consistent with the data and
+their assumptions; Oberst and Sontag [2019], Killian et al. [2022] focus on sampling counterfactual trajectories
+under the evaluation policy given that the POMDP follows a particular Gumbel-softmax structure; Wang
+et al. [2021], Gasse et al. [2021] focus on using the offline data to warm start online reinforcement learning;
+Liao et al. [2021] study OPE using instrumental variables; Chandak et al. [2021] show that OPE can be
+performed under very general confounding if the behavior policy probabilities of the logged actions are known;
+Hu and Wager [2023] consider hidden states that do not affect the behavior policy and are therefore not
+confounders but do make OPE harder by breaking Markovianity thereby inducing a curse of horizon; and
+Tennenholtz et al. [2020], Nair and Jiang [2021] study conditions under which the policy value under the
+POMDP model is identified.
+    Of the past work on OPE under unmeasured confounding, Tennenholtz et al. [2020], Nair and Jiang
+[2021] are closest to ours, since they too consider a general POMDP model of confounding, namely without
+restrictions that preserve Markovianity via i.i.d. confounders, knowing the confounder-dependent propensities,
+having unconfounded logged actions, or using a specific Gumbel-softmax form. Tennenholtz et al. [2020]
+consider a particular class of tabular POMDPs satisfying some rank constraints, and Nair and Jiang [2021]
+extend these results and slightly relax its assumptions. However, both do not consider how to actually
+construct OPE estimators based on their identification results that satisfy desirable properties such as
+consistency or asymptotic normality, and they can only be applied to tabular POMDPs. This work presents
+a novel and general identification result and proposes a class of resulting OPE estimators that possesses such
+desirable properties.
+    Another area of relevant literature is on proximal causal inference (PCI). PCI was first proposed by
+Miao et al. [2018a], showing that using two conditionally independent proxies of the confounder (known as
+a negative control outcome and a negative control action) we can learn an outcome bridge function that
+generalizes the standard mean-outcome function and controls for the confounding effects. Since then this
+work has been expanded, including by alternatively using an action bridge function which instead generalizes
+the inverse propensity score [Miao et al., 2018b], allowing for multiple fixed treatments [Tchetgen Tchetgen
+et al., 2020], performing multiply-robust treatment effect estimation [Shi et al., 2020], combining outcome and
+action bridge functions for semiparametrically efficient estimation [Cui et al., 2020], using PCI to estimate
+the value of contextual-bandit policies [Xu et al., 2021] or generalized treatment effects [Kallus et al., 2022],
+or estimating bridge functions using adversarial machine learning [Kallus et al., 2022, Ghassami et al., 2022].
+In addition, the OPE for POMDP methodologies of Tennenholtz et al. [2020], Nair and Jiang [2021] discussed
+above were said to be motivated by PCI. This work relates to this body of work as it proposes a new way of
+performing OPE for POMDPs using PCI, and it also proposes a new adversarial machine learning-based
+approach for estimating the bridge functions.
+
+
+                                                        2
+   At the intersection of work of OPE and PCI is the concurrent work of Ying et al. [2021], which considers
+PCI in multi time step scenarios, given two proxies at each time step similar to what we consider in Section 4.2.
+Unlike us they only consider the problem of estimating treatment effects for fixed vectors of treatment at
+each time step, optionally conditional on observable context at t = 1, as opposed to evaluating policies that
+can adaptively treat based on the context available so far.
+   Finally, there is an extensive body of work on learning policies for POMDPs using online learning. For
+example, see Azizzadenesheli et al. [2016], Katt et al. [2017], Bhattacharya et al. [2020],Yang et al. [2021],
+Singh et al. [2021], and references therein. This work is distinct in that we consider an offline setting where
+identification is an issue. At the same time, this work is related to the online setting in that it could potentially
+be used to augment and warm start such approaches if there is also offline observed data available.
+
+
+3    Problem Setting
+A POMDP is formally defined by a tuple (S, A, O, H, PO , PR , PT ), where S denotes a state space, A denotes
+a finite action space, O denotes an observation space, H ∈ N denotes a time horizon, PO is an observation
+                (t)
+kernel, with PO (· | s) denoting the density of the observation Ot given the state St = s at time t, PR is a
+                       (t)
+reward kernel, with PR (· | s, a) denoting the density of the (bounded) reward Rt ∈ [−Rmax , Rmax ] given the
+                                                                               (t)
+state St = s and action At = a at time t, and PT is a transition kernel, with PT (· | s, a) denoting the density
+of the next St+1 given the state St = s and action At = a at time t. Note that we allow for the POMDP to
+be time inhomogeneous; that is, we allow the outcome, reward, and transition kernels to potentially depend
+on the time index. Finally, we let O0 denote some prior observation of the state before t = 1 (which may be
+empty), and we let τtfull and τt denote the true and observed trajectories up to time t respectively, which we
+define as
+
+                         τ0 = τ0full = O0
+                         τt = (O0 , (O1 , A1 , R1 ), (O2 , A2 , Rt ), . . . , (Ot , At , Rt ))
+                      τtfull = (O0 , (S1 , O1 , A1 , R1 ), (S2 , O2 , A2 , Rt ), . . . , (St , Ot , At , Rt )) .
+
+     Let πb be some given randomized logging policy, which is characterized by a sequence of functions
+  (1)         (H)          (t)
+πb , . . . , πb , where πb (a | St ) denotes the probability that the logging policy takes action a ∈ A at
+time t given state St . The logging policy together with the POMDP define a joint distribution over the
+                    full
+(true) trajectory τH     given by acting according to πb ; let Pb denote this distribution. All probabilities and
+expectations in the ensuing will be with respect to Pb unless otherwise specified, e.g., by a subscript.
+                                                                                               (1) (2)       (n)
+     Our data consists of observed trajectories generated by the logging policy: D = {τH , τH , . . . , τH },
+                (i)
+where each τH is an i.i.d. sample of τH (which does not contain St ), distributed according to Pb . Importantly,
+we emphasize that, although we assume that states are unobserved by the decision maker and are not included
+in the logged data D, the logging policy still uses these hidden states, inducing confounding.
+                                (t)
+     Implicit in our notation πb (a | St ) is that the logging policy actions are independent of the past given
+current state St . Similarly, the POMDP model is characterized by similar independence assumption with
+respect to observation and reward emissions, and state transitions. This means that Pb satisfies a Markovian
+assumption with respect to St ; however, as St is unobserved we cannot condition on it and break the past
+from the future. We visualize the directed acyclic graph (DAG) representing Pb in Fig. 1. In particular, we
+have the following conditional independencies in Pb : for every t,
+                                                       full
+                                                Ot ⊥⊥ τt−1  | St
+                                                       full
+                                                Rt ⊥⊥ τt−1  , Ot | St , At
+                                                         full
+                                                St+1 ⊥⊥ τt−1  , Ot , Rt | St , At
+                                                       full
+                                                At ⊥⊥ τt−1  | St .
+
+    Now, let πe be some deterministic target policy that we wish to evaluate, which is characterized by a
+                       (1)          (H)        (t)
+sequence of functions πe , . . . , πe , where πe (Ot , τt−1 ) ∈ A denotes the action taken by policy πe at time t
+given current observation Ot and the past observable trajectory τt−1 . We visualize the POMDP model under
+
+
+                                                                  3
+                            O1                 O2                  O3
+
+
+                            S1                  S2                 S3       ......
+
+
+                            R1       A1        R2          A2      R3       A3
+
+
+Figure 1: Graphical representation of the POMDP model under the logging policy πb . The red arrows make
+explicit the dependence of πb on the hidden state. Dashed circles denote variables unobserved in our data.
+
+                   τ0                  τ1                   τ2                τ3
+
+                              O1                 O2                  O3
+
+                                                                                     ......
+                              S1                 S2                  S3
+
+
+                              R1      A1         R2         A2       R3       A3
+
+
+Figure 2: Graphical representation of the POMDP model under the evaluation policy πe . The red arrows
+make explicit the dependence of πe on the current observation and previous observable trajectory, and the
+blue nodes and arrows make explicit the dependence of the observable trajectories on the data.
+
+                                                                                      (t)
+such a policy that only depends on observable data in Fig. 2. Note that we allow πe to potentially depend
+on all observable data up to time t; this is because the Markovian assumption does not hold with respect
+to the observations Ot , so we may wish to consider policies that use all past observable information to best
+account for the unobserved state. We let Pe denote the distribution over trajectories that would be obtained
+by following policy πe in the POMDP. Then, given some discounting factor γ ∈ (0, 1], we define the value of
+policy πe as
+                                                    H
+                                                    X
+                                         vγ (πe ) =   γ t−1 EPe [Rt ] ,
+                                                     t=1
+
+The task OPE under the POMDP model is to estimate vγ (πe ) (a function of Pe ) given D (drawn from Pb ).
+
+
+4    Identification Theory
+Before considering how to actually estimate vγ (πe ), we first consider the problem of identification, which is
+the problem of finding some function ψ such that vγ (πe ) = ψ(Pb ), and is a prerequisite for identificaiton.
+This is the first stepping stone because Pb is the most we could hope to ever learn from observing D. If
+such a ψ exists, then we say that vγ (πe ) is identified with respect to Pb . In general, such an identification
+result is impossible for the OPE problem given unobserved confounding as introduced by our POMDP model.
+Therefore, we must impose some assumptions on Pb for such identification to be possible.
+    To the best of our knowledge, the only existing identification result of this kind was presented by
+Tennenholtz et al. [2020] (with a slight generalization given by Nair and Jiang, 2021), and is only valid in
+tabular settings where states and observations are discrete. We will proceed first by extending this approach
+to more general, non-tabular settings. However, we will note that there are some restrictive limitations to
+estimation based on this approach. So, motivated by the limitations, we develop a new and more general
+identification theory which extends the PCI approach to the sequential setting and easily enables efficient
+
+
+                                                       4
+estimation.
+
+4.1    Identification by Time-Independent Sampling and Its Limitations
+                                                                                                              (t)
+For our generalization of Tennenholtz et al. [2020], we will consider evaluating policies πe such that πe (Ot , τt )
+                                             (t)
+only depends on O1:t and A1:t−1 ; that is, πe can depend on all observed data available at time t except for
+O0 and past rewards. First, for each t ∈ {1, . . . , H}, let Dt = (Ot−1 , Ot , Ot+1 , At , Rt ), and for any such tuple
+D = (O, O0 , O00 , A, R) define o(D) = O, o0 (D) = O0 , o00 (D) = O00 , a(D) = A, and r(D) = R. In addition,
+                         (t)         (t)
+define the shorthand πe (D1:t ) = πe (o0 (Dt ), . . . , o0 (D1 ), a(Dt−1 ), . . . , a(D1 )). Furthermore, let Pind denote
+the measure on D1:H in which each tuple Dt is sampled independently according to its marginal distribution
+in Pb . Note that under this measure the overlapping observations between these tuples (e.g. o0 (Dt ) and
+o(Dt+1 )) may take different values. Then, given these definitions, we have the following result.
+Theorem 1. Under some regularity conditions detailed in Appendix A, there exist functions ρ(t) defined by
+conditional moment restrictions under Pb , such that for every t ∈ {1, . . . , H]} we have
+                              "       t
+                                                                                                    #
+                                      Y                                                          
+             EPe [Rt ] = EPind r(Dt )   1{a(Ds ) = π (t) (D1:s )}ρ(s) o(Ds ), a(Ds ), o00 (Ds−1 )     .
+                                         s=1
+
+Furthermore, under the conditions of Tennenholtz et al. [2020, Theorem 1], these regularity conditions are
+satisfied, and the above is identical to their identification quantity.
+
+    Since Pind is a function of Pb , and vγ (πe ) is a function of EPe [R1 ], . . . , EPe [RH ], Theorem 1 gives a
+valid identification quantity for vγ (πe ). The full details of the regularity conditions and nuisance functions
+governing this result are not very important to this paper, so they are deferred along with the proof of this
+theorem to Appendix A. For our purposes, the main takeaway of Theorem 1 is that there exists a natural
+generalization of Tennenholtz et al. [2020, Theorem 1] to non-discrete settings; while that result was originally
+expressed as a sum over all possible observable trajectories, we show that it can instead be expressed as the
+expectation of a simple, estimable quantity whose existence does not depend on discreteness. Unfortunately,
+the expectation that naturally arises is under Pind rather than Pb . This means that empirical approximations
+of this expectation given n i.i.d. samples from Pb would require averaging over ns terms, introducing a
+curse of dimension. Furthermore, this expectation clearly does not have many of the desirable properties
+for OPE estimating equations held by many OPE estimators in the simpler MDP setting, such as Neyman
+orthogonality [Kallus and Uehara, 2020, 2022].
+
+4.2    Identification by Proximal Causal Inference
+We now discuss an alternative way of obtaining identifiability, via a reduction to a nested sequence of
+proximal causal inference (PCI) problems of the kind described by Cui et al. [2020]. These authors considered
+identifying the average treatment effect (ATE), and other related causal estimands, for binary decision making
+problems with unmeasured confounding given two independent proxies for the confounders, one of which is
+conditionally independent from treatments given confounders, and the other of which is independent from
+outcomes given treatment and confounders. We will in fact leverage the refinement of the PCI approach by
+Kallus et al. [2022], which has strictly weaker assumptions than Cui et al. [2020].
+    Our reduction works by defining random variables Zt and Wt for each t ∈ [H] that are measurable w.r.t.
+the observed trajectory τH , as well as defining random variables Ut for each t ∈ [H] such that St is measurable
+w.r.t. Ut . We respectively refer to Zt and Wt as negative control actions and negative control outcomes,
+and we refer to Ut as confounders. All triplets (Zt , Wt , Ut ) must be satisfy certain independence properties
+outlined below. Any definition of such variables that satisfy these independence properties is considered a
+valid PCI reduction, and we will have various examples of valid PCI reductions for our POMDP model at the
+end of this section.
+    To formalize these assumptions, we must first define some additional notation. Let Pt∗ denote the measure
+on trajectories induced by running policy πe for the first t − 1 actions, and running policy πb henceforth.
+Note that according to this definition, Pb = P1∗ , and Pe = PH+1 ∗
+                                                                     . In addition, let E∗t and Pt∗ be shorthand
+
+
+                                                           5
+                        S1          ...         St−1              St           ...            SH        SH+1
+
+
+
+
+         Pt∗ :          O1          ...         Ot−1              Ot           ...            OH        OH+1
+
+
+
+
+                        A1          ...         At−1              At           ...            AH
+
+                                     πe                                            πb
+
+
+
+
+                                                                  Zt                Ut             Wt
+
+                       PCI Problem under Pt∗ :
+
+                                                                          At             Yt
+
+
+
+
+Figure 3: Visual summary of the interventional distributions and corresponding conditional independence
+assumptions on proxies for our Proximal RL theory. Above: Visual representation of the interventional
+distribution Pt∗ , which is the distribution over trajectories obtained by following the evaluation policy πe for
+the first t − 1 actions, and then taking all subsequent actions following πb . Below: Probabilistic graphical
+representation of the corresponding Proximal Causal Inference decision-making problem at time t under
+Pt∗ , with outcome variable Yt = φ(Rt , Dt+1:H ) for arbitrary φ. The variables Zt and Wt are conditionally
+independent action-side and outcome-side proxies for the true (unobserved) confounder Ut .
+
+
+for expectation and probability mass under Pt∗ respectively. We visualize these intervention distributions in
+the first part of Fig. 3.
+                                                      (t)
+    Next, for each t ∈ {1, . . . , H} we define Et = πe (Ot , τt−1 ), and Dt = (Zt , Wt , At , Et , Rt ). In addition, we
+will refer to any random variable Yt as an outcome variable at time t if it is measurable w.r.t. (Rt , Dt+1:H ).
+For any such variable and a ∈ A, we use Yt (a) to denote a random variable with the same distribution that Yt
+would have if, possibly counter to fact, action a were taken at time t instead of At . We note that under Pt∗ ,
+we can interpret Yt (a) as the outcome that would be obtained by applying πe for the first t − 1 actions, the
+fixed action a at time t, and then πb henceforth (as opposed to the factual outcome Yt obtained by applying
+πe for the first t − 1 actions and πb henceforth). We also note that according to this notation Yt (At ) = Yt
+always.
+    Given these definitions, we are ready to present our core assumptions. Our first assumption is that the
+confounders Ut are sufficient to induce a particular conditional independence structure between the proxies
+Zt and Wt , as well as the observable data. Specifically, we assume the following:
+Assumption 1 (Negative Controls). For each t ∈ [H] and a ∈ A, and any outcome variable Yt that is
+measurable w.r.t. (Rt , Dt+1:H ), we have
+                                           Zt , At ⊥⊥Pt∗ Wt , Et , Yt (a) | Ut .
+   We note that these independence assumptions imply that the decision making problem under Pt∗ with
+confounder Ut , negative controls Zt and Wt , action At , and outcome (Rt , Dt+1:H ) satisfy the PCI problem
+
+
+                                                            6
+structure as in Cui et al. [2020]. We visualize this structure for the problem at time t in Fig. 3. In addition, it
+requires that the action-side proxy Zt is conditionally independent from the next action Et that would have
+                     (t)
+been taken under πe . Note also that we may additionally include an observable context variable Xt , which
+may be useful for defining more efficient reductions. In this case, the conditional independence assumption in
+Assumption 1 should hold given both Ut and Xt , and in everything that follows Zt , Wt , and Ut should be
+replaced with (Zt , Xt ), (Wt , Xt ), and (Ut , Xt ) respectively, as in Cui et al. [2020]. However, we omit Xt from
+the notation in the rest of the paper for brevity.
+    Next, our results require the existence of some bridge functions, as follows.
+Assumption 2 (Bridge Functions Exist). For each t ∈ [H] and a ∈ A, and any given outcome variable
+Yt = φ(Rt , Dt+1:H ), there exists functions q (t) and h(t,φ) satisfying
+
+                           E∗t [q (t) (Zt , At ) | Ut , At = a] = Pt∗ (At = a | Ut )−1      a.s.
+                 and    E∗t [h(t,φ) (Wt , At ) | Ut , At = a] = E∗t [1{Et = At }Yt | Ut , At = a]        a.s. .
+
+    Implicit in the assumption is that Pt∗ (At = a | Ut ) > 0. We refer to the functions q (t) as action bridge
+functions, and h(t,φ) as outcome bridge functions. These may be seen as analogues of inverse propensity scores
+and state-action quality functions respectively. As argued previously by Kallus et al. [2022], assuming the
+existence of these functions is more general than the approach taken by Cui et al. [2020], who require complex
+completeness conditions. We refer readers to Kallus et al. [2022] for a detailed presentation of conditions
+under which the existence of such bridge functions can be justified, as well as concrete examples of bridge
+functions when the negative controls are discrete, or the negative controls and Yt are defined by linear models.
+    In the case of both Assumptions 1 and 2, the assumption depends on the choice of proxies Zt and Wt , and
+                                                                               (t)
+on the choice of confounders Ut . In addition, the parts of (Ot , τt−1 ) that πe may depend on determines what
+variables Et is a function of, so the evaluation policy πe also affects the validity of Assumption 1. For now we
+just emphasize this important point, and present our main identification theory, which is valid given these
+assumptions. However, we will provide some concrete examples of feasible and valid choices of (Zt , Wt , Ut )
+that satisfy Assumption 1 for different kinds of policies πe in Section 4.3. In addition, we provide an in-depth
+examination of the additional conditions under which Assumption 2 holds for an example tabular setting in
+Section 4.4.
+Theorem 2. Let Assumptions 1 and 2 hold. Define q (t) and h(t) as any solutions to the following equations
+(which are assumed to hold almost surely)
+                   h                              i
+                E∗t q (t) (Zt , At ) | Wt , At = a = Pt∗ (At = a | Wt )−1 ∀a ∈ A ,                     (1)
+                   h                              i     h                          i
+                E∗t h(t) (Wt , At ) | Zt , At = a = E∗t 1{Et = At }Yt | Zt , At = a ∀a ∈ A ,           (2)
+
+where YH = RH , and for every t ≤ H we recursively define
+                            X                                                                   
+            Yt−1 = Rt−1 + γ       h(t) (Wt , a) + q (t) (Zt , At ) 1{At = Et }Yt − h(t) (Wt , At ) .               (3)
+                                      a∈A
+                 Qt−1                  (s)
+Also, let ηt =    s=1 1{Es = As }q           (Zs , As ). Then, we have vγ (πe ) = EPb [ψDR (τH )], where
+                               H
+                               X                       X                                                   
+                 ψDR (τH ) =         γ t−1 ηt+1 Rt + ηt   h(t) (Wt , a) − ηt q (t) (Zt , At )h(t) (Wt , At ) .     (4)
+                               t=1                        a∈A
+
+    Since EPb [ψDR (τH )] is fully defined by Pb , this is a valid identification result. As detailed in our proof, the
+existence of solutions to Eqs. (1) and (2) is guaranteed given our assumptions. Comparing with Theorem 1,
+this result has many immediate advantages; it is written as an expectation over Pb , and so may be analyzed
+readily using standard semiparametric efficiency theory, and although Eqs. (1) and (2) may appear complex
+given that they are expressed in terms of the intervention distributions Pt∗ , this can easily be dealt with
+as discussed later. We also observe that Eq. (4) has a very similar structure to the Double Reinforcement
+Learning (DRL) estimators for the MDP setting [Kallus and Uehara, 2020], where h(t) and q (t) are used
+
+
+                                                                7
+                                                                                                   (t)
+             PCI Reduction              Zt                   Wt      Ut              Input to πe
+             curr. and prev. obs.       Ot−1 , At−1 , Rt−1   Ot      St              Ot
+             curr. and k-prior obs.     Ot−k0                Ot      St , St−k0 +1   (Ot , τt−1 ) \ τt−k0
+             two views of obs.          Otpriv               Otpub   St                               priv
+                                                                                     (Ot , τt−1 ) \ O0:t
+
+Table 1: Summary of some valid PCI reductions for our Proximal RL theory. For each, we provide the explicit
+reduction in terms of the triplet (Zt , Wt , Ut ), and we summarize what kinds of policies can be evaluated under
+                                                               (t)
+the respective reduction (i.e. what is the allowed input to πe ). For the second row, recall that k 0 = min(k, t),
+and for the third row, recall that Ot = (Otpriv , Otpub ), where Otpriv ⊥⊥ Otpub | St .
+
+
+in place of inverse propensity score and quality function terms respectively. This is very promising, since
+DRL estimators enjoy desirable properties such as semiparametric efficiency in the MDP setting [Kallus and
+Uehara, 2020]. Indeed, in Section 5 we show that similar properties extend to estimators defined based on
+Eq. (4).
+     At a high level, the proof of Theorem 2 works by defining a series of of outcome variables Yt such that, for
+each PCI problem at time t ∈ [H] under distribution Pt∗ and with outcome variable Yt , the policy value obtained
+by intervening at time t with πe is equal to EPe [Rt + γRt+1 + . . . + γ H−t RH ]. In the base case of t = H this
+                                                            ∗
+property is trivially satisfied with Yt = Rt , since under PH all prior actions prior to time H are taken following
+πe . Conversely, for t < H, we establish via backward induction that this holds with Yt defined according to
+Eq. (3). Intuitively, this works because the term multiplied by γ in Eq. (3) is the doubly robust influence
+function for the PCI problem at time t, so E∗t [Yt−1 ] = EPe [Rt−1 ] + γE∗t+1 [Yt ]. Similarly, ψDR (τH ) is the
+doubly robust influence function for the PCI problem at t = 1, and so EPb [ψDR (τH )] = E∗2 [Y1 ] = . . . = vγ (πe ).
+That is, we recursively apply the improved identification theory of Kallus et al. [2022] to a nested sequence
+of PCI problems. In each step of the induction, we apply Assumptions 1 and 2 with the specific outcome
+variable Yt . We provide full proof details in Appendix B, where we also present a slightly more general result
+that allows for alternatives to ψDR that instead resemble importance sampling or direct method estimators
+for the MDP setting.
+
+4.3     Specific Proximal Causal Inference Reductions and Resulting Identification
+Next, we provide some discussion of how to actually construct a valid PCI reduction; that is, how to choose Zt ,
+Wt , and Ut that satisfy Assumption 1. We provide several options of how this reduction may be performed,
+and discuss in each case the assumptions that would be required of the POMDP and πe for identification based
+on our results. In all cases that we consider below, we would need to additionally justify Assumption 2, which
+implicitly requires some additional completeness conditions on the choices of Zt , Wt , and Ut . Furthermore,
+we note that the practicality of any given reduction would depend heavily on how well-correlated Wt and Zt
+are for each t, which in turn would impact how easily the required nuisance functions q (t) and h(t) could be
+fit. We summarize these reductions in Table 1.
+
+4.3.1   Current and previous observation
+Perhaps the most simple kind of PCI reduction would be to define Ut = St , Wt = Ot , and Zt =
+(Ot−1 , At−1 , Rt−1 ). That is, we use the current hidden state as confounders, and we use both the ob-
+servation of St as well as the previous observation, action, reward triple as proxies for Ot . For this definition
+we define A0 = R0 = ∅. It is easy to verify that this is a valid PCI reduction (i.e. satisfying Assumption 1)
+              (t)
+as long as πe depends on (τt , Ot ) via Ot only. In addition, it is easy to verify that this reduction remains
+valid if we replace Zt with Ot−1 , which gives us a very simple and elegant reduction, at the slight cost of
+fewer treatment-side proxies.
+    This kind of reduction may be relevant in applications where the current observation of the state is
+considered to be rich enough for decision making, but where nonetheless it is possible that confounding is
+present. One example of such a setting is a noisy observation setting, where Ot is a direct observation of St
+that may be corrupted with some probability, as discussed in more detail in Section 6. Another example
+where such a reduction may be desirable is when we wish to consider policies that are functions of Ot only
+
+
+                                                         8
+for reasons of simplicity / interpretability. For example, if we wish to evaluate an automated policy for sepsis
+management, we may wish that the policy is a simple function of the patient’s current state that can be
+understood and audited by doctors.
+
+4.3.2   Current and k-prior observation
+An alternative to the previous reduction would be to define to define Ut = (St , St−k0 +1 ), Wt = Ot , and
+Zt = Ot−k0 , for some integer k ≥ 2, where k 0 = min(k, t). Note that in this reduction we can no longer
+include any action or reward in Zt , as this would break Assumption 1 in general given the definition of Pt∗ .
+                                                    (t)
+This reduction allows for any policy where πe depends on (τt , Ot ) via the data from the k-most recent time
+steps; i.e. (Ot−k0 +1:t , At−k0 +1:t−1 , Rt−k0 +1:t−1 ).
+    This kind of reduction would be useful in applications where it is necessary to consider policies that
+consider a past history of observations, rather than only the most recent observation. For example, if we were
+considering the task of training an robot to act within an environment that it can only observe part of at each
+time step through its camera, it may be necessary to consider policies that use several recent observations to
+build a more accurate map of the environment. However, one limitation of this reduction compared to the
+previous is that it uses two states as its confounder, which may make Assumption 2 more difficult to satisfy.
+In addition, since Zt and Wt are separated in time, if k is large they may be weakly correlated, making bridge
+functions more difficult to fit.
+
+4.3.3   Two views of current observation
+Finally, we consider a different kind of reduction, which is valid when we have two separate views of the
+observation; that is, we can partition each observation Ot as Ot = (Otpriv , Otpub ), where Otpriv ⊥⊥ Otpub | St .
+In this case, we can define Ut = St , Wt = Otpub , and Zt = Otpriv . This allows us to evaluate any policy where
+  (t)                                      priv
+πe may depend on all of τt except for O0:t      .
+     This kind of reduction could be appealing in many settings. First of all, it may be useful for the same
+kinds of applications as the previous kind of reduction, as it allows us to consider policies defined on a history
+of past observations without incurring the costs of the same costs in terms of satisfying Assumption 2 or
+estimating bridge functions. This reduction could be particularly useful when there are some observation
+variables that cannot be used directly for decision making. For example, in the personalized education
+example considered in Section 1, there may be certain testing-based metrics that were specifically collected
+with the logged data, but that would not be available when a policy was deployed. Similarly, in robotics
+settings as discussed earlier, there may be cheap sensors that are always available, and expensive sensors that
+are only available in the logged data [Pan et al., 2020]. In this case, we could include all such unavailable
+covariates in Otpriv , and the remaining covariates in Otpub , and this would allow policy evaluation with no
+effective restriction on the kinds of policies considered. Similarly, if certain sensitive covariates were not
+allowed to be included in policies e.g. for ethical reasons, such covariates could be included in Otpriv .
+
+4.4     Example: Tabular POMDPs Using Previous and Current Observation as
+        Proxies
+Finally, we conclude this section with a discussion of our key identification assumptions for a simple tabular
+case, where we use the previous and current observations as proxies for the unobserved state as described in
+Section 4.3.1. That is, we consider settings where Ut = St , Zt = Ot−1 , Wt = Ot , and S and O are both finite.
+                                                                                    (t)
+    As argued previously, this choice of proxies satisfies Assumption 1 as long as πe depends on Ot , τt−1 via
+Ot only. However, it remains to also justify Assumption 2. The following proposition allows us to rewrite the
+bridge equations for this simple setting in terms of some conditional probability matrices under the POMDP
+and evaluation policy πe .
+Proposition 1. Let P (t) (O | S) denote the |O| by |S| matrix of the distribution of Ot given St in the
+                     (t)
+POMDP, and let Pe (S0 | S) denote the |S| by |S| matrix of the distribution of St−1 given St under rollout by
+πe . In addition, for any outcome variable Yt = φ(Rt , Dt+1:H ) and a ∈ A, let E∗t [1{Et = At }Yt | S, a] denote
+the |S|-length vector of values of 1{Et = At }Yt given St and At = a under Pt∗ , and let Pt∗ (a | S)−1 denote
+
+
+                                                        9
+the |S|-length vector of values of P (At = a | St )−1 under Pt∗ . Then, using proxies Zt = Ot−1 and Wt = Ot ,
+and confounders Ut = St , the bridge equations in Assumption 2 for each t correspond to solving
+
+                          Pe(t) (S0 | S)> P (t) (O | S)> q (t) (O, a) = Pt∗ (a | S)−1    ∀a ∈ A
+
+and
+                         P (t) (O | S)> h(t,φ) (O, a) = E∗t [1{Et = At }Yt | S, a]       ∀a ∈ A ,
+where q (t) (O, a) and h(t,φ) (O, a) are the |O|-length vector of values of q (t) (Zt , a) and h(t,φ) (Wt , a) respectively.
+
+    This proposition follows trivially by applying the fact that Zt = Ot−1 , Wt = Ot , and Ut = St , and
+                                                                                                   (t)
+explicitly expanding out the conditional expectations in the bridge equations in terms of Pe (S0 | S) and
+  (t)
+P (O | S) given the Markovian property of the POMDP conditioned on the unobserved states.
+                                                                                             (t)
+    A trivial corollary of the proposition is that, if |O| ≥ |S|, and P (t) (O | S) and Pe (S0 | S) are both
+full-rank, then the above equations are always solvable for all a ∈ A, no matter the outcome variable Yt . This
+                                              (t)
+follows by using any pseudo-inverse for Pe (S0 | S)> P (t) (O | S)> and P (t) (O | S)> . The conditions that
+|O| ≥ |S| and that P (t) (O | S) is full rank are independent of the behavior or evaluation policies, and they
+essentially require that all distributions over states imply different distributions over observations; that is,
+                                                                                                 (t)
+there are no “invisible” aspects of St that don’t affect Ot . Conversely, the assumption that Pe (S 0 | S) is full
+rank depends on the evaluation policy πe . However, it may be justified for all possible evaluation policies, for
+                                                                                         (t)
+example if the |S| by |S| conditional probability matrix defining the transition kernel PT (St | St−1 , At−1 = a)
+were invertible for every a ∈ A. In other words, we can justify Assumption 2 under some basic conditions on
+the underlying POMDP, which may be reasoned about on a problem-by-problem basis.
+    Finally, although the above analysis is specific to our example setting, the intuition is very general; in
+order for Assumption 2 to hold, we need that the proxies are sufficiently well correlated with the confounders
+                              (t)
+(e.g. that P (t) (O | S) and Pe (S0 | S) are full rank), and that they contain at least as much information as
+the confounders (e.g. that we also have |O| ≥ |S|).
+
+
+5     Policy Value Estimators
+Now we turn from the question of identification to that of estimation. We will focus on estimation of vγ (πe )
+based on the identification result given by Corollary 8. We will assume in the remainder of this section that
+we have fixed a valid PCI reduction that satisfies Assumptions 1 and 2. A natural approach to estimating
+vγ (πe ) based on Corollary 8 would be to use an estimator of the kind
+                                                                  n
+                                                               1 X d (i)
+                                              v̂γ(n) (πe ) =         ψDR (τH ) ,                                         (5)
+                                                               n i=1
+
+                                                                                                            (t)
+where ψd DR is an approximation of ψDR using plug-in estimators for the nuisance functions h                    and q (t) for
+each t. Specifically, to eschew assumptions on the nuisance function estimators aside from rates, we will use a
+cross-fitting estimation technique [Chernozhukov et al., 2016, Zheng and van der Laan, 2011]. Namely, fixing
+K ≥ 2, for each k = 1, . . . , K: (1) for t = 1, . . . , H, we fit estimators ĥ(t,k) and q̂ (t,k) only on the observed
+trajectories i = 1, . . . , n with i 6= k − 1 (mod K); (2) and then for i = 1, . . . , n with i = k − 1 (mod K), we
+             (i)               (i)                        (t) (t)
+set ψdDR (τH ) to be ψDR (τH ) where we replace h , q             with ĥ(t,k) , q̂ (t,k) . Then we use these to construct
+an estimator by taking an average as in Eq. (5). We discuss exactly how we fit nuisance estimators given
+trajectory data in Section 5.3. Until then, for Sections 5.1 and 5.2, we keep this abstract and general: we will
+only impose assumptions about the rates of convergence of nuisance estimators and that we used cross-fitting
+           (i)
+so that τH is independent of ĥ(t,k) , q̂ (t,k) whenever i = k − 1 (mod K).
+
+5.1     Consistency and Asymptotic Normality
+                                                                      (n)
+We first consider conditions under which the estimator v̂γ (πe ) is consistent and asymptotically normal. For
+this, we need to make some assumptions on the quality of our nuisance estimators.
+
+
+                                                                10
+Assumption 3. Consistent and bounded nuisance estimates: letting Ψ represent q (t) (Zt , At ) or
+h(t) (Wt , a) for any t ∈ [H] and a ∈ A, we have that for each k ∈ [K]:
+   1. kΨ̂(k) − Ψk2,Pb = op (1)
+
+   2. kΨ̂(k) k∞ = Op (1)
+   3. kΨk∞ < ∞
+Nuisance estimation rates: The following stochastic bounds hold over the sampling distributions for
+constructing the estimators q̂ (1,k) and ĥ(t,k) for all t ∈ [H] and k ∈ [K]:
+   4. For each t ∈ [H], a ∈ A, and k ∈ [K], we have
+
+                     kq̂ (t,k) (Zt , At ) − q (t) (Zt , At )k2,Pb kĥ(t,k) (Zt , a) − h(t) (Zt , a)k2,Pb = op (n−1/2 )
+
+   5. for each t ∈ [H], t0 < t, a ∈ A, and k ∈ [K], we have
+                          0                       0
+                   kq̂ (t ,k) (Zt0 , At0 ) − q (t ) (Zt0 , At0 )k2,Pb kĥ(t,k) (Zt , a) − h(t) (Zt , a)k2,Pb = op (n−1/2 )
+
+   6. for each t ∈ [H], t0 < t, and k ∈ [K], we have
+                      0                       0
+                  kq̂ (t ,k) (Zt0 , At0 ) − q (t ) (Zt0 , At0 )k2,Pb kq̂ (t,k) (Zt , At ) − q (t) (Zt , At )k2,Pb = op (n−1/2 )
+
+    Essentially, Assumption 3 requires that the nuisances q (t) and h(t) are estimated consistently in terms of
+the L2,Pb functional norm for each t, and that the corresponding product-error terms converge faster than
+n−1/2 rate. This could be achieved, for example, if each nuisance by itself were estimated at a op (n−1/4 ) rate,
+which notably permits slower-than-parametric rates and is obtainable for many non-parametric machine-
+learning-based methods [Chernozhukov et al., 2016]. In particular, there is a very established line of work on
+establishing rates like these for conditional moment problems, like those defining q (t) and h(t) , in terms of
+projected error (e.g. obtaining rates for kE[ĥ(t,k) (Wt , At ) − h(t) (Wt , At ) | Zt , At ]k2 ,) using e.g. sieve methods
+[Chen and Pouzo, 2009, 2012] or minimax methods with general machine learning classes [Dikkala et al., 2020].
+These can be translated to corresponding rates for the actual L2 error (e.g. kĥ(t,k) (Wt , At ) − h(t) (Wt , At )k2 )
+given assumptions on so-called “ill-posedness” measures (see e.g. Chen and Pouzo [2012],) which can be
+used to ensure our required rates. Alternatively, there exist methods that can directly obtain L2 error rates
+for such conditional moment problems, by leveraging so-called “source conditions” [Carrasco et al., 2007,
+Definition 3.4], for example using regularized sieve methods [Florens et al., 2011], neural nets with Tikhonov
+regularization [Liao et al., 2020], or kernel methods with spectral regulariztion [Wang et al., 2022]. Also
+note that the product-rate condition allows for some trade off where, if some nuisances can be estimated
+faster, then other nuisances can be estimated even slower than op (n−1/4 ). In addition, we require a technical
+boundedness condition on the uniform norm of the errors and of the true nuisances themselves. Given this,
+we can now present our main consistency and asymptotic normality theorem.
+Theorem 3. Let the conditions of Theorem 2 be given, and assume that the nuisance functions plugged
+       (n)
+into v̂γ (πe ) are estimated using cross fitting. Furthermore, suppose that the nuisance estimation for each
+cross-fitting fold satisfies Assumption 3. Then, we have
+                              √
+                                n(v̂γ(n) (πe ) − vγ (πe )) → N (0, σDR
+                                                                    2
+                                                                       ) in distribution,
+                                            2
+                                where      σDR = EPb [(ψDR (τH ) − vγ (πe ))2 ]
+
+    The key step in proving Theorem 3 is to establish that ψDR enjoys Neyman orthogonality with respect
+to all nuisance functions, and in particular characterizing the unique product structure of the bias. Having
+established this, we proceed by applying the machinery of theorem 3.1 of Chernozhukov et al. [2016]. We
+refer the reader to the appendix for the detailed proof.
+    One technical note about this theorem is that there may be multiple q (t) and h(t) that solve Eqs. (1)
+and (2), which creates some ambiguity in both Assumption 3 and the definition of ψDR (τH ). This is important,
+
+
+                                                                   11
+                                                                                                                2
+since the ambiguity in the definition of ψDR (τH ) affects the value of the asymptotic variance σDR               . In this
+case, we implicitly assume that Assumption 3 holds for some arbitrarily given solutions q and h(t) for     (t)
+                               2
+each t ∈ [H], and that σDR         is defined using the same q (t) and h(t) solutions. Thus, our consistency result in
+Theorem 3 holds even when bridge functions are non-unique.
+     Finally, we briefly consider how this variance grows in terms of H. Since ϕDR (τH ) consists of a sum
+                                                         Qt−1       0
+of H terms, each of which is multiplied by ηt = s0 =0 q (s ) (Zs0 , As0 )1{Es0 = As0 }, we can generally bound
+                                               PH Qt          (s)
+                                                                  (Zs , As )k∞ (kq (t) (Zt , At )k2 + a∈A kh(t) (Wt , a)k2 +
+                                                                                                     P
+the efficient asymptotic variance by             t=1   s=1 kq
+kq (t) (Zt , At )k∞ kh(t) (Wt , At )k2 ). Therefore, assuming that all functions h(t) (Wt , At ) and q (t) (Zt , At ) have
+k · k∞ norm of the same order H grows, the asymptotic variance should grow roughly as O(H 2 ) as H → ∞.
+On the other hand, if the inverse problems for q (t) and h(t) grow increasingly ill-conditioned as t increases,
+then the norms of these functions may grow, in which case the growth of asymptotic variance may be worse
+than quadratic.
+
+5.2     Semiparametric Efficiency
+We now consider the question of semiparametric efficiency of our OPE estimators. Semiparametric efficiency is
+defined relative to a model M, which is a set of allowed distributions such that Pb ∈ M. Roughly speaking,√we
+say that an estimator is semiparametrically efficient w.r.t. M if it is regular (meaning invariant to Op (1/ n)
+perturbations to the data-generating process that keep it inside M), and achieves the minimum asymptotic
+variance of all regular estimators. We provide a summary of semiparametric efficiency as it pertains to
+our results in Appendix D, but for the purposes of this section it suffices to say that, under conditions we
+establish, there exists a function ψeff ∈ L2,Pb (τH ), called the “efficient influence function” w.r.t. M, and that
+               (n)                                             √    (n)                       Pn          (i)
+an estimator v̂γ (πe ) is efficient w.r.t. M if and only if n(v̂γ (πe ) − vγ (πe )) = n−1/2 i=1 ψeff (τH ) + op (1),
+that is, asymptotically it looks like simple sample average of this function.
+    One complication in considering models of distributions on τH is that technically the definition of vγ (πe )
+                                          full
+depends on the full distribution of τH         . In the case that the distribution of τH corresponds to the logging
+distribution induced by some behavior policy and underlying POMDP that satisfies Assumption 2, it is
+clear from Theorem 2 that using any nuisances satisfying the required conditional moments will result in
+the same policy value estimate vγ (πe ). However, if we allow for distributions on τH that do not necessarily
+satisfy such conditions, as is standard in the literature on policy evaluation, it may be the case that different
+solutions for h(t) and q (t) result in different values of EP [ψDR (τH )]. To avoid such issues, we consider a model
+of distributions where the nuisances and corresponding policy value estimate are uniquely defined, as follows.
+                                                                    (0)
+Definition 1 (Model and Target Parameter). Define Me                      as the set of all distributions on τH , and for each
+t ≥ 1 recursively define:
+             Qt−1 (s)
+   1. ηt,P = s=1 qP (Zs , As )1{As = Es }
+       ∗
+   2. Pt,P (At | Wt ) = EP [ηt,P | Wt , At ]PP (At | Wt )
+   3. (Tt,P g)(Wt , At ) = EP [ηt,P g(Zt , At ) | Wt , At ] for all g ∈ L2,P (Zt , At )
+          (t)       (t−1)                                  ∗
+   4. Me = Me               ∩ {P : Tt,P is invertible and Pt,P (At | Wt )−1 ∈ L2,P (Wt , At )}
+       (t)             −1   ∗
+                                (At | Wt )−1
+                                                   
+   5. qP (Zt , At ) = Tt,P Pt,P
+                                          (t−1)                            (t)             ∗
+where (1-3) are defined for P ∈ Me                , and (5) for P ∈ Me . Furthermore, let Tt,P denote the adjoint of
+                                                      (t)
+Tt,P , define YH = Rh , and for each t ∈ [H] and P ∈ Me recursively define
+   6. µt,P (Zt , At ) = EP [ηt,P 1{At = Et }Yt,P | Zt , At ]
+        (t)             ∗
+   7. hP (Wt , At ) = (Tt,P )−1 (µt,P (Zt , At ))
+                                                                                            
+                P     (t)               (t)                                   (t)
+   8. ψt,P =         h
+                  a∈A P   (W t , a) + qP    (Z t , At )   1{A t = Et }Yt,P − hP   (W t , At )
+
+   9. Yt−1,P = Rt−1 + γψt,P
+
+
+                                                               12
+                                                                         (H)
+where the latter is only defined for t > 1. Finally, let MPCI = Me , and for each P ∈ MPCI define
+                                                     "               #
+                                                       X (1)
+                                        V (P) = EP        hP (W1 , a) .
+                                                             a∈A
+
+    We note that this definition is not circular, since η1,P = 1 for every P, and so we can concretely define
+the first set of quantities in the order they are listed above for each t ∈ [H] in ascending order, and the
+second set in descending order of t. We note that in the case that P = Pb , it is straightforward to reason
+              (t)   (t)
+that ηt,Pb , qPb , hPb , and Yt,Pb agree with the corresponding definitions in Theorem 2 and Corollary 8: Tt,Pb
+and Tt,Pb correspond to standard conditional expectation operators under Pt∗ , Pt,P
+       ∗                                                                            ∗
+                                                                                      b
+                                                                                        (At | Wt ) = Pt∗ (At | Wt ),
+and V (Pb ) = vγ (πe ). Therefore, MPCI is a natural model of observational distributions where the required
+nuisances are uniquely defined, and V (P) is a natural and uniquely defined generalization of vγ (πe ) for
+distributions P that do not necessarily correspond to actual logging distributions satisfying Assumption 2.
+    Finally, we assume the following the following on the actual observed distribution Pb .
+Assumption 4. For every sequence of distributions Pn that converge in law to Pb , there exists some integer
+                                                           ∗
+N such that for all n ≥ N and t ∈ [H] such that Tt,Pn and Tt,Pn
+                                                                are invertible. Furthermore, for all such
+sequences and t ∈ [H] we also have
+  1. lim inf n→∞ inf kf (Zt ,At )k1,Pn ≥1 kTt,Pn f (Zt , At )k1,Pn > 0
+                                           ∗
+  2. lim inf n→∞ inf kg(Wt ,At )k1,Pn ≥1 kTt,Pn
+                                                g(Wt , At )k1,Pn > 0
+                  ∗
+  3. lim supn→∞ kPt,Pn
+                       (At | Wt )−1 k∞ < ∞ .
+In addition, for each t ∈ [H] the distribution Pb satisfies
+  4. inf kf (Zt ,At )k2,Pb ≥1 kTt,Pn f (Zt , At )k2,Pb > 0
+                               ∗
+  5. inf kg(Wt ,At )k2,Pn ≥1 kTt,Pn
+                                    g(Wt , At )k2,Pb > 0 .
+                                      ∗
+    The condition that Tt,Pn and Tt,P   n
+                                           are invertible for large n ensures that the model MPCI is locally
+saturated at Pb , and the additional conditions ensure that the nuisance functions can be uniformly bounded
+within parametric submodels. These are very technical conditions used in our semiparametric efficiency
+proof, and it may be possible to relax them. We note also that in discrete settings, these conditions follow
+easily given Pb ∈ MPCI , since in this setting the conditions can be characterized in terms of the entries or
+eigenvalues of some probability matrices being bounded away from zero, which by continuity must be the
+case when Pn is sufficiently close to Pb . Importantly, the locally saturated condition on MPCI at Pb means
+that the relevant tangent space is unrestricted. (See Appendix E.1 for a discussion of issues with the tangent
+space in past work in the absence of local saturation.)
+    Given this setup, we can now present our main efficiency result.
+Theorem 4. Suppose that Pb is the observational distribution given by a POMDP and logging policy that
+satisfies the conditions of Theorem 2, and let Assumption 4 be given. Then, ψDR (τH ) − vγ (πe ) is the efficient
+influence function for V (P) at P = Pb .
+   Finally, the following corollary combines this result with Theorem 3, which shows that under the
+same conditions, if the nuisances are appropriately estimated then the resulting estimator will achieve the
+semiparametric efficiency bound relative to MPCI .
+                                                                                              (n)
+Corollary 5. Let the conditions of Theorems 3 and 4 be given. Then, the estimator v̂γ (πe ) is semipara-
+metrically efficient w.r.t. MPCI .
+
+5.3    Nuisance Estimation
+Finally, we conclude this section with a discussion of how we may actually estimate q (t) and h(t) . The
+conditional moment equations Eqs. (1) and (2) defining these nuisances are defined in terms of the intervention
+distributions Pt∗ , which are not directly observable. Therefore, we provide the following lemma, which re-frames
+these as a nested series of conditional moment restrictions under Pb .
+
+
+                                                             13
+Lemma 1. Let the conditions of Theorem 2 be given. Then, for any collection of functions q (1) , . . . , q (H)
+and h(1) , . . . , h(H) , these functions satisfy Eqs. (1) and (2) for every t ∈ [H] if and only if for every t ∈ [H]
+we have
+                                 "                                         !#
+                                                              X
+                                                 (t)
+                            EPb ηt g(Wt , At )q (Zt , At ) −      g(Wt , a)    =0      ∀ measurable g
+                                                                    a∈A
+                             h                                                 i
+              and      EPb       ηt f (Zt , At ) h(t) (Wt , At ) − 1{Et = At }Yt = 0           ∀ measurable f ,
+
+where ηt and Yt are defined as in Theorem 2.
+                                                                                                              0
+    We can observe that the moment restrictions defining q (t) for each t depend only on q (t ) for t0 < t, and
+                                                0                         00
+those defining h(t) for each t depend on h(t ) for t0 > t and on q (t ) for every t00 6= t. This suggests a natural
+order for estimating these nuisances, of q (1) through q (H) first, and then h(H) through h(1) . We now take
+this approach, solving an estimate of the continuum of moment conditions in each round. (An alternative
+approach may be to jointly solve for all 2H nuisances together.) Set
+                                                                                      !
+                                                                           X
+                            U (q,t) (q, g) = η̂t g(Wt , At )q(Zt , At ) −    g(Wt , a)
+                                                                                a∈A
+                                                                                                
+                                  (h,t)
+                             U            (h, f ) = η̂t f (Zt , At ) h(Wt , At ) − 1{Et = At }Ŷt ,
+
+where η̂t and Ŷt are estimated by plugging in the preceding nuisance estimators (in the ordering described
+above). Following Bennett and Kallus [2023], the continuum of moment conditions {q : EPb U (q,t) (q, g) = 0 ∀g}
+or {h : EPb U (h,t) (h, f ) = 0 ∀f } can be efficiently solved using a regularized, variational reformulation of
+the optimally weighted generalized method of moments [Hansen, 1982], known as the variational method of
+moments (VMM). This gives our following proposed estimators for solving for this nuisance bridge functions:
+Proposition 2. Our VMM estimators for the nuisance functions q (1) , . . . , q (H) and h(1) , . . . , h(H) take the
+form
+                                                      1
+              q (t) = argmin sup En [U (q,t) (q, g)] − En [U (q,t) (q̃t , g)2 ] + R(q,t) (q) − R(g,t) )(g),
+                       q∈Q (t) g∈G (t)                4
+                                                            1
+              h(t) = argmin sup       En [U (h,t) (h, f )] − En [U (h,t) (h̃t , f )2 ] + R(h,t) (h) − R(f,t) (f ) ,
+                      h∈H(t) f ∈F (t)                       4
+
+and can be sequentially solved for in the order q (1) through q (H) then h(H) through h(1) , where Q(t) and H(t)
+are hypothesis classes for the functions q (t) and h(t) respectively, G (t) and F (t) are some critic function classes
+corresponding to the set of moments we are enforcing, R(q,t) , R(g,t) , R(h,t) , and R(f,t) are regularizers, and
+q̃ (t) and h̃(t) are some prior estimates of q (t) and h(t) which are arbitrarily defined and need not necessarily
+be consistent.
+    There are many existing methods for solving empirical minimax equations of these kinds for different
+kinds of function classes Q(t) and H(t) , as well as different kinds of corresponding critic classes G (t) and
+F (t) . In particular, in Appendix F we provide a detailed derivation and description of an efficient process for
+solving these equations when the two critic classes are given by Reproducing Kernel Hilbert Spaces (RKHSs),
+and we regularize them using squared RKHS norm. Note that this approach is very generic, and allows for
+any function classes Q(t) and H(t) that we can efficiently minimize convex losses over.
+
+
+6     Experiments
+Finally, we present a series of experiments to demonstrate our method and theory. We present two sets of
+experiments. First, we present a simple toy scenario, where we explore the behavior of the methodology and
+provide a “proof of concept” of our theory. Second, motivated by the findings of of our first experiments, we
+benchmark our methodology in a confounded variation of the more complex “sepsis simulator” environment of
+Oberst and Sontag [2019], which is a better reflection of real application. For full details of all experiments,
+see our code at https://github.com/CausalML/ProximalRL.
+
+
+                                                                 14
+              10.0
+               7.5                                                   102
+               5.0
+
+
+PV Estimate
+               2.5                                                   101
+               0.0      Target PV                              MSE   100
+               2.5      Ours
+               5.0      MDP
+                        MeanR                                      10 1
+               7.5      TIS
+              10.0                                      104                      103                      104
+                                       103
+                                    Training Set Size                         Training Set Size
+              10.0
+               7.5                                                  104
+               5.0
+
+
+PV Estimate
+                                                                    103
+               2.5
+               0.0      Target PV                              MSE  102
+               2.5      Ours                                        101
+               5.0      MDP
+                        MeanR                                       100
+               7.5      TIS
+              10.0                                                 10 1
+                                       103              104                      103                      104
+                                    Training Set Size                         Training Set Size
+              10.0
+               7.5                                                   103
+               5.0
+
+
+PV Estimate
+                                                                     102
+               2.5
+               0.0      Target PV                              MSE   101
+               2.5      Ours
+                                                                     100
+               5.0      MDP
+                        MeanR
+               7.5      TIS                                        10 1
+              10.0                                      104                      103                      104
+                                       103
+                                    Training Set Size                         Training Set Size
+Figure 4: Results of our Proximal RL experiment on the NoisyObs environment with noise = 0.2. In the
+top, middle, and bottom rows we display results for πeeasy , πehard , and πeoptim respectively. On the left we
+display the mean policy value estimate of each method, where the solid black line corresponds to the true
+policy value, and the shaded regions correspond to one standard deviations of the policy value estimates.
+On the right we display the corresponding mean squared error of these estimates, where the shaded regions
+correspond to 95% confidence intervals for these values.
+
+
+6.1             Experiment 1: Toy Scenario
+6.1.1                Experimental Setup
+For our first experiment, we consider a simple POMDP, which we refer to as NoisyObs, which is a time-
+homogeneous POMDP with three states, two actions, and three observation values. We denote these by
+S = {s1 , s2 , s3 }, A = {a1 , a2 }, and O = {o1 , o2 , o3 }. We detail the state transition, reward, and initial
+state distribution of the POMDP in Appendix G. The observation emission process for NoisyObs is given
+  (t)
+PO (oi | sj ) = 1{i = j}(1 − 3noise /2) + /2, where noise is a parameter of the POMDP. This models a noisy
+observation of the state, since we observe the correct state with probability 1 − noise , or a randomly selected
+incorrect state otherwise. Thus if noise = 0 there is no confounding, and greater noise indicate more noisy
+measurements.
+    We collected logged data using a time-homogeneous behavioral policy πbNoisyObs , with a horizon length
+H = 3. We considered three different evaluation policies πeeasy , πehard , and πeoptim , which are all also time-
+homogeneous and depend only on the current observation, and are detailed in Appendix G. These polices
+are so named because πeeasy and πehard are are designed to have high and low overlap with the logging policy
+respectively, and πeoptim is the optimal policy when noise is sufficiently small. Therefore these cover a wide
+range of different kinds of policies. In all cases, we set γ = 1.
+    We performed policy evaluation with the following methods: (1) Ours is the efficient estimator discussed
+in Section 5, with nuisance estimation performed using the sequential procedure described in Section 5.3; (2)
+                                                         Pn PH           (i)
+MeanR is a naive unadjusted baseline given by n1 i=1 t=1 γ t Rt ; (3) MDP is a model-based baseline
+
+
+                                                              15
+given by fitting a tabular MDP to the observed data, treating the observations as states, and computing
+the value of πe on this model; and (4) TIS is a baseline based on the result in Theorem 1, with estimated
+plugged-in nuisances and replacing the expectation under Pind with its empirical analogue. We provide more
+detail about each of these methods in Appendix G. In the case of our method, we used a simplified version of
+the “current and previous observation” PCI reduction given by the first row of Table 1, where Zt = Ot−1 and
+Wt = Ot , which is valid since we are considering evaluation policies that only depend on Ot .
+
+6.1.2   Results
+We now present results policy evaluation for for the above scenario and policies, using both our method and the
+above benchmarks. Specifically, for each n ∈ {200, 500, 1000, 2000, 5000, 10000}, πe ∈ {πeeasy , πehard , πeoptim },
+and  ∈ {0, 0.2} we repeated the following process 100 times: (1) we sampled n trajectories with horizon
+length H = 3, behavior policy πbNoisyObs and noise level noise = ; and (2) estimated v1 (πe ) using these n
+trajectories for each method.
+    In Fig. 4 we display results for the confounded case where noise = 0.2 (i.e., POMDP setting). Here, we
+see that our method is consistent, while the MDP method, which is only designed to work in MDP settings,
+is not. The only exception is for estimating the value of πeeasy , however this is only because MDP just
+happens to have very small bias for estimating this policy. While our method is consistent, it does have more
+variance than the MDP benchmark as it tackles a much more complex estimation problem. As expected, the
+unadjusted MeanR benchmark is inconsistent as it only estimates the value of the logging policy. Finally,
+despite our identification theory in Section 4.1, the TIS method in general performs very poorly. This is
+unsurprising, since as discussed in Section 4.1 the identification result (as an expectation over Pind ) may
+not lend itself to good estimation by plugging in empirical estimates into the identification formula. For
+comparison, in Appendix G, we present additional results for the unconfounded case, noise = 0 (i.e., MDP
+setting), where we see that the MDP baseline becomes consistent due to the absence of confounding and that
+our method remains consistent and has less variance than in the POMDP setting shown here but still more
+than the MDP baseline, which is expected as it still solves a more complex estimation problem in order to
+adapt to both the MDP and POMDP settings.
+
+6.2     Experiment 2: Sepsis Management
+6.2.1   Experimental Setup
+Next, we consider a more “real world”-inspired scenario. Specifically, we consider a scenario based on the sepsis
+management simulator of Oberst and Sontag [2019]. Their environment considers the active management of
+sepsis for patients, whose state is described by heart rate, blood pressure, oxygen concentration, glucose level,
+and whether the patient is diabetic. At each time step, the action taken consists of three binary components:
+whether to place the patient on/off antibiotics, whether to place them on/off vasopressors, and whether to
+place them on/off a ventilator, giving a total of 8 unique actions. After taking each action, we receive a
+reward based on the number of components of the state taking values within safe ranges, with a maximum
+reward of 1 if all indicators are safe and the patient is off all three treatments, and a minimum reward of −10
+if three more more indicators are unsafe, with various intermediate values. The system uses almost identical
+parameters as in Oberst and Sontag [2019] with some minor modifications, and we provide a more detailed
+description in the appendix.
+    In order to introduce confounding, we only observe a censored version of the state; for each patient, with
+25% probability we do not observe whether or not that patient is diabetic (i.e. in all observations for that
+patient the “diabetic” indicator is set to “False” regardless of whether the patient is diabetic or not). That is,
+the true state contains both an indicator of whether the patient is diabetic or not and whether their diabetes
+status is censored, but for the observed state we instead only observed a possibly censored diabetes indicator.
+Since all other components of the state are discrete, this means that both state and observation spaces are
+discrete (i.e. tabular), with a total state space size of |S| = 2880, and observation space size of |O| = 1440.
+    We experimented on this scenario over a time horizon of H = 3 and a discount factor of γ = 1. We
+first constructed our behavioral policy πb by computing the optimal policy in the true POMDP π ? , and
+defining πb by introducing -greedy sampling to π ? with  = 0.1; that is, we defined πb = 0.9π ? + 0.1πunif ,
+where πunif is a policy that takes all 8 actions with equal probability. Then, we sampled 10,000 observational
+
+
+                                                        16
+                   Method                  v̂1 (πe )       Bias     RMSE      Improvement Acc.
+               Ours (best hyper.)      −2.370 ± 0.597     −0.096    0.599           82%
+               Ours (auto hyper.)      −2.459 ± 0.182     −0.184    0.258          100%
+                     MDP               −1.261 ± 0.054      1.014    1.015           0%
+                   MeanR               −1.799 ± 0.025      0.476    0.477            —
+
+Table 2: Results of our Proximal RL experiments on the sepsis management environment. For reach method,
+we list the average policy value prediction (with one standard deviation error), along with the empirical bias
+and root mean squared error. In addition, for each method other than MeanR, we list the method’s accuracy
+of predicting whether v1 (πe ) > v1 (πb ) or not. For reference, the true policy values were v1 (πe ) = −2.275 and
+v1 (πb ) = −1.799.
+
+
+trajectories using πb , and defined πe to be the predicted optimal policy fit on these trajectories using dynamic
+programming on a simple count-based tabular MDP model, treating the observations Ot as the true states St .
+Note that since the observations Ot are confounded, we expect that πe should not necessarily be an estimate
+of the actual optimal policy π ? .
+    Next, given the fixed policies πb and πe coming from the first stage of the experiment, we repeated the
+following procedure 50 times: (1) we sampled 10,000 observational trajectories using πb ; and (2) we estimated
+v1 (πe ) using those trajectories as input for all methods. We performed policy evaluation with our method, as
+well as the MeanR and MDP benchmarks, as in the previous experiment. In the case of our method, we
+experimented with a large range of hyperparameter values, as detailed in the appendix. In addition, we used
+the proxies Zt = (Gt−1 , Xt ) and Wt = (Gt , Xt ), where Ot = (Gt , Xt ) is a partition of the observation into
+information about diabetes (Gt ) and non-diabetes information (Xt ); see appendix for more details.
+    Finally, since we had observed in our prior experiments that our method could be sensitive to hyperpa-
+rameter values, and also since we lack ground truth so cannot set these “fairly” using e.g. cross-validation, we
+experimented with the following heuristic procedure automatic hyperparameter selection: (1) we first estimate
+the policy value using all 81 different possible hyperparameter values; (2) we throw away all estimates that take
+values outside of the range of observed reward values; and (3) we take the median of the remaining estimates.
+This heuristic is based on the observation from our prior experiments that, as long as hyperparameter values
+are within reasonable ranges, our method typically gives estimates that are either fairly accurate, or wildly
+out-of-bound. We estimated policy value using this heuristic separately for each of the 50 experimental
+replications.
+
+6.2.2   Results
+We present the main results of this second experiment in Table 2. There we present results for our method
+with the single best set of hyperparameters out of all tested (in terms of mean squared error across the 50
+replications), as well using the automatic hyperparameter selection heuristic described above. We can first
+observe that using the single best hyperparameter setup gives policy value predictions that are approximately
+unbiased, but with very high variance. Qualitatively, this variance seems to be partially explained by unstable
+predictions in a minority of cases. On the other hand, our automatic hyperparameter heuristic gives estimates
+results in slightly higher bias, but much lower variance, and therefore much lower mean squared error. This
+strong performance of our heuristic versus choosing the best single set of hyperparameters is extremely
+encouraging, since unlike picking a “best” hyperparameter combination, the heuristic is actually feasible in
+practice, as it does not require any ground truth information for hyperparameter selection. Finally, as in the
+prior experiments, the benchmark methods, which either do not take into account confounding (MDP), or
+are completely non-causal (MeanR), both give extremely biased estimates with low variance.
+    Next, we note that in practice we are often more concerned about predicting whether πe is an improvement
+on πb or not, rather than the exact policy value of πe . Accurately answering this question is important in many
+applications, where the baseline policy πb reflects current best practices or business as usual, and πe represents
+a proposed new policy. For example, here we could think of πb representing how physicians currently manage
+sepsis, and πe as a proposed automated algorithm for sepsis management. We have v1 (πe ) ≈ −2.275 and
+v1 (πb ) ≈ −1.799, so we would like any method of policy evaluation to be able to correctly predict that the new
+proposed algorithm (πe ) is worse than standard physician care (πb ). Specifically, we evaluate each method
+
+
+                                                        17
+by what percentage of the time the policy value estimate is smaller than the observational mean reward
+(MeanR), as the latter is an unbiased estimate of v1 (πb ). We list these results in the final column in Table 2.
+We note that our method with the best hyperparameters usually correctly predicts that πe is worse than
+πb , and with our automatic hyperparameter selection heuristic this prediction is always correct. On the
+other hand, the MDP benchmark, which fails to take into account confounding from the censored diabetes
+measurements, always incorrectly predicts that πe is an improvement on πb .
+
+
+7    Conclusion
+In this paper, we discussed the problem of OPE in an unknown POMDP as a model for the problem
+of offline RL with general unobserved confounding. First, we analyzed the recently proposed approach
+for identifying the policy value for tabular POMDPs [Tennenholtz et al., 2020]. We showed that while
+it could be placed within a more general framework and extended to continuous settings, it suffers from
+some theoretical limitations due to the unusual form of the identification formulation, which brings its
+usefulness for constructing estimators with good theoretical properties into question. Motivated by this, we
+proposed a new framework for identifying the policy value, by sequentially reducing the problem to a series of
+proximal causal inference problems. Furthermore, we extended this identification framework to a framework
+of estimators based on double machine learning and cross-fitting [Chernozhukov et al., 2016], and showed
+that under appropriate conditions such estimators are asymptotically normal and semiparametrically efficient.
+Finally, we constructed a concrete algorithm for implementing such an estimator, and provided an empirical
+proof of concept of our theory by applying algorithm in a toy synthetic setting with confounding due to
+noisy measurements, as well as a complex spepsis management setting with confounding due to missing
+measurements of diabetes.
+    Perhaps the most significant scope for future work on this topic is in the development of more practical
+algorithms. Indeed, although our experiments were only intended as a proof of concept of our methods
+and theory, they also show that our actual proposed estimators can often have high variance even in a
+simple toy POMDP with a moderate number (e.g., 1000) of trajectories. There may be ways to improve
+on this; for example it may be beneficial to solve the conditional moment problems defining the q (t) and
+h(t) functions simultaneously rather than sequentially as we proposed, which may result in cascading errors.
+Another important topic for future work would be to explore hyperparameter optimization strategies, such as
+the heuristic method we proposed for our sepsis experiments; although we found this heuristic worked well
+empirically, it may introduce other challenges such as dealing with post-selection inference.
+    Another area where there is significant scope for future work is on the topic of semiparametric efficiency.
+Extending our model to allow for multiple nuisances, in a way where the parameter of interest is still
+well-defined, is an important open challenge. Additional issues are discussed in Appendix E.1.
+    Finally, in terms of future work, there is the problem of how to actually apply our theory as well as
+policy value estimators in real-world sequential decision making problems involving unmeasured confounding.
+Although our work is largely theoretical, we hope that it will be impactful in motivating progress toward
+solving such real-world challenges in practice.
+
+
+References
+K. Azizzadenesheli, A. Lazaric, and A. Anandkumar. Reinforcement learning of pomdps using spectral
+  methods. In Proceedings of the 29th Conference on Learning Theory, pages 193–256, 2016.
+A. Bennett and N. Kallus. The variational method of moments. To appear in Journal of the Royal Statistical
+  Society: Series B (Statistical Methodology), 2023.
+A. Bennett, N. Kallus, L. Li, and A. Mousavi. Off-policy evaluation in infinite-horizon reinforcement
+  learning with latent confounders. In International Conference on Artificial Intelligence and Statistics, pages
+  1999–2007. PMLR, 2021.
+S. Bhattacharya, S. Badyal, T. Wheeler, S. Gil, and D. Bertsekas. Reinforcement learning for pomdp:
+
+
+
+                                                       18
+  Partitioned rollout and policy iteration with application to autonomous sequential repair problems. IEEE
+  Robotics and Automation Letters, 5(3):3967–3974, 2020.
+M. Carrasco, J.-P. Florens, and E. Renault. Linear inverse problems in structural econometrics estimation
+ based on spectral decomposition and regularization. Handbook of econometrics, 6:5633–5751, 2007.
+Y. Chandak, S. Niekum, B. da Silva, E. Learned-Miller, E. Brunskill, and P. S. Thomas. Universal off-policy
+  evaluation. Advances in Neural Information Processing Systems, 34:27475–27490, 2021.
+S. Chen and B. Zhang. Estimating and improving dynamic treatment regimes with a time-varying instrumental
+   variable. arXiv preprint arXiv:2104.07822, 2021.
+X. Chen and D. Pouzo. Efficient estimation of semiparametric conditional moment models with possibly
+  nonsmooth residuals. Journal of Econometrics, 152(1):46–60, 2009.
+X. Chen and D. Pouzo. Estimation of nonparametric conditional moment models with possibly nonsmooth
+  generalized residuals. Econometrica, 80(1):277–321, 2012.
+V. Chernozhukov, D. Chetverikov, M. Demirer, E. Duflo, C. Hansen, and W. K. Newey. Double machine
+  learning for treatment and causal parameters. Technical report, cemmap working paper, 2016.
+Y. Cui, H. Pu, X. Shi, W. Miao, and E. J. Tchetgen Tchetgen. Semiparametric proximal causal inference.
+  arXiv preprint arXiv:2011.08411, 2020.
+N. Dikkala, G. Lewis, L. Mackey, and V. Syrgkanis. Minimax estimation of conditional moment models.
+  Advances in Neural Information Processing Systems, 33:12248–12262, 2020.
+J.-P. Florens, J. Johannes, and S. Van Bellegem. Identification and estimation by penalization in nonparametric
+   instrumental regression. Econometric Theory, 27(3):472–496, 2011.
+M. Gasse, D. Grasset, G. Gaudron, and P.-Y. Oudeyer. Causal reinforcement learning using observational
+ and interventional data. arXiv preprint arXiv:2106.14421, 2021.
+A. Ghassami, A. Ying, I. Shpitser, and E. T. Tchetgen. Minimax kernel machine learning for a class of doubly
+  robust functionals with application to proximal causal inference. In International Conference on Artificial
+  Intelligence and Statistics, pages 7210–7239. PMLR, 2022.
+L. P. Hansen. Large sample properties of generalized method of moments estimators. Econometrica, pages
+  1029–1054, 1982.
+D. Hendrycks and K. Gimpel. Gaussian error linear units (gelus). arXiv preprint arXiv:1606.08415, 2016.
+Y. Hu and S. Wager. Off-policy evaluation in partially observed markov decision processes under sequential
+  ignorability. arXiv preprint arXiv:2110.12343, 2023.
+N. Kallus and M. Uehara. Double reinforcement learning for efficient off-policy evaluation in markov decision
+  processes. The Journal of Machine Learning Research, 21(1):6742–6804, 2020.
+N. Kallus and M. Uehara. Efficiently breaking the curse of horizon in off-policy evaluation with double
+  reinforcement learning. Operations Research, 2022.
+N. Kallus and A. Zhou. Confounding-robust policy evaluation in infinite-horizon reinforcement learning.
+  Advances in Neural Information Processing Systems, 33:22293–22304, 2020.
+N. Kallus, X. Mao, and M. Uehara. Causal inference under unmeasured confounding with negative controls:
+  A minimax learning approach. arXiv preprint arXiv:2103.14029, 2022.
+S. Katt, F. A. Oliehoek, and C. Amato. Learning in pomdps with monte carlo tree search. In International
+  Conference on Machine Learning, pages 1819–1827. PMLR, 2017.
+T. W. Killian, M. Ghassemi, and S. Joshi. Counterfactually guided policy transfer in clinical settings. In
+  Conference on Health, Inference, and Learning, pages 5–31. PMLR, 2022.
+
+
+                                                      19
+L. Liao, Y.-L. Chen, Z. Yang, B. Dai, M. Kolar, and Z. Wang. Provably efficient neural estimation of
+  structural equation models: An adversarial approach. Advances in Neural Information Processing Systems,
+  33:8947–8958, 2020.
+L. Liao, Z. Fu, Z. Yang, M. Kolar, and Z. Wang. Instrumental variable value iteration for causal offline
+  reinforcement learning. arXiv preprint arXiv:2102.09907, 2021.
+
+W. Miao, Z. Geng, and E. J. Tchetgen Tchetgen. Identifying causal effects with proxy variables of an
+ unmeasured confounder. Biometrika, 105(4):987–993, 2018a.
+W. Miao, X. Shi, and E. J. Tchetgen Tchetgen. A confounding bridge approach for double negative control
+ inference on causal effects. arXiv preprint arXiv:1808.04945, 2018b.
+
+Y. Nair and N. Jiang. A spectral approach to off-policy evaluation for pomdps. arXiv preprint arXiv:2109.10502,
+  2021.
+H. Namkoong, R. Keramati, S. Yadlowsky, and E. Brunskill. Off-policy policy evaluation for sequential
+  decisions under unobserved confounding. Advances in Neural Information Processing Systems, 33:18819–
+  18831, 2020.
+
+M. Oberst and D. Sontag. Counterfactual off-policy evaluation with gumbel-max structural causal models. In
+ International Conference on Machine Learning, pages 4881–4890. PMLR, 2019.
+Y. Pan, C.-A. Cheng, K. Saigol, K. Lee, X. Yan, E. A. Theodorou, and B. Boots. Imitation learning for agile
+  autonomous driving. The International Journal of Robotics Research, 39(2-3):286–302, 2020.
+
+X. Shi, W. Miao, J. C. Nelson, and E. J. Tchetgen Tchetgen. Multiply robust causal inference with double-
+  negative control adjustment for categorical unmeasured confounding. Journal of the Royal Statistical
+  Society: Series B (Statistical Methodology), 82(2):521–540, 2020.
+G. Singh, S. Peri, J. Kim, H. Kim, and S. Ahn. Structured world belief for reinforcement learning in pomdp.
+  In International Conference on Machine Learning, pages 9744–9755. PMLR, 2021.
+
+E. J. Tchetgen Tchetgen, A. Ying, Y. Cui, X. Shi, and W. Miao. An introduction to proximal causal learning.
+  arXiv preprint arXiv:2009.10982, 2020.
+G. Tennenholtz, S. Mannor, and U. Shalit. Off-policy evaluation in partially observable environments. In
+  Proceedings of the 33rd AAAI Conference on Artificial Intelligence (AAAI), 2020.
+
+A. Van Der Vaart. On differentiable functionals. The Annals of Statistics, pages 178–204, 1991.
+A. W. Van der Vaart. Asymptotic statistics, volume 3. Cambridge university press, 2000.
+L. Wang, Z. Yang, and Z. Wang. Provably efficient causal reinforcement learning with confounded observational
+  data. Advances in Neural Information Processing Systems, 34:21164–21175, 2021.
+
+Z. Wang, Y. Luo, Y. Li, J. Zhu, and B. Schölkopf. Spectral representation learning for conditional moment
+  models. arXiv preprint arXiv:2210.16525, 2022.
+L. Xu, H. Kanagawa, and A. Gretton. Deep proxy causal learning and its application to confounded bandit
+  policy evaluation. Advances in Neural Information Processing Systems, 34:26264–26275, 2021.
+C.-H. H. Yang, I. Hung, T. Danny, Y. Ouyang, and P.-Y. Chen. Causal inference q-network: Toward resilient
+  reinforcement learning. arXiv preprint arXiv:2102.09677, 2021.
+A. Ying, W. Miao, X. Shi, and E. J. Tchetgen Tchetgen. Proximal causal inference for complex longitudinal
+  studies. arXiv preprint arXiv:2109.07030, 2021.
+W. Zheng and M. J. van der Laan. Cross-validated targeted minimum-loss-based estimation. In Targeted
+ Learning, pages 459–474. Springer, 2011.
+
+
+                                                      20
+A      Identification by Time-Independent Sampling
+In this appendix, we present a general identification result given by Theorem 6. Then, we present a
+specialization of this result to the discrete setting in Lemma 2. We do not provide a separate proof of
+Theorem 1, since it follows immediately from Lemma 2. We also note that in this section we will use the
+notation Zt = o(Dt ), Wt = o0 (Dt ), and Xt = o00 (Dt ), which is not to be confused with the Zt and Wt notation
+used in our PCI identification theory.
+   First, before we present these results, we establish the following completeness assumption which they
+depend on, and is the missing technical assumption referenced by Theorem 1.
+Assumption 5 (Completeness). For each t ∈ {1, . . . , H} and a ∈ A, if EPb [g(St ) | Ot , At = a] = 0 almost
+surely for some function g, then g(St ) = 0 almost surely.
+    This assumption is fundamental to this identification approach, and essentially requires that Ot captures
+all degrees of variation in St . In the case that states and observations are finite, it is necessary that Ot have
+at least as many categories as St for this condition to hold. Given this, we are ready to present our first
+identification result.
+
+Theorem 6. Let Assumption 5 hold, and suppose that for each t ∈ {1, . . . , H} there exists a function
+ρ(t) : S × A × S 7→ R, such that for every measure f on Wt that is absolutely continuous with respect to Pb
+and every a ∈ A, we have almost surely
+                    Z                                                               
+                                                                                    df
+                  E    ρ(t) (Zt , At , x)df (x) Wt , At = a = P (At = a | Wt )−1         (Wt ) ,        (6)
+                                                                                   dPb
+
+where df /dPb denotes the Radon-Nikodym derivative of f with respect to Pb . Then, for each s ∈ {1, . . . , H}
+we have                                    "                                       #
+                                               s
+                                               Y
+                          EPe [Rs ] = EPind Rs   1{At = Et }ρ(t) (Zt , At , Xt−1 )
+                                                   t=1
+
+    We note that this result identifies vγ (πe ) for any given γ, since by construction Pind is identified with
+respect to Pb , and this allows us to express vγ (πe ) as a function of Pind . Note that implicit in the assumptions
+is that P (At = a | Wt ) > 0.
+    We call this result a time-independent sampling result, since it is written as an expectation with respect to
+Pind , where data at each time point is sampled independently. We note that the moment equations given by
+Eq. (6) in general are very complicated, and it is not immediately clear under what conditions this equation
+is even solvable. In the tabular setting, we present the following lemma which provides an analytic solution
+to Eq. (6) and makes clear the connection to Tennenholtz et al. [2020].
+
+Lemma 2. Suppose that Ot is discrete with k categories for every t, and without loss of generality let the
+support of Ot be denoted by {1, . . . , k}. In addition, for each t ∈ {1, . . . , s} and a ∈ A, let Q(t,a) denote the
+k × k matrix defined according to
+
+                                    Q(t,a)
+                                     x,y = PPb (Ot = x | At = a, Ot−1 = y) .
+
+
+Then, assuming Q(t,a) is invertible for each t and a, Eq. (6) is solved by
+
+                                                            ((Q(t,a) )−1 )z,x
+                                      ρ(t) (z, a, x) =                        .
+                                                         P (Ot−1 = z, At = a)
+
+Furthermore, plugging this solution into the identification result of Theorem 6 is identical to Theorem 1 of
+Tennenholtz et al. [2020].
+   We also note that, in the case that the matrices Q(t,a ) defined above are invertible, it easily follows that
+Assumption 5 holds, as long as St has no more than k categories.
+
+
+
+
+                                                           21
+Proof of Theorem 6. We will prove this result for arbitrary fixed s ∈ [H]. Define
+                           Ys = Rs
+                           Yt = φ(t+1) (Zt+1 , At+1 , Wt+1 , Et+1 , Xt , Yt+1 )            ∀t ∈ [s − 1] ,
+where
+                                         φ(t) (z, a, w, e, x, y) = ρ(t) (z, a, x)1{a = e}y .
+    Now, by these definitions we need to prove that
+                                                      EPe [Rs ] = EPind [Y0 ] .
+where Y0 = φ(1) (Z1 , A1 , W1 , E1 , X0 , Y1 ).
+   We will proceed via a recursive argument. In order to set up our key recursion, we first define some
+additional notation. First, let Pt∗ denote the intervention distribution introduced in Section 4.2, and let Pind,t
+                                                                                                             ∗
+                                                                 ∗
+denote the measure on D1:H defined by a mixture between Pt+1         and Pind , where
+   1. {W1:t−1 }, {X1:t−1 } {A1:t−1 }, and {R1:t−1 } are jointly sampled from Pt∗
+   2. {Z1 , . . . , ZH }, {Wt , . . . , WH }, {Xt , . . . , XH } {At , . . . , AH }, and {Rt , . . . , RH } are jointly sampled from
+      Pind .
+    Given this setup, the inductive relation we would like to prove is
+                             ∗
+                           EPind,t [φ(t) (Zt , At , Wt , Et , Xt−1 , Yt )] = EPind,t+1
+                                                                               ∗       [Yt ]     ∀t ∈ [s]                       (7)
+   We note that if Eq. (7) holds, then via chaining this relation and the recursive definitions of Yt , we
+would instantly have our result, since EPind,1     ∗   [φ(1) (Z1 , A1 , W1 , E1 , W0 , Y1 )] = EPind,1
+                                                                                                     ∗  [Y0 ] = EPind [Y0 ], and
+  ∗
+EPind,s+1 [Rs ] = EPe [Rs ]. Therefore, it only remains to prove that Eq. (7) holds.
+   Next, by the assumption on φ(t) in the theorem statement, we have
+                               "                                     !                       #
+                                  (t)                      dPb
+                           ∗
+                       EPind,t   ρ (Zt , At , Xt−1 )        ∗           (Wt ) Wt , At = a
+                                                         dPind,t+1
+                                       !                 Z                                              
+                                dPb                                      (t)
+                       =        ∗        (W   t )E   ∗
+                                                  Pind,t      f t−1 (x)ρ     (Z t , At , x) W t , At = a
+                             dPind,t+1                      x
+                                       !          ∗
+                                                    dPind,t+1
+                                                               
+                                dPb
+                       =        ∗        (Wt )                    (Wt )P (At = a | Wt )−1
+                             dPind,t+1                 dPb
+                         = P (At = a | Wt )−1 ,
+                                                                     ∗
+where in this derivation ft−1 denotes the density of Xt−1 under Pind,t  , which we note is the same as the
+                      ∗
+density of Wt under Pind,t+1 . Given this, applying the independence assumptions of our POMDP framework
+we have
+                ∗
+              EPind,t [P (At = a | St )−1 | Wt , At = a]
+               = EPind,t
+                    ∗    [P (At = a | St , Wt )−1 | Wt , At = a]
+                    P (St = s | Wt , At = a)
+                 Z
+               =                               ds
+                  s P (At = a | Wt , St = s)
+                    P (At = a | Wt , St = s)P (St = s | Wt )
+                 Z
+               =                                                ds
+                  s P (At = a | Wt , St = s)P (At = a | Wt )
+               = P (At = a | Wt )−1
+                        "                                         !                        #
+                              (t)                       dPb
+               = EPind,t
+                   ∗     ρ (Zt , At , Xt−1 )            ∗             (Wt ) Wt , At = a
+                                                      dPind,t+1
+                          "          "                                      !                      #             #
+                                         (t)                      dPb
+               = EPind,t
+                   ∗       ∗
+                         EPind,t ρ (Zt , At , Xt−1 )              ∗             (Wt ) St , At = a Wt , At = a .
+                                                                dPind,t+1
+
+
+                                                                  22
+   Given this, it then follows from Assumption 5 that
+                      "                                  !                  #
+                                                 dP b
+                  ∗
+              EPind,t   ρ(t) (Zt , At , Xt−1 )   ∗         (Wt ) St , At = a = P (At = a | St )−1 ,
+                                               dPind,t+1
+
+which holds almost surely for each a ∈ A, and therefore also holds replacing a with At .
+   Finally, applying this previous equation, we have
+
+                   ∗
+                 EPind,t [φ(t) (Zt , At , Wt , Et , Xt−1 , Yt ]
+                  = EPind,t
+                      ∗     [ρ(t) (Zt , At , Xt−1 )1{At = Et }Yt ]
+                            "          "                                   !                              #
+                                                                    dP b
+                  = EPind,t
+                      ∗           ∗
+                              EPind,t    ρ(t) (Zt , At , Xt−1 )     ∗        (Wt ) St , At , Wt , Et , Yt
+                                                                 dPind,t+1
+                                      ∗                                  #
+                                       dPind,t+1
+                                                    
+                                   ·                  (Wt )1{At = Et }Yt
+                                          dPb
+                            "          "                                   !                 #
+                                                                    dP b
+                  = EPind,t
+                      ∗           ∗
+                              EPind,t    ρ(t) (Zt , At , Xt−1 )     ∗        (Wt ) St , At ,
+                                                                 dPind,t+1
+                                      ∗                                  #
+                                       dPind,t+1
+                                                    
+                                   ·                  (Wt )1{At = Et }Yt
+                                          dPb
+                                                 ∗
+                                                   dPind,t+1
+                                                                                 
+                                             −1
+                  = EPind,t
+                      ∗       P (At | St )                      (Wt )1{At = Et }Yt
+                                                      dPb
+                             "                                                                          #
+                                                                     ∗
+                               X P (At | St , Wt , Et , Yt )  dPind,t+1   
+                  = EPind,t
+                      ∗                                                       (Wt )1{Et = a}Yt (Et )
+                               a
+                                             P (At | St )            dPb
+                              ∗
+                                dPind,t+1
+                                                             
+                  = EPind,t
+                      ∗                         (Wt )Yt (Et )
+                                     dPb
+                  = EPind,t+1
+                      ∗       [Yt ] ,
+
+where the third and sixth equalities follow from the independence assumptions of the POMDP given St .
+In this derivation we use the potential outcome notation Yt (a) to denote the value Yt would have taken
+if we intervened on the t’th action with value a (and the subsequent values of Xt and Rt are possibly
+changed accordingly; note that this intevention does not change the values of Zt or Wt since these represent
+observations at time t − 1 and t respectively.) The final equality follows because replacing Yt with Yt (Et )
+                                                  ∗
+effectively updates the mixture distribution Pind,t     so that At , Xt , and Rt are included in the set variables
+                        ∗
+sampled according to Pt+1  , rather than in the set of those sampled according to Pind . Furthermore, integrating
+                                          ∗
+over the Radon-Nikodym derivative (dPind,t+1     /dPb )(Wt ) effectively further updates the mixture distribution
+                                                                 ∗
+so that Wt is also included in the set sampled according to Pt+1     , since the distribution of Wt under Pb is the
+                                           ∗
+same as the distribution of Wt under Pind,t . That is, these two terms effectively replace integration under
+  ∗                              ∗
+Pind,t with integration under Pind,t+1 . This establishes Eq. (7), and therefore as discussed above the theorem
+follows by recursion.
+
+
+Proof of Lemma 2. First we establish the required property of this definition of ρ(t) . Since observations are
+tabular, the required property is equivalent to
+                        "                                    #
+                          X                                     f (Wt )
+                      E            (t)
+                             f (x)ρ (Zt , At , x) Wt , At = a =         P (At | Wt )−1
+                                                                P (Wt )
+                            x∈O
+                                                                                  f (Wt )
+                                                                       =                        ,
+                                                                           P (At = a, Ot = Wt )
+
+
+
+                                                                  23
+almost surely for every discrete probability distribution f over the observation space. Now, recalling that
+  (t,a)
+Qx,y = P (Ot = x | At = a, Ot−1 = y), plugging the definition of ρ(t) into the LHS above, we have
+                 "                                    #
+                   X
+                            (t)
+               E      f (x)ρ (Zt , At , x) Wt , At = a
+                    x∈O
+                      "                                                                             #
+                          X
+                =E            f (x)P (Ot−1 = Zt , At = a)           −1
+                                                                         (Q(t,a) )−1
+                                                                                  Zt ,x   Wt , At = a
+                        x∈O
+                     X
+                =           f (x)P (Ot−1 = z, At = a)−1 P (Ot−1 = z | Ot = Wt , At = a)(Q(t,a) )−1
+                                                                                                z,x
+                    x,z∈O
+                     X f (x)P (Ot = Wt | Ot−1 = z, At = a)P (Ot−1 = z | At = a)
+                =                                                               (Q(t,a) )−1
+                                                                                         z,x
+                               P (Ot−1 = z, At = a)P (Ot = Wt | At = a)
+                    x,z∈O
+                     X             f (x)P (Ot−1 = z | At = a)        (t,a)
+                =                                                   Q      (Q(t,a) )−1
+                                                                                    z,x
+                            P (Ot−1 = z, At = a)P (Ot = Wt | At = a) Wt ,z
+                    x,z∈O
+                    X                  f (x)             X (t,a)
+                =                                         QWt ,z (Q(t,a) )−1
+                                                                          z,x
+                          P (At = a)P (Ot = Wt | At = a)
+                    x∈O                                                  z∈O
+                    X            f (x)
+                =                              1{Wt = x}
+                          P (Ot = Wt , At = a)
+                    x∈O
+                           f (Wt )
+                =                        ,
+                    P (At = a, Ot = Wt )
+
+which establishes the required property of ρ(t) .
+   Now, for the second part of the theorem, we first note that in terms of our notation and under our (w.l.o.g.)
+assumption that the target policy is deterministic, Tennenholtz et al. [2020, Theorem 1] is equivalent to
+                                            s
+                                                                            !
+                                 X         Y
+                EPe [Rs ] =                      1{at = Et (o1:t , a1:t−1 )}
+                               o1:s ∈O s ,a1:s ∈As       t=1
+                                                         X
+                                                     ·         EPb [Rs | Os = os , As = as , Os−1 = z]
+                                                         z∈O
+                                                           · P (Os = os | As = a, Os−1 = z)Ω(o1:s , a1:s )z ,
+
+where Et (o1:t , a1:t−1 ) denotes the action taken by πe given O1:t = o1:t , and A1:t−1 = a1:t−1 , andwe define
+                                       s
+                                       Y
+                 Ω(o1:s , a1:s ) =           Ξs−t+1 (o1:s−t+1 , a1:s−t+1 )
+                                       t=1
+                                       X
+             Ξt (o1:t , a1:t )z,z0 =         (Q(t,at ) )−1                                                 0
+                                                        z,x P (Ot = x, Ot−1 = ot−1 | At−1 = at−1 , Ot−2 = z )
+                                       x∈O
+                                       X
+               Ξ1 (o1:t , a1:t )z =          (Q(1,a1 ) )−1
+                                                        z,x P (O1 = x) .
+                                       x∈O
+
+    We note that the term we refer to as Ω was called the same in Tennenholtz et al. [2020], and the terms we
+refer to as Ξ were called W , and we explicitly write out the matrix multiplication in the definitions of the Ξ
+terms. Next, plugging the definition of Ω into the above equation for EPe [Rs ], and explicitly writing out the
+sums implied by the multiplication of the Ξt terms, and re-arranging terms, we obtain
+
+
+
+
+                                                                     24
+                                                            s
+                                                                                                !
+                                       X                    Y
+                 EPe [Rs ] =                                      1{at = Et (o1:t , a1:t−1 )}
+                                o1:s ∈O s ,a1:s ∈As         t=1
+                               z1:s ∈O s ,x0:s−1 ∈O s
+
+                                                        · EPb [Rs | Os = os , As = as , Os−1 = zs ]
+                                                             s
+                                                                                                                   !
+                                                             Y
+                                                        ·       (Q(t,at ) )−1
+                                                                           zt ,xt−1 P (At = at , Ot−1 = zt )
+                                                                                                            −1
+
+                                                             t=1
+                                                             s−1
+                                                                                                                       !
+                                                             Y
+                                                        ·          P (Ot = ot , At = at , Ot−1 = zt , Ot+1 = xt )
+                                                             t=1
+                                                        · P (Os = os , As = as , Os−1 = zs )P (O0 = x0 ) .
+
+   Now, we note that (Q(t,at ) )−1
+                                zt ,xt−1 P (At = at , Ot−1 = zt )
+                                                                 −1
+                                                                    = ρ(t) (zt , at , xt−1 ), and that summing over the
+                   Qs−1
+product of terms t=1 P (Ot = ot , At = at , Ot−1 = Zt , Ot+1 = xt ) and P (Os = os , As = as , Os−1 = Zs ) and
+P (O0 = x0 ) is equivalent to integrating over Pind , where zt , at , xt , and ot correspond to Zt , At , Xt , and Wt
+respectively. Re-writing the previous equation as an expectation and simplifying based on this gives us
+                                    "                        s
+                                                                                                   #
+                                                            Y
+                                                                                (t)
+                 EPe [Rs ] = EPind EPb [Rs | Ws , As , Zs ]     1{At = Et }ρ (Zt , At , Xt−1 )
+                                                                         t=1
+                                       "         "          s
+                                                                                                                    ##
+                                                            Y
+                                                                                (t)
+                            = EPind EPind Rs                      1{At = Et }ρ (Zt , At , Xt−1 ) Ws , As , Zs
+                                                            t=1
+                                       "      s
+                                                                                           #
+                                              Y
+                                                                        (t)
+                            = EPind Rs              1{At = Et }ρ (Zt , At , Xt−1 ) ,
+                                              t=1
+
+where the second equation follows since theQdistribution of Rs given Ws , As , and Zs is the same under Pb and
+                                            s
+Pind , and because Rs is independent of t=1 1{At = Et }ρ(t) (Zt , At , Xt−1 ) given (Ws , As , Zs ) under Pind .
+We note that the final equation is our identification result from Theorem 6, and so we conclude.
+
+
+
+B      Identification by Proximal Causal Inference
+In this section we will present a slightly more general theorem than Theorem 2, which is the following.
+                                                                                                                           (s)
+Theorem 7. Let Assumptions 1 and 2 hold. For each s ∈ {1, . . . , H} recursively define Ys = Rs , and
+  (s)
+Yt−1 = φ(t,s) (Zt , Wt , At , Et , Yt ) for each t ≤ s, where the function φ(t,s) is allowed to take one of the following
+three forms:
+                (t,s)                        (s)
+                                                   X
+               φReg (Zt , Wt , At , Et , Yt ) =         h(t,s) (Wt , a)
+                                                        a∈A
+                (t,s)                     (s)                               (s)
+               φIS (Zt , Wt , At , Et , Yt ) = q (t) (Zt , At )1{At = Et }Yt
+                (t,s)                     (s)
+                                               X
+               φDR (Zt , Wt , At , Et , Yt ) =        h(t,s) (Wt , a)
+                                               a∈A
+                                                                                                               
+                                                                                            (s)
+                                                            + q (t) (Zt , At ) 1{At = Et }Yt − h(t,s) (Wt , At ) ,
+
+where h(t,s) and q (t) are solutions to, respectively,
+
+                 E∗t [q (t) (Zt , At ) | Wt , At = a] = Pt∗ (At = a | Wt )−1            a.s.        ∀a ∈ A ,
+                                                                         (s)
+               E∗t [h(t,s) (Wt , At ) | Zt , At = a] = E∗t [1{At = Et }Yt | Zt , At = a]                   a.s.   ∀a ∈ A ,
+
+
+                                                                       25
+which we show must exist.
+                                    (s)
+   Then, we have EPe [Rs ] = EPb [Y0 ] for each s ∈ {1, . . . , H}.
+   Furthermore, the following corollary makes the connection between Theorem 2 and Theorem 7 clear.
+Corollary 8. Let Assumptions 1 and 2 hold, and let Yt , h(t) , and ηt be defined as in Theorem 2. Then, we
+have vγ (πe ) = EPb [ψIS (τH )] = EPb [ψReg (τH )] = EPb [ψDR (τH )], where
+                                H
+                                X
+               ψIS (τH ) =            γ t−1 ηt+1 Rt
+                                t=1
+                                 X
+              ψReg (τH ) =            h(1) (W1 , a)
+                                a∈A
+                                H
+                                                                                                                    !
+                                X                            X
+              ψDR (τH ) =             γ t−1   ηt+1 Rt + ηt         h(t) (Wt , a) − ηt q (t) (Zt , At )h(t) (Wt , At )   .
+                                t=1                          a∈A
+
+                                                                                                                            (s)
+    This corollary follows directly from Theorem 7, noting that for any collection of variables Y0 satisfying
+                                                       PH           (s)
+the conditions of Theorem 7 we have vγ (πe ) = EPb [ s=1 γ s−1 Y0 ]. For ψIS , ψReg , and ψDR the specific
+                        (t,s)  (t,s)    (t,s)
+result arises by using φIS , φReg , or φDR respectively for each (t, s), and we also use the fact that for every
+                     PH            (s)                     PH
+t ≥ 1 we have Yt = s=t γ s−t Yt , and therefore h(t) = s=t γ s−t h(t,s) .
+    We note that ψIS and ψReg have very similar structures to importance sampling and direct method
+estimators for the MDP setting, where the h(t) terms are similar to the quality function terms, and the ηt
+and νt terms are similar to the importance sampling terms. Also, as already discussed in Section 4.2, ψDR
+has a very similar structure to Double Reinforcement Learning (DRL) estimators for the MDP setting [Kallus
+and Uehara, 2020].
+    Before we present the proof of Theorem 7, we establish some additional notation and some helper lemmas.
+Using similar notation to Kallus et al. [2022], for any t ∈ [H] and φ ∈ L2,Pt∗ (Rt , Dt+1:H ) we define the sets
+
+                  Q(t) = {q ∈ L2,Pt∗ (Zt , At ) : E∗t [q(Zt , At ) − Pt∗ (At | Ut )−1 | Ut , At = a] = 0
+                                a.s. ∀a ∈ A}
+                H   (t,φ)
+                            = {h ∈ L2,Pt∗ (Wt , At ) : E∗t [h(Wt , At ) − 1{At = Et }Yt | Ut , at = a] = 0
+                                a.s. ∀a ∈ A}
+                  (t)
+                 Qobs = {q ∈ L2,Pt∗ (Zt , At ) : E∗t [q(Zt , At ) − Pt∗ (At | Wt )−1 | Wt , At = a] = 0
+                                a.s. ∀a ∈ A}
+                 (t,φ)
+                Hobs = {h ∈ L2,Pt∗ (Wt , At ) : E∗t [h(Wt , At ) − 1{At = Et }Yt | Wt , At = a] = 0
+                                a.s. ∀a ∈ A} ,
+
+where Yt = φ(Rt , Et+1:H ).
+   First, we will prove an important claim from Section 4.2, which is that Assumption 2 implies that Eqs. (1)
+and (2) both have solutions. This claim is formalized by the following lemma.
+                                                                                                                                  (t)
+Lemma 3. Under Assumption 1 and for each t ∈ [H] and φ ∈ L2,Pt∗ (Rt , Dt+1:H ) we have Q(t) ⊆ Qobs and
+          (t,φ)
+H(t,φ) ⊆ Hobs .
+
+
+
+
+                                                                   26
+Proof of Lemma 3. First, suppose that q (t) ∈ Q(t) . Then we have
+
+              E∗t [q (t) (Zt , At ) | Wt , At = a] = E∗t [E∗t [q (t) (Zt , At ) | Ut , Wt , At = a] | Wt , At = a]
+                                                  = E∗t [E∗t [q (t) (Zt , At ) | Ut , At = a] | Wt , At = a]
+                                                  = E∗t [Pt∗ (At = a | Ut )−1 | Wt , At = a]
+                                                         Pt∗ (Ut = u | Wt , At = a)
+                                                    Z
+                                                  =                                  dµ(u)
+                                                           Pt∗ (At = a | Ut = u)
+                                                         Pt∗ (At = a | Wt , Ut = u)Pt∗ (Ut = u | Wt )
+                                                    Z
+                                                  =                                                   dµ(u)
+                                                           Pt∗ (At = a | Ut = u)Pt∗ (At = a | Wt )
+                                                                            Z
+                                                  = Pt∗ (At = a | Wt )−1 Pt∗ (Ut = u | Wt )dµ(u)
+
+                                                  = Pt∗ (At = a | Wt )−1 ,
+
+where in the second and sixth equalities we apply the independence assumptions from Assumption 1, in the
+third equality we apply the fact that q (t) ∈ Q(t) , and the fifth equality follows from Bayes’ rule. Therefore,
+         (t)
+q (t) ∈ Qobs .
+     Second, suppose that h(t) ∈ H(t,φ) . Then we have
+
+              E∗t [h(t) (Wt , At ) | Zt , At = a] = E∗t [E∗t [h(t) (Wt , At ) | Ut , Zt , At = a] | Zt , At = a]
+                                                  = E∗t [E∗t [h(t) (Wt , At ) | Ut , At = a] | Zt , At = a]
+                                                  = E∗t [E∗t [φ(Rt , Dt+1:H ) | Ut , At = a] | Zt , At = a]
+                                                  = E∗t [E∗t [φ(Rt , Dt+1:H ) | Ut , Zt , At = a] | Zt , At = a]
+                                                  = E∗t [φ(Rt , Dt+1:H ) | Zt , At = a] ,
+
+where in the second and fourth equalities we apply the independence assumptions from Assumption 1, and in
+                                                                           (t,φ)
+the third equality we apply the fact that h(t) ∈ H(t) . Therefore, h(t) ∈ Hobs .
+
+                                                                                                           (t,s)        (t,s)
+   Next, we establish the following pair of lemmas, which allow us to establish that φIS                           and φReg satisfy
+an important recursive property in the case that q (t) ∈ Q(t) or h(t) ∈ H(H) respectively.
+Lemma 4. Suppose that q (t) ∈ Q(t) , let Yt = φ(Rt , Dt+1:H ), and let Assumption 1 be given. Then, we have
+
+                                      E∗t [q (t) (Zt , At )1{At = Et }Yt ] = E∗t+1 [Yt ] .
+
+Lemma 5. Suppose that h(t) ∈ H(t,φ) , let Yt = φ(Rt , Dt+1:H ), and let Assumption 1 be given. Then, we have
+                                        "                #
+                                          X
+                                      ∗
+                                    Et        h (Wt , a) = E∗t+1 [Yt ] .
+                                               (t)
+
+                                                 a∈A
+
+
+
+
+                                                               27
+Proof of Lemma 4. Given that q (t) ∈ Q(t) , we have
+                     E∗t [q (t) (Zt , At )1{At = Et }Yt ]
+                      = E∗t [E∗t [q (t) (Zt , At ) | Ut , At , Et , Yt (1), . . . , Yt (m)]1{At = Et }Yt ]
+                      = E∗t [E∗t [q (t) (Zt , At ) | Ut , At ]1{At = Et }Yt ]
+                      = E∗t [Pt∗ (At | Ut )−1 1{At = Et }Yt ]
+                      = E∗t [Pt∗ (At | Ut )−1 1{At = Et }Yt (Et )]
+                             "                                                                     #
+                               X P ∗ (At = a | Ut , Et , Yt (1), . . . , Yt (m))
+                         ∗           t
+                      = Et                                                       1{Et = a}Yt (Et )
+                                               Pt∗ (At = a | Ut )
+                               a∈A
+                             "                        #
+                               X
+                          ∗
+                      = Et         1{Et = a}Yt (Et )
+                               a∈A
+                      = E∗t [Yt (Et )]
+                      = E∗t+1 [Yt ] ,
+where in the second and sixth equalities we apply the independence assumptions from Assumption 1, in the
+third equality we apply the fact that q (t) ∈ Q(t) , in the fourth equality we apply the fact that Yt = Yt (At ),
+and in the final equality we apply the fact that by definition intervening on the t’th action with Et under Pt∗
+                                ∗
+is by definition equivalent to Pt+1 .
+
+Proof of Lemma 5. Given that h(t,φ) ∈ Q(t) , we have
+                     "               #         " "                 ##
+                       X                           X
+                   ∗       (t)               ∗   ∗    (t)
+                  Et      h (Wt , a) = Et Et         h (Wt , a) Ut
+                         a∈A                                     a∈A
+                                                       "         "                                    ##
+                                                                     X
+                                               = E∗t    E∗t                (t)
+                                                                          h (Wt , At ) Ut , At = a
+                                                                 a∈A
+                                                       "         "                                     ##
+                                                                     X
+                                               = E∗t    E∗t               1{Et = At }Yt   Ut , At = a
+                                                                 a∈A
+                                                       "         "                                           ##
+                                                                     X
+                                               = E∗t E∗t                  1{Et = a}Yt (Et ) Ut , At = a
+                                                                 a∈A
+                                                       "         "                               ##
+                                                                     X
+                                               = E∗t       E∗t            1{Et = a}Yt (Et ) Ut
+                                                                 a∈A
+                                                       "                              #
+                                                           X
+                                               = E∗t             1{Et = a}Yt (Et )
+                                                           a∈A
+                                               = E∗t [Yt (Et )]
+                                               = E∗t+1 [Yt ]
+
+
+where in the second and sixth equalities we apply the independence assumptions from Assumption 1, in the
+third equality we apply the fact that h(t) ∈ H(t,φ) , in the fourth equality we apply the fact that Yt = Yt (At ),
+and in the final equality we apply the fact that by definition intervening on the t’th action with Et under Pt∗
+                                ∗
+is by definition equivalent to Pt+1 .
+
+
+    Now, by the previous two lemmas, we would be able to establish identification via backward induction, if it
+were the case that the functions q (t) and h(t,s) used for identification were actually members of Q(t) and H(t,φ)
+                                       (s)                                                (t)             (t,φ)
+(for φ such that φ(Rt , Dt+1:H ) = Yt ). However, instead we assumed that q (t) ∈ Qobs and h(t) ∈ Hobs , so
+some additional care must be taken. The next lemma and its corollaries allow us to remedy this issue.
+
+
+                                                                     28
+                           (t)                   (t,φ)
+Lemma 6. Let q (t) ∈ Qobs and h(t) ∈ Hobs be chosen arbitrarily, for some given Yt = φ(Rt , Dt+1:H ). Then
+we have                                                             "                #
+                                                                      X
+                         E∗t [q (t) (Zt , At )1{At = Et }Yt ] = E∗t     h(t) (Wt , a) .
+                                                                                  a∈A
+
+Proof of Lemma 6. We have
+
+                   E∗t [q (t) (Zt , At )1{At = Et }Yt ] = E∗t [q (t) (Zt , At )E∗t [1{At = Et }Yt | Zt , At ]]
+                                                            = E∗t [q (t) (Zt , At )E∗t [h(t) (Wt , At ) | Zt , At ]]
+                                                            = E∗t [q (t) (Zt , At )h(t) (Wt , At )]
+                                                            = E∗t [E∗t [q (t) (Zt , At ) | Wt , At ]h(t) (Wt , At )]
+                                                            = E∗t [Pt∗ (At | Wt )−1 h(t) (Wt , At )]
+                                                                   "                                       #
+                                                                     X P ∗ (At = a | Wt )
+                                                            = E∗t          t
+                                                                                             h(t) (Wt , a)
+                                                                         Pt∗ (At = a | Wt )
+                                                                     a∈A
+                                                                   "                 #
+                                                                     X
+                                                                ∗         (t)
+                                                            = Et         h (Wt , a) .
+                                                                     a∈A
+
+
+
+                                         (t)
+Corollary 9. Suppose that q (t) ∈ Qobs , let Yt = φ(Rt , Dt+1:H ), and let Assumptions 1 and 2 be given. Then,
+we have
+                                 E∗t [q (t) (Zt , At )1{At = Et }Yt ] = E∗t+1 [Yt ] .
+                                               (t,φ)
+Corollary 10. Suppose that h(t) ∈ Hobs , let Yt = φ(Rt , Dt+1:H ), and let Assumptions 1 and 2 be given.
+Then, we have                         "              #
+                                        X
+                                    ∗
+                                  Et       h (Wt , a) = E∗t+1 [Yt ] .
+                                             (t)
+
+                                                      a∈A
+
+   Corollary 9 follows because from Assumption 2 there must exist some h(t) ∈ H(t,φ) , and by Lemma 3 we
+                    (t,φ)
+know that h(t) ∈ Hobs , so therefore applying Lemma 6 and then Lemma 5 we have
+                                                             "             #
+                                                               X
+                          ∗ (t)                            ∗
+                        Et [q (Zt , At )1{At = Et }Yt ] = Et     h (Wt , a) = E∗t+1 [Yt ] .
+                                                                  (t)
+
+                                                                           a∈A
+
+
+Corollary 10 follows by an almost identical logic, since by Assumption 2 there must exist some q (t) ∈ Q(t) ,
+                                            (t)
+and by Lemma 3 we also know that q (t) ∈ Qobs . Therefore, applying Lemma 6 and then Lemma 4 we have
+                         "              #
+                           X
+                       ∗
+                      Et     h (Wt , a) = E∗t [q (t) (Zt , At )1{At = Et }Yt ] = E∗t+1 [Yt ] .
+                              (t)
+
+                             a∈A
+
+   These corollaries are sufficient to construct our inductive proof for our main identification result, in the
+         (t,s)    (t,s)                            (t,s)
+case of φIS and φReg . However, for the case of φDR we need to establish one final lemma before presenting
+our main proof.
+                                                (t)                                                    (t,φ)
+Lemma 7. Suppose that either q (t) ∈ Qobs and h(t) ∈ L2,Pt∗ (Wt , At ) or h(t) ∈ Hobs and q (t) ∈ L2,Pt∗ (Zt , At ).
+In addition, let Yt = φ(Rt , Dt+1:H ), and let Assumptions 1 and 2 be given. Then, we have
+                    "                                                             #
+                                                                  X
+                  ∗   (t)                           (t)
+                 Et q (Zt , At )(1{At = Et }Yt − h (Wt , At )) +       h (Wt , a) = E∗t+1 [Yt ] .
+                                                                        (t)
+
+                                                                                   a∈A
+
+
+
+
+                                                                   29
+                                                                                 (t)
+Proof of Lemma 7. First consider the case where q (t) ∈ Qobs and h(t) ∈ L2,Pt∗ (Wt , At ). In this case, we have
+                       "                                                               #
+                                                                      X
+                     ∗   (t)                            (t)                (t)
+                   Et q (Zt , At )(1{At = Et }Yt − h (Wt , At )) +        h (Wt , a)
+                                                                                                    a∈A
+                                                                                       "                        #
+                                                                                           X
+                                = E∗t t[q (t) (Zt , At )1{At = Et }Yt ] + E∗t                  h(t) (Wt , a)
+                                                                                       a∈A
+
+                                    − E∗t [q (t) (Zt , At )h(t) (Wt , At )]
+                                                    "                    #
+                                                       X
+                                   ∗              ∗
+                                = Et+1 [Yt ] + Et           h (Wt , a) − E∗t [q (t) (Zt , At )h(t) (Wt , At )] ,
+                                                             (t)
+
+                                                         a∈A
+                                                                                                          (t)
+where in the second equality we apply Corollary 9. Now, given q (t) ∈ Qobs we can further establish
+                                                              h                                               i
+                  E∗t [q (t) (Zt , At )h(t) (Wt , At )] = E∗t E∗t [q (t) (Zt , At ) | Wt , At ]h(t) (Wt , At )
+                                                              h                                   i
+                                                        = E∗t Pt∗ (At | Wt )−1 h(t) (Wt , At )
+                                                              "                       #
+                                                                X
+                                                        = E∗t        h(t) (Wt , At ) .
+                                                                           a∈A
+
+Thus, plugging this into the previous equation we have
+                  "                                                                                                 #
+                                                                                           X
+                 E∗t       q   (t)                                   (t)
+                                     (Zt , At )(1{At = Et }Yt − h (Wt , At )) +                   h (Wt , a) = E∗t+1 [Yt ] .
+                                                                                                    (t)
+
+                                                                                           a∈A
+                                                                     (t,φ)
+   Next, instead consider the case where h(t) ∈ Hobs and q (t) ∈ L2,Pt∗ (Zt , At ). In this case, we have
+               "                                                                   #
+                                                                    X
+            E∗t q (t) (Zt , At )(1{At = Et }Yt − h(t) (Wt , At )) +   h(t) (Wt , a)
+                                                                                       a∈A
+                                                                                                                    "                #
+                       h                                                                              i                 X
+              = E∗t        q   (t)
+                                     (Zt , At )E∗t [1{At = Et }Yt − h(t) (Wt , At ) | Zt , At ]            + E∗t              (t)
+                                                                                                                            h (Wt , a)
+                                                                                                                    a∈A
+              = 0 + E∗t+1 [Yt ] ,
+                                                                                                                    (t,φ)
+where the second equality follows from Corollary 10 and the fact that h(t) ∈ Hobs . Therefore, under either
+conditions we have our desired result.
+
+
+   Now that we have established these preliminary lemmas, we are ready to present the main proof.
+                                                                                                                                         (t)
+Proof of Theorem 7. First, we have assumed Assumptions 1 and 2, as well as the fact that q (t) ∈ Qobs and
+         (t,φ)                                                                                     (t+1,s)
+h(t) ∈ Hobs , so it follows from Corollaries 9 and 10 and Lemma 7 that for any of the choices of φIS       ,
+ (t+1,s)       (t+1,s)                     (s)
+φReg , or φDR          for defining each Yt term (for t < s) we have
+                                                                                 (s)                      (s)
+                                               E∗t [φ(t,s) (Zt , Wt , At , Et , Yt )] = E∗t+1 [Yt ] ,
+                                                                                                                        (s)
+which holds for every t < s. Furthermore, plugging in the recursive definition of Yt−1 , the previous equation
+is equivalent to
+                                                 (s)             (s)
+                                          E∗t [Yt−1 ] = E∗t+1 [Yt ] ,
+which again holds for every t < s. Therefore, by backward induction we have
+                                                                   (s)
+                                                             E∗1 [Y0 ] = E∗s+1 [Rs ] .
+However, by construction P1∗ = Pb , and the distribution of Rs under Ps+1
+                                                                      ∗
+                                                                          is the same as under Pe , so
+                         (s)
+therefore we have EPb [Y0 ] = EPe [Rs ], as required.
+
+
+
+                                                                           30
+C       Proof of Consistency and Asymptotic Normality
+We will prove this theorem by appealing to Chernozhukov et al. [2016, Theorem 3.1]. Therefore, this proof
+will consist of establishing the conditions of this theorem. We will first present a lemma establishing the
+Newman orthogonality property of this influence function, which not only is a condition of Chernozhukov
+et al. [2016, Theorem 3.1] but an important property in its own right, before presenting the rest of the proof.
+      In what follows below, for any generic quantity Ψ that depends on our nuisance functions, we will use
+the notation Ψ̂ to refer to the value of Ψ using the estimated nuisance functions q̂ (t) and ĥ(t) in place of
+q (t) and h(t) respectively for each t ∈ [H], and define ∆Ψ = Ψ̂ − Ψ. In addition, for any r ∈ [0, 1] we let
+                                                                               (t)
+Ψ|r refer to the value of Ψ using the nuisances qr (t) = q (t) + r∆q (t) and hr = h(t) + r∆h(t) in place of
+  (t)       (t)
+q and h respectively for each t ∈ [H], and define ∆r Ψ = Ψ|r − Ψ. We note that according to these
+definitions, Ψ = Ψ|0 , Ψ̂ = Ψ|1 , and ∆Ψ = ∆1 Ψ. In what follows below we will treat ∆q (t) and ∆h(t) as
+non-random square integrable functions with the same signature as q (t) and h(t) respectively for each t ∈ [H],
+which may take arbitrary values. This is in contrast to previous sections, where Ψ̂ was treated as a random
+quantity with respect to the sampling distribution of the n i.i.d. behavior trajectories. Finally, we note
+that it is trivial to verify that for any pair of quantities Ψ and Ψ0 we have ∆r (Ψ + Ψ0 ) = ∆r Ψ + ∆r Ψ0 , and
+∆r (ΨΨ0 ) = (∆r Ψ)Ψ0 + Ψ(∆r Ψ0 ) + (∆r Ψ)(∆r Ψ0 ), which we will frequently apply in the derivations below
+without further explanation.
+Lemma 8. Under the conditions of Theorem 2, as well as the additional assumption that kq (t) (Zt , At )k < ∞
+and kh(t) (Wt , At )k < ∞ for each t ∈ [H], ψDR satisfies Neyman orthogonality with respect to the nuisances
+q (t) and h(t) for all t ∈ [H]. More concretely, for any arbitrary functions ∆q (t) (Zt , At ) and ∆h(t) (Wt , At ) for
+each t ∈ [H] that have finite supremum norm, we have
+
+                                                  ∂
+                                                        EP [ψDR (τH )|r ] = 0 .
+                                                  ∂r r=0 b
+
+Proof of Lemma 8. First, we note that
+                           X                                                            
+             ψDR (τH )|r =    h(1)           (1)                             (1)
+                               r (W1 , a) + qr (Z1 , A1 ) 1{A1 = E1 }Y1,r − hr (W1 , A1 ) ,
+                                 a∈A
+
+where                                                                                                             !
+                                        X                                                                    
+              Yt−1,r = Rt−1 + γ               h(t)           (t)
+                                               r (Wt , a) + qr (Zt , At )       1{At = Et }Yt,r − h(t)
+                                                                                                   r (Wt , At )
+                                        a∈A
+
+for all t ∈ {2, 3, . . . , H}, and
+                                                          YH,r = RH .
+Therefore, we have
+
+                    ∂                    X
+                           ψDR (τH )|r =     ∆h(1) (W1 , a) − q (1) (Z1 , A1 )∆h(1) (W1 , A1 )
+                    ∂r r=0
+                                         a∈A
+                                                                                            
+                                         + ∆q (1) (Z1 , A1 ) 1{A1 = E1 }Y1,0 − h(1) (W1 , A1 )
+                                                                                  ∂
+                                               + q (1) (Z1 , A1 )1{A1 = E1 }             Y1,r .
+                                                                                  ∂r r=0
+
+Now, following an identical argument as in Lemma 6, for any t ∈ [H] and arbitrary functions h̃ and q̃ with he
+same signature as h(t) and q (t) we have
+                                      "                                        #
+                                        X
+                                    ∗                   (t)
+                                  Et      h̃(Wt , a) − q (Zt , At )h̃(Wt , At ) = 0                       (8)
+                                               a∈A
+                                       h                                             i
+                                 E∗t    q̃(Zt , At ) 1{At = Et }Yt,0 − h(t) (Wt , At ) = 0 .                          (9)
+
+
+                                                                31
+In addition, it is straightforward to argue via backward induction on t that
+                                                                       
+                                  ∗   (t)                    ∂
+                                 Et q (Zt , At )1{At = Et )}        Yt,r = 0 ,
+                                                             ∂r r=0
+
+for every t ∈ [H]. For the base case where t = H, this is straightforward since YH,r = RH , which doesn’t
+depend on r. Otherwise, for the inductive case, we first note that following Lemma 4, for any t ≤ H we have
+                                                                                           
+                                                           ∂                     ∂
+              E∗t−1 q (t−1) (Zt−1 , At−1 )1{At−1 = Et−1 )}        Yt−1,r = E∗t          Yt−1,r ,
+                                                           ∂r r=0                ∂r r=0
+
+and furthermore we have
+                      ∂                 X
+                             Yt−1,r = γ     ∆h(t) (Wt , a) − γq (t) (Zt , At )∆h(t) (Wt , At )
+                      ∂r r=0
+                                        a∈A
+                                                                                              
+                                      + γ∆q (t) (Zt , At ) 1{At = Et }Yt,0 − h(t) (Wt , At )
+                                                                           ∂
+                                          + γq (t) (Zt , At )1{At = Et }          Yt,r .
+                                                                           ∂r r=0
+
+Now, given Eqs. (8) and (9) it immediately follows that the first three terms have mean zero under E∗t .
+Furthermore, the final term also has mean zero by the inductive assumption. This completes the backward
+induction, and therefore putting the above together we have
+                                                              
+                                             ∂
+                                       EPb          ψDR (τH )|r = 0 .
+                                             ∂r r=0
+
+   It only remains to argue that we can swap the order of differentiation and integration in this equation.
+By the mean value theorem, we have
+
+                                 ψDR (τH )|r − ψDR (τH )   ∂
+                                                         =         ψDR (τH )|r ,
+                                            r              ∂r r=r0
+
+for some r0 ∈ (0, r). Therefore, it follows that
+                                                                                          
+                          ∂                                             ∂
+                                EP [ψDR (τH )|r ] = lim    EPb                  ψDR (τH )|r .
+                          ∂r r=0 b                  r 0 →0              ∂r r=r0
+             ∂
+Now, clearly ∂r                                      ∂
+                     ψ (τ )| converges point-wise to ∂r
+                r=r 0 DR H r
+                                                           ψ (τ )| as r0 → 0. Furthermore, it follows
+                                                        r=0 DR H r
+                                    (t)         (t)   ∂             (t)        ∂                (t)
+trivially from the definitions of qr and hr that ∂r           q = ∆q (t) , and ∂r
+                                                         r=r 0 r
+                                                                                       h = ∆h(t) for every
+                                                                                  r=r 0 r
+              0                             0
+t ∈ [H] and r ∈ [0, 1]. Therefore, for any r ∈ [0, 1] we have
+
+                   ∂
+                          ψDR (τH )|r
+                  ∂r r=r0             ∞
+                   X
+                           (1)
+                 ≤    k∆h (W1 , a)k∞
+                    a∈A
+                                                                                              
+                   + k∆q (1) (Z1 , A1 )k∞ kY1,r0 k∞ + kh(1) (W1 , A1 )k∞ + k∆h(1) (W1 , A1 )k∞
+                                                               
+                   + kq (1) (Z1 , A1 )k∞ + k∆q (1) (Z1 , A1 )k∞
+                                                                      
+                                   (1)                   ∂
+                          · k∆h (W1 , A1 )k∞ +                  Y1,r     .
+                                                        ∂r r=r0      ∞
+
+Now, by assumption we know that q (t) , h(t) , ∆q (t) , and ∆h(t) all have bounded supremum norm, so therefore
+ ∂                                                                         0
+∂r r=r 0 (ψDR (τH ))r is uniformly bounded in supremum norm over r ∈ [0, 1], as long as we can uniformly
+                         ∂
+bound kY1,r0 k∞ and k ∂r         Y k . Therefore, our final result would follow by the dominated convergence
+                            r=r 0 1,r ∞
+
+
+                                                           32
+theorem as long as we can show these two bounds. In order to show this, bote that for any t < H and
+r0 ∈ [0, 1] we can bound
+                                       X                                              
+                 kYt,r k∞ ≤ kRt k∞ + γ    kh(t+1) (Wt+1 , a)k∞ + k∆h(t+1) (Zt+1 , a)k∞
+                                             a∈A
+                                                                                         
+                                        (t+1)
+                                + γ kq      (Wt+1 , At+1 )k∞ + k∆q (t+1) (Zt+1 , At+1 )k∞
+                                                                                                 
+                                  · kYt+1,r k∞ + kh(t+1) (Wt+1 , a)k∞ + k∆q (t+1) (Zt+1 , At+1 )k∞ ,
+
+and
+                      ∂
+                              Yt,r
+                      ∂r r=r0      ∞
+                        X
+                     ≤γ     k∆h(t+1) (W1 , a)k∞
+                          a∈A
+
+                        + γk∆q (t+1) (Zt+1 , At+1 )k∞
+                                                                                              
+                          · kYt+1,r0 k∞ + kh(t+1) (Wt+1 , At+1 )k∞ + k∆h(t+1) (Wt+1 , At+1 )k∞
+                                                                                  
+                        + γ kq (t+1) (Zt+1 , At+1 )k∞ + k∆q (t+1) (Zt+1 , At+1 )k∞
+                                                                               
+                                                             ∂
+                          · k∆h(t+1) (Wt+1 , At+1 )k∞ +              Yt+1,r       ,
+                                                            ∂r r=r0          ∞
+
+and for t = H we have kYH,r0 k∞ = kRH k∞ and ∂r   ∂
+                                                           Y
+                                                      r=r 0 H,r ∞
+                                                                   = 0 for all r0 . Therefore, given this and
+the fact that all rewards are bounded by assumption, it follows from backward induction that kY1,r0 k∞ and
+  ∂
+k ∂r      Y k are uniformly bounded over r0 ∈ [0, 1]. Thus, the final result follows by the dominated
+     r=r 0 1,r ∞
+convergence theorem as discussed above.
+
+
+Proof of Theorem 3. We will establish this proof based on directly applying Chernozhukov et al. [2016,
+Theorem 3.1]. We note that this theorem immediately implies Theorem 3, as long as we can establish that
+its conditions hold. We will proceed by establishing these conditions one by one. Specifically, we need to
+establish their Assumption 3.1 and Assumption 3.2.
+    We note that Chernozhukov et al. [2016, Theorem 3.1] considers linear scores, where the parameter of
+interest θ is the solution to
+
+                                     E[ψ(τH ; θ, ξ)] = E[ψ a (τH ; ξ)θ + ψ b (τH ; ξ)] = 0 ,                                 (10)
+
+where ξ represents the nuisance functions, and ψ(τH ; θ, ξ) = ψ a (τH ; ξ)θ + ψ b (τH ; ξ). In our case, the
+notation above corresponds to our quantities of interest as follows: θ = vγ (πe ) is the target policy value;
+ξ = q (1) , . . . , q (H) , h(1) , . . . , h(H) ; ψ a (τH ; ξ) = −1; and ψ b (τH ; ξ) is equal to ψDR (τH ) with the true nuisances
+replaced with ξ.
+    Let Ξ(c, c0 , c00 ) denote the set of all possible nuisances ξ such that, for all t ∈ [H], a ∈ A and Ψ ∈
+{q (Zt , At ), h(t) (Wt , a)}, we have:
+  (t)
+
+
+                                                                 k∆Ψk∞ ≤ c
+                                                               k∆Ψk2,Pb ≤ c0
+                                     k∆q (t) (Zt , At )∆h(t) (Wt , a)k2,Pb ≤ c00
+                                                    0
+                                             k∆q (t ) (Zt0 , At0 )∆Ψk2,Pb ≤ c00     ∀t0 < t .
+
+In addition, let ξ0 denote the value of the true nuisances, and let ξˆn denote the estimated nuisances using n
+              (1)          (n)
+trajectories τH , . . . , τH . We note that by Assumption 3 there must exist some constant c∗ and sequences
+c0n ∈ o(1) and c00n ∈ o(n−1/2 ) such that P (ξˆn ∈ Ξ(c∗ , c0n , c00n )) → 1 as n → ∞, and let Ξn = Ξ(c∗ , c0n , c00n ). We
+also note that according to the above definitions ψDR (τH ) = ψ b (τH ; ξ0 ), and ξ0 ∈ Ξn for all n.
+
+
+                                                               33
+    First, let us establish Chernozhukov et al. [2016, Assumption 3.1]. For (i) and (ii) we note that vγ (πe )
+satisfies Eq. (10) trivially given Theorem 2, and that this score is linear in θ. For (iii) we note that following
+an almost identical argument as in the proof of Lemma 8 by applying the dominated convergence theorem, it
+is trivial that E[ψDR (τH )] is twice Gateaux differentiable for any ξ − ξ0 ∈ Ξn , since for all such directions we
+have k∆q (t) (Zt , At )k∞ < ∞ and k∆h(t) (Wt , At )k∞ < ∞. Condition (iv) holds trivially with nuisance set Ξn
+for any sequence δn , since by Lemma 8 we have exact Neyman orthogonality. Finally, (v) holds trivially for
+any c0 ∈ (0, 1) and c1 ∈ (1, ∞), since ψ a (τH ; ξ) is constant.
+    Next, let us establish Chernozhukov et al. [2016, Assumption 3.2]. For (i), we note that by Assumption 3
+we have that ξˆn ∈ Ξn with probability approaching one. For (ii), we note that given the definition of Ξn and
+the fact that rewards are bounded, it trivially follows that for any q > 2 we have
+
+                                     sup kψ b (τH ; ξ)kq,Pb ≤ sup kψ b (τH ; ξ)k∞ < ∞ ,
+                                   ξ∈Ξ(c∗ )                                   ξ∈Ξ(c∗ )
+
+from which (ii) follows trivially, since we showed that part (v) of Chernozhukov et al. [2016, Assumption 3.2]
+holds for any arbitrary c1 ∈ (1, ∞). For (iii), we can first note that clearly
+
+                                          sup |EPb [ψ a (τH ; ξ)] − EPb [ψ a (τH ; ξ0 )]| = 0 ,
+                                         ξ∈Ξ(c∗ )
+
+
+since ψ a is constant. Second, we note that for any ξˆ ∈ Ξn , we have
+
+             kψ(τH ; vγ (πe ), ˆ
+                               ξ) − ψ(τH ; vγ (πe ), ξ0 )k2,Pb
+              = k∆ψ b (τH ; ξ)k2,Pb
+                X                                                                                                                              
+              ≤      ∆h(1) (W1 , a)                   + kq   (1)
+                                                                   (Z1 , A1 )k∞             ∆h   (1)
+                                                                                                       (W1 , A1 )                + k∆Y1 k2,Pb
+                                               2,Pb                                                                      2,Pb
+                a∈A
+                                                                                                       
+                   + k∆q (1) (Z1 , A1 )k2,Pb              h(1) (W1 , A1 )               + kY1 k∞
+                                                                                    ∞
+                                                                                                                     
+                            (1)                                (1)
+                   + k∆q          (Z1 , A1 )k2,Pb         ∆h             (W1 , A1 )            + k∆Y1 k2,Pb
+                                                                                        2,Pb
+
+              ≤ |A|c0n + c∗ (c0n + k∆Y1 k2,Pb ) + (c∗ + k∆Y1 k∞ )c0n + (c0n + k∆Y1 k2,Pb )c0n ,
+
+and furthermore for each 1 < t ≤ H we have
+
+             k∆Yt−1 k2,Pb
+                X                                                                                                                                
+             ≤γ       ∆h(t) (Wt , a)                  + γkq (t) (Zt , At )k∞                   ∆h(t) (Wt , At )                  + k∆Yt k2,Pb
+                                               2,Pb                                                                       2,Pb
+                  a∈A
+                                                                                                      
+                  + γk∆q (t) (Zt , At )k2,Pb              h(t) (Wt , At )               + kYt k∞
+                                                                                    ∞
+                                                                                                                    
+                             (t)                                   (t)
+                  + γk∆q           (Zt , At )k2,Pb        ∆h (Wt , At )                        + k∆Yt k2,Pb
+                                                                                        2,Pb
+
+             ≤ γ|A|c0n + γc∗ (c0n + k∆Yt k2,Pb ) + γ(c∗ + k∆Yt k∞ )c0n + γ(c0n + k∆Yt k2,Pb )c0n .
+
+Now, as argued in the proof of Lemma 8, it easily follows by backward induction on t that kYt k∞ < ∞.
+                                                                                                          (1)
+Therefore, given the above equation it easily follows again by backward induction on t that k∆Yt k2,Pb ≤ δn
+                           (1)                                         (1)
+and k∆ψ b (τH ; ξ)k2,Pb ≤ δn for all ξˆ ∈ Ξn , where the sequence δn ∈ o(1) does not depend on ξ.
+                                                                                                ˆ Thus, we
+have
+                                                  ˆ − ψ(τH ; vγ (πe ), ξ0 )
+                             sup ψ(τH ; vγ (πe ), ξ)                        ≤ δn(1) .
+                                  ξ∈Ξn                                                                      2,Pb
+
+Similarly, recalling that
+                              H
+                                                                                                                                          !
+                              X                                      X
+                                         t−1                                  (t)                          (t)              (t)
+               ψDR (τH ) =           γ          ηt+1 Rt + ηt                 h (Wt , a) − ηt q                   (Zt , At )h (Wt , At )       ,
+                              t=1                                    a∈A
+
+
+                                                                             34
+for any ξˆ ∈ Ξn we also have
+               ∂2 b
+                   ψ (τH ; ξ|r )
+               ∂r2
+                   H
+                                                                                                                   !
+                 X          ∂2                            X
+               =      γ t−1 2 ηt+1,r             Rt +           h(t)           (t)          (t)
+                                                                 r (Wt , a) − qr (Zt , At )hr (Wt , At )
+                  t=1
+                           ∂r
+                                                          a∈A
+                        H
+                        XX                   ∂
+                    +                γ t−1      ηt,r ∆h(t) (Wt , a)
+                        t=1 a∈A
+                                             ∂r
+                        H
+                        X             ∂                                                                       
+                    +         γ t−1      ηt,r ∆q (t) (Zt , At )hr (Wt , At ) + ∆h(t) (Wt , At )qr(t) (Zt , At ) ,
+                        t=1
+                                      ∂r
+
+and
+                          ∂         X
+                             ηt,r =   ∆q (s) (Zs , As )br (s)
+                          ∂r
+                                            s∈[t]
+                              2
+                         ∂           X X                                                  0
+
+                            2
+                              ηt,r =                            ∆q (s) (Zs , As )∆q (s ) (Zs0 , As0 )br (s, s0 )
+                         ∂r           0     s∈[t] s ∈[t]\{s}
+
+where
+                                                         Y
+                    br (s) = 1{Es = As }                          1{Eh = Ah }qr(h) (Zh , Ah )
+                                                      h∈[t]\{s}
+                                                                             Y
+                  br (s, s0 ) = 1{Es = As }1{Es0 = As0 }                                 1{Eh = Ah }qr(h) (Zh , Ah ) .
+                                                                         h∈[t]\{s,s0 }
+
+
+Therefore, it easily follows from the above and the definition of Ξn that for all ξˆ ∈ Ξn we have
+                                                            ∂2 b
+                                                                ψ (τH ; ξ|r )   ≤ k1
+                                                            ∂r2               ∞
+                                                      ∂2 b
+                                                          ψ (τH ; ξ|r )      ≤ k2 c00n ,
+                                                      ∂r2               1,Pb
+
+for some constants k1 and k2 that don’t depend on ξˆ or on r. Therefore, we can apply the dominated
+convergence theorem to obtain
+
+                                      sup           |EPb ψ(τH ; vγ (πe ), rξ + (1 − r)ξ0 )| ≤ k2 c00n .
+                                  r∈(0,1),ξ∈Ξn
+
+                                                                             (1)   √
+Putting the above together, we have condition (iii) with δn = max(δn , k2 nc00n ). Finally, condition (iv)
+follows since by assumption the variance of ψDR (τH ) is non-zero.
+    Therefore, we have established the conditions of Chernozhukov et al. [2016, Theorem 3.1], so applying
+this theorem we have
+                                                                n
+                           √                                1 X          (i)
+                              n(v̂γ(n) (πe ) − vγ (πe )) = √       ψDR (τH ) + op (1) ,
+                                                             n i=1
+                                                                                             2
+which by the central limit theorem and Slutsky’s theorem converges in distribution to N (0, σDR ).
+
+
+
+D       Background on Semiparametric Efficiency Theory
+In this appendix we provide a brief review of semiparametric efficiency theory, as relevant for the theory in
+this paper. We will consider a random variable X ∈ X , a model (set of distributions) M, where each P ∈ M
+
+
+                                                                       35
+defines a distribution for X, and some scalar parameter v : M 7→ R. Also let µ denote some dominating
+measure such that P  µ for every P ∈ P, and denote the corresponding density as dP/dµ. Given i.i.d.
+observations X1 , . . . , Xn sampled from some P0 ∈ M, semiparametric efficiency theory concerns itself with
+the limits on the estimation of v(P0 ), given that the estimator is required to be consistent and “well behaved”
+(defined concretely below) at all P in a neighborhood of P0 in the model M.
+
+D.1     Definitions
+Definition 2 (Influence function of estimators). An estimator sequence v̂n (X1:n ) is asymptotically linear
+(AL) with influence function (IF) ψP0 (X) if
+                                                                n
+                               √                              1 X
+                                   n(v̂n (X1:n ) − v(P0 )) = √      ψP (X) + op (1)
+                                                               n i=1 0
+
+where EP0 [ψP0 (X)] = 0.
+Definition 3 (One-dimensional submodel and its score function). A one-dimensional submodel of M passing
+through P is a set of distributions {P :  ∈ U } ⊆ M, where:
+   1. P0 = P
+   2. The score function s(X; ) = (d/d) log((dP /dµ)(X)) exists
+   3. There exists u > 0 s.t. sup||≤u |s(X; )|(dP /dµ)(X)dµ(X) < ∞ and E[sup||≤u s(X; )2 ] < ∞ .
+                             R
+
+Also, we define s(X) = s(X; 0), which we refer to as the score function of the submodel at P0 , Note that by
+property (3) we have s(X) ∈ L2,P (X). We also note that these conditions on the parametric sub-model are
+slightly stronger than those in some related work; these are needed to prove our semiparametric efficiency
+results with full rigor, and our definitions below should be interpreted w.r.t. such well-behaved submodels.
+Definition 4 (Tangent space). The tangent space of M at P0 is the linear closure of the score function at
+P0 of all one-dimensional submodels of M passing through P0 .
+   Note that the tangent space is always a cone, since we can always redefine any one-dimensional parametric
+submodel replacing  with any scalar multiple of .
+Definition 5 (Pathwise differentiability). A functional v : M 7→ R is pathwise differentiable at P0 wrt M
+if there exists a mean-zero function ψP0 (X), such that any one-dimensional submodel {P } of M passing
+through P0 with score function s(X) satisfies
+
+                                          dv(P )
+                                                   = E[ψP0 (X)s(X)] .
+                                            d =0
+
+    The function ψP0 (X) is called a gradient of v(P0 ) at P0 wrt M. The efficient IF (EIF, or canonical
+gradient) of v(P0 ) wrt M is the unique gradient ψ̃P0 (X) of v(P0 ) at P0 wrt M that belongs to the tangent
+space at P0 wrt M.
+    Finally, we define regular estimators, which are those whose limiting distribution is robust to local changes
+to the data generating process. This is what we alluded to above by “well behaved” estimators. Note that
+restricting attention to regular estimators excludes pathological behavior such as that of the super-efficient
+Hodges estimator.
+Definition 6 (Regular estimators). An estimator sequence v̂n is called regular at P0 for v(P0 ) wrt M if
+there exists a limiting probability measure L such that, for any one-dimensional submodel {P } of M passing
+through P0 , we have                     √
+                                           n(v̂n (X1:n ) − v(P1/√n )) → L
+in distribution as n → ∞, where X1:n are distributed i.i.d. according to P1/√n .
+   Note that this property holds even if {P } is chosen adversarially in response to v̂n .
+
+
+                                                        36
+D.2     Characterizations
+The following characterizes some important equivalences based on the above definitions. The following are
+based on Van Der Vaart [1991, Theorm 3.1].
+Theorem 11 (Influence functions are gradients). Suppose that v̂n (X1:n ) is an AL estimator of v(P0 ) with
+influence function ψP0 (X), and that v(P0 ) is pathwise differentiable at P0 wrt M. Then v̂n (X1:n ) is a regular
+estimator of v(P0 ) at P0 wrt M if and only if ψP0 (X) is a gradient of v(P0 ) at P0 wrt M.
+Corollary 12 (Characterization of the EIF). The EIF wrt M is the projection of any gradient wrt M onto
+the tangent space wrt M.
+
+D.3     Strategy to calculate the EIF
+Given the above, the following is a natural strategy to calculate the EIF:
+   1. Calculate a gradient ψP0 (X) of the target parameter v(P0 ) wrt M
+   2. Calculate the gradient space wrt M
+   3. Either:
+       (a) Show that ψP0 (X) already lies in the above tangent space, or
+       (b) Project ψP0 (X) onto the tangent space
+    The first part of the above can often be done by explicitly computing the derivative of v(P ) wrt , and
+re-arranging this into the form E[ψP0 (X)s(X)] for some function ψP0 (X).
+
+D.4     Optimalities
+Finally, we describe the optimal properties of the EIF ψ̃P0 (X). We define the efficiency bound as the
+variance of the EIF, varP0 [ψ̃P0 (X)], which has the following interpretations. First, the efficiency bound gives a
+lower-bound on the risk of any estimator in a local asymptotic minimax sense [Van der Vaart, 2000, Theorem
+25.20].
+Theorem 13 (Local Asymptotic Minimax (LAM) theorem). Let v(P0 ) be pathwise differentiable at P0 wrt
+M, with the EIF ψ̃P0 (X). Then, for any estimator sequence v̂n (X1:n ), and any symmetric quasi-convex loss
+function l : R 7→ [0, ∞), we have
+                                                        √                          
+                            sup       lim sup EP (k)√ l n v̂n (X1:n ) − v(P1/√n )
+                                 (1)           (m)       n→∞ k∈[m]   1/   n
+                      m∈N,{P          },...,{P     }
+                           Z
+                      ≥        l(u)dN (0, varP0 [ψ̃P0 (X)]) ,
+
+          (1)          (m)
+where {P }, . . . , {P       } are one-dimensional submodels of M passing through P0 .
+    In other words, if we allow for adversarial local perturbations to the data generating process that are
+consistent with M, then the worst-case risk of any estimator (not necessarily regular) is lower-bounded
+by that of a regular and asymptotic estimator whose influence function is the EIF. This interpretation
+follows because, given the above definition of regular estimators and the central limit theorem, the limiting
+distribution of such a regular and AL estimator is N (0, varP0 [ψ̃P0 (X)]) under any such local perturbations.
+Note that this theorem also implies the following, possibly easier-to-interpret corollary.
+Corollary 14. Under the same assumptions as Theorem 13, we have
+                                                   √                     
+                      inf lim inf    sup       EQ l n {v̂n (X1:n ) − v(Q)}
+                               δ>0 n→∞ Q∈M,dTV (Q,P0 )≤δ
+                                    Z
+                                ≥        l(u)dN (0, varP0 [ψ̃P0 (X)]) ,
+
+where dTV (·, ·) is the total variation distance, and N (µ, σ 2 ) denotes a normal distribution with mean µ and
+variance σ 2 .
+
+
+                                                                     37
+   Second, the efficiency bound gives a lower-bound on the risk of any regular estimator, in a strict non-
+minimax sense [Van der Vaart, 2000, Theorem 25.21].
+Theorem 15 (Convolution Theorem). Let l : R 7→ [0, ∞) be a symmetric quasi-convex loss function. Let
+v(P0 ) be pathwise differentiable at P0 wrt M with EIF ψ̃P0 (X), and let v̂n (X1:n ) be a regular estimator
+sequence for v(P0 ) at P0 wrt M, with limiting distribution L. Then, we have
+                                 Z             Z
+                                   l(u)dL(u) ≥ l(u)dN (0, varP0 [ψ̃P0 (X)]) .
+
+    Equality holds obviously when L = N (0, varP0 [ψ̃P0 (X)]), which as discussed above follows when v̂n (X1:n )
+is regular and AL with influence function given by the EIF.
+    We note that in our interpretations of both the LAM and Convolution Theorems, we argued that if an
+estimator is regular and AL with influence function ψ̃P0 (X) then it will achieve the corresponding bound.
+The following final theorem shows that the latter property alone is both necessary and sufficient [Van der
+Vaart, 2000, Theorem 25.23].
+Theorem 16. Let v(P0 ) be pathwise differentiable at P0 wrt M, and let ψ̃P0 (X) be the EIF. Then an
+estimator sequence is efficient (regular wrt M and with limiting distribution N (0, varP0 [ψ̃P0 (X)])) if and only
+if it is AL with influence function ψ̃P0 (X).
+
+
+E     Semiparametric Efficiency Theory for Proximal RL Estimator
+Here, we detail the missing theory for our semiparaparametric efficiency theory in Section 5.2. In particular,
+we provide some additional minor lemmas that are needed to prove Theorem 4, and then end this appendix
+with the theorem’s proof.
+    First, for any u > 0 let us define the following, which is a set of random variables indexed by some 
+satisfying a particular boundedness condition.
+                                 (
+                  Fbounded (u) =    f (τH ) : sup kf0 (τH )k∞ < ∞
+                                             |0 |≤u
+                                                                                                  )
+                                                                 1
+                                              and       sup         (f0 (τH ) − f0 (τH ))      <∞ .           (11)
+                                                       |0 |≤u   0                        2,P0
+
+                                              (t)         (t)
+In particular, we would like to show that q        and h belong to this set for some u > 0. This is formalized
+by the following lemma.
+                                                                                         (t)
+Lemma 9. Let Assumption 4 be given. Then there exists u > 0 such that q (Zt , At ) ∈ Fbounded (u) and
+ (t)
+h (Wt , At ) ∈ Fbounded (u) for every t ∈ [H].
+    This condition allows us to apply dominated convergence theorem arguments in computing the path
+                                                               (t)     (t)
+derivative of V (P ). In particular, we do not assume that q or h are differentiable w.r.t. , so the second
+part of the definition of Fbounded (u) lets us deal with finite-difference terms.
+    Before we prove Lemma 9, we must first establish some helper lemma. First, the following establishes
+that the set Fbounded is closed w.r.t. addition and multiplication.
+Lemma 10. Let Fbounded (u) be defined as in Eq. (11) for each, and suppose that f (τH ) ∈ Fbounded (u) and
+g (τH ) ∈ Fbounded (u) for some u > 0. Then f (τH ) + g (τH ) ∈ Fbounded (u) and f (τH )g (τH ) ∈ Fbounded (u).
+Proof of Lemma 10. Let c1 , c2 , d1 , d2 < ∞ be constants such that
+                                                                 1
+                      sup kf (τH )k∞ ≤ c1               sup       (f (τH ) − f0 (τH ))      ≤ d1
+                     ||≤u                              ||≤u                           2,P0
+                                                                 1
+                      sup kg (τH )k∞ ≤ c2               sup       (g (τH ) − g0 (τH ))      ≤ d2 .
+                     ||≤u                              ||≤u                           2,P0
+
+
+
+                                                           38
+First consider the case of f (τH ) + g (τH ). It easily follows from the triangle inequality that
+                           sup kf (τH ) + g (τH )k∞ ≤ c1 + c2
+                          ||≤u
+
+                                    1
+                           sup        ((f (τH ) + g (τH )) − (f0 (τH ) + g0 (τH )))      ≤ d1 + d2 ,
+                          ||≤u                                                      2,P0
+
+which clearly establishes that f (τH ) + g (τH ) ∈ Fbounded (u).
+   Now, consider the case of f (τH )g (τH ). For the first required bound, we clearly have
+                                                  sup kf (τH )g (τH )k∞ ≤ c1 c2 .
+                                                  ||≤u
+
+The second required bound requires slightly more work. There, we have
+                             1
+                     sup       (f (τH )g (τH ) − f0 (τH )g0 (τH ))
+                    ||≤u                                           2,P0
+                                  1
+                    ≤ sup           (f (τH )g (τH ) − f0 (τH )g (τH ))
+                        ||≤u                                            2,P0
+                                         1
+                            + sup          (f0 (τH )g (τH ) − f0 (τH )g0 (τH ))
+                              ||≤u                                             2,P0
+                                      1                                       1
+                    ≤ c2 sup            (f (τH ) − f0 (τH ))      + c1 sup     (g (τH ) − g0 (τH ))
+                            ||≤u                            2,P0      ||≤u                        2,P0
+
+                    ≤ c2 d1 + c1 d2 .
+Therefore, we also have f (τH )g (τH ) ∈ Fbounded (u).
+                                                                                          ∗ −1
+   Next, the following lemmas allow us to bound functions in the range of (Tt, )−1 and (Tt, ) .
+Lemma 11. Under the conditions of Theorem 4, there exists some u > 0 and constants C1 , C2 < ∞ such
+that for every t ∈ [H], and functions f∗ (Zt , At ) and g∗ (Wt , At ) indexed by , we have
+                                    sup k(Tt, )−1 g∗ (Wt , At )k∞ ≤ C1 sup kg∗ (Wt , At )k∞
+                                  ||≤u                                           ||≤u
+                                            ∗ −1 ∗
+                                     sup k(Tt, ) f (Zt , At )k∞ ≤ C2 sup kf∗ (Zt , At )k∞ .
+                                    ||≤u                              ||≤u
+
+Proof of Lemma 11. For the first required bound, we have
+                            sup k(Tt, )−1 g∗ (Wt , At )k∞
+                            ||≤u
+
+                            =               sup               E [f (Zt , At )(Tt, )−1 g∗ (Wt , At )]
+                                 ||≤u,kf (Zt ,At )k1,P ≤1
+
+                            =               sup               E [g∗ (Wt , At )(Tt,
+                                                                                  ∗ −1
+                                                                                      ) f (Zt , At )]
+                                 ||≤u,kf (Zt ,At )k1,P ≤1
+
+                            ≤ sup kg∗ (Wt , At )k∞                  sup                ∗ −1
+                                                                                     k(Tt, ) f (Zt , At )k1,P .
+                                 ||≤u                        kf (Zt ,At )k1,P ≤1
+
+where the first equality follows from the fact that the 1- and ∞-norms are dual, the second equality follows
+from the fact that the inverse of the adjoint is the adjoint of the inverse, and the inequality follows from
+Hölders inequality. Next, we can further bound
+                                                                                        ∗ −1
+                                       ∗ −1
+                                                                                     k(Tt, ) f (Zt , At )k1,P
+                    sup             k(Tt, ) f (Zt , At )k1,P =            sup
+             kf (Zt ,At )k1,P ≤1                                        f (Zt ,At )     kf  (Zt , At )k1,P
+                                                                                   kg(Wt , At )k1,P
+                                                                     =      sup      ∗
+                                                                       g(Wt ,At ) kTt, g(Wt , At )k1,P
+                                                                                                                  −1
+                                                                                                ∗
+                                                                     =           inf       kTt,  g(Wt , At )k1,P     .
+                                                                            kg(Wt ,At )k1,P ≥1
+
+
+
+                                                                       39
+Now, we have from Assumption 4 that
+                                                                         ∗
+                                      lim inf          inf             kTt, g(Wt , At )k1,P > 0 .
+                                        →0     kg(Wt ,At )k1,P ≥1
+
+Therefore, the above must be bounded by some C1 , for sufficiently small , which establishes the first required
+bound.
+   The second required bound follows from an almost-identical argument, except that here we instead apply
+the assumption that
+                              lim inf     inf       kTt, f (Zt , At )k1,P > 0 .
+                                        →0     kf (Zt ,At )k1,P ≥1
+
+
+
+                                                                                                                     (2)   (2)
+Lemma 12. Under the conditions of Theorem 4, there exists some u > 0 and constants C1 , C2                                       < ∞ such
+that for every t ∈ [H], and functions f∗ (Zt , At ) and g∗ (Wt , At ) indexed by , we have
+                                                                                (2)
+                             sup k(Tt,0 )−1 g∗ (Wt , At )k2,P0 ≤ C1                  sup kg∗ (Wt , At )k2,P0
+                             ||≤u                                                    ||≤u
+                                    ∗ −1 ∗                                      (2)
+                             sup k(Tt,0 ) f (Zt , At )k2,P0 ≤ C2                     sup kf∗ (Zt , At )k2,P0 .
+                             ||≤u                                                    ||≤u
+
+Proof of Lemma 12. The proof of this is very similar to that of Lemma 11, except using P0 instead of P .
+For the first required bound, we have
+
+                          sup k(Tt,0 )−1 g∗ (Wt , At )k2,P0
+                         ||≤u
+
+                         =               sup              E0 [f (Zt , At )(Tt,0 )−1 g∗ (Wt , At )]
+                             ||≤u,kf (Zt ,At )k2,P0 ≤1
+
+                         =               sup              E0 [g∗ (Wt , At )(Tt,0
+                                                                              ∗ −1
+                                                                                  ) f (Zt , At )]
+                             ||≤u,kf (Zt ,At )k2,P0 ≤1
+
+                         ≤ sup kg∗ (Wt , At )k2,P0                 sup                  ∗ −1
+                                                                                      k(Tt,0 ) f (Zt , At )k2,P0 .
+                             ||≤u                           kf (Zt ,At )k2,P0 ≤1
+
+
+where the first equality follows from the fact that the 2-norm is self-dual, the second equality follows from
+the fact that the inverse of the adjoint is the adjoint of the inverse, and the inequality follows from Cauchy
+Schwartz. Next, we can further bound
+                                                                                      ∗ −1
+                                      ∗ −1
+                                                                                   k(Tt,0 ) f (Zt , At )k2,P0
+                   sup             k(Tt,0 ) f (Zt , At )k2,P0 =             sup
+            kf (Zt ,At )k2,P0 ≤1                                       f (Zt ,At )     kf  (Zt , At )k2,P0
+                                                                                  kg(Wt , At )k2,P0
+                                                                   =        sup     ∗
+                                                                     g(Wt ,At ) kT  t,0 g(Wt , At )k2,P0
+                                                                                                                   −1
+                                                                                                ∗
+                                                                   =            inf        kTt,0   g(Wt , At )k2,P0     .
+                                                                            kg(Wt ,At )k2,P0 ≥1
+
+
+But we know from Assumption 4 that this term is finite, which gives us our first required bound.
+   The second required bound follows from an almost-identical argument, except that here we instead apply
+the fact that inf kf (Zt ,At )k2,P0 ≥1 kTt,0 f (Zt , At )k2,P0 > 0, which also follows from Assumption 4.
+
+
+   Now, given the previous lemma, as well as the definition of Fbounded (u) and Lemma 10, the following
+                       (t)               (t)
+lemmas establish that q (Zt , At ) and h (Wt , At ) lie within this set for some u > 0. This will along with
+Lemma 14 will allow us to compute the derivative of V (P ) in the main proof of Theorem 4.
+
+Lemma 13. Under the conditions of Theorem 4, there exists some u > 0 such that for every t ∈ [H] we have
+           (t)                               (t)
+sup||≤u kq (Zt , At )k∞ < ∞ and sup||≤u kh (Zt , At )k∞ < ∞.
+
+
+                                                                       40
+                                                         (t)
+Proof of Lemma 13. First consider the case of q . First, by Assumption 4 it must be the case that for some
+u > 0 and some constant C3 < ∞, we have
+                                                     ∗
+                                               sup kPt, (At | Wt )−1 k∞ ≤ C3 ,
+                                               ||≤u
+
+simultaneously for every t ∈ [H]. Now, let u > 0 be such that the above holds, as well as as Lemma 11, and
+let C1 and C2 be defined as in Lemma 11. Note that clearly for || ≤ u we have P ∈ MPCI , so let us restrict
+our attention to such . Next, note that for any || ≤ u we have
+                                                             −1 ∗
+                                         q(t) (Zt , At ) = Tt, Pt, (At | Wt )−1 ,
+
+and so given Lemma 11 we have
+                                                  kq(t) (Zt , At )k∞ ≤ C2 C3 .
+                                                                                                               (t)
+We note that this bound does not depend on , so therefore we have our desired result for q .
+              (t)
+  Next, for h , we note that
+                                                        ∗ −1
+                                   q(t) (Zt , At ) = (Tt, ) µt, (Zt , At ) .
+Therefore, we can proceed with a near-identical argument again using Lemma 11, as long as we can uniformly
+                                                                                               (t)
+bound kµt, (Zt , At )k∞ over || ≤ u for each t. First, note that given the above bound for q and the
+definition of µt, , for each t ∈ [H] we have
+
+                                        kµt, (Zt , At )k∞ ≤ (C2 C3 )t−1 kYt, k∞ .
+
+Therefore it is sufficient to uniformly bound Yt, for each t. We will do this by backward induction on t. For
+the base case where t = H, we trivially have kYH, k∞ ≤ Rmax , where Rmax is a bound on the absolute value
+of all rewards. Now, suppose that kYt+1, k∞ ≤ C4,t+1 for some C4,t+1 that doesn’t depend on . Then we
+have
+               kYt, k∞ ≤ Rmax + γ(|A| + (C3 C2 ))kh(t+1)
+                                                          (Wt+1 , At+1 )k∞ + γ(C3 C2 )kYt+1, k∞
+Now, by the inductive hypothesis Yt+1, is uniformly bounded and therefore so is µt+1, (Zt+1 , At+1 ), and
+                                                                    (t)              (t+1)
+therefore following an identical argument as above as for bounding q we have that kh     (Wt+1 , At+1 )k∞
+is uniformly bounded. Specifically, by Lemma 11 we have
+
+                                    kµt+1, (Zt+1 , At+1 )k∞ ≤ (C3 C2 )t C4,t+1
+                                    kh(t+1)
+                                           (Wt+1 , At+1 )k∞ ≤ C1 (C3 C2 )t C4,t+1 ,
+
+and therefore Yt, is uniformly bounded. This completes the induction, so therefore we conclude that we have
+                         (t)
+a uniform bound on kh (Wt , At )k∞ over || ≤ u.
+
+
+   Now, we are finally ready to provide the proof of Lemma 9.
+Proof of Lemma 9. Let u, C1 , C2 , and C3 be defined as in the proof of Lemma 13, and define
+                                                  1  (t)              (t)
+                                                                                   
+                             δ(q,t) (Zt , At ) =     q (Zt , At ) − q0 (Zt , At )
+                                                  
+                                                  1 
+                                                                        (t)
+                                                                                     
+                           δ(h,t) (Wt , At ) =       h(t)
+                                                        (Wt , At ) − h0 (Wt , At ) .
+                                                  
+                                                                (q,t)                  (h,t)
+Now, given Lemma 13 it is sufficient to prove that δ (Zt , At ) and δ (Wt , At ) are uniformly bounded
+                                                           (q,t)
+over || ≤ u, in 2-norm. We will prove this for each δ (Zt , At ) term via forward induction on t, and
+                    (h,t)                                                                        (q,t)
+then for each δ (Wt , At ) term via backward induction on t. Furthermore, noticing that δ (Zt , At ) =
+                (q,t)             (h,t)                        (h,t)
+(Tt,0 )−1 Tt,0 δ (Zt , At ) and δ (Wt , At ) = (T0,
+                                                   ∗ −1 ∗
+                                                       ) T0, δ (Wt , At ), for each t ∈ [H], it follows from
+Lemma 12 that it is sufficient to show
+                                                                             ∗ (h,t)
+                 sup Tt,0 δ(q,t) (Zt , At )           < ∞ and          sup Tt,0 δ (Wt , At )          < ∞.
+                ||≤u                           2,P0                    ||≤u                    2,P0
+
+
+
+                                                               41
+   First, we can show that show that
+                                     1                                              1
+                                                                        (t)
+           Tt,0 δ(q,t) (Zt , At ) =    Tt, q(t) (Zt , At ) − Tt,0 q0 (Zt , At ) − (Tt, − Tt,0 )q(t) (Zt , At )
+                                                                                         
+                                     1   ∗                −1        ∗              −1
+                                                                                      
+                                   =    P (At | Wt ) − Pt,0 (At | Wt )
+                                      t,
+                                         1                                                                                
+                                       −      E [ηt, q(t) (Zt , At ) | Wt , At ] − E0 [ηt,0 q(t) (Zt , At ) | Wt , At ]
+                                         
+                                     1   ∗
+                                             (At | Wt )−1 − Pt,0    ∗
+                                                                       (At | Wt )−1
+                                                                                      
+                                   =    Pt,
+                                     
+                                         1
+                                       − (E − E0 ) [ηt,0 q(t) (Zt , At ) | Wt , At ]
+                                                                                          
+                                                1                   (t)
+                                       − E        (ηt, − ηt,0 ) q (Zt , At ) | Wt , At                                      (12)
+                                                
+
+   We will proceed by bounding the three terms in Eq. (12) one by one. for the first, we have
+                1  ∗
+                       (At | Wt )−1 − Pt,0
+                                        ∗
+                                           (At | Wt )−1
+                                                        
+                  Pt,
+                                                          !
+                       ∗
+                    Pt, (At | Wt )−1 − Pt,0
+                                           ∗
+                                              (At | Wt )−1     ∗
+                                                              Pt,                ∗
+                                                                   (At | Wt ) − Pt,0 (At | Wt )
+                                                                                                
+                =         ∗ (A | W ) − P ∗ (A | W )
+                        Pt,   t    t     t,0   t    t                         
+                                                                   ∗                   ∗
+                                                                    Pt, (At | Wt ) − Pt,0 (At | Wt )
+                                                                                                      
+                         ∗                        ∗           −2
+                = −(aPt, (At | Wt ) + (1 − a)Pt,0 (At | Wt ))                                          ,
+                                                                                    
+
+where the second equation follows from the mean value theorem, for some a ∈ (0, 1) that may depend on t,
+                               ∗                        ∗
+At , and Wt . Now, clearly k(aPt, (At | Wt ) + (1 − a)Pt,0 (At | Wt ))−2 k∞ ≤ C32 . Furthermore, we have
+                                         ∗
+                                        Pt, (At | Wt ) = E [ηt, | Wt , At ]P (At | Wt ) .
+
+In addition, applying the mean value theorem again we have
+                       1
+                         (P (At | Wt ) − P0 (At | Wt ))      = kP0 (At | Wt )s0 (At | Wt )k2,P0
+                                                        2,P0
+                                                                     ≤ ks0 (At , Wt )k2,P0 + ks0 (At )k2,P0 ,
+
+for some 0 ∈ (0, 1). Therefore, since by our definition of score functions in Appendix D score functions have
+uniformly bounded euclidean norm, it follows that P (At | Wt ) ∈ Fbounded (u).
+                                                  ∗
+    Now, in the base case where t = 1 we have Pt,  (At | Wt ) = P (At | Wt ), and otherwise in the inductive case
+where t > 1, by the inductive assumption and Lemma 10 it easily follows that E [ηt, | Wt , At ] ∈ Fbounded (u),
+                                      ∗
+and therefore by Lemma 10 so is Pt,    (At | Wt ). In either case, this implies the required bound for the first
+term of Eq. (12).
+    For the second term of Eq. (12), by the mean value theorem we have
+                                    1                   (t)
+                                      (E − E0 ) [ηt,0 q0 (Zt , At ) | Wt , At ]
+                                    
+                                                                           (t)
+                                    = E0 [s0 (τt−1 , Zt | Wt , At )ηt,0 q0 (Zt , At ) | Wt , At ]
+                                                                              (t)
+                                    = E0 [s0 (τt−1 , Zt , Wt , At )ηt,0 q0 (Zt , At ) | Wt , At ]
+                                                                        (t)
+                                          − E0 [s0 (Wt , At )ηt,0 q0 (Zt , At ) | Wt , At ] ,
+
+where 0 ∈ (0, ) and may be measurable w.r.t. the other random variables inside the expectation. Now, by
+                          (t)
+Lemma 13 we have kηt,0 q0 (Zt , At )k∞ < ∞. Furthermore, by our definition of score functions in parametric
+submodels in Appendix D we have sup||≤u ks (τt−1 , Zt , Wt , At )k2,P0 < ∞ and sup||≤u ks (Wt , At )k2,P0 < ∞.
+   Finally, for the third term of Eq. (12), in the base case that t = 1 we have ηt, = ηt,0 = 1, so this term
+vanishes. Otherwise, in the inductive case where t > 1, by the inductive assumption and Lemma 10 we know
+
+
+                                                                   42
+                                                                                        (t)
+that 1 (ηt, − η0, ) ∈ Fbounded (u). Therefore, combined with the fact that q0 (Zt , At ) is bounded, it follows
+that this third term is uniformly bounded over || ≤ u.
+                                                                                        (t)
+    Therefore, we have completed the process of forward induction and proved that q (Zt , At ) ∈ Fbounded (u)
+                                                                                (t)
+for all t ∈ [H]. Now, we proceed to the backward induction to prove that h (Wt , At ) ∈ Fbounded (u) for all
+t ∈ [H]. Proceeding similarly as above, we have
+
+                            ∗ (h,t)               1
+                           Tt, δ (Wt , At ) =     (1{Et = At }Yt, − 1{Et = At }Yt,0 )
+                                                  
+                                                      1
+                                                    − (E − E0 ) [ηt,0 h(t)
+                                                                           (Wt , At ) | Zt , At ]
+                                                                                                 
+                                                          1                 (t)
+                                                    − E    (ηt, − ηt,0 ) h (Wt , At ) | Zt , At
+                                                          
+The second two terms can be bounded in infinity norm uniformly over || ≤ u following an identical argument
+as for the second two terms in Eq. (12), so we only need to bound the first term. In the base case, where t = H,
+we have YH, = YH,0 = RH , so this first term simply disappears. Otherwise, in the inductive case where
+t < H, we note that Yt, = Rt + γΩt, , where Ωt, is defined in terms of addition and multiplication of terms
+                                  (t0 )                (t0 )
+of the kind Rt0 , 1{Et0 = At0 }, q (Zt0 , At0 ), and h (Wt0 , At0 ), for t0 > t. Therefore, noting that rewards by
+assumption are bounded, it follows from the inductive assumption and Lemma 10 that Yt, ∈ Fbounded (u),
+and therefore this first term is bounded.
+                                                                        (t)
+    This completes the backward induction, and establishes that h (Wt , At ) ∈ Fbounded (u) for all t ∈ [H], so
+therefore we can conclude.
+
+
+E.1     Discussion of Issues with Tangent Spaces in Past Work
+Here we will discuss the problems with tagnent spaces proposed in past work on proximal causal inference.
+Given that this past work has considered the simpler setting where H = 1, we will omit all suffixes and
+prefixes involving t in the discussion here. Let T : L2 (Z, A) 7→ L2 (W, A) be the conditional operator defined
+according to
+                                      T f (Z, A) = E[f (Z, A) | W, A] ∀f ,
+whose adjoint T ∗ : L2 (W, A) 7→ L2 (Z, A) satisfies
+
+                                        T ∗ g(W, A) = E[g(W, A) | Z, A] ∀g .
+
+    In Cui et al. [2020], the authors propose to use the tangent space, which, in terms of our notation and
+definitions of q and h, is defined by the restrictions
+
+                                E[q(Z, A))(s(A | W ) + s(Z | W, A)) | W, A] ∈ Range(T )
+                           E[(1{E = A}R − h(W, A))s(W, R | Z, A) | Z, A] ∈ Range(T ∗ ) .
+
+However, this choice of tangent space is never fully justified in terms of the model under consideration. In
+Kallus et al. [2022], the authors do justify the necessity of these restrictions by noting that if q and h are
+differentiable with respect to  within a given submodel, then we must have
+                                                     
+                               ∂
+                           E          q (Z, A) | W, A
+                               ∂ =0
+                               ∂
+                           =          P (A | W )−1 − E[s(Z | W, A)q(Z, A) | W, A]
+                               ∂ =0
+                              = −P (A | W )−1 s(A | W ) − E[s(Z | W, A)q(Z, A) | W, A]
+                              = −E[(s(A | W ) + s(Z | W, A))q(Z, A) | W, A] ,
+
+and                                          
+                       ∂
+               E              h (W, A) | Z, A = E[s(W, R | Z, A)(1{E = A}R − h(W, A)) | Z, A] .
+                       ∂ =0
+
+                                                             43
+    Unfortunately, there are still some problems in this choice of tangent space. Firstly, although they are
+clearly necessary conditions for differentiability of the nuisances, it is not clear that they are sufficient
+conditions; that is, it is not clear that for a given score function satisfying these conditions we can actually
+construct a parametric submodel for which the nuisances are defined and differentiable. Note that this
+is contrast to many other areas of work involving semiparametric efficiency theory, where the tangent set
+restrictions simply correspond to some conditional independence assumptions, in which case it is trivial to
+see that the tangent set restrictions invoked are both necessary and sufficient, since the partitioning of the
+score function immediately implies the independence structure of corresponding parametric submodels.
+    Secondly, it is not clear that diferentiability of the nuisances is even necessary – indeed we showed how to
+prove that ψDR (τH ) is a gradient of the policy value without ever assuming or requiring that the nuisance
+functions were differentiable – nor is it clear what impact if any this requirement of nuisance differentiability
+would have on the actual model of interest.
+    Thirdly, Kallus et al. [2022] consider a more general model in which h and q are not necessarily uniquely
+determined, in which case the above restrictions would actually have to hold for all valid h and q functions,
+and it is not immediately clear that requiring this restriction for a single chosen h and q is sufficient.
+    Finally, under a model in which the allowed distributions all actually correspond to observational
+distributions for latent variable models with hidden confounders satisfying the PCI, which the past work
+implies are the only kinds of distributions under consideration, there are additional necessary restrictions
+on the score functions. For example, let L = (Z, A), and Q = (W, R), then from the PCI independence
+assumptions is clear that the observed distribution must take the form
+                                               Z
+                                   P (L, Q) = P (S)P (L | S)P (Q | S)dµ(S) ,
+
+for some latent variable S. It is easy to show that this implies that for any differentiable submodel on the full
+data (L, Q, S) we have
+                               R
+                                 ∂(s(S) + s(L | S) + s(Q | S))P (S)P (L | S)P (Q | S)dµ(S)
+                   s(L, Q) =                  R
+                                                P (S)P (L | S)P (Q | S)dµ(S)
+                              Z
+                            = ∂(s(S) + s(L | S) + s(Q | S))P (S | L, Q)dµ(S)
+
+                           = E[s(S) + s(L | S) + s(Q | S) | L, Q] .
+
+Therefore, there must exist functions f1 , f2 , and f3 such that
+
+                      s(Z, A, W, R) = E[f1 (S) + f2 (Z, A; S) + f3 (W, R; S) | Z, A, W, R] ,
+
+which satisfy
+                            E[f1 (S)] = E[f2 (Z, A; S) | S] = E[f3 (W, R; S) | S] = 0 .
+It is not clear that the previously proposed tangent spaces ensure this condition, for example.
+    Given these above issues, we took care to define assumptions to avoid such issues, by ensuring that we
+consider a model that is locally saturated at Pb , which guarantees that the tangent set is all square integrable
+functions. Achieving this involves ensuring that the nuisances are uniquely determined locally near Pb , and
+defining the parameter of interest is not defined in terms of the actual policy value, and rather in terms of
+the nuisances and the identification quantity; that is, we ensure that the parameter of interest corresponds to
+the target policy value for distributions that actually come from an underlying valid PCI model satisfying
+our assumptions, and otherwise is still an unambiguous and well-defined quantity as long as the nuisances are
+uniquely defined.
+
+E.2    Proof of Semiparametric Efficiency Theorem
+Before we present the main proof we present the following lemma based on the dominated convergence
+theorem, which we will apply heavily.
+
+
+
+                                                        44
+Lemma 14. Let P be a parametric submodel, and suppose that function f (τH ) indexed by  converges
+point-wise to f (τH ) as  → 0. Suppose in addition that it is uniformly bounded for small ; that is,
+lim sup→0 kf (τH )k∞ < ∞. Then, we have
+                                       1
+                                 lim       (E [f (τH )] − E0 [f (τH )]) = E0 [s(τH )f (τH )]
+                                 →0 
+
+Proof of Lemma 14. Let µ(τH ) be a dominating measure for all measures in the parametric submodel, and
+let p (τH ) = (dP /dµ)(τH ). Then, we have
+                                                           Z
+                       1                                     1
+                         (E [f (τH )] − E0 [f (τH )]) =     (p (τH ) − p0 (τH )) f (τH )dµ(τH )
+                                                            
+                                                           Z
+                                                         = p0 (τH )s0 (τH )f (τH )dµ(τH ) ,
+
+where in the second equality we apply the mean value theorem, and 0 ∈ (0, ). Then, given the boundedness
+condition on p0 (τH )s0 (τH ) for parametric submodels assumed in Appendix D, as well as the uniform
+boundedness and point-wise convergence assumed on f , applying the dominated convergence theorem gives
+us
+                                                             Z
+                            1
+                       lim (E [f (τH )] − E0 [f (τH )]) = p0 (τH )s0 (τH )f0 (τH )dµ(τH )
+                       →0 
+
+                                                           = E0 [s(τH )f (τH )] ,
+
+as required.
+Proof of Theorem 4. Following Appendix D, in order to prove this theorem we need to: (1) derive the tangent
+space of MPCI at Pb ; (2) justify that ψDR lies within this tangent space; and (3) show that ψDR is a gradient
+of vγ (πe ). For the first two parts, we note that by the conditions of Theorem 4 it easily follows that any
+parametric submodel P passing through Pb at  = 0 must lie within MPCI for sufficiently small , so therefore
+the tangent space is simply the set of all square integrable functions. Given this, ψDR clearly lies within this
+tangent space. Therefore, we only need to justify that it is a gradient. That is, we need to show that for
+every parametric submodel
+
+                                   ∂V (P )
+                                                = EPb [s(τH )(ψDR (τH ) − vγ (πe ))] ,
+                                     ∂     =0
+
+where s(τH ) is the score function of the parametric submodel. Note that we have not assumed that the
+           (t)      (t)
+nuiances q and h are differentiable, so we must proceed with caution.
+   First, note that
+                     1
+                       (V (P ) − V (Pb ))
+                            "                  #       "                #
+                         1      X                  1      X (1)
+                     = E          h(1)
+                                      (W1 , a) − E0         h0 (W1 , a)
+                                                  
+                               a∈A                       a∈A
+                                      "               #      "                               #
+                         1              X
+                                            (1)
+                                                               X1
+                                                                      (1)         (1)
+                     = (E − E0 )          h (W1 , a) + E0        (h (W1 , a) − h0 (W1 , a)) .
+                                                                  
+                                       a∈A                           a∈A
+
+               (1)                                                                                (1)
+Now, since h (W1 , A1 ) ∈ Fbounded (u) for sufficiently small u, it trivially follows that h (w, a) converges to
+ (1)
+h0 (w, a) for every w, a. Combining this fact along with Lemma 13 and Lemma 14, this implies that the first
+
+
+
+
+                                                                45
+                                        P        (1)
+term above converges to E0 [s(τH ) a∈A h (W1 , a)]. For the second term, we have
+                "                                        #
+                  X1                         (1)
+                            (1)
+             E0          (h (W1 , a) − h0 (W1 , a))
+                         
+                  a∈A
+                                                                          
+                                      −1 1   (1)               (1)
+             = E0 P0 (A1 | W1 )            (h (W1 , A1 ) − h0 (W1 , A1 ))
+                                          
+                                                                       
+                       (1)           1 (1)                 (1)
+             = E0 q0 (Z1 , A1 ) (h (W1 , A1 ) − h0 (W1 , A1 ))
+                                      
+                1               h
+                                  (1)
+                                                             i
+             = (E0 − E ) q0 (Z1 , A1 )h(1)       (W1 , A1 )
+                
+                      1  h (1)                             i      h
+                                                                     (1)          (1)
+                                                                                            i
+                   +       E q0 (Z1 , A1 )h(1)  (W1 , A1 ) − E0 q0 (Z1 , A1 )h0 (W1 , A1 )
+                      
+                1               h
+                                  (1)
+                                                             i
+             = (E0 − E ) q0 (Z1 , A1 )h(1)       (W1 , A1 )
+                
+                      1  h (1)                                  i    h
+                                                                         (1)
+                                                                                               i
+                   +       E q0 (Z1 , A1 )1{E1 = A1 }Y1, − E0 q0 (Z1 , A1 )1{E1 = A1 }Y1,0
+                      
+                1               h
+                                  (1)
+                                                                                  i
+             = (E − E0 ) q0 (Z1 , A1 ) 1{E1 = A1 }Y1, − h(1)          (W1 , A1 )
+                                                                     
+                             (1)                        1
+                   + E0 q0 (Z1 , A1 )1{E1 = A1 } (Y1, − Y1,0 ) .
+                                                        
+Now, again applying Lemmas 9 and 14 the first term above converges to
+                                     (1)
+                           E0 [s(τH )q0 (Z1 , A1 )(1{E1 = A1 }Y1, − h(1)
+                                                                       (W1 , A1 ))] .
+
+Combining this with the previous result and the fact that s(τH ) has mean zero, as well as Lemma 4, we get
+                                                                                             
+                 ∂V (P )                                                     1
+                              = E0 [s(τH )(ψDR (τH ) − vγ (τe ))] + lim E∗2     (Y1, − Y1,0 ) .
+                    ∂    =0
+                                                                    →0       
+
+Therefore, all that remains to show is that the second term above vanishes. We will argue this by backward
+induction, by showing that for all t ≤ H we have
+                                                                  
+                                             ∗     1
+                                        lim Et+1     (Yt, − Yt,0 ) = 0 .                              (13)
+                                        →0        
+
+    First, for the base case t = H, this is trivial, since YH, = RH for all . Next, suppose that Eq. (13) holds
+for all t ≥ s, for some s ≤ H. We will argue that it also holds for t = s − 1. Specifically, plugging in the
+definitions of Ys, and Ys−1,0 , we have
+                                                 "                                           #
+                  ∗ 1                            ∗ 1
+                                                        X                        (s)
+                                                                                             
+                                                                  (s)
+                 Es     (Ys−1, − Ys−1,0 ) = γEs                 h (Ws , a) − h0 (Ws , a)
+                                                    
+                                                       a∈A
+                                                          
+                                                            1 (s)                                      
+                                                                                       (s)
+                                                + γE∗s           q (Zs , As )∆s, − q0 (Zs , As )∆s,0
+                                                            
+                                                                                                      
+                                                      (s)             1  (s)               (s)
+                                            = γE∗s q0 (Zs , As )          h (Ws , As ) − h0 (Ws , As )
+                                                                      
+                                                          
+                                                            1 (s)                                      
+                                                                                       (s)
+                                                + γE∗s           q (Zs , As )∆s, − q0 (Zs , As )∆s,0
+                                                            
+                                                                                               
+                                                     1                        (s)
+                                                                                          
+                                            = γE∗s        q(s) (Zs , As ) − q0 (Zs , As ) ∆s,
+                                                     
+                                                                                                     
+                                                             (s)                        1
+                                                + γE∗s q0 (Zs , As )1{Es = As } (Ys, − Ys,0 ) ,
+                                                                                        
+
+
+                                                       46
+where ∆s, = 1{Es = As }Ys, −h(s) (Ws , As ). Now, by Lemma 4 the second term is equal to E∗s+1 [ 1 (Ys, −Ys,0 )],
+which converges to zero by the inductive hypothesis. Furthermore, since E∗s [∆s,0 | Zs , As ] = 0, we can derive
+                                                           
+                   ∗ 1
+                                                         
+                           (s)             (s)
+                 Es      q (Zs , As ) − q0 (Zs , As ) ∆s,
+                       
+                                                                        
+                      ∗ 1
+                                                           
+                               (s)             (s)
+                  = Es        q (Zs , As ) − q0 (Zs , As ) (∆s, − ∆s,0 )
+                          
+                                                                             
+                              1  (s)              (s)
+                                                              
+                  = E0 ηt,0       q (Zs , As ) − q0 (Zs , As ) (∆s, − ∆s,0 )
+                               
+                                 1  (s)               (s)
+                                                                        1
+                  ≤ kηt,0 k∞       q (Zs , As ) − q0 (Zs , As )           (∆s, − ∆s,0 )      ,
+                                                                   2,P0                  2,P0
+
+                                                                                                   (s)
+where the inequality follows from Cauchy Schwartz. Also, by Lemma 9 we have q (Zt , At ) ∈ Fbounded (u)
+for some u > 0, and further by Lemma 10 we have ∆s, ∈ Fbounded (u). In addition, by Lemma 13 we have
+kηt,0 k∞ < ∞. Therefore, the first term also converges to zero. Thus, putting the above together, we have
+lim→0 E∗s 1 (Ys−1, − Ys−1,0 ) = 0, which proves the inductive case, and therefore our proof is complete.
+
+
+
+F     Nuisance Estimation
+First in this appendix we provide a proof of Lemma 1. Then, we provide a meta-algorithm approach for
+actually estimating nuisances following this lemma, which we implement in our experiments.
+
+F.1     Proof of Nuisance Estimation Lemma
+The proof of this lemma follows in a very straightforward way by successively applying Lemma 4. The details
+are as follows.
+Proof of Lemma 1. We will first deal with the case of q (t) . We first note that Eq. (1) is equivalent to
+                              h                                             i
+                          E∗t g(Wt , At ) q (t) (Zt , At ) − Pt∗ (At | Wt )−1 = 0 ,
+
+for all measurable g. Next, following the same argument as in Lemma 6, the above is equivalent to
+                               "                                        #
+                                                             X
+                           E∗t g(Wt , At )q (t) (Zt , At ) −   g(Wt , a) = 0 ∀g .
+                                                                  a∈A
+
+Next, we can argue by backward induction that for all s ∈ [t] we have
+                  " t−1                                                                  !#
+                         (s0 )
+                    Y                                                         X
+                ∗                                               (t)
+               Es       q (Zs0 , As0 )1{Es0 = As0 } g(Wt , At )q (Zt , At ) −   g(Wt , a)
+                     s0 =s                                                                 a∈A
+                       "                                                #
+                                                        X
+                 = E∗t g(Wt , At )q (t) (Zt , At ) −          g(Wt , a) .
+                                                        a∈A
+
+The base case is trivially true, and the inductive case follows by applying Lemma 4. Therefore, noting that
+                                              t−1
+                                              Y          0
+                                       ηt =           q (s ) (Zs0 , As0 )1{Es0 = As0 } ,
+                                              s0 =0
+
+we can put the above together to conclude that Eq. (1) is equivalent to
+                          "                                           !#
+                                                        X
+                                          (t)
+                      EPb ηt g(Wt , At )q (Zt , At ) −      g(Wt , a)    =0                      ∀g .
+                                                                     a∈A
+
+
+                                                                47
+   Finally, we can deal with the case of h(t) almost identically. We can first note that Eq. (2) is equivalent to
+                            h                                           i
+                         E∗t f (Zt , At ) h(t) (Wt , At ) − 1{Et = At }Yt = 0      ∀f ,
+
+and applying an almost identical backwards induction argument this is equivalent to
+                          h                                            i
+                     EPb ηt f (Zt , At ) h(t) (Wt , At ) − 1{Et = At }Yt = 0   ∀f ,
+
+which in turn is equivalent to
+                                   h                                        i
+                                EPb ηt h(t) (Wt , At ) − 1{Et = At }Yt Zt , At = 0 .
+
+
+
+
+F.2     Meta-Algorithm for Nuisance Estimation with Kernel Critics
+We now consider a very general meta-algorithm for implementing the estimators in Proposition 2 for kernel
+critics. In particular, let us assume that the kernel classes G (t) and F (t) are RKHSs, and the critic regularizers
+are R(·) = (α/4)k · k2K , where k · kK is the corresponding RKHS norm for that critic. Then, this gives
+the kernel VMM, for which Bennett and Kallus [2023] established good theoretical properties in terms of
+consistency, asymptotic normality, and efficiency. This also admits a simple closed-form for the inner sup in
+the min-max problems above.
+    The resulting sequential estimation procedure is summarized in Algorithm 1. The algorithm estimates
+the functions q (t) in ascending order and then estimates h(t) in descending order, in each case using plug-in
+estimates of the previously estimated nuisances. We let K (q,t) and K (h,t) denote the kernel functions for the
+critic function classes G (t) and F (t) , respectively, where the former is defined on pairs of (Wt , At ) tuples, and
+the latter on pairs of (Zt , At ), and let α(q,t) and α(h,t) denote the corresponding hyperparameters for the
+critic regularizers. We note that any or all of the above inputs may be data-driven, and we emphasize again
+that the prior estimates q̃ (t) and h̃(t) may come from any methodology and need not necessarily be consistent.
+In particular, we can start by inputting the zero functions for these (or any other fixed functions), and then
+run the procedure again using the previous output as input for the prior estimates.
+    We provide a derivation of this algorithm below. We note that it is a meta-algorithm, since it requires
+some additional procedures to solve the minimization problems over q ∈ Q(t) and h ∈ H (t) at the end of
+ComputeQ and ComputeH respectively. However, solving such problems is very standard and well studied,
+so we do not consider it explicitly here. In this algorithm we let Vector denote a function which converts
+a set into a vector with the elements ordered arbitrarily. Finally, in the case that the data is discrete, this
+algorithm is very efficient in terms of how it scales with n; the overall computational cost will be linear in n,
+since the maximum possible lengths of V (q,t) and V (h,t) are bounded for each t ∈ [H].
+
+F.3     Derivation of Meta-Algorithm
+Following Bennett and Kallus [2023], the kernel VMM estimators work by solving
+
+                                           q̂ (t) = argmin Jn (q; α(q,t) ) + R(q,t) (q) ,
+                                                      q∈Q(t)
+
+where
+                                                  "                                                      !#
+                                                                                       X
+                               (q,t)
+                    Jn (q; α           ) = sup En ηt      g(Wt , At )q(Zt , At ) −           g(Wt , a)
+                                           g
+                                                                                       a∈A
+                                                                                                                 !2 
+                                             1                                                  X
+                                            − En ηt2          g(Wt , At )q̃ (t) (Zt , At ) −         g(Wt , a)     
+                                             4
+                                                                                                a∈A
+
+                                            + α(q,t) kgkK (q,t) ,
+
+
+                                                                    48
+Algorithm 1 Sequential VMM for PCI-POMDP Nuisance Estimation
+                                    (1)           (n)
+Input: Data D = (τH , . . . , τH ), nuisance function classes Q(t) and H(t) , kernel functions K (q,t) and K (h,t) ,
+      hyperparameters α(q,t) and α(h,t) , prior estimates q̃ (t) and h̃(t) , and optional regularization functions
+      R(q,t) and R(h,t) , for all t ∈ [H]
+Output: Nuisance estimates q̂ (t) and ĥ(t) for all t ∈ [H]
+       (i)
+ 1: ηt       ← 1 ∀i
+ 2: for t ∈ {1, . . . , H} do
+                                                   (i)
+ 3:          V (q,t) ← Vector({(Wt , a) | i ∈ [n], a ∈ A})
+ 4:          q̂ (t) ← ComputeQ(Wt , Zt , At , V (q,t) , Q(t) , R(q,t) , α(q,t) , q̃ (t) , K (q,t) , ηt )
+              (i)       (i)           (i)         (i)           (i)   (i)
+ 5:          ηt+1 ← ηt 1{At = Et }q̂ (t) (Zt , At ) ∀i
+       (i)
+ 6: ωH        ← 0 ∀i
+ 7: for t ∈ {H, H − 1, . . . , 1} do
+                                                  (t)     (t)
+ 8:          V (h,t) ← Vector({(Zi , Ai ) | i ∈ [n]})
+              (i)             (i)           (i)     (i)         (i)
+ 9:          µt ← 1{At = Et }(Rt + γωt ) ∀i
+10:          ĥ(t) ← ComputeH(Wt , Zt , At , V (h,t) , H(t) , R(h,t) , α(h,t) , h̃(t) , K (h,t) , ηt , µt )
+                                                                                               
+               (i)              (i)                (i)   (i)     (i)                (i)    (i)
+             ωt−1 ← a∈A ĥ(t) (Wt , a) + q̂ (t) (Zt , At ) µt − ĥ(t) (Wt , At )
+                      P
+11:                                                                                                    ∀i
+
+12: return q̂ (1) , . . . , q̂ (H) , ĥ(1) , . . . , ĥ(H)
+
+13: procedure ComputeQ(W , Z, A, V , Q, R, α, q̃, K, η)
+                                                                                 
+             Li,j (q) ← η (i) q(Zi , Ai )K(((Wi , Ai ), Vj ) − a∈A K((Wi , a), Vj ) ∀i, j, q
+                                                              P
+14:
+                        Pn
+15:          Ωi,j ← n1 k=1 Lk,i (q̃)Lk,j (q̃) + αK(Vi , Vj ) ∀i, j
+                        Pn
+16:          ρi (q) ← n1 k=1 Lk,i (q) ∀i, q
+17:          return argminq∈Q ρ(q)T Ω−1 ρ(q) + R(q)
+
+18: procedure ComputeH(W , Z, A, V , H, R, α, h̃, K, η, µ)
+
+19:          Li,j (h) ← ηi K((Zi , Ai ), Vj ) (h(Wi , Ai ) − µi ) ∀i, j, h
+                       Pn
+20:          Ωi,j ← n1 k=1 Lk,i (h̃)Lk,j (h̃) + αK(Vi , Vj ) ∀i, j
+                        Pn
+21:          ρi (h) ← n1 k=1 Lk,i (h) ∀i, h
+22:          return argminh∈H ρ(h)T Ω−1 ρ(h) + R(h)
+
+
+
+
+                                                                            49
+where En is the empirical expectation using the n observed trajectories, and k · kK (q,t) is the RKHS norm
+with kernel K (q,t) . First, by Representer Theorem, we only need to optimize over g of the form
+                                                N (Wt ;A)
+                                                   X
+                                           g=                 βj K (q,t) (S(Wt ; A)j , ·) .
+                                                   j=1
+
+Now, plugging this into the above equation for Jn (q; αt ), we obtain
+                                                                       1
+                                           Jn (q; αt ) = sup β T ρ(q) − β T Qβ ,
+                                                          β            4
+
+where Q and ρ(q) are defined as in function ComputeQ in Algorithm 1. Given Q is invertible, it is
+straightforward to verify that the above is maximized by β = 2Q−1 ρ(q), giving Jn (q; αt ) = ρ(q)T Q−1 ρ(q).
+Therefore, the kernel VMM solution is given by
+
+                                        q̂ (t) = argmin ρ(q)T Q−1 ρ(q) + R(q,t) (q) ,
+                                                q∈Q(t)
+
+which verifies the correctness of ComputeQ.
+    Next, for ComputeH, following an almost identical argument as above the kernel VMM estimator is
+given by
+                                   ĥ(t) = argmin Jn (h; α(h,t) ) + R(h,t) (h) ,
+                                                 h∈H(t)
+
+where
+
+                 Jn (h; α(h,t) ) = sup En [ηt f (Zt , At ) (h(Wt , At ) − µt )]
+                                    f
+                                      1 h                                      2
+                                                                                 i
+                                     − En ηt2 f (Zt , At )2 (h(Wt , At ) − µt ) + α(h,t) kf kK (h,t) ,
+                                      4
+where µt = 1{Et = At }Yt . Again, by the Representer Theorem, we only need to optimize over f of the form
+                                                N (Zt ,At )
+                                                   X
+                                          f=                  βj K (h,t) (S(Zt , At )j , ·) ,
+                                                   j=1
+
+and plugging this in to the above gives us
+                                                                       1
+                                           Jn (h; αt ) = sup β T ρ(h) − β T Qβ ,
+                                                          β            4
+
+where ρ(h) and Q are defined as in ComputeH. This is clearly minimized by β = 2Q−1 ρ(h), and plugging
+this into the original objective gives us
+
+                                     ĥ(t) = argmin ρ(h)T Q−1 ρ(h) + R(h,t) (h) ,
+                                                h∈H(t)
+
+which verifies the correctness of ComputeH.
+    Finally, for the main part of the algorithm, we observe that it works by sequentially estimating each q (t)
+                                                                                                                0
+for increasing t according to ComputeQ, using an estimate of ηt given by plugging in our estimates of q (t )
+for t0 < t, and then sequentially estimating each h(t) for decreasing t according to ComputeH, using an
+estimate of ηt given by plugging in our estimates of q (t) for t0 < t and an estimate of µt by plugging in our
+                 0         0
+estimates of q (t ) and h(t ) for t0 > t. We note that in the computation of the estimate of µt , we use the fact
+that
+                                           µt = 1{Et = At } (Rt + γωt ) ,
+where ωH = 0, and for t < H we have
+                    X                                                                         
+              ωt =      h(t+1) (Wt+1 , a) + q (t+1) (Zt+1 , At+1 ) µt+1 − h(t+1) (Wt+1 , At+1 ) .
+                      a∈A
+
+
+                                                                   50
+                                                       3.0         s2           -2.0
+
+                                     0.0          s1         1.0                  s3
+                                                                         -2.0
+
+                                                                   8.0
+
+Figure 5: Graphical representation of the NoisyObs POMDP scenario used in our Proximal RL experiments.
+Red dashed edges / blue solid edges represent the transitions under actions a1 / a2 respectively, and the
+numeric label for each edge indicates the corresponding reward. Note that all transitions and rewards in
+NoisyObs are deterministic, and do not depend on the time index. In each state si we receive observation oi
+with probability 1 − noise , or observatoin oj with probability noise /2, for each j 6= i.
+
+                   a1    a2                  a1        a2                    a1   a2           a1   a2
+             s1    0.8   0.2            o1   1         0                o1   0    1      o1    1    0
+             s2    0.8   0.2            o2   1         0                o2   0    1      o2    0    1
+             s3    0.2   0.8            o3   0         1                o3   1    0      o3    1    0
+
+
+Table 3: Details of the policies under consideration for our Proximal RL experiments in the NoisyObs
+POMDP scenario. The first table summarizes the probability distribution of the logging policy πbNoisyObs ,
+where each row gives the probability distribution over actions for the corresponding state. The next three tables
+similarly summarize the evaluation policies πeeasy , πehard , and πeoptim respectively, which are all deterministic
+policies that depend on the current observation only. Note that none of these policies depend on the time
+index.
+
+G       Additional Details for Experiment 1
+G.1     Environment Details
+We describe here the details of the NoisyObs environment. First, in Fig. 5 we describe the state transition
+and reward structure of this POMDP. Second, the initial state is drawn according to the following process:
+for each logged trajectory we first sample a prior state S0 equal to s1 , s2 , or s3 with probabilities 0.5, 0.3,
+and 0.2 respectively, a prior observation O0 ∼ PO (· | S0 ), and a prior action A0 ∼ πbNoisyObs (· | S0 ). Then,
+the initial state S1 is given by transitioning from S0 with A0 .
+
+G.2     Policy Details
+In Table 3 we fully describe both the behavior policy πbNoisyObs as well as the evaluation policies πeeasy , πehard ,
+and πeoptim used in our experiments.
+
+G.3     Method Details
+Here we provide more detail about each of the methods used in our experiments.
+
+G.3.1    Ours
+Our method is an implementation of the estimator described in Section 5, using 5-fold cross-fitting, and with
+nuisance estimation following Algorithm 1. As described in Section 6, we use the PCI reduction given by
+setting Zt = Ot−1 and Wt = Ot , and we did not include an explicit Xt .
+    For every t ∈ [H] we set the inputs to the algorithm as follows: H(t) and Q(t) were the set of all tabular
+functions; all regularization functions were set as R(f ) = λkf k2,n , for some fixed hyperparameter λ; all values
+of α(q,t) and α(h,t) were set a to a common hyperparameter α; and the kernels K (q,t) and K (h,t) were set as
+in Bennett and Kallus [2023], using the same process of combining three Gaussian kernels with automatically
+
+
+
+                                                             51
+                                              πeeasy             πehard          πeoptim
+                                              −4     −4          −2     −2
+                            noise = 0     (10 , 10 )        (10 , 10 )       (10−4 , 10−2 )
+                           noise = 0.2    (10−4 , 10−4 )    (10−2 , 10−4 )   (10−4 , 10−4 )
+
+Table 4: Summary of hand-chosen hyperparameter combinations for each setting. Each tuple gives the chosen
+value for α and λ respectively.
+
+
+calibrated bandwidths based on the variance of the data. Furthermore, the inputs to the kernel functions
+were given by concatenating one-hot embeddings of Zt and At or Wt and At .
+    For each setting (given by combination of πe and noise ), we experimented with hyperparameter values
+given by α ∈ {10−2 , 10−4 , 10−6 , 10−8 }, and λ ∈ {1, 10−2 , 10−4 , 10−6 }. In all cases, we set all values of α(q,t)
+and α(h,t) to the same α, and similarly we set all values of λ(q,t) and λ(h,t) to the same λ. In each setting, we
+performed grid search by experimenting with all of the above combinations of α and λ, and hand-selected
+and presented results for a combination of (α, λ) for which the algorithm performed well. Our hand-selected
+(α, λ) for each setting is summarized in Table 4.
+    We emphasize that this process is not meant to simulate what would be done in real applications, where
+the true target policy value is unknown. Rather, our intention is demonstrate the proof of concept of our
+theory, and show that an algorithm such as Algorithm 1 can produce accurate policy value estimates when the
+hyperparameters are well-calibrated. We leave the problem of automatically selecting such hyperparameters
+in a data-driven way to future work.
+
+G.3.2    MeanR
+                                                                  t (i)
+                                                  Pn        PH
+This baseline is extremely simple, given by n1       i=1     t=1 γ Rt .
+
+
+G.3.3    MDP
+For this baseline we first fit an MDP model to the observed observation, action, next observation counts in D,
+treating observations as states. Then, we compute the value of πe on this count-based tabular MDP model,
+using dynamic programming.
+
+G.3.4    TIS
+This is given by estimating the time-independent sampling identification quantity defined by Theorem 6
+and Lemma 2, by estimating the required probability matrices directly from the observed counts, and
+replacing the expectation over Pind with its empirical analogue, based on summing over all nH combinations
+of separately sampling an observed trajectory at each time step, and then normalizing by multiplying by
+n−H .
+
+G.4     Results for the MDP Setting
+Figure 6 presents the results of our experiment in an MDP setting without any confounding. Namely, where
+we set noise = 0. We can observe that this makes MDP baseline consistent and highly accurate. Our estimate
+remains consistent, has lower variance than in the POMDP setting shown in Fig. 4 but still more than the
+MDP baseline. The MeanR and TIS baselines still perform badly even in the MDP setting, as expected.
+
+
+H       Additional Details for Experiment 2
+H.1     Environment and Policy Details
+We used the exact sepsis simulator environment as in Oberst and Sontag [2019], except with the following
+modifications:
+   1. We replaced their initial state distribution with a uniform distribution over all non-terminal states.
+
+
+
+                                                            52
+              10.0                                                 102
+               7.5                                                 101
+               5.0
+
+
+PV Estimate
+               2.5                                                 100
+               0.0   Target PV                              MSE   10 1
+               2.5   Ours                                         10 2
+               5.0   MDP
+                     MeanR                                        10 3
+               7.5   TIS
+              10.0                                                10 4
+                                    103              104                    103                  104
+                                 Training Set Size                       Training Set Size
+              10.0
+               7.5                                                101
+               5.0
+
+
+PV Estimate
+                                                                  100
+               2.5
+               0.0   Target PV                              MSE   10 1
+               2.5   Ours
+               5.0   MDP                                          10 2
+                     MeanR
+               7.5   TIS                                          10 3
+              10.0                                   104                    103                  104
+                                    103
+                                 Training Set Size                       Training Set Size
+              10.0                                                102
+               7.5                                               10 3
+               5.0
+
+
+PV Estimate
+               2.5                                               10 8
+                                                                10 13
+               0.0
+               2.5
+                     Target PV
+                     Ours
+                                                            MSE 10 18
+               5.0   MDP                                        10 23
+                     MeanR
+               7.5   TIS                                        10 28
+              10.0                                   104                    103                  104
+                                    103
+                                 Training Set Size                       Training Set Size
+Figure 6: Results of our Proximal RL experiments on the NoisyObs environment with noise = 0. Plots are
+displayed in the same order as in Fig. 4.
+
+
+
+
+                                                           53
+   2. As described in the main text, each patient initially (at t = 1) has a 20% chance of having their diabetes
+      status censored, in which case the observed value of diabetes is always False for that patient (regardless
+      of whether they actually have diabetes or not)
+   3. We used a slightly different reward function, in order to make rewards less sparse. As in the original
+      simulator, this is based on a count of the number of core indicators (heart rate, blood pressure, oxygen
+      concentration, and glucose level) taking values within safe bounds. Specifically, rewards are defined as
+      follows: (1) if all four indicators are safe and the patient is not on any of the three treatments, they
+      receive a reward of 1; (2) if all four indicators are safe but they are on some treatment they receive
+      a reward of 0; (3) if exactly one indicator is unsafe they receive a reward of −1; (4) if exactly two
+      indicators are unsafe they receive a reward of −2; and (5) if three or more indicators are unsafe they
+      receive a reward of −10. In addition, as in the original simulator, in the case of (1) or (5) they enter a
+      cured or dead terminal (absorbing) state respectively. However, in our version of the simulator, in these
+      cases they continue to receive the reward of 1 or −10 respectively for all future time steps.
+   For full exact details of the environment, as well as the exact details of how we generated πb and πe
+(which was sketched out in the main text), we refer readers to our code release.
+
+H.2      Method Details
+H.2.1     Benchmarks
+The MeanR and MDP benchmarks were implemented identically as in the prior experiment. See the prior
+appendix section for details.
+
+H.2.2     Our Method
+Our method is again an implementation of the estimator described in Section 5, this time using 2-fold
+cross-fitting, and again with nuisance estimation following Algorithm 1. As described in the main text in
+Section 6.2, if we partition Ot = (Gt , Xt ), where Gt is the (possibly censored) indicator of whether the patient
+is diabetic, and Xt is all other aspects of Ot , then we use the PCI reduction given by setting Zt = (Gt−1 , Xt ),
+and Wt = (Gt , Xt ). Note that since the (censored) diabetes observation doesn’t change over time, this
+means that Gt−1 = Gt so both proxies are identical, but this is consistent with our assumptions since Gt is
+deterministically determined by the full state St , so Gt and Gt−1 are conditionally independent given St .
+    For every t ∈ [H] we set the inputs to the algorithm as follows: H(t) and Q(t) were some particular neural net
+classes described below; the regularization functions were set as R(q,t) (q) = λq kqk2,n and R(h,t) (h) = λh khk2,n
+for all t, for some fixed hyperparameters λq and λh that don’t depend on t; the values of α(q,t) and α(h,t) were
+set to common hyperparameters αq and αh respectively that don’t depend on t; and the kernels K (q,t) and
+K (h,t) were set as in Bennett and Kallus [2023], using the same process of combining three Gaussian kernels
+with automatically calibrated bandwidths based on the variance of the data. Furthermore, the inputs to the
+kernel functions were given by concatenating embeddings of (Gt , Xt , At ) based on the following featurizations
+that were concatenated together:
+   1. The Gt was encoded as a single 0 or 1 valued variable
+   2. We extracted 13 features from Xt as follows:
+        (a) 0 or 1-valued variables indicating whether heart rate was abnormally high, heart rate was abnormally
+            low, blood pressure was abormally high, blood pressure was abormally low, oxygen level was
+            abornally low, and glucose level was abnormal (6 features)
+        (b) 0 or 1-valued variables indicating whether there were exactly one, or exactly two, main indicators
+            with unsafe values (2 features)
+        (c) The glucose level, normalized in range of 0 to 1 (1 feature)
+        (d) 0 or 1-valued binary variables indicating whether the patient is currently on each of the three
+            treatments (3 features)
+        (e) 0 or 1-valued variable indicating whether the patient is in an absorbing state (1 feature)
+
+
+                                                        54
+  3. At was encoded as a vector of three 0 or 1-valued binary variables indicating whether each treatment
+     type was used or not
+   We used the following neural net class for each of the H(t) and Q(t) classes: (1) we first separately
+passed the At and (Xt , Gt ) embedings described above through linear layers with outputs of sizes 10 and 50
+respectively; (2) we then passed these two vectors through a bi-linear layer with 50 outputs; (3) we passed
+the output of the bi-linear layer through a linear layer with 50 outputs again; and (4) we passed the previous
+outputs through a final linear layer with 1 output. In addition, we used GeLU [Hendrycks and Gimpel, 2016]
+nonlinearities in between all linear and bi-linear layers.
+   For more thorough details of our method implementation, we refer readers to our code release.
+
+H.3     Hyperparameter Details
+We experimented with separately setting the hyperparameters λh , λq , αh , and αq for our method, each taking
+values in the set {10−2 , 10−3 , 10−4 }. This gave a total of 81 different total hyperparameter configurations
+that we experimented with. Out of those different configurations, the single best configuration (in terms
+of overall MSE), which we presented results for, was given by λh = 10−4 , λq = 10−2 , αh = 10−2 , and
+αq = 10−4 . On the other hand, our automatic hyperparameter heuristic separately selected from these 81
+different configurations, by taking a median of the predictions after discarding out-of-bound values, on each
+of the 50 replications.
+
+
+
+
+                                                     55
+

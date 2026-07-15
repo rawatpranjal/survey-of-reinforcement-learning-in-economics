@@ -1,513 +1,605 @@
-## Haumea's thermal emission revisited in the light of the occultation results
-
-T. M¨ uller a , Cs. Kiss b , V. Al´ ı-Lagoa a , J. L. Ortiz c , E. Lellouch d , P. Santos-Sanz c , S. Fornasier d , G. Marton b , M.
-
-b,g e f
-
-Mommert e , A. Farkas-Tak´ acs , A. Thirouin , E. Vilenius a Max-Planck-Institut f¨ ur extraterrestrische Physik, Giessenbachstrasse 1, 85748 Garching, Germany
-
-b Konkoly Observatory, Research Centre for Astronomy and Earth Sciences, Hungarian Academy of Sciences, H-1121 Budapest, Konkoly Thege Mikl´ os ´ ut 15-17, Hungary c Departamento de Sistema Solar, Instituto de Astrof´ ısica de Andaluc´ ıa (CSIC), Glorieta de la Astronom´ ıa s / n, 18008 Granada, Spain d LESIA-Observatoire de Paris, CNRS, UPMC Univ. Paris 06, Univ. Paris-Diderot, France
-
-e Lowell Observatory, 1400 W Mars Hill Rd, 86001, Flagsta ff , Arizona, USA
-
-f Max-Planck-Institut f¨ ur Sonnensystemforschung, Justus-von-Liebig-Weg 3, 37077 G¨ ottingen, Germany
-
-g
-
-E¨ otv¨ os Lor´ and University, P´ azm´ any P´ eter s. 1 / A, H-1171 Budapest, Hungary
-
-## Abstract
-
-A recent multi-chord occultation measurement of the dwarf planet (136108) Haumea (Ortiz et al. 2017) revealed an elongated shape with the longest axis comparable to Pluto's mean diameter. The chords also indicate a ring around Haumea's equatorial plane, where its largest moon, Hi'iaka, is also located. The Haumea occultation size estimate (size of an equal-volume sphere 1 D equ = 1595km) is larger than previous radiometric solutions (equivalent sizes in the range between 1150 and 1350 km), which lowers the object's density to about 1.8 g / cm 3 , a value closer to the densities of other large TNOs. We present unpublished and also reprocessed Herschel and Spitzer mid- and far-infrared measurements. We compare 100- and 160µ mthermal lightcurve amplitudes - originating from Haumea itself - with models of the total measured system fluxes (ring, satellite, Haumea) from 24 - 350 µ m. The combination with results derived from the occultation measurements allows us to reinterpret the object's thermal emission. Our radiometric studies show that Haumea's crystalline water ice surface must have a thermal inertia of about 5 J K -1 m -2 s -1 / 2 (combined with a root mean square of the surface slopes of 0.2). We also have indications that the satellites (at least Hi'iaka) must have high geometric albedos /greaterorsimilar 0.5, otherwise the derived thermal amplitude would be inconsistent with the total measured system fluxes at 24, 70, 100, 160, 250, and 350 µ m. The high albedos imply sizes of about 300 and 150km for Hi'iaka and Namaka, respectively, indicating unexpectedly high densities &gt; 1.0 g cm -3 for TNOs this small, and the assumed collisional formation from Haumea's icy crust. We also estimated the thermal emission of the ring for the time period 1980-2030, showing that the contribution during the Spitzer and Herschel epochs was small, but not negligible. Due to the progressive opening of the ring plane, the ring emission will be increasing in the next decade when JWST is operational. In the MIRI 25.5 µ m band it will also be possible to obtain a very high-quality thermal lightcurve to test the derived Haumea properties.
-
-Keywords:
-
-## 1. Introduction
-
-Haumea is a large trans-Neptunian object (TNO) discovered in 2003, with pre-discovery observations going back to Palomar Mountain DSS 2 images from 1955. Its very blue color (Tegler et al. 2007) and a surface covered with crystalline water ice (Merlin et al. 2007; Tegler et al. 2007; Trujillo et al. 2007) makes it very unique among the large TNOs. It is known to have two satellites (Brown et al. 2005, 2006) and a ring (Ortiz et al. 2017). Both satellites show signs of water ice on the surface (Barkume et al. 2006; Fraser and Brown 2009), and the water-ice absorption features are at least as deep as Haumea's. These moons are thought to have been formed either by a catastrophic impact that excavated them from the proto-Haumea ice mantle (Brown et al. 2007) or from rotational fission (Ortiz et al. 2012).
-
-1 D equ = 2 · (a · b · c) 1 / 3 .
-
-2 Digitized Sky Survey
-
-Brown et al. (2007) reported that several other dynamically clustered objects show similar water ice absorption features and proposed that they all originated in an impact event at least 1 Gyr ago. Vilenius et al. (2018) studied a range of Haumea family members which were seen by Spitzer and Herschel. They determined Haumea-like high albedos (average 0.48) and a distinct slope of the cumulative size distribution, di ff erent from dynamical interlopers. Lacerda et al. (2008) and Lacerda (2009) performed multi-color lightcurves and found indications for surface heterogeneity on Haumea, some parts appearing to be redder and darker than the rest. However, Pinilla-Alonso et al. (2009) did not see any significant variations in their spectra taken at di ff erent rotational phases. More sensitive NIR spectroscopy measurements (Gourgeot et al. 2016) confirmed the presence of crystalline water ice over large parts of the surface and also showed that the so-called dark red spot (DRS) region was slightly redder spectrally, yet, still showing the crystalline ice signature.
-
-Based on a large visible lightcurve amplitude, a fast rotation, and assuming hydrostatic equilibrium, Rabinowitz et al. (2006) estimated the dimentions of 980 km &lt; a &lt; 1250km, 540km &lt; b &lt; 759km, and 430km &lt; c &lt; 498km (ellipsoidal axes a &gt; b &gt; c) for a triaxial rotationally deformed Haumea with a homogeneous geometric albedo of p V = 0.6 - 0.7. Stansberry et al. (2008) conducted Spitzer-MIPS 70µ m observations and combined it with visible photometry. Their radiometric analysis resulted in a geometric albedo of 0.84 + 0 . 10 -0 . 20 and a Spitzer-derived radiometric size of 1150 + 250 -100 km. They also list a size of 1350 ± 100km refering to Rabinowitz et al. (2005). Lellouch et al. (2010) combined the Spitzer-MIPS data with Herschel-PACS measurements at 100 and 160 µ m. They found an equivalent diameter (D equ ) of ∼ 1300km (radiometric diameters between 1230 and 1324 km) and a geometric albedo of 0.70-0.81. The 100µ m thermal lightcurve was explained by an elongated body with an axis ratio a / b = ∼ 1.3 and a low thermal inertia of 0.2-0.5 J m -2 s -1 / 2 K -1 (NEATM η &lt; 1.15-1.35; for more information on the NEATM and the beaming parameter η see Harris 1998). Fornasier et al. (2013) included additional Herschel measurements at 70, 250, and 350 µ m. They derived a radiometric size of 1239.5 + 68 . 7 -57 . 8 km and a geometric albedo pV of 0.804 + 0 . 062 -0 . 095 based on a NEATM fit with η = 0 . 95 + 0 . 33 0 . 26 .
-
--Lockwood et al. (2014) combined system-resolved HST data with re-analyzed Spitzer-MIPS 70µ m data. They concluded that Haumea's extreme shape is the cause of the large amplitude optical lightcurve, but also some longitudinal surface heterogeneity is needed to explain the di ff erent lightcurve minima and maxima. The axis of their best-fit Jacobi triaxial ellipsoid had lengths of 1,920 × 1,540 × 990km (2a × 2b × 2c) and a high density of about 2.6 g cm -3 . Santos-Sanz et al. (2017) presented 100- and 160µ mthermal lightcurves of Haumea obtained by the Herschel-PACS instrument apparently also showing the 100 µ mlightcurve asymmetry connected to the DRS. The radiometric studies implied a low thermal inertia ( &lt; 0.5 J m -2 s -1 / 2 K -1 ) and a phase integral 3 larger than 0.73 for Haumea's surface. The best size estimate is given for a triaxial ellipsoid with a = 961km, b = 768km, c = 499km, leading to a 'mean area-equivalent diameter' of 1309 km, and pV = 0 . 71, in agreement with previous radiometric studies. Vilenius et al. (2018) used the occultation results together with previously published fluxes by Fornasier et al. (2013) to determine a NEATM η of 1.74. Combining η with the thermal parameter Θ via the η -Θ -relation (Lellouch et al. 2013) gave a thermal inertia estimate of Γ ∼ 1 J m -2 s -1 / 2 K -1 . Satellite and ring contributions were neglected in previous aforementioned studies.
-
-The recent occultation results (Ortiz et al. 2017) are in contradiction to the published radiometric properties (size, albedo, thermal inertia) and the hydrostatic equilibrium assumption. The occultation event combined with the optical lightcurve amplitude leads to a much larger body size with about 2,322 km for Haumea's longest axis (2a), implying a density below 1.9 g cm -3 (for the derived equivalent diameter of 1595 km) and a geometric albedo of only 0.51.
-
-In this work, we present new and updated infrared measurements and reinterpret the object's thermal infrared emission in the light of the occultation results. In section 2 we present the published thermal data set from Spitzer and Herschel-SPIRE, and also the re-analyzed data from Herschel-PACS. In section 3 we look at Haumea's spinshape solution (Ortiz et al. 2017), derived from the multi-chord occultation, and re-interpret the corresponding thermal measurements. In section 4 we discuss our results and put them in context with other icy bodies in the Solar System. Conclusions and an outlook to future studies will be given in section 5.
-
-3 The phase integral q allows to calculate an object's bolometric Bond albedo A: A = p · q, with p being the bolometric geometric albedo, assumed to be equal to the V-band albedo p V .
-
-## 2. Thermal infrared observations
-
-## 2.1. Spitzer-MIPS observations in 2005 / 2007
-
-Spitzer-MIPS (Werner et al. 2004; Rieke et al. 2004) 24 / 70µ m measurements were taken on 2005 June 20 / 22 (listed in the Spitzer Heritage Archive under 'Santa', AORKEYs 13803008, 13802752)and 2007 July 13-19 (AORKEYs 19179520, 19179776, 19180032). Stansberry et al. (2008) published an upper limit of 0.022 mJy in the 24µ m band and 7.8 mJy (S / Nof 5.3) in the 70µ mband, derived from the two 25-min measurement in 2005. A new data reduction confirmed the 24µ mnon-detection (in 13803008) and gave a marginal (S / N ∼ 2) 24µ mdetection at 0.026 ± 0.012 mJy (individual background-subtracted mosaics for 13802752). At 70 µ m, the new calibrated in-band fluxes are 7.6 ± 1.6 mJy (from background-subtracted combined images) or 10.9 ± 1.8 mJy (13802752) and 4.3 ± 2.1 mJy (13803008) for the individual background-subtracted mosaics. The two measurements are separated by about 65 degrees in rotational phase, which makes the separate fluxes more useful.
-
-In the case of the three 176-min observations in 2007, a recent reduction by Lockwood et al. (2014) combined the data in blocks of 44 min of the same rotational phases by using the 3.915341 ± 0.000005 h rotation period from Lellouch et al. (2010). The new 70µ m fluxes are listed in Table 2 in Lockwood et al. (2014), but times are given in the Haumea reference frame. We added 423.45min light-travel time to obtain the Spitzer-centric measurement times (for compatibility with other observations, our IR database requirements, and our model setup). The observed MIPS thermal flux increase and decrease were found to be positively correlated (on a 97% level) with the HST optical lightcurve, indicating a shape-driven origin. The Lockwood et al. (2014) 70µ m fluxes show a fitted minimum level close to 12 mJy and an amplitude of 4 mJy. However, the fit was done via a Jacobi ellipsoid (1920 × 1540 × 990km) and several of the MIPS points deviate considerably, with the lowest values around 8 mJy and the highest close to 20 mJy.
-
-The color correction for Haumea-like SEDs was estimated to be 1.28 for the 24µ m band (see also Table 4.16 in the MIPS Instrument Handbook 4 for blackbodies in the temperature range between 30 and 50 K). The color correction at 70 µ m is 0.89 (see also Stansberry et al. 2007, Table 2, color corrections for black bodies with temperatures in the range between 30 and 60 K). We divided the above fluxes by these factors to obtain mono-chromatic flux densities at the 23.68 and 71.42µ m reference wavelengths. In addition, we added 6% calibration uncertainty to all MIPS flux errors when combining Spitzer with Herschel measurements for radiometric size and albedo determinations, as recommended in Lockwood et al. (2014).
-
-In Fornasier et al. (2013) the lightcurve-averaged and color-corrected flux density at 71.42 µ mis given with 15.83 ± 1.20 mJy, in good agreement with the averaged Lockwood et al. (2014) fluxes when taking the color-correction factor of 0.89 into account.
-
-## 2.2. Herschel-PACS / -SPIRE observations of Haumea
-
-The Herschel Space Observatory (Pilbratt et al. 2010) also performed a range of measurements on Haumea with the PACS (Poglitsch et al. 2010) and SPIRE (Gri ffi n et al. 2010) instruments in the framework of the large key project 'TNOs-are-Cool!' (M¨ uller et al. 2009). Subset of these data were presented in Lellouch et al. (2010), Fornasier et al. (2013), and Santos-Sanz et al. (2017).
-
-Herschel-SPIRE. For our analysis we took the SPIRE measurements from 2011 January 7 / 9 as presented by Fornasier et al. (2013). The two 35-min observation blocks were combined to eliminate the strong background structures. The measurements are separated by 49.94 hour which corresponds to almost exactly 270 degrees in rotational phase, but both epochs are close to the mid-flux in the optical lightcurve and can therefore be combined.
-
-Herschel-PACS. The Herschel-PACS observation were taken on 2009 December 23 / 25 (OBSIDs 1342188470,1342188520; 100 / 160 µ m), and 2010 June 20 / 21 (1342198851, 1342198903 / 904 / 905 / 906; 70 / 100 / 160 µ m). Lellouch et al. (2010) presented an analysis of the 2009 lightcurve data, and Fornasier et al. (2013) of the 2010 data. Santos-Sanz et al. (2017) focused on the two lightcurve data sets from 2009 and 2010.
-
-In the present paper, we re-analyzed and re-calibrated all PACS observations with the latest tools and techniques (Kiss et al. 2014). The reprocessing includes a better noise characterization, the elimination of the background which
-
-4 http://irsa.ipac.caltech.edu/data/SPITZER/docs/mips/mipsinstrumenthandbook/
-
-Table 1: Epochs and observing geometry for all thermal measurements. PACS and SPIRE are Herschel instruments, the observations are labeled with the Observation ID (OBSID), and the photometric bands are at 70, 100, 160, 250, 350, and 500 µ m. MIPS is a Spitzer instrument, the observations are connected to an AORKEY, the relevant bands are at 24 and 70 µ m. The Haumea heliocentric distance (r helio ), the observatoryHaumea distance ( ∆ ), and the phase angle α are given for the observation mid-time. The one-way light-travel times vary between 421.97 and 426.33 minutes. Note, that for the flux determination it was necessary to combine di ff erent measurements (see text), the corresponding observing epochs in Tables A.6, A.7, and A.8 are therefore di ff erent. Observations were taken from the Spitzer Heritage Archive (SHA) and the Herschel Science Archive (HSA). The PACS data are based on 10 individual 3.5(or 3.0) arcmin satellite scans, separated by 10 arcsec and either in 70 or 110 ◦ scan angles with respect to the instrument reference frame. the lightcurve background measurement. The 1-3 days separation of the measurements allows to reconstruct mutual backgrounds while Haumea is always in the center of the map.
-
-| Instrument   |   Identifier | Band(s)         | Start time UT        |   Duration [sec] |   mid-time JD ( + 2450000.0) |   r helio [AU] |   ∆ [AU] |   α [ ◦ ] | Comments       |
-|--------------|--------------|-----------------|----------------------|------------------|------------------------------|----------------|----------|-----------|----------------|
-| MIPS         |     13803008 | 24 / 70         | 2005-Jun-20 17:20:37 |             1477 |                      3542.23 |         51.242 |   50.906 |      1.07 | 'Santa' in SHA |
-| MIPS         |     13802752 | 24 / 70         | 2005-Jun-22 09:11:29 |             1477 |                      3543.89 |         51.242 |   50.929 |      1.08 | 'Santa' in SHA |
-| MIPS         |     19179520 | 24 / 70         | 2007-Jul-13 11:01:22 |            10294 |                      4295.02 |         51.152 |   50.885 |      1.1  | '2003 EL61' in |
-| MIPS         |     19179776 | 24 / 70         | 2007-Jul-16 04:23:05 |            10297 |                      4297.74 |         51.152 |   50.924 |      1.11 | '2003 EL61' in |
-| MIPS         |     19180032 | 24 / 70         | 2007-Jul-19 06:43:33 |            10296 |                      4300.84 |         51.152 |   50.969 |      1.12 | '2003 EL61' in |
-| PACS         |   1342188470 | 100 / 160       | 2009-Dec-23 05:52:01 |            12084 |                      5188.81 |         51.028 |   51.262 |      1.08 | lightcurve 1   |
-| PACS         |   1342188520 | 100 / 160       | 2009-Dec-25 06:13:39 |             2420 |                      5190.77 |         51.028 |   51.232 |      1.09 | background     |
-| PACS         |   1342198851 | 100 / 160       | 2010-Jun-20 20:45:11 |            15514 |                      5368.45 |         51.001 |   50.737 |      1.12 | lightcurve 2   |
-| PACS         |   1342198903 | 70 / 160        | 2010-Jun-21 22:42:00 |              568 |                      5369.45 |         51.001 |   50.752 |      1.12 | scan map       |
-| PACS         |   1342198904 | 70 / 160        | 2010-Jun-21 22:52:31 |              568 |                      5369.46 |         51.001 |   50.752 |      1.12 | cross-scan map |
-| PACS         |   1342198905 | 100 / 160       | 2010-Jun-21 23:03:02 |              568 |                      5369.46 |         51.001 |   50.752 |      1.12 | scan map       |
-| PACS         |   1342198906 | 100 / 160       | 2010-Jun-21 23:13:33 |              568 |                      5369.47 |         51.001 |   50.752 |      1.12 | cross-scan map |
-| SPIRE        |   1342212360 | 250 / 350 / 500 | 2011-Jan-07 07:08:50 |             2111 |                      5568.81 |         50.971 |   50.994 |      1.12 | small scan map |
-| SPIRE        |   1342212414 | 250 / 350 / 500 | 2011-Jan-09 09:05:18 |             2111 |                      5570.89 |         50.971 |   50.962 |      1.12 | follow-on map  |
-
-is very critical for faint sources in the two long-wavelength channels at 100 and 160 µ m, an object-centered stacking of multiple measurements, and a better understanding of the flux calibration for faint sources (see also Klaas et al. 2018; Balog et al. 2014). The flux errors were determined by performing aperture photometry at random places in the close vicinity of Haumea and then combining with the PACS photometer intrinsic absolute flux calibration error of 5% (Balog et al. 2014). The final Haumea maps - together with all 'TNOs-are-Cool' observations (more than 400h of Herschel observing time; M¨ uller et al. 2009) - were uploaded to the HSA 5 as 'User Provided Data Products (UPDP 6 )'. The details of the procedure and the new products are given in two specific release notes: 'User Provided Data Products of Herschel / PACS photometric light curve measurements of trans-Neptunian objects and Centaurs 7 ', and 'User Provided Data Products from the TNOs are Cool! A Survey of the trans-Neptunian Region Herschel Open Time Key Program 8 '.
-
-Two sets of 100 / 160µ m lightcurves were taken: (1) A 3h21min sequence on 2009 December 23, followed by a ∼ 40min background measurement on 2009 Dec 25. However, Haumea had moved by more than 80 arcsec between both measurements (Haumea's apparent motion was about 1.7 arcsec / hour) which means that the relevant background region had moved to the edge of the 105 × 210arcsec FOV of the PACS bolometer array in the follow-up measurements on Dec 25. Haumea's sky background in the long-duration measurement is therefore only poorly characterized and part of the observed flux variations are very likely related to the structured background along Haumea's path. (2) A 4h18min sequence on 2010 June 20. In this second sequence, Haumea moved about 5.6 arcsec on the sky during the 4.3 hours (compared to the ∼ 7 / 12 arcsec FWHM of a point-source PSF at 100 / 160 µ m, respectively). The sky background in these two bands were taken from the measurements taken on the following day, when Haumea had movedabout 30 arcsec. We performed aperture photometry on the background-subtractedimages, and color-corrected the resulting fluxes (see also Santos-Sanz et al. 2017). For the 100 and 160 µ m lightcurve data we merged 3 and 6
-
-5 Herschel Science Archive
-
-6 https://www.cosmos.esa.int/web/herschel/user-provided-data-products
-
-7 http://www.mpe.mpg.de/ ~ tmueller/sbnaf/doc/tnosarecool\_hsa\_upload\_v1.pdf
-
-8 http://www.mpe.mpg.de/ ~ tmueller/sbnaf/doc/tno\_lightcurve\_hsa\_upload\_v1.pdf
-
-repetitions, respectively. For the overlap, the shift between the 100 µ mdata points is 1 repetition, but it is 3 repetitions between the 160 µ m data points, leading to an oversampled of a factor of 3(6) at 100(160) µ m. The final numbers are given in Tables A.6, A.7, and A.8.
-
-With the knowledge of Haumea's precise rotation period, it is possible to combine the 100 / 160µ m lightcurves from December 2009 and June 2010 to plot the obtained fluxes as a function of rotational phase using P rot = 3.915341h (Santos-Sanz et al. 2017; Thirouin 2013), and a (Herschel-centric) reference date of JD = 2455188.743985 (phase φ = 0), the start time of the observations. It is worth to note that the light travel times and the rotational phase shifts between the two lightcurve epochs are only 13.5 s and 0.0009, respectively, much shorter than typical measurement time of a few minutes. Figure 1 shows the phase-folded 100- and 160µ mdata, respectively.
-
-The 100µ m double-peaked sinusoidal fit gave A0 = 25.23 ± 0.89 mJy and A1 = 3.12 ± 1.25 mJy (Flux = A0 + A1 sin( φ )). Overall, the consideration of the 1 st lightcurve from December 2009 seems to increase the lightcurve amplitude a bit, but it gives almost exactly the same mean (A0). In the caption of Fig. 1 we explain the data and model fits. We see a definite lightcurve at 100 µ m, and it is likely asymmetric (lower peak at φ = 0.6). There are some data points from the 1 st lightcurve data (dark blue) that seemingly increase the amplitude, but these points are a ff ected by single repetitions that provide a very high flux density. They all happen in the 1 st lightcurve with the problematic background.
-
-The combined light curve at 160 µ m shows the first-epoch data in red and the second-epoch data in orange. The error bars are much larger at the 1 st epoch due to the background characterization problems. We determined A0 = 26.57 ± 2.73mJy and A1 = 4.10 ± 3.85mJy. The uncertainty on A1 is very large, but produced by our χ 2 analysis of the data. We also tried to refit the 160 µ m data with a fixed lightcurve phase, as obtained from the 100 µ m lightcurve. In this case, the mean is the same, and the lightcurve amplitude is &lt; 2.5 mJy, with a nearly flat (uniform) distribution between 0 and 2.5 mJy (formally the highest probability is at ≈ 1.63 mJy). It is worth to note that both, our 100 µ m and 160 µ mlightcurve amplitudes, correspond to ∼ 0.3 mag, very close to the visible lightcurve amplitude.
-
-The four short 10-min PACS measurements from 2010 June 21 (see Table 1) are reduced in a standard way by combining the scan- and cross-scan images. The 100- and 160µ m background maps (from 2010 June 20) were subtracted. The 70µ mmaphas no dedicated background counterpart, but background confusion is less severe at these shorter wavelengths. The extracted fluxes are aperture and color corrected and come with a proper noise determination. The fluxes are given in the tables in the appendix (Tables A.6, A.7, A.8, A.9). These 3-band data can also be phased into our lightcurve data: The corresponding rotation phase is around 0.75, which is very close to the mid-flux level.
-
-Overall, the new reduction procedure increased the reliability of the extracted fluxes and reduced the previously published peak-to-peak lightcurve amplitudes significantly. The poorly characterized background structures in the 2009 lightcurve data were the main cause for the large flux variation shown in Lellouch et al. (2010) (peak-to-peak lightcurve amplitude of ∼ 17mJy at 100 µ m) and Santos-Sanz et al. (2017) (about 10(8) mJy variation at 100(160) µ m).
-
-## 3. Thermophysical model calculations
-
-The radiometric technique (see e.g. Delbo et al. 2015 and references therein) usually takes measured thermal infrared fluxes to derive size, albedo, and thermal properties for a given object. In the case of Haumea, we follow a di ff erent approach, mainly because of the direct size measurement from the occultation event, and the unknowns in the satellite-ring contributions to the thermal signals.
-
-## 3.1. Using the occultation cross-section
-
-We use the occultation-derived 2-D ellipse fit for Haumea, as measured on 2017 January 21 at around 03:09 UT ( ± about 1.5 min). Haumea's projected shape was fit by an ellipse with a = 852 ± 2 km and b = 569 ± 13 km or a circleequivalent diameter of 2 √ 852 × 569 = 1392.5 km ( ± 10.2 km) (Ortiz et al. 2017). The lightcurves taken close in time to the occultation event showed that Haumea was very close to its minimum brightness, both in reflected light and thermal emission (see Lockwood et al. 2014; Santos-Sanz et al. 2017). Regarding the DRS, this is centered in one of the lightcurve maxima (Lacerda et al. 2008), which means that at lightcurve minimum the DRS would be in grazing view from the Earth with a tiny e ff ect on the thermal flux.
-
-In a first step, we use only the occultation cross section and the object's rotational properties (Lellouch et al. 2010; Ortiz et al. 2017) to make thermophysical predictions at the Spitzer and Herschel observing epochs and geometries. The following (relevant) parameters were used in our thermophysical model (TPM) setup:
-
-Figure 1: The two sets of 100- (top) and 160µ m(bottom) Herschel-PACS lightcurve measurements combined (see text for details). The zero phase corresponds to JD = 2455188.743985. The dark blue(red) points are of the 1 st epoch, and the light blue(orange) ones are of the 2 nd epoch. The solid black curve is the sinusoidal fit. The curve drawn by the black dots is a smooth curve from the original data (the fit is made with the original data, not the smoothed one, without the three outliers around φ = 0.65). The 100 µ m lightcurve seems to be asymmetric with the lower peak at φ = 0.6.
-
-<!-- image -->
-
-- For the interpretation of the fitted occultation ellipse we use an oblate spheroid with a = b = 852km; c = 513km which resembles the occultation ellipse when projecting the oblate spheroid under an aspect angle of 76.2 ◦ .
-- We use the occultation-derived rotation poles at (RA, Dec) = (285.1 ◦ , -10.6 ◦ ) and (RA, Dec) = (312.3 ◦ , -18.6 ◦ ), named pole 1 and pole 2, respectively (in ecliptic coordinates: (285.2 ◦ , + 12.1 ◦ ) and (309.6 ◦ , -0.8 ◦ )); however, pole 1 was given priority in Ortiz et al. (2017) because of the long-term lightcurve amplitude behavior of Haumea and the agreement with Hi'iaka's orbital pole position.
-- The object's rotation period was found to be P rot = 3.915341 hours (Santos-Sanz et al. 2017).
-- The rotationally averaged absolute magnitude of the Haumea-system is HV =+ 0.35 ± 0.06, but we use the HV value of Haumea's main body at the time of the occultation: 0.35 + 0.14 + 0.32 / 2mag (to account for the satellites and the lightcurve amplitude; Ortiz et al. 2017) = 0.65 mag.
-- Then, the object's geometric albedo can be calculated (Harris 1998):
-
-<!-- formula-not-decoded -->
-
-The resulting geometric albedo connected to the occultation ellipse size is then 0.51 ± 0.02 (Ortiz et al. 2017) or ± 0.05 if we take the 10.2-km size error and a conservative ± 0.1 mag error for H mag into account.
-
-- For the phase integral we applied the formula by Brucker et al. (2009): q = 0 . 336 pV + 0 . 479. This led to q = 0 . 65 (for pV = 0 . 51). Whenever relevant, we tested also a wider range of q = 0 . 45 to 0.85 to account for the unknown scattering properties on Haumea's surface.
-- Like in most radiometric studies, we use a bolometric emissivity /epsilon1 = 0 . 9 in the MIPS / PACS range, and a lower emissivity of 0.8 at sub-millimeter wavelengths in the SPIRE range (see M¨ uller 2002, Fornasier et al. 2013; Lellouch et al. 2016; Lellouch et al. 2017).
-- We consider a very wide range of surface roughness values (as a free parameter) ranging between 0.1 (very smooth) and 0.9 (extremely rough) in r.m.s. of surface slopes. However, the lower range with r.m.s &lt; 0.5 seems to be more realistic for TNOs (see findings in Fornasier et al. (2013)).
-- The thermal inertia is our free parameter and we test a range between 0.01 J K -1 m -2 s -1 / 2 (extremely low thermal conductivity) and 100 J K -1 m -2 s -1 / 2 (extremely high conductivity considering the low-temperature environment at 50 AU).
-- The di ff erences in Spitzer-Haumea and Herschel-Haumea distances and phase angles are small and lead to negligible di ff erences in the TPM fluxes of only 1-2% (assuming low thermal inertia below 5 J K -1 m -2 s -1 / 2 ) or less for thermal inertias &gt; 5 J K -1 m -2 s -1 / 2 , for the 6-yr span of thermal observations (Tbl. reftbl:obs).
-
-Using the above settings, we can make flux predictions for the full range of thermal inertias and roughness levels for the specific occultation size. The calculations are done via a TPM (Lagerros 1996, 1997, 1998; M¨ uller and Lagerros 1998; M¨ uller 2002) and, in the first step, by using a spheroid resembling the fitted occultation ellipse (see explanation above). The TPM predictions are shown in Fig. 2. The illuminated side of a TNO coincides with the visible hemisphere given the typical small phase angle of the observations. However, the thermal fluxes (default values are shown as diamonds) decrease with increasing thermal inertias (more heat is transported to the night side). At ∼ 10J K -1 m -2 s -1 / 2 Haumea is almost isothermal (except at the poorly illuminated polar regions) with the 30-40 K zone reaching latitudes of above 60 ◦ . At much larger thermal inertias more and more heat goes to the subsurface (lowering the e ff ective temperature) and the warm terrain shrinks towards the equatorial zone (still isothermal at each latitude) which explains the steep decrease at very high thermal inertias. The assumptions of a high / low surface roughness (dashed line below and dashed-dotted line above the diamonds) produces higher / lower fluxes, but the influence of roughness shrinks with increasing thermal inertia. We also tested the influence of the phase integral q (0.45 &lt; q &lt; 0.85), but the lines are within the low / high roughness corridor, with the q = 0.45 prediction close to the 'high roughness' levels, and the q = 0.85 predictions close to the 'low roughness' dashed line (see Fig. 2, bottom).
-
-These predictions can now be compared with the calibrated, color-corrected absolute flux densities. We take the fluxes at thermal lightcurve minimum since the occultation happened close to the minimum (Santos-Sanz et al. 2017): ≈ 12mJy at 70 µ m (estimated from Figure 1 in Lockwood et al. (2014)), 22 ± 1.5mJy at 100 µ m, (horizontal dashed and dotted lines on the left side in Figure 2 top and bottom part), and 22.5 ± 3mJy at 160 µ m (see fit parameters A0 and A1 above). But there is one problem with that comparison: the thermal measurements include contributions from the ring and Haumea's satellites (see discussion in Section 3.3). The Haumea-only fluxes (subtracting the smallest possible ring-satellite contribution) are also shown in the figure as thicker solid lines on the right side of Figure 2. The intersections with the flux curves indicate the most probable thermal inertia for Haumea itself. These simple calculations are based on the measured occultation ellipse and Haumea's H-magnitude and rotational properties, but they show that the occultation result is only compatible with the thermal measurements when the thermal inertia is larger than ≈ 2JK -1 m -2 s -1 / 2 . This lower limit for the thermal inertia is confirmed by similar exercises at 70, 160, and 250 µ m where we also have multiple observations. The figure shows that higher ring / satellite contributions (e.g., when assuming a less-extreme lower albedo for the satellites) would automatically lead to even higher thermal inertias for Haumea. Also the TPM assumptions for the surface roughness play a role: for a low-roughness (smooth) surface we estimate a thermal inertia of 2 (or higher), while a very rough surface would give also higher thermal inertias well above 10J K -1 m -2 s -1 / 2 . TPM analysis of other targets (Fornasier et al. 2013; Kiss et al. 2018) indicated that lower roughness values (r.m.s. of surface slopes between 0.1 to 0.3) seem to fit better the thermal signals of dwarf planets. Looking at the influence of the phase integral shows an opposite trend: high q-values are more compatible with low thermal inertias (above ∼ 5JK -1 m -2 s -1 / 2 ), while q-values below 0.5 would require Haumea to have Γ well above 10J K -1 m -2 s -1 / 2 (Figure 2 bottom part).
-
-## 3.2. Using the occultation-lightcurve derived 3-D size-spin-shape solution
-
-The above exercise (Fig. 2) used minimum fluxes in each band for a direct comparison with the occultation 2D results. But the five thermal ligthcurves (single MIPS 70 µ m; two-epoch PACS 100 / 160µ m lightcurves) contain additional information. The absolute fluxes are 'contaminated' by the unknown ring / satellite contributions, but the lightcurve amplitude is directly connected to Haumea itself (Lockwood et al. 2014). For the interpretation of the thermal lightcurves we use the Ortiz et al. (2017) 3-axes ellipsoid with a default size of a = (1161 ± 30)km, b = (852 ± 2)km, and c = (513 ± 16)km (a / b = 1.36 and b / c = 1.66) and a volume-equivalent diameter of 2 · (1161 · 852 · 513) 1 / 3 = 1595km. In addition, we also consider the more extreme solution (based on a maximum of 5% for the visual brightness contribution of the ring to the observed magnitudes) with 2a = 2520km (a / b = 1.48; D equ = 1632km), also given in Ortiz et al. (2017). The corresponding thermal lightcurve amplitude decreases with increasing thermal inertia (see Figure 3), with only very little influence by the surface roughness assumptions or the value for the phase integral (not shown in the figure). The 'default' occultation model is shown with a solid line, the extreme case with 2a = 2520km produces a larger amplitude (shown as dashed line). The 100µ m lightcurve amplitude which was fitted to the observed fluxes (see Figure 1) is over-plotted (solid horizontal line). The formal amplitude error from the fit is also shown (dashed horizontal lines). The 100 µ m lightcurve amplitude indicates that Haumea must have a thermal inertia in an estimated range between ∼ 2 and about 10 J m -2 s -1 / 2 K -1 . If the a-axis is more extended (dashed line in Fig. 3) then the limits are between 4 and about 15 J m -2 s -1 / 2 K -1 . The lightcurves at 70 µ m (MIPS) and 160 µ m give a very similar picture, although the formal errors are bigger. Figure 3 explains nicely why previous studies (Lellouch et al. 2010; Santos-Sanz et al. 2017) resulted in much smaller thermal inertias for Haumea. In these projects, the light curve amplitudes were heavily overestimated due to the poorly characterised background. In addition, previous assumed shape models (based on hydrostatic equilibrium) were less elongated than the one from the occultation, and the derived radiometric size was smaller. Both aspects pushed the derived thermal inertia to very small values. Having the occultation-derived shape, spin pole and size, also allowed us to look into the shift between the optical and thermal lightcurves. We calculated this shift for thermal inertias ranging from Γ= 0J m -2 s -1 / 2 K -1 (in phase with the optical lightcurve) to Γ= 25J m -2 s -1 / 2 K -1 (thermal lightcurve is delayed with respect to the optical). We determined delay times (see also Santos-Sanz et al. 2017) of up to 5 min (or ∼ 0.02 in rotational phase) for the current aspect angle, but our observations are clearly not accurate enough to measure this e ff ect directly. However, the optical-thermal delay might still be an interesting approach for other targets (with less-extreme shapes) to constrain the object's thermal inertia.
-
-Figure 2: TPM 100µ m flux calculations using only the occultation 2-D ellipse information. The measured 100µ m flux (of the thermal lightcurve minimum) is over-plotted: Left side within the figure: the observed Haumea-ring-satellite fluxes (with errors shown as dotted lines); right side: the estimated satellite-ring contribution was subtracted from the observed flux, assuming an albedo of p V = 0.8 for the satellites (horizontal top solid / dashed lines), and p V = 0.5 (lower solid line). Top: Using a wide range of extreme roughness levels on the surface. Bottom: Using a wide range of phase integrals (from 0.45 to 0.85). The intersections between model and observed fluxes indicate that Haumea's thermal inertia must be above ∼ 2 and below ∼ 20J m -2 s -1 / 2 K -1
-
-<!-- image -->
-
-.
-
-Figure 3: TPM 100µ m lightcurve amplitudes for the default 3-D spin-shape-size solution derived from the occultation (solid line) and using the largest possible a-axis extension (see Ortiz et al. 2017) (dashed line). The observed lightcurve amplitude is over-plotted (see Fig. 1). This approach leads to a thermal inertia above ∼ 2 and below ∼ 15 J m -2 s -1 / 2 K -1 for Haumea.
-
-<!-- image -->
-
-## 3.3. Estimating the thermal contribution of the satellites and the ring
-
-Haumeais knownto have two satellites (Brown et al. 2005, 2006) and a ring (Ortiz et al. 2017). Ragozzine and Brown (2009) determined the mass of Haumea's satellites from the orbits in the framework of a three point mass model (1.79 ± 0.11 · 10 19 kg for Hi'iaka, and 1.79 ± 1.48 · 10 18 kg for Namaka). Using a realistic density estimate of ρ = 0.51.5 g / cm 3 for both moons, the size ranges are D H = 350 ± 50km, and D N = 150 ± 50km for Hi'iaka and Namaka, respectively. Additionally, Brown et al. (2006) listed the moons' brightnesses to be 5.9 +/ -1.5% and 1.5 +/ -0.5% of Haumea's brightness, while Ragozzine and Brown (2009) reported Hi'iaka to be ≈ 10 times fainter than Haumea and Namaka ≈ 3.7 times fainter than Hi'iaka, corresponding to ∼ 3.5 and 5.1 mag for their absolute magnitudes 9 , given Haumea's absolute magnitude, H V = 0.49 mag (Ortiz et al. 2017). We predicted the flux densities of Haumea's satellites using a NEATM model (Harris 1998) for the above range of possible mass-related sizes and albedos (fulfilling the H-magnitude constraint), and assuming the Brucker et al. (2009) phase-integral-albedo relation. We consider the usage of the NEATM as appropriate in case of the satellites where no spin properties (rotation period and / or spin-axis orientation) are known. In Table 2 we list the corresponding flux predictions assuming a beaming parameter of η = 1. This η -value is close to the weighted mean value of 1.07 derived from combined Herschel and Spitzer observations of 85 TNOs and Centaurs (Lellouch et al. 2013).
-
-Table 2: NEATM predictions for Haumea's satellites, assuming a beaming parameter η = 1.0, and a constant emissivity of /epsilon1 = 0.9. 'PhaseInt': value for the phase integral.
-
-| Diameter   | Albedo   | PhaseInt   | Hi'iaka flux (mJy) at   | Hi'iaka flux (mJy) at   | Hi'iaka flux (mJy) at   | Hi'iaka flux (mJy) at   | Hi'iaka flux (mJy) at   | Hi'iaka flux (mJy) at   |
-|------------|----------|------------|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|-------------------------|
-| (km)       | p V      | q          | 24 µ m                  | 70 µ m                  | 100 µ m                 | 160 µ m                 | 250 µ m                 | 350 µ m                 |
-| 300        | 0.79     | 0.74       | 0.002                   | 0.86                    | 1.33                    | 1.31                    | 0.89                    | 0.58                    |
-| 350        | 0.58     | 0.67       | 0.011                   | 1.85                    | 2.52                    | 2.24                    | 1.44                    | 0.91                    |
-| 400        | 0.44     | 0.63       | 0.023                   | 2.93                    | 3.78                    | 3.22                    | 2.03                    | 1.27                    |
-| Diameter   | Albedo   | PInteg.    | Namaka flux (mJy) at    | Namaka flux (mJy) at    | Namaka flux (mJy) at    | Namaka flux (mJy) at    | Namaka flux (mJy) at    | Namaka flux (mJy) at    |
-| (km)       | p V      | q          | 24 µ m                  | 70 µ m                  | 100 µ m                 | 160 µ m                 | 250 µ m                 | 350 µ m                 |
-| 140        | 0.83     | 0.76       | < 0.001                 | 0.17                    | 0.26                    | 0.27                    | 0.18                    | 0.12                    |
-| 160        | 0.64     | 0.69       | 0.002                   | 0.35                    | 0.49                    | 0.44                    | 0.29                    | 0.18                    |
-| 180        | 0.50     | 0.65       | 0.004                   | 0.55                    | 0.72                    | 0.63                    | 0.40                    | 0.25                    |
-| 200        | 0.41     | 0.62       | 0.006                   | 0.76                    | 0.97                    | 0.82                    | 0.51                    | 0.32                    |
-
-For both satellites, smaller sizes than the above stated limits would require unrealistically high geometric albedos, p V &gt; 1, which is not expected for inactive bodies. The two satellites give a minimum thermal emission contribution of ∼ 1.0 mJy at 70 µ m, 1.6 mJy at 100 µ m, 1.6 mJy at 160 µ m, 1.1 mJy at 250 µ m, and 0.7 mJy at 350 µ m(assuming p V ∼ 0.8 for both). For a lower albedo of p V ∼ 0.5, the contributions at 70, 100, 160, 250, and 350 µ mare already 2.4, 3.2, 2.9, 1.8, and 1.2 mJy, respectively. We also investigated the influence of a higher beaming paramter with η = 1.3. In this case, the satellites contribute about 20% less flux in the PACS and about 10% less in the SPIRE range.
-
-It is worth to note here that Haumea might have more so-far undiscovered satellites, including potential shepherd satellites for the ring. They might also add a small contribution to the observed fluxes of the Haumea-ring-satellite system.
-
-To estimate the thermal contribution of Haumea's ring, we used the simple thermal model from Lellouch et al. (2017), itself based on a simplified version of a model for Saturn's rings. In this model, the only source of energy for ring particles is absorbed solar radiation, but mutual shadowing - as seen both from the Sun and the observer - and optical depth e ff ects are taken into consideration. The model further assumes that ring particles have a bolometric and spectral emissivity of unity. By analogy with Saturn's rings, the latter assumption is certainly valid up to ∼ 200 µ m, but the spectral emissivity could decrease at longer wavelengths if ring particles are made of water ice. Model free parameters are the ring radius r , width w , opacity τ , and Bond albedo Ab , related to the I / F reflectivity 10 and the phase
-
-9 see also http://www.johnstonsarchive.net/astro/astmoons/am-136108.html , retrieved on Oct 24, 2018.
-
-10 I is the intensity of light reflected by the surface and π F is the incident solar flux density.
-
-Table 3: Thermal emission predictions for Haumea's ring assuming I / F = 0.09. The first part shows the estimates (in mJy) for our Spitzer and Herschel measurements, the second part includes calculations (in µ Jy!) for JWST-MIRI filters. During the 2005 / 2007 Spitzer observing epochs the ring contribution in the 24µ m band is expected to be below 1 µ Jy and therefore negligible. The MIRI imager sensitivities (SNR = 10 in 10,000 sec) are increasing from about 1 µ Jy at 15 µ mto about 10 µ Jy at 25.5 µ m.
-
-| Observation epoch    | 70 µ m [mJy]   | 100 µ m [mJy]   | 160 µ m [mJy]   | 250 / 350 µ m [mJy]   |
-|----------------------|----------------|-----------------|-----------------|-----------------------|
-| Jun 2005             | < 0.05         | -               | -               | - / - / -             |
-| Jul 2007             | 0.15           | -               | -               | -                     |
-| Dec 2009             | 0.4            | 1.0             | 1.2             | - / -                 |
-| Jun 2010             | 0.6            | 1.4             | 1.4             | - / -                 |
-| Jan 2011             | -              | -               | -               | 1.4 / 1.0             |
-| JWST-MIRI prediction | 15 µ m [ µ Jy] | 18 µ m [ µ Jy]  | 21 µ m [ µ Jy]  | 25.5 µ m [ µ Jy]      |
-| early 2022 mid 2025  | 0.012          | 0.28            | 2.5             | 23                    |
-|                      | 0.023          | 0.48            | 4.0             | 35                    |
-
-integral, assumed here to be equal to 0.5. We use the nominal values from (Ortiz et al. 2017), i.e. r = 2287km, w = 70km, τ = 0.5 and I / F = 0.09 (see also the discussion in Braga-Ribas et al. 2014). Although the latter quantity is the least well constrained, it has a minor e ff ect on the ring thermal emission. We calculated the ring thermal flux for all viewing geometries from 1980 to 2030 (see Figure 4). The calculated thermal fluxes at some selected wavelengths and dates are listed in Table 3.
-
-In the work by Santos-Sanz et al. (2017), the possible thermal contributions of the satellites Hi'iaka and Namaka were estimated to be ∼ 6% and 1.5%, respectively, but they did not consider these contributions in their radiometric analysis. And, the ring was not known at that time. Here, we subtract the summed up minimum ring-satellite contribution from the total observed Spitzer and Herschel fluxes: 0.002 mJy and 1.1 (1.2) mJy for the MIPS 24- and 70µ m observations in 2005 (2007); 1.6 mJy, 2.6 (3.0) mJy, and 2.8 (3.0) mJy for the PACS 70, 100, and 160µ m observations in 2009 (2010); and, 2.5 mJy and 1.7 mJy for the SPIRE 250 and 350 µ m observations in 2011. Depending on wavelengths and epoch, the Haumea-only fluxes are about 5-23% lower than the total observed fluxes for the most conservative case (with the satellites having an albedo above 0.7). In case of darker surfaces (albedo of 0.5 for the satellites), the satellite / ring contributions would increase significantly and could easily reach 1 / 3 of the observed total flux. However, in these cases, the Haumea model would require a very high thermal inertia well above 10 to lower it's flux contribution accordingly. At the same time, the amplitude of the thermal lightcurve would also decrease, well below the observed 100 and 160 µ m amplitudes (see Figs. 3 and 5, bottom).
-
-## 4. Discussion
-
-The size and shape estimate for Haumea and the ring discovery from the multi-chord occultation observation were crucial for the reinterpretation of the thermal emission measurements. From our calculations (Figs. 2 and 3), it is very likely that the satellites and the ring contributions to the measured signals are small. As a consequence, the satellites (at least Hi'iaka) must have a high albedo (very likely above 0.5), otherwise their thermal contribution would reach several milli-Jansky which is problematic when trying to match the Haumea occultation size to the ring-satellitesubtracted thermal flux. Haumea's thermal inertia would be above 10 J m -2 s -1 / 2 K -1 (see also discussion below), and the thermal lightcurve amplitude would shrink to 1-2 mJy, well below the observed amplitude. The case of a dark Hi'iaka (and also Namaka) with p V &lt; 0.5 can therefore be excluded. We should note here, that Namaka's flux is only about 20 to 25% of Hi'iaka's flux (for equal albedo), so excluding the case of a dark Namaka is much more di ffi cult. The albedo limit of about 0.5 is not very well determined and it is related to the assumption of a beaming parameter of η = 1.0. A higher η -value (e.g. η = 1.3) for the satellites would lower the thermal emission contribution by 10-20% in the Herschel wavelength range (higher value for the shorter wavelengths). In this case, a Hi'iaka albedo of ∼ 0.5
-
-<!-- image -->
-
-Year
-
-Year
-
-Year
-
-Year
-
-Year
-
-Year
-
-Year
-
-Year
-
-Figure 4: Thermal model flux predictions for Haumea's ring for the time period 1980 to 2030. The Spitzer observations happened in 2005 and 2007 when the ring contribution was negligible. For the interpretation of the Herschel observations (2009-2011) we took the 0.4 to 1.4 mJy contribution into account, depending on the filter and observing time.
-
-would still be compatible with the observed system fluxes. Additional small flux contributions could also come from undiscovered small satellites, but previous search programs (Brown et al. 2006) excluded other satellites at the size of Namaka or larger. However, the high albedo for the satellites is connected to small diameters of about 300 and 150km for Hi'iaka and Namaka, respectively (see Table 2 and the discussions in Section 3.3). And since the masses are known, their densities must be well above 1.0 g cm -3 to comply with the mass and the brightness constraints. This makes these satellites (or at least Hi'iaka) very special in the current size-density picture (see Kiss et al. 2018). They show that all TNOs below 500 km in diameter seem to have densities well below 1.0 g cm -3 , i.e. close to (or even below) the density of pure water ice or granular ice with self-compression (Durham et al. 2005). The indication for higher densities for Haumea satellites points therefore to a formation process of these two satellites which is di ff erent from other small-size TNOs. A density below 1.0 g cm -3 would also be the expectation for Haumea's satellites if they have been formed by a collision. Their density should represent the icy crust of Haumea which is expected to be much lower than Haumea's bulk density of about 1.9 g cm -3 . These questions about Hi'iaka's and Namaka's density and their formation cannot be answered conclusively by our thermal measurements, especially, since the masses of both satellites are also uncertain (Ragozzine and Brown 2009).
-
-The two constraints from Figs. 2 and 3 indicate that Haumea's thermal inertia is very likely between 2 and 10 J m -2 s -1 / 2 K -1 (possibly up to 15 J m -2 s -1 / 2 K -1 if the a-axis is larger than the default value). This can be tested on all thermal data combined with a standard radiometric technique. In a first case (case I) we do not subtract any ring or satellite contribution. In case II and case III, we use all MIPS / PACS / SPIRE fluxes with the corresponding satellite (see Table 2) and ring contributions (see Table 3) subtracted. In case II, we assume a high albedo of p V = 0.8 for both satellites (low satellite flux contribution), in case III we assume p V = 0.5 (producing higher satellite flux contributions). Then we search for the thermal inertia that produces the best fit to all data simultaneously, without violating the occultation and H-mag constraints.
-
-We summarized our results in Table 4. The χ 2 minima are not changing much for the three cases, but when studying the fits to the di ff erent thermal lightcurves individually, we see problems for low ( &lt; 3J m -2 s -1 / 2 K -1 ) and
-
-Table 4: Radiometric analysis of all thermal measurements combined. Cases are explained in the text. We accepted values for the reduced χ 2 up to 1.4, with the optimum χ 2 around 0.7 (case I &amp; II) and 0.8 (case III).
-
-| Case   | TI range [Jm 2 s 1 / 2 K 1 ]   | comments                                                                                                                                        |
-|--------|--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| I      | 1-3                            | trend in obs / mod ratios with wavelengths, conflict with mass-brightness constraints on the satellites                                         |
-| II     | 2-7                            | best solution at TI = 5 ( χ 2 r = 0.7) compatible with satellite mass / density estimates match to absolute flux level and lightcurve amplitude |
-| III    | 7-11                           | amplitude fit and overall match to flux levels degrading, trend in obs / mod ratios with wavelengths                                            |
-
-high ( Γ &gt; 8 J m -2 s -1 / 2 K -1 ) thermal inertias. These problems are nicely visible in Figure 5 (bottom part) where the di ff erent solutions for the highest-quality PACS 100 µ m lightcurve are shown. Case I and case III also fail to match the lightcurve-averaged fluxes in di ff erent bands (70, 100, 160 µ m) equally well: In the observation-to-model ratios one can see a strong trend with wavelengths (the models overestimate the 70 µ m fluxes and underestimate the 160 µ m levels). Another argument against case I: The satellite mass estimates by Ragozzine and Brown (2009) lead to a thermal signal of at least 1-2 mJy in the PACS bands for the highest possible albedo and significantly more for a lower albedo (and / or in case of more, so-far undiscovered, satellites). The case I solution can therefore only produce a lower limit for Haumea's thermal inertia. Case III is also very problematic: if the ring and the satellites contribute too much, then Haumea's thermal inertia has to increase accordingly and this would lower the thermal lightcurve amplitude well below the observed level. The o ff set in observation-to-model ratio at sub-millimeter range would also increase and be more di ffi cult to explain (see lower part of Figure 5).
-
-The overall best solution (in reduced χ 2 , and also when inspecting the match to the absolute fluxes and thermal lightcurve), is found for case II, with TPM settings of Γ ∼ 5, a phase integral of 0.65, and a surface roughness of ∼ 0.2 r.m.s. of surface slopes. Figure 5 shows our best match to the data for case II, with only the small ring / satellite contributions (5-20% to the total observed fluxes) subtracted. In the upper part of the figure we have calculated Haumea's thermal emission at the given observing geometry for each thermal measurement, and we show the observations-tomodel ratios as a function of wavelengths. At 70, 100, and 160 µ m, the measurements are well matched, at 24 µ m the model prediction is in agreement with the non- or marginal detection, but at 250 and 350 µ m the predictions overestimate the fluxes. It seems that the ring and satellite contributions are negligible at these wavelengths, indicating that their sub-millimeter emissivity is lower than the assumed value of /epsilon1 = 0.9 (for the satellites) and 1.0 (for the ring). Another option is a higher I / F value for the ring: with increasing albedo the thermal ring emission is going down and for an I / F of 0.5 it would decrease to about half the assumed value, but this would also lower the ring contribution in the PACS range and it would only partly explain the SPIRE data problem. But both e ff ects combined would lower the sub-millimeter thermal contribution of the ring and the satellites and would bring the observation-to-model ratios at 250 and 350 µ m in Figure 5 closer to 1.0. Our current ring model does not depend on particle sizes and it is therefore not possible to constrain the particle sizes. However, a recent study on the particle dynamics of Haumea's dust ring (Kov´ acs and Reg´ aly 2018) found that particles with sizes of ∼ 1 µ mwould accumulate circularly in a narrow ring near the 3:1 spin-orbit resonance and survive for a reasonable time periods. Such small grain sizes would make the ring more transparent at far-IR wavelengths and lead to a better match between our Haumea predictions and the (case II) fluxes.
-
-How does Haumea's thermal inertia compare with other distant TNOs or with large dwarf planets with known thermal properties? Lellouch et al. (2013) analyzed a large sample of TNOs and found a Γ = 2.5 ± 0.5 J m -2 s -1 / 2 K -1 for objects at heliocentric distances of r helio = 20-50AU. Haumea is at r helio = ∼ 51AU and the thermal inertia should therefore be slightly lower due to the lower surface temperatures: assuming that the T 3 term dominates in the thermal conductivity (the thermal inertia scales with ∼ r 3 / 4 ; see e.g. Delbo et al. 2015). On the other hand, the thermal inertia of Pluto and Charon are larger: Γ Pluto = 16-26J m -2 s -1 / 2 K -1 and Γ Charon = 9-14J m -2 s -1 / 2 K -1 (Lellouch et al. 2011, 2016). A Pluto(Charon)-like surface has then a thermal inertia of 11.3-18.3(6.3-9.9)J m -2 s -1 / 2 K -1 at the distance of
-
-Figure 5: Top: All observations (MIPS and PACS lightcurves have been averaged), divided by the corresponding TPM predictions ( Γ = 5J m -2 s -1 / 2 K -1 , r.m.s. of surface slopes of 0.2, q = 0.65, occultation-derived 3-D shape and spin properties for pole 1, Haumea emissivity of 0.9 in the PACS range and 0.8 in the SPIRE range). Triangles are Spitzer-MIPS data, diamonds are Herschel-PACS, and boxes are Herschel-SPIRE observations. Small thermal contributions (case II) from the ring and the satellites were subtracted from the observed fluxes. The 24 µ m data point is a non- or marginal detection, the 70, 100, and 160 µ m points are well matched. At 250 and 350 µ m we might have overestimated the ring and satellite contributions (see text). Note that the true size, shape and spin properties have been used for the ratio calculations. Bottom: the most-accurate 100 µ mlightcurve (PACS, second epoch in Jun 2010), with minimum ring / satellite contributions subtracted (case II), shown together with absolute model predictions over-plotted. The two thicker dashed lines are related to Γ = 4J m -2 s -1 / 2 K -1 (higher one) and Γ = 6J m -2 s -1 / 2 K -1 (lower one).
-
-<!-- image -->
-
-Haumea (about a factor of 1.4 lower). But the high Γ -values for Pluto and Charon are thought to be caused by large diurnal skin depth due to their slow rotation ( ∼ P 1 / 2 dependence; see also discussion in Kiss et al. 2018). Haumea rotates much faster than Pluto and Charon (6.38 d orbital / rotation period of Pluto-Charon versus 3.91 h for Haumea), and also faster than typical TNOs (P = ∼ 6-12h; Du ff ard et al. 2009; Thirouin et al. 2016). Taking the skin-depth e ff ect into account would lower the expected thermal inertia to about 1.8-2.9(1.0-1.5)J m -2 s -1 / 2 K -1 for Haumea, if we assume a Pluto(Charon)-like surface. Our derived values for Haumea are a factor of 2-3 higher and point to a more compact (hence higher conductivity) surface than compared to Pluto or Charon.
-
-The phase integral q is a critical property in the thermophysical model concept for high-albedo objects like Haumea. The thermal flux depends mainly on the object's size and its Bond albedo A b , with A b = p V · q. For objects with a standard scattering behavior in the visible, the phase slope G is given with 0.15, leading to a phase integral of q = 0.39 (Bowell et al. 1989). This works well for low-albedo objects, but fails for high-albedo objects. Pluto's phase integral was found to be q = 0.8 (Lellouch et al. 2000), which was used by Stansberry et al. (2008) for the interpretation of the Spitzer measurements of Haumea. Lellouch et al. (2010) adopted a phase integral q = 0.7, intermediate between those estimated for Pluto (0.8) and Charon (0.6) (Lellouch et al. 2000). Santos-Sanz et al. (2017) determined a high phase integral ( &gt; 0.73) for Haumea by matching an overestimated 100 / 160µ m lightcurve amplitude. Using the phase integral formula by Brucker et al. (2009): q = 0.336 · p V + 0.479, we find q = 0.65 (for p V = 0.51). We used di ff erent values for q, but there are simply too many unknowns in the system to constrain its value. Overall, we find better fits to the data for higher values (q = 0.65 to 0.8), the lower values (q = 0.45) would push Haumea's thermal inertia to larger values (above 10 J m -2 s -1 / 2 K -1 ) and decrease the thermal lightcurve amplitudes too much. However, the combination of a low q-values (around 0.5) with a smooth surface (r.m.s. &lt; 0.2) would also lead to an acceptable solution with Γ = 5J m -2 s -1 / 2 K -1 , and in agreement with the observed flux and amplitude levels (see Fig. 2).
-
-The study of the DRS via thermal data is very uncertain. In Figure 1 it is di ffi cult to identify which of the 100 µ m maxima is higher, the errors are large, and the outliers at 40 mJy are di ffi cult to judge. Following the DRS phasing in Santos-Sanz et al. (2017) and also in Gourgeot et al. (2016), the DRS is connected to the second maximum (at rotational phases around 0.6 in Fig. 1 or at 2.15 hours in Fig. 5, lower part). Lacerda et al. (2008) suggested three di ff erent DRS models with a darker region covering only a few percent of the maximum equatorial cross-sectional area, up to a model where a whole hemisphere has a darker albedo. A few percent change in albedo between the DRS and the rest of the surface can easily explain the two maxima in reflected light, with the DRS connected to the lower optical maximum, hence the higher thermal maximum. At Herschel / Spitzer wavelengths, also the thermal inertia plays a role, and if there is a variation in thermal inertia, this could either compensate an albedo e ff ect or enhance it, and also surface roughness and phase integral play a role. But such an investigation would require a high-quality thermal lightcurve, close in time with an optical ligthcurve to constrain the physical and thermal properties of the DRS region.
-
-## 5. Conclusions and outlook
-
-The previously published thermal lightcurves (Lellouch et al. 2010; Santos-Sanz et al. 2017) showed a very large amplitude which led to a misinterpretation of Haumea's thermal properties and systematically underestimated (by ∼ 25%) radiometric sizes. We have reanalyzed the Spitzer and Herschel far-infrared and sub-millimeter observations from 2005 to 2011 with the latest reduction and calibration schemes, and a more elaborate sky background handling. The new multi-filter Herschel-PACS fluxes and thermal lightcurves are presented in Tables A.6, A.7, A.8, A.9. The corresponding background-eliminated Herschel-PACS maps are available from the HSA. All thermal observations are measurements of the combined Haumea-ring-satellite system and their interpretation requires to consider possible ring and satellite contributions. Only the thermal lightcurve amplitude (measured at 70, 100, and 160 µ m) is connected to Haumea itself. We confirm the 3.91 h periodicity of the thermal lightcurve and we see that thermal and visual lightcurves are in phase.
-
-We estimated the time-dependent ring fluxes by using a simple thermal model from Lellouch et al. (2017), based on ring properties of Saturn and Chariklo. During the Spitzer observations in 2005 / 2006 the ring emission was small (and almost negligible), but due to the opening of the ring plane, the ring contributed ∼ 1-1.5 mJy to the measured Herschel signals in 2009-2011.
-
-The mass and brightness estimates (Brown et al. 2006; Ragozzine and Brown 2009) for the two Haumea satellites Hi'iaka and Namaka are crucial for the interpretation of the thermal measurements. We calculated the far-IR fluxes for both satellites for a size-albedo range which is compatible with these constraints and under the assumption of a density range between 0.5 and 1.5 g cm -3 . In case of a high density of 1.5 g cm -3 (requiring a geometric albedo of ∼ 0.8), the satellites add about 1-1.5 mJy to the observed flux. More moderate density assumptions (related to a lower albedo) lead to much higher satellite fluxes and cause severe problems in interpreting the remaining Haumea-only far-IR fluxes.
-
-The key element for the re-interpretation of the Haumea measurements, however, is coming from a successful occultation measurement (Ortiz et al. 2017). It led to the discovery of the ring around Haumea, a highly-accurate ellipse fit to the multi-chord event (which happened very close to the lightcurve minimum), and allowed to reconstruct the objects size, shape, and spin-properties. We used the occultation-derived properties to take a closer look at the possible thermal and physical properties of Haumea and it's two satellites. We find that Haumea has a thermal inertia of about 5 J m -2 s -1 / 2 K -1 (in combination with a surface roughness r.m.s. = 0.2, a phase integral q = 0.65, and the pole 1 solution in Ortiz et al. 2017). A much smaller of the thermal inertia value would require that the ring and the satellite fluxes are completely negligible, a higher value would lower the thermal lightcurve amplitude below the observed values. A lower phase integral (q = 0.5) would push the solution to higher thermal inertia (up to about 10J m -2 s -1 / 2 K -1 ), assuming a similar surface roughness. When the degree of surface roughness is varied from 0.0 (smooth) to 0.5 (see Fornasier et al. 2013) the derived value of Haumea's thermal inertia would also vary in the range between 3 and 10 J m -2 s -1 / 2 K -1 , with the smooth surface connected to a lower thermal inertia value. The most extreme thermal inertia of about ∼ 15J m -2 s -1 / 2 K -1 is found for a low phase integral (q &lt; 0.5) combined with a high surface roughness (r.m.s. /greaterorsimilar 0.5).
-
-The satellites are very likely in the smaller size regime ( ∼ 300km diameter for Hi'iaka and ∼ 150km for Namaka) linked to a high albedo p V &gt;&gt; 0.5, and connected to an unexpectedly high density &gt; 1g cm -1 . Lower albedo solutions would push their thermal emission to large values which are not compatible with the occultation-derived size-shapespin and our radiometric thermal-inertia solution. Our fit to the sub-millimeter thermal measurements improves if we lower the emissivity of the ring ( /epsilon1 = 1.0 assumed) and the satellites for which we assumed /epsilon1 = 0.9.
-
-Haumea's ring contribution to the total thermal flux will increase significantly over the next decades (Figure 4). The JWST-MIRI imager sensitivities (about 1 µ Jy at 15 µ m to about 10 µ Jy at 25.5 µ mfor a SNR of 10 in 10,000sec) would be perfectly suitable to measure the ring-only fluxes, but the spatial resolution will not be su ffi cient to separate the ring from the main body. However, MIRI measurements would allow us to confirm Haumea's thermal properties from the thermal lightcurve amplitude and the shape of its spectral energy distribution. Then, in comparison with the Spitzer and Herschel data, the MIRI multi-filter data will provide a higher-quality characterization of the ring properties as a byproduct.
-
-Measurements with JWST-MIRI will be very sensitive to the thermal properties of Haumea. Based on our best-fit TPM ( Γ= 5J m -2 s -1 / 2 K -1 , q = 0.65, r.m.s. = 0.2) for Haumea we predicted fluxes in three long-wavelengths MIRI channels (see Table 5).
-
-Table 5: JWST-MIRI predictions for Feb 1, 2022 at r helio = 50.18 au, ∆ = 50.00 au, α = 1.1 ◦ , at a solar elongation of 100 ◦ when Haumea is visible for JWST. The first column in each band gives the average flux level, the second the lightcurve variations. Note that at shorter wavelengths below ∼ 20 µ m there is still a significant contribution from reflected light in MIRI bands. These predictions depend also on the phase integral (here: q = 0.65) and the surface roughness (here: r.m.s. = 0.2) and have therefor significant uncertainties.
-
-| Thermal inertia Γ [Jm 2 s 1 / 2 K 1 ]   | 21.0 µ m   | 21.0 µ m   | 25.5 µ m   | 25.5 µ m   |
-|-----------------------------------------|------------|------------|------------|------------|
-|                                         | flx[ µ Jy] | amp[ µ Jy] | flx[ µ Jy] | amp[ µ Jy] |
-| 0.5                                     | 33         | ± 6        | 230        | ± 46       |
-| 2.0                                     | 21         | ± 3        | 131        | ± 12       |
-| 5.0                                     | 19         | ± 3        | 110        | ± 10       |
-| 10                                      | 10         | ± 2        | 57         | ± 10       |
-
-The MIRI imager sensitivities (SNR = 10 in 10,000 sec) are increasing from about 1 µ Jy at 15 µ m to about 10 µ Jy at 25.5 µ m. It will therefore be possible to obtain SNR well above 25 in 1000 sec in the 25.5 µ m filter at all rotational
-
-phases. A second, shorter-wavelength band (possibly at 21 µ m) will allow characterizing the spectral slope and help to disentangle the ring and satellite contributions. At shorter wavelength below ∼ 20 µ mthere are still strong contributions from reflected Sun light.
-
-## Acknowledgement
-
-The research leading to these results has received funding from the European Union's Horizon 2020 Research and Innovation Programme, under Grant Agreement no 687378. Funding from the Spanish grant AYA-2017-89637-R is acknowledged.
-
-## Appendix A. Herschel-PACS photometric flux densities
-
-We performed aperture photometry on the reduced, calibrated, and background eliminated final images. The fluxes were aperture corrected, color-corrected (correction factors 1.00, 0.98, and 0.99 at 70.0, 100.0, and 160.0 µ m, respectively). We also included the recommended 5% absolute flux error when we use PACS fluxes in radiometric calculations.
-
-## Appendix A.1. Lightcurve measurements at 100 µ m
-
-At 100 µ m, we merged always three repetitions (shifted by 1) before extracting the aperture photometry (first line: repetitions 1-3, second line 2-4, third line 3-5, etc.).
-
-## Appendix A.2. Lightcurve measurements at 160 µ m
-
-At 160 µ m, we merged always six repetitions (shifted by 3) before extracting the aperture photometry (first line: repetitions 1-6, second line 4-9, third line 7-12, etc.).
-
-## Appendix A.3. Multi-filter measurements
-
-## References
-
-- Balog, Z., M¨ uller, T., Nielbock, M., Altieri, B., Klaas, U., Blommaert, J., Linz, H., Lutz, D., Mo´ or, A., Billot, N., Sauvage, M., Okumura, K., Jul. 2014. The Herschel-PACS photometer calibration. Point-source flux calibration for scan maps. Experimental Astronomy 37, 129-160.
-- Barkume, K. M., Brown, M. E., Schaller, E. L., Mar. 2006. Water Ice on the Satellite of Kuiper Belt Object 2003 EL61. ApJ640, L87-L89.
-- Bowell, E., Hapke, B., Domingue, D., Lumme, K., Peltoniemi, J., Harris, A. W., 1989. Application of photometric models to asteroids. In: Binzel, R. P., Gehrels, T., Matthews, M. S. (Eds.), Asteroids II. pp. 524-556.
-- Braga-Ribas, F., Sicardy, B., Ortiz, J. L., Snodgrass, C., Roques, F., Vieira-Martins, R., Camargo, J. I. B., Assafin, M., Du ff ard, R., Jehin, E., Pollock, J., Leiva, R., Emilio, M., Machado, D. I., Colazo, C., Lellouch, E., Skottfelt, J., Gillon, M., Ligier, N., Maquet, L., Benedetti-Rossi, G., Gomes, A. R., Kervella, P., Monteiro, H., Sfair, R., El Moutamid, M., Tancredi, G., Spagnotto, J., Maury, A., Morales, N., Gil-Hutton, R., Roland, S., Ceretta, A., Gu, S.-H., Wang, X.-B., Harpsøe, K., Rabus, M., Manfroid, J., Opitom, C., Vanzi, L., Mehret, L., Lorenzini, L., Schneiter, E. M., Melia, R., Lecacheux, J., Colas, F., Vachier, F., Widemann, T., Almenares, L., Sandness, R. G., Char, F., Perez, V ., Lemos, P., Martinez, N., Jørgensen, U. G., Dominik, M., Roig, F., Reichart, D. E., Lacluyze, A. P., Haislip, J. B., Ivarsen, K. M., Moore, J. P., Frank, N. R., Lambas, D. G., Apr. 2014. A ring system detected around the Centaur (10199) Chariklo. Nature508, 72-75.
-- Brown, M. E., Barkume, K. M., Ragozzine, D., Schaller, E. L., Mar. 2007. A collisional family of icy objects in the Kuiper belt. Nature446, 294-296.
-- Brown, M. E., Bouchez, A. H., Rabinowitz, D., Sari, R., Trujillo, C. A., van Dam, M., Campbell, R., Chin, J., Hartman, S., Johansson, E., Lafon, R., Le Mignant, D., Stomski, P., Summers, D., Wizinowich, P., Oct. 2005. Keck Observatory Laser Guide Star Adaptive Optics Discovery and Characterization of a Satellite to the Large Kuiper Belt Object 2003 EL61. ApJ632, L45-L48.
-- Brown, M. E., van Dam, M. A., Bouchez, A. H., Le Mignant, D., Campbell, R. D., Chin, J. C. Y., Conrad, A., Hartman, S. K., Johansson, E. M., Lafon, R. E., Rabinowitz, D. L., Stomski, Jr., P. J., Summers, D. M., Trujillo, C. A., Wizinowich, P. L., Mar. 2006. Satellites of the Largest Kuiper Belt Objects. ApJ639, L43-L46.
-- Brucker, M. J., Grundy, W. M., Stansberry, J. A., Spencer, J. R., Sheppard, S. S., Chiang, E. I., Buie, M. W., May 2009. High albedos of low inclination Classical Kuiper belt objects. Icarus201, 284-294.
-- Delbo, M., Mueller, M., Emery, J. P., Rozitis, B., Capria, M. T., 2015. Asteroid Thermophysical Modeling. pp. 107-128.
-- Du ff ard, R., Ortiz, J. L., Thirouin, A., Santos-Sanz, P., Morales, N., Oct. 2009. Transneptunian objects and Centaurs from light curves. A&amp;A505, 1283-1295.
-- Durham, W. B., McKinnon, W. B., Stern, L. A., Sep. 2005. Cold compaction of water ice. Geophys. Res. Lett.32, L18202.
-- Fornasier, S., Lellouch, E., M¨ uller, T., Santos-Sanz, P., Panuzzo, P., Kiss, C., Lim, T., Mommert, M., Bockel´ ee-Morvan, D., Vilenius, E., Stansberry, J., Tozzi, G. P., Mottola, S., Delsanti, A., Crovisier, J., Du ff ard, R., Henry, F., Lacerda, P., Barucci, A., Gicquel, A., Jul. 2013. TNOs are Cool: Asurvey of the trans-Neptunian region. VIII. Combined Herschel PACS and SPIRE observations of nine bright targets at 70-500 µ m. A&amp;A555, A15.
-
-Table A.6: Herschel-PACS lightcurve observations (OBSIDs 1342188470, 1342188520) at 100 µ m on 2009 Dec 23. The times are observation mid-times in the Herschel reference frame.
-
-| mid-time                  | in-band flux &error   | in-band flux &error   | abs. flux &error   | abs. flux &error   |
-|---------------------------|-----------------------|-----------------------|--------------------|--------------------|
-| obs. epoch                | [mJy]                 | [mJy]                 | [mJy]              | [mJy]              |
-| 2455188.7492              | 25.49                 | 9.37                  | 26.01              | 9.46               |
-| 2455188.7527              | 25.06                 | 9.04                  | 25.57              | 9.12               |
-| 2455188.7562              | 23.55                 | 8.96                  | 24.03              | 9.04               |
-| 2455188.7597              | 29.47                 | 10.68                 | 30.07              | 10.78              |
-| 2455188.7632              | 34.11                 | 7.85                  | 34.81              | 8.03               |
-| 2455188.7667              | 34.81                 | 6.02                  | 35.52              | 6.27               |
-| 2455188.7702              | 32.41                 | 6.33                  | 33.07              | 6.53               |
-| 2455188.7737              | 31.02                 | 7.81                  | 31.65              | 7.96               |
-| 2455188.7772              | 26.47                 | 8.16                  | 27.01              | 8.27               |
-| 2455188.7807              | 23.51                 | 6.91                  | 23.99              | 7.01               |
-| 2455188.7842              | 18.59                 | 4.91                  | 18.97              | 5.00               |
-| 2455188.7877              | 18.91                 | 5.97                  | 19.30              | 6.05               |
-| 2455188.7912              | 17.76                 | 6.18                  | 18.12              | 6.24               |
-| 2455188.7947              | 18.16                 | 6.90                  | 18.54              | 6.96               |
-| 2455188.7982              | 23.24                 | 5.33                  | 23.72              | 5.46               |
-| 2455188.8017              | 24.53                 | 5.53                  | 25.03              | 5.67               |
-| 2455188.8052              | 25.69                 | 5.71                  | 26.22              | 5.86               |
-| 2455188.8087              | 20.00                 | 5.84                  | 20.40              | 5.92               |
-| 2455188.8122              | 21.57                 | 5.84                  | 22.01              | 5.94               |
-| 2455188.8156              | 18.31                 | 6.77                  | 18.69              | 6.83               |
-| 2455188.8191              | 22.52                 | 4.71                  | 22.98              | 4.84               |
-| 2455188.8226              | 23.10                 | 4.88                  | 23.57              | 5.02               |
-| 2455188.8261              | 28.57                 | 4.01                  | 29.15              | 4.26               |
-| 2455188.8296              | 26.15                 | 5.29                  | 26.69              | 5.45               |
-| 2455188.8331              | 23.01                 | 5.68                  | 23.48              | 5.80               |
-| 2455188.8366              | 21.25                 | 5.29                  | 21.68              | 5.39               |
-| 2455188.8401              | 24.08                 | 5.72                  | 24.57              | 5.84               |
-| 2455188.8436              | 40.97                 | 3.67                  | 41.80              | 4.21               |
-| 2455188.8471              | 42.61                 | 5.39                  | 43.48              | 5.79               |
-| 2455188.8506              | 44.43                 | 3.78                  | 45.34              | 4.38               |
-| 2455188.8541              | 26.61                 | 5.49                  | 27.15              | 5.65               |
-| 2455188.8576              | 23.39                 | 4.83                  | 23.86              | 4.97               |
-| 2455188.8611              | 18.93                 | 4.99                  | 19.32              | 5.08               |
-| 2455188.8646              | 22.14                 | 4.99                  | 22.59              | 5.11               |
-| 2455188.8681              | 25.24                 | 5.06                  | 25.76              | 5.22               |
-| 2455188.8716              | 27.79                 | 5.84                  | 28.35              | 6.01               |
-| 2455188.8751 2455188.8784 | 20.83 20.01           | 6.74 6.40             | 21.26 20.42        | 6.82 6.48          |
-
-Fraser, W. C., Brown, M. E., Apr. 2009. NICMOS Photometry of the Unusual Dwarf Planet Haumea and its Satellites. ApJ695, L1-L3.
-
-Gourgeot, F., Carry, B., Dumas, C., Vachier, F., Merlin, F., Lacerda, P., Barucci, M. A., Berthier, J., Aug. 2016. Near-infrared spatially resolved spectroscopy of (136108) Haumea's multiple system. A&amp;A593, A19.
-
-Gri ffi n, M. J., Abergel, A., Abreu, A., Ade, P. A. R., Andr´ e, P., Augueres, J.-L., Babbedge, T., Bae, Y ., Baillie, T., Baluteau, J.-P., Barlow, M. J., Bendo, G., Benielli, D., Bock, J. J., Bonhomme, P., Brisbin, D., Brockley-Blatt, C., Caldwell, M., Cara, C., Castro-Rodriguez, N., Cerulli, R., Chanial, P., Chen, S., Clark, E., Clements, D. L., Clerc, L., Coker, J., Communal, D., Conversi, L., Cox, P., Crumb, D., Cunningham, C., Daly, F., Davis, G. R., de Antoni, P., Delderfield, J., Devin, N., di Giorgio, A., Didschuns, I., Dohlen, K., Donati, M., Dowell, A., Dowell, C. D., Duband, L., Dumaye, L., Emery, R. J., Ferlet, M., Ferrand, D., Fontignie, J., Fox, M., Franceschini, A., Frerking, M., Fulton, T., Garcia, J.,
-
-- Gastaud, R., Gear, W. K., Glenn, J., Goizel, A., Gri ffi n, D. K., Grundy, T., Guest, S., Guillemet, L., Hargrave, P. C., Harwit, M., Hastings, P., Hatziminaoglou, E., Herman, M., Hinde, B., Hristov, V., Huang, M., Imhof, P., Isaak, K. J., Israelsson, U., Ivison, R. J., Jennings, D., Kiernan, B., King, K. J., Lange, A. E., Latter, W., Laurent, G., Laurent, P., Leeks, S. J., Lellouch, E., Levenson, L., Li, B., Li, J., Lilienthal, J., Lim, T., Liu, S. J., Lu, N., Madden, S., Mainetti, G., Marliani, P., McKay, D., Mercier, K., Molinari, S., Morris, H., Moseley, H., Mulder, J., Mur, M., Naylor, D. A., Nguyen, H., O'Halloran, B., Oliver, S., Olofsson, G., Olofsson, H.-G., Orfei, R., Page, M. J., Pain, I., Panuzzo, P., Papageorgiou, A., Parks, G., Parr-Burman, P., Pearce, A., Pearson, C., P´ erez-Fournon, I., Pinsard, F., Pisano, G., Podosek, J., Pohlen, M., Polehampton, E. T., Pouliquen, D., Rigopoulou, D., Rizzo, D., Roseboom, I. G., Roussel, H., Rowan-Robinson, M., Rownd, B., Saraceno, P., Sauvage, M., Savage, R., Savini, G., Sawyer, E., Scharmberg, C., Schmitt, D., Schneider, N., Schulz, B., Schwartz, A., Shafer, R., Shupe, D. L., Sibthorpe, B., Sidher, S., Smith, A., Smith, A. J., Smith, D., Spencer, L., Stobie, B., Sudiwala, R., Sukhatme, K., Surace, C., Stevens, J. A., Swinyard, B. M., Trichas, M., Tourette, T., Triou, H., Tseng, S., Tucker, C., Turner, A., Vaccari, M., Valtchanov, I., Vigroux, L., Virique, E., V oellmer, G., Walker, H., Ward, R., Waskett, T., Weilert, M., Wesson, R., White, G. J., Whitehouse, N., Wilson, C. D., Winter, B., Woodcraft, A. L., Wright, G. S., Xu, C. K., Zavagno, A., Zemcov, M., Zhang, L., Zonca, E., Jul. 2010. The Herschel-SPIRE instrument and its in-flight performance. A&amp;A518, L3.
-- Harris, A. W., Feb. 1998. A Thermal Model for Near-Earth Asteroids. Icarus131, 291-301.
-- Kiss, C., Marton, G., Parker, A. H., Gundy, W., Farkas-Tak´ acs, A., Stansberry, J. P´ al, A., M¨ uller, T., Noll, K. S., Schwamb, M. E., Barr, A. C., Young, L. A., Vink´ o, J., 2018. The mass and density of the dwarf planet (225088) 2007 OR10. Icarus submitted.
-- Kiss, C., M¨ uller, T. G., Vilenius, E., P´ al, A., Santos-Sanz, P., Lellouch, E., Marton, G., Vereb´ elyi, E., Szalai, N., Hartogh, P., Stansberry, J., Henry, F., Delsanti, A., Jul. 2014. Optimized Herschel / PACS photometer observing and data reduction strategies for moving solar system targets. Experimental Astronomy 37, 161-174.
-- Klaas, U., Balog, Z., Nielbock, M., M¨ uller, T. G., Linz, H., Kiss, C., May 2018. Herschel-PACS photometry of faint stars for sensitivity performance assessment and establishment of faint FIR primary photometric standards. A&amp;A613, A40.
-- Kov´ acs, T., Reg´ aly, Z., Oct. 2018. Dynamics of Haumea's dust ring. MNRAS479, 4560-4565.
-- Lacerda, P., Feb. 2009. Time-Resolved Near-Infrared Photometry of Extreme Kuiper Belt Object Haumea. AJ137, 3404-3413.
-- Lacerda, P., Jewitt, D., Peixinho, N., May 2008. High-Precision Photometry of Extreme KBO 2003 EL61. AJ135, 1749-1756.
-- Lagerros, J. S. V ., Jun. 1996. Thermal physics of asteroids. I. E ff ects of shape, heat conduction and beaming. A&amp;A310, 1011-1020.
-- Lagerros, J. S. V ., Sep. 1997. Thermal physics of asteroids. III. Irregular shapes and albedo variegations. A&amp;A325, 1226-1236.
-- Lagerros, J. S. V ., Apr. 1998. Thermal physics of asteroids. IV . Thermal infrared beaming. A&amp;A332, 1123-1132.
-- Lellouch, E., Kiss, C., Santos-Sanz, P., M¨ uller, T. G., Fornasier, S., Groussin, O., Lacerda, P., Ortiz, J. L., Thirouin, A., Delsanti, A., Du ff ard, R., Harris, A. W., Henry, F., Lim, T., Moreno, R., Mommert, M., Mueller, M., Protopapa, S., Stansberry, J., Trilling, D., Vilenius, E., Barucci, A., Crovisier, J., Doressoundiram, A., Dotto, E., Guti´ errez, P. J., Hainaut, O., Hartogh, P., Hestro ff er, D., Horner, J., Jorda, L., Kidger, M., Lara, L., Rengel, M., Swinyard, B., Thomas, N., Jul. 2010. 'TNOs are cool': A survey of the trans-Neptunian region. II. The thermal lightcurve of (136108) Haumea. A&amp;A518, L147.
-- Lellouch, E., Laureijs, R., Schmitt, B., Quirico, E., de Bergh, C., Crovisier, J., Coustenis, A., Sep. 2000. Pluto's Non-isothermal Surface. Icarus147, 220-250.
-- Lellouch, E., Moreno, R., M¨ uller, T., Fornasier, S., Santos-Sanz, P., Moullet, A., Gurwell, M., Stansberry, J., Leiva, R., Sicardy, B., Butler, B., Boissier, J., Dec. 2017. The thermal emission of Centaurs and trans-Neptunian objects at millimeter wavelengths from ALMA observations. A&amp;A608, A45.
-- Lellouch, E., Santos-Sanz, P., Fornasier, S., Lim, T., Stansberry, J., Vilenius, E., Kiss, C., M¨ uller, T., Marton, G., Protopapa, S., Panuzzo, P., Moreno, R., Apr. 2016. The long-wavelength thermal emission of the Pluto-Charon system from Herschel observations. Evidence for emissivity e ff ects. A&amp;A588, A2.
-- Lellouch, E., Santos-Sanz, P., Lacerda, P., Mommert, M., Du ff ard, R., Ortiz, J. L., M¨ uller, T. G., Fornasier, S., Stansberry, J., Kiss, C., Vilenius, E., Mueller, M., Peixinho, N., Moreno, R., Groussin, O., Delsanti, A., Harris, A. W., Sep. 2013. 'TNOs are Cool': A survey of the trans-Neptunian region. IX. Thermal properties of Kuiper belt objects and Centaurs from combined Herschel and Spitzer observations. A&amp;A557, A60.
-- Lellouch, E., Stansberry, J., Emery, J., Grundy, W., Cruikshank, D. P., Aug. 2011. Thermal properties of Pluto's and Charon's surfaces from Spitzer observations. Icarus214, 701-716.
-- Lockwood, A. C., Brown, M. E., Stansberry, J., May 2014. The Size and Shape of the Oblong Dwarf Planet Haumea. Earth Moon and Planets 111, 127-137.
-- Merlin, F., Guilbert, A., Dumas, C., Barucci, M. A., de Bergh, C., Vernazza, P., May 2007. Properties of the icy surface of the TNO 136108 (2003 EL61). A&amp;A466, 1185-1188.
-- M¨ uller, T. G., Dec. 2002. Thermophysical analysis of infrared observations of asteroids. Meteoritics and Planetary Science 37, 1919-1928.
-- M¨ uller, T. G., Lagerros, J. S. V ., Oct. 1998. Asteroids as far-infrared photometric standards for ISOPHOT. A&amp;A338, 340-352.
-- M¨ uller, T. G., Lellouch, E., B¨ ohnhardt, H., Stansberry, J., Barucci, A., Crovisier, J., Delsanti, A., Doressoundiram, A., Dotto, E., Du ff ard, R., Fornasier, S., Groussin, O., Guti´ errez, P. J., Hainaut, O., Harris, A. W., Hartogh, P., Hestro ff er, D., Horner, J., Jewitt, D., Kidger, M., Kiss, C., Lacerda, P., Lara, L., Lim, T., Mueller, M., Moreno, R., Ortiz, J.-L., Rengel, M., Santos-Sanz, P., Swinyard, B., Thomas, N., Thirouin, A., Trilling, D., Sep. 2009. TNOs are Cool: A Survey of the Transneptunian Region. Earth Moon and Planets 105, 209-219.
-- Ortiz, J. L., Santos-Sanz, P., Sicardy, B., Benedetti-Rossi, G., B´ erard, D., Morales, N., Du ff ard, R., Braga-Ribas, F., Hopp, U., Ries, C., Nascimbeni, V., Marzari, F., Granata, V ., P´ al, A., Kiss, C., Pribulla, T., Komˇ z´ ık, R., Hornoch, K., Pravec, P., Bacci, P., Maestripieri, M., Nerli, L., Mazzei, L., Bachini, M., Martinelli, F., Succi, G., Ciabattari, F., Mikuz, H., Carbognani, A., Gaehrken, B., Mottola, S., Hellmich, S., Rommel, F. L., Fern´ andez-Valenzuela, E., Campo Bagatin, A., Cikota, S., Cikota, A., Lecacheux, J., Vieira-Martins, R., Camargo, J. I. B., Assafin, M., Colas, F., Behrend, R., Desmars, J., Meza, E., Alvarez-Candal, A., Beisker, W., Gomes-Junior, A. R., Morgado, B. E., Roques, F., Vachier, F., Berthier, J., Mueller, T. G., Madiedo, J. M., Unsalan, O., Sonbas, E., Karaman, N., Erece, O., Koseoglu, D. T., Ozisik, T., Kalkan, S., Guney, Y ., Niaei, M. S., Satir, O., Yesilyaprak, C., Puskullu, C., Kabas, A., Demircan, O., Alikakos, J., Charmandaris, V ., Leto, G., Ohlert, J., Christille, J. M., Szak´ ats, R., Tak´ acsn´ e Farkas, A., Varga-Vereb´ elyi, E., Marton, G., Marciniak, A., Bartczak, P., Santana-Ros, T., Butkiewicz-Ba ¸k, M., Dudzi´ nski, G., Al´ ı-Lagoa, V ., Gazeas, K., Tzouganatos, L., Paschalis, N., Tsamis, V ., S´ anchez-Lavega, A., P´ erez-Hoyos, S., Hueso, R., Guirado, J. C., Peris, V., Iglesias-Marzoa, R., Oct. 2017. The size, shape, density and ring of the dwarf planet Haumea from a stellar occultation. Nature550, 219-223.
-- Ortiz, J. L., Sicardy, B., Braga-Ribas, F., Alvarez-Candal, A., Lellouch, E., Du ff ard, R., Pinilla-Alonso, N., Ivanov, V . D., Littlefair, S. P., Camargo,
-
-- J. I. B., Assafin, M., Unda-Sanzana, E., Jehin, E., Morales, N., Tancredi, G., Gil-Hutton, R., de La Cueva, I., Colque, J. P., da Silva Neto, D. N., Manfroid, J., Thirouin, A., Guti´ errez, P. J., Lecacheux, J., Gillon, M., Maury, A., Colas, F., Licandro, J., Mueller, T., Jacques, C., Weaver, D., Milone, A., Salvo, R., Bruzzone, S., Organero, F., Behrend, R., Roland, S., Vieira-Martins, R., Widemann, T., Roques, F., Santos-Sanz, P., Hestro ff er, D., Dhillon, V . S., Marsh, T. R., Harlingten, C., Campo Bagatin, A., Alonso, M. L., Ortiz, M., Colazo, C., Lima, H. J. F., Oliveira, A. S., Kerber, L. O., Smiljanic, R., Pimentel, E., Giacchini, B., Cacella, P., Emilio, M., Nov. 2012. Albedo and atmospheric constraints of dwarf planet Makemake from a stellar occultation. Nature491, 566-569.
-2. Pilbratt, G. L., Riedinger, J. R., Passvogel, T., Crone, G., Doyle, D., Gageur, U., Heras, A. M., Jewell, C., Metcalfe, L., Ott, S., Schmidt, M., Jul. 2010. Herschel Space Observatory. An ESA facility for far-infrared and submillimetre astronomy. A&amp;A518, L1.
-3. Pinilla-Alonso, N., Brunetto, R., Licandro, J., Gil-Hutton, R., Roush, T. L., Strazzulla, G., Mar. 2009. The surface of (136108) Haumea (2003 EL61), the largest carbon-depleted object in the trans-Neptunian belt. A&amp;A496, 547-556.
-4. Poglitsch, A., Waelkens, C., Geis, N., Feuchtgruber, H., Vandenbussche, B., Rodriguez, L., Krause, O., Renotte, E., van Hoof, C., Saraceno, P., Cepa, J., Kerschbaum, F., Agn` ese, P., Ali, B., Altieri, B., Andreani, P., Augueres, J.-L., Balog, Z., Barl, L., Bauer, O. H., Belbachir, N., Benedettini, M., Billot, N., Boulade, O., Bischof, H., Blommaert, J., Callut, E., Cara, C., Cerulli, R., Cesarsky, D., Contursi, A., Creten, Y ., De Meester, W., Doublier, V., Doumayrou, E., Duband, L., Exter, K., Genzel, R., Gillis, J.-M., Gr¨ ozinger, U., Henning, T., Herreros, J., Huygen, R., Inguscio, M., Jakob, G., Jamar, C., Jean, C., de Jong, J., Katterloher, R., Kiss, C., Klaas, U., Lemke, D., Lutz, D., Madden, S., Marquet, B., Martignac, J., Mazy, A., Merken, P., Montfort, F., Morbidelli, L., M¨ uller, T., Nielbock, M., Okumura, K., Orfei, R., Ottensamer, R., Pezzuto, S., Popesso, P., Putzeys, J., Regibo, S., Reveret, V ., Royer, P., Sauvage, M., Schreiber, J., Stegmaier, J., Schmitt, D., Schubert, J., Sturm, E., Thiel, M., Tofani, G., Vavrek, R., Wetzstein, M., Wieprecht, E., Wiezorrek, E., Jul. 2010. The Photodetector Array Camera and Spectrometer (PACS) on the Herschel Space Observatory. A&amp;A518, L2.
-5. Rabinowitz, D., Tourtellotte, S., Brown, M., Trujillo, C., Aug. 2005. Photometric observations of a very bright TNO with an extraordinary lightcurve. In: AAS / Division for Planetary Sciences Meeting Abstracts #37. Vol. 37 of Bulletin of the American Astronomical Society. p. 746.
-6. Rabinowitz, D. L., Barkume, K., Brown, M. E., Roe, H., Schwartz, M., Tourtellotte, S., Trujillo, C., Mar. 2006. Photometric Observations Constraining the Size, Shape, and Albedo of 2003 EL61, a Rapidly Rotating, Pluto-sized Object in the Kuiper Belt. ApJ639, 1238-1251.
-7. Ragozzine, D., Brown, M. E., Jun. 2009. Orbits and Masses of the Satellites of the Dwarf Planet Haumea (2003 EL61). AJ137, 4766-4776.
-8. Rieke, G. H., Young, E. T., Engelbracht, C. W., Kelly, D. M., Low, F. J., Haller, E. E., Beeman, J. W., Gordon, K. D., Stansberry, J. A., Misselt, K. A., Cadien, J., Morrison, J. E., Rivlis, G., Latter, W. B., Noriega-Crespo, A., Padgett, D. L., Stapelfeldt, K. R., Hines, D. C., Egami, E., Muzerolle, J., Alonso-Herrero, A., Blaylock, M., Dole, H., Hinz, J. L., Le Floc'h, E., Papovich, C., P´ erez-Gonz´ alez, P. G., Smith, P. S., Su, K. Y. L., Bennett, L., Frayer, D. T., Henderson, D., Lu, N., Masci, F., Pesenson, M., Rebull, L., Rho, J., Keene, J., Stolovy, S., Wachter, S., Wheaton, W., Werner, M. W., Richards, P. L., Sep. 2004. The Multiband Imaging Photometer for Spitzer (MIPS). ApJS154, 25-29.
-9. Santos-Sanz, P., Lellouch, E., Groussin, O., Lacerda, P., M¨ uller, T. G., Ortiz, J. L., Kiss, C., Vilenius, E., Stansberry, J., Du ff ard, R., Fornasier, S., Jorda, L., Thirouin, A., Aug. 2017. 'TNOs are Cool': A survey of the trans-Neptunian region. XII. Thermal light curves of Haumea, 2003 VS2 and 2003 AZ84 with Herschel / PACS. A&amp;A604, A95.
-10. Stansberry, J., Grundy, W., Brown, M., Cruikshank, D., Spencer, J., Trilling, D., Margot, J.-L., 2008. Physical Properties of Kuiper Belt and Centaur Objects: Constraints from the Spitzer Space Telescope. pp. 161-179.
-11. Stansberry, J. A., Gordon, K. D., Bhattacharya, B., Engelbracht, C. W., Rieke, G. H., Marleau, F. R., Fadda, D., Frayer, D. T., Noriega-Crespo, A., Wachter, S., Young, E. T., M¨ uller, T. G., Kelly, D. M., Blaylock, M., Henderson, D., Neugebauer, G., Beeman, J. W., Haller, E. E., Sep. 2007. Absolute Calibration and Characterization of the Multiband Imaging Photometer for Spitzer. III. An Asteroid-based Calibration of MIPS at 160 µ m. PASP119, 1038-1051.
-12. Tegler, S. C., Grundy, W. M., Romanishin, W., Consolmagno, G. J., Mogren, K., Vilas, F., Feb. 2007. Optical Spectroscopy of the Large Kuiper Belt Objects 136472 (2005 FY9) and 136108 (2003 EL61). AJ133, 526-530.
-13. Thirouin, A., 2013. Study of transneptunian objects using photometrics techniques and numerical simulations. Doctoral Dissertation (available from http: // hdl.handle.net / 10481 / 30832).
-14. Thirouin, A., Sheppard, S. S., Noll, K. S., Moskovitz, N. A., Ortiz, J. L., Doressoundiram, A., Jun. 2016. Rotational Properties of the Haumea Family Members and Candidates: Short-term Variability. AJ151, 148.
-15. Trujillo, C. A., Brown, M. E., Barkume, K. M., Schaller, E. L., Rabinowitz, D. L., Feb. 2007. The Surface of 2003 EL61 in the Near-Infrared. ApJ655, 1172-1178.
-16. Vilenius, E., Stansberry, J., M¨ uller, T., Mueller, M., Kiss, C., Santos-Sanz, P., Mommert, M., P´ al, A., Lellouch, E., Ortiz, J. L., Peixinho, N., Thirouin, A., Lykawka, P. S., Horner, J., Du ff ard, R., Fornasier, S., Delsanti, A., Oct. 2018. 'TNOs are Cool': A survey of the trans-Neptunian region. XIII. Size / albedo characterization of the Haumea family observed with Herschel and Spitzer. A&amp;A618, A136.
-17. Werner, M. W., Roellig, T. L., Low, F. J., Rieke, G. H., Rieke, M., Ho ff mann, W. F., Young, E., Houck, J. R., Brandl, B., Fazio, G. G., Hora, J. L., Gehrz, R. D., Helou, G., Soifer, B. T., Stau ff er, J., Keene, J., Eisenhardt, P., Gallagher, D., Gautier, T. N., Irace, W., Lawrence, C. R., Simmons, L., Van Cleve, J. E., Jura, M., Wright, E. L., Cruikshank, D. P., Sep. 2004. The Spitzer Space Telescope Mission. ApJS154, 1-9.
-
-Table A.7: Herschel-PACS lightcurve observations (OBSIDs 1342198851, 1342198905 / 906) at 100 µ mon 2010 Jun 20 / 21. The times are observation mid-times in the Herschel reference frame.
-
-| mid-time                  | in-band flux &error   | in-band flux &error   | abs. flux &error   | abs. flux &error   |
-|---------------------------|-----------------------|-----------------------|--------------------|--------------------|
-| obs. epoch                | [mJy]                 | [mJy]                 | [mJy]              | [mJy]              |
-| 2455368.3690              | 31.39                 | 2.99                  | 32.03              | 3.38               |
-| 2455368.3723              | 25.96                 | 9.04                  | 26.49              | 9.13               |
-| 2455368.3755              | 18.46                 | 4.75                  | 18.84              | 4.84               |
-| 2455368.3788              | 21.94                 | 4.76                  | 22.39              | 4.88               |
-| 2455368.3821              | 26.62                 | 7.85                  | 27.16              | 7.96               |
-| 2455368.3853              | 28.77                 | 3.54                  | 29.36              | 3.82               |
-| 2455368.3886              | 25.27                 | 2.44                  | 25.78              | 2.74               |
-| 2455368.3919              | 23.67                 | 7.81                  | 24.15              | 7.90               |
-| 2455368.3951              | 26.38                 | 1.52                  | 26.92              | 2.01               |
-| 2455368.3984              | 27.97                 | 4.05                  | 28.54              | 4.29               |
-| 2455368.4017              | 27.50                 | 4.91                  | 28.06 19.75        | 5.10 3.47          |
-| 2455368.4049              | 19.36                 | 3.33                  | 18.92              | 4.92               |
-| 2455368.4082 2455368.4114 | 18.54                 | 4.83 6.90             | 19.74              | 6.97               |
-| 2455368.4147              | 19.34 24.22           | 3.83                  | 24.71              | 4.02               |
-| 2455368.4180              | 24.30                 | 3.07                  | 24.80              | 3.30               |
-| 2455368.4212              | 25.73                 | 5.71                  | 26.25              | 5.86               |
-| 2455368.4245              | 21.89                 | 1.90                  | 22.34              | 2.19               |
-| 2455368.4278              | 22.57                 | 3.11                  | 23.03              | 3.31               |
-| 2455368.4310              | 17.46                 | 6.77                  | 17.82              | 6.83               |
-| 2455368.4343              | 21.44                 | 2.49                  | 21.87              | 2.71               |
-| 2455368.4376              | 21.81                 | 2.65                  | 22.25              | 2.86               |
-| 2455368.4408              | 27.18                 | 4.01                  | 27.73              | 4.23               |
-| 2455368.4441              | 27.46                 | 5.36 2.08             | 28.02 28.68        | 5.53 2.51          |
-| 2455368.4473 2455368.4506 | 28.11 25.68           | 5.29                  | 26.20              | 5.44               |
-| 2455368.4539              | 29.91                 | 3.33                  | 30.52              | 3.65               |
-| 2455368.4571              | 29.70                 | 2.52                  | 30.31              | 2.93               |
-| 2455368.4604              | 32.12                 | 5.39                  | 32.78              | 5.62               |
-| 2455368.4637              | 27.95 26.69           | 3.46 5.23             | 28.52              | 3.73 5.40          |
-| 2455368.4669 2455368.4702 | 27.48                 | 4.83                  | 27.24 28.04        | 5.02               |
-| 2455368.4735              | 26.75                 | 4.93                  | 27.29              | 5.11               |
-| 2455368.4767              | 26.30                 | 1.61                  | 26.83              | 2.08               |
-| 2455368.4800              | 26.05                 | 5.06                  | 26.58              | 5.23               |
-| 2455368.4833              | 23.51                 | 3.47                  | 23.99              | 3.66               |
-| 2455368.4865              | 25.86                 | 4.15                  | 26.38              | 4.35               |
-| 2455368.4898              | 23.69                 | 6.40                  | 24.17              | 6.51               |
-| 2455368.4930              | 25.44                 | 3.47                  | 25.95              | 3.69               |
-| 2455368.4963              | 23.09                 | 4.06                  | 23.56              | 4.22               |
-| 2455368.4996              | 20.43                 | 3.21                  | 20.85              | 3.37               |
-| 2455368.5028              | 23.64                 | 3.47                  | 24.12              | 3.66               |
-| 2455368.5061              | 23.94                 | 2.46                  | 24.43              | 2.74               |
-|                           |                       |                       |                    | 3.70               |
-| 2455368.5094              | 23.56                 | 3.51                  | 24.04              | 3.72               |
-| 2455368.5126 2455368.5159 | 27.26 28.18           | 3.47 4.11             | 27.81 28.75        | 4.35               |
-| 2455368.5192              |                       |                       | 28.97              | 3.50               |
-| 2455368.5224              | 28.39                 | 3.20                  | 24.67              |                    |
-| 2455368.5257              | 24.18 27.50           | 3.47 3.73             | 28.06              | 3.67 22            |
-| 2455368.5289              | 27.24                 | 5.14                  | 27.80              | 3.97 5.32          |
-| 2455368.5322              | 30.50                 | 3.47                  | 31.12              | 3.79               |
-| 2455368.5355              | 28.00                 | 3.55                  | 28.57              | 3.82               |
-| 2455368.5386              | 31.09                 | 3.73                  | 31.72              | 4.04               |
-
-Table A.8: Herschel-PACS lightcurve observations at 160 µ m on 2009 Dec 23 (OBSIDs 1342188470, 1342188520) and 2010 Jun 20 / 21 (OBSIDs 1342198851, 1342198905 / 906). The times are observation mid-times in the Herschel reference frame.
-
-| mid-time     | in-band flux &error   | in-band flux &error   | abs. flux &error   | abs. flux &error   |
-|--------------|-----------------------|-----------------------|--------------------|--------------------|
-| obs. epoch   | [mJy]                 | [mJy]                 | [mJy]              | [mJy]              |
-| 2455188.7545 | 24.76                 | 12.66                 | 25.01              | 12.72              |
-| 2455188.7650 | 30.12                 | 15.51                 | 30.42              | 15.58              |
-| 2455188.7755 | 23.75                 | 15.33                 | 23.99              | 15.37              |
-| 2455188.7859 | 18.27                 | 14.13                 | 18.45              | 14.16              |
-| 2455188.7964 | 24.45                 | 14.94                 | 24.69              | 14.99              |
-| 2455188.8069 | 21.03                 | 15.99                 | 21.24              | 16.02              |
-| 2455188.8174 | 18.72                 | 15.44                 | 18.91              | 15.47              |
-| 2455188.8279 | 27.61                 | 15.00                 | 27.89              | 15.06              |
-| 2455188.8384 | 35.60                 | 13.82                 | 35.96              | 13.94              |
-| 2455188.8489 | 31.83                 | 12.85                 | 32.16              | 12.95              |
-| 2455188.8593 | 34.21                 | 11.94                 | 34.55              | 12.06              |
-| 2455188.8698 | 32.95                 | 12.02                 | 33.28              | 12.13              |
-| 2455368.3739 | 37.54                 | 7.44                  | 37.92              | 7.67               |
-| 2455368.3837 | 31.83                 | 8.60                  | 32.15              | 8.75               |
-| 2455368.3935 | 34.26                 | 7.23                  | 34.61              | 7.43               |
-| 2455368.4033 | 40.41                 | 4.82                  | 40.82              | 5.23               |
-| 2455368.4131 | 35.11                 | 7.58                  | 35.46              | 7.78               |
-| 2455368.4229 | 28.59                 | 7.91                  | 28.88              | 8.03               |
-| 2455368.4327 | 24.13                 | 8.30                  | 24.37              | 8.39               |
-| 2455368.4425 | 24.37                 | 7.48                  | 24.62              | 7.58               |
-| 2455368.4522 | 22.05                 | 8.87                  | 22.27              | 8.94               |
-| 2455368.4620 | 32.03                 | 6.84                  | 32.35              | 7.03               |
-| 2455368.4718 | 33.66                 | 7.97                  | 34.00              | 8.15               |
-| 2455368.4816 | 21.51                 | 11.32                 | 21.73              | 11.37              |
-| 2455368.4914 | 29.50                 | 10.45                 | 29.79              | 10.55              |
-| 2455368.5012 | 27.60                 | 8.83                  | 27.88              | 8.94               |
-| 2455368.5110 | 20.43                 | 9.93                  | 20.64              | 9.99               |
-| 2455368.5208 | 27.05                 | 9.48                  | 27.32              | 9.57               |
-| 2455368.5306 | 20.66                 | 8.31                  | 20.87              | 8.37               |
-
-Table A.9: Herschel-PACS 3-band observations from 2010 Jun 21. The times are observation mid-times in the Herschel reference frame.
-
-| mid-time obs. epoch   | band   | in-band flux& error   | in-band flux& error   | λ re f [ µ m]   | abs. flux &error   | abs. flux &error   | OBSIDs                       |
-|-----------------------|--------|-----------------------|-----------------------|-----------------|--------------------|--------------------|------------------------------|
-| mid-time obs. epoch   | band   | [mJy]                 | [mJy]                 | λ re f [ µ m]   | [mJy]              | [mJy]              | OBSIDs                       |
-| 2455369.45202         | blue   | 13.79                 | 2.30                  | 70.0            | 13.8               | 2.4                | 1342198903 / 904             |
-| 2455369.46740         | green  | 14.49                 | 3.50                  | 100.0           | 14.8               | 3.6                | 1342198905 / 906             |
-| 2455369.45933         | red    | 31.48                 | 5.26                  | 160.0           | 31.8               | 5.5                | 1342198903 / 904 / 905 / 906 |
+                                                      The Thirty-Second AAAI Conference
+                                                       on Artificial Intelligence (AAAI-18)
+
+
+
+
+                  A Combinatorial-Bandit Algorithm for the Online Joint
+            Bid / Budget Optimization of Pay-per-Click Advertising Campaigns
+
+                      Alessandro Nuara, Francesco Trovò, Nicola Gatti, Marcello Restelli
+                                    Dipartimento di Elettronica, Informazione e Bioingegneria
+                                                Politecnico di Milano, Milano, Italy
+                           {alessandro.nuara, francesco1.trovo, nicola.gatti, marcello.restelli}@polimi.it
+
+
+                            Abstract                                        is not truthful—i.e., the best bid for an advertiser may be
+                                                                            different from the actual value per click—, and learning al-
+  Pay-per-click advertising includes various formats (e.g.,
+                                                                            gorithms are commonly used to learn the optimal bids. The
+  search, contextual, and social) with a total investment of more
+  than 140 billion USD per year. An advertising campaign                    Vicrey-Clarke-Groves mechanism (VCG) is instead used for
+  is composed of some subcampaigns—each with a different                    contextual and social advertising (Varian and Harris 2014;
+  ad—and a cumulative daily budget. The allocation of the ads               Gatti et al. 2015). This auction is truthful only in the unreal-
+  is ruled exploiting auction mechanisms. In this paper, we pro-            istic case in which the daily budget is unlimited.1 Thus, each
+  pose, for the ﬁrst time to the best of our knowledge, an al-              advertiser needs to ﬁnd the best bid and budget values in an
+  gorithm for the online joint bid/budget optimization of pay-              online fashion, and this problem is currently open in the lit-
+  per-click multi-channel advertising campaigns. We formulate               erature. In the present paper, we provide a novel algorithm,
+  the optimization problem as a combinatorial bandit prob-                  based on combinatorial bandit techniques (Chen, Wang, and
+  lem, in which we use Gaussian Processes to estimate stochas-              Yuan 2013), capable of automating this task.
+  tic functions, Bayesian bandit techniques to address the ex-
+  ploration/exploitation problem, and a dynamic programming                    Related works. Only a few works in the algorithmic eco-
+  technique to solve a variation of the Multiple-Choice Knap-               nomic literature tackle the campaign advertising problem
+  sack problem. We experimentally evaluate our algorithm both               by combining learning and optimization techniques. More
+  in simulation—using a synthetic setting generated a Yahoo!                speciﬁcally, Zhang et al. (2012) study a scenario similar to
+  dataset—and in a real-world application for two months.                   the one we analyze in this paper. The authors take into ac-
+                                                                            count the problem of the joint bid/budget optimization of
+                                                                            subcampaigns in an ofﬂine fashion. However, this algorithm
+                        Introduction                                        suffers from some drawbacks. More precisely, the model
+Online advertising has been given wide attention from the                   of each subcampaign requires a huge number of parame-
+scientiﬁc world as well as from industry. in 2016 more than                 ters s.t. even achieving rough estimates requires a consid-
+72 billion USD has been spent in search advertising (IAB                    erable amount of data, usually available only after the sys-
+2016), which represents about 50% of the total market. The                  tem has been running for several months. Furthermore, some
+development of automatic techniques is crucial both for the                 parameters (e.g., the position of the ad for each impression
+publishers and the advertisers, and artiﬁcial intelligence can              and click) cannot be observed by an advertiser, not allow-
+play a prominent role in this context. In this paper, we focus              ing the employment of the model in practice. Finally, the
+on pay-per-click advertising—including different formats,                   optimization problem formulated therein is nonlinear and
+e.g., search, contextual, and social—in which an advertiser                 ﬁnding a good-quality approximate solution requires long
+pays only once a user has clicked her ad.                                   computational time. Thomaidou, Liakopoulos, and Vazir-
+   An advertising campaign is characterized by a set                        giannis (2014) separate the optimization of the bid from that
+of subcampaigns—each with a potentially different pair                      one of the budget, using a genetic algorithm to optimize the
+ad/targeting—and by a cumulative daily budget. Remark-                      budget and subsequently applying some bidding strategies.
+ably, a campaign may include subcampaigns on different                      Markakis and Telelis (2010) study the convergence of some
+channels, e.g., Google, Bing, Facebook. In pay-per-click ad-                bidding strategies in a single-subcampaign scenario.
+vertising, to get an ad impressed, the advertisers take part                   Online learning results are known only for the restricted
+in an auction, specifying a bid and a daily budget for each                 cases with a single subcampaign and a budget constraint
+subcampaign (Qin, Chen, and Liu 2015). The advertisers’                     over all the length of the campaign without temporal dead-
+goal is to select these variables to maximize the expected                  lines.2 Ding et al. (2013) and Xia et al. (2015) work on a
+revenue they get from the advertising campaign. The Gen-
+eralized Second Price auction (GSP) is used for search ad-                       1
+vertising (King, Atkins, and Schwarz 2007). This auction                         Notably, the value per click is unknown at the setup of the
+                                                                            campaign, not allowing an advertiser to bid truthfully.
+Copyright  c 2018, Association for the Advancement of Artiﬁcial               2
+                                                                                 This last assumption rarely holds in real-world applications
+Intelligence (www.aaai.org). All rights reserved.                           where, instead, results are expected by a given deadline.
+
+
+
+
+                                                                     2379
+ﬁnite number of bid values and exploit a multi-armed bandit                                 Problem Formulation
+approach. Trovò et al. (2016) work on a continuous space of             We are given an advertising campaign C = {C1 , . . . , CN },
+bids and show that assuring worst-case guarantees leads to               with N ∈ N, where Cj is the j-th subcampaign, a ﬁ-
+the worsening of the average-case performance.                           nite time horizon of T ∈ N days, and a spending plan
+   Less related works concern daily budget optimization (Xu              B = {y 1 , . . . , y T }, where y t ∈ R+ is the cumulative budget
+et al. 2015; Italia et al. 2017), bidding strategies in display          one is willing to spend at day t ∈ {1, . . . , T }.3,4 While the
+advertising (Wang, Zhang, and Yuan 2016; Weinan et al.                   proposed deﬁnition is general w.r.t. the channel we target, in
+2016; Zhang, Yuan, and Wang 2014; Lee, Jalali, and Das-                  the speciﬁc case of search engines (where the subcampaigns
+dan 2013) and video advertising (Geyik et al. 2016). Finally,            are commonly targeted to multiple keywords), we assume
+some works deal with the attribution problem of the conver-              that each subcampaign has been set s.t. its keywords behave
+sions in display advertising (Geyik, A-Saxena, and Dasdan                similarly. As a consequence, a single decision for each group
+2014; Kireyev, Pauwels, and Gupta 2016).                                 of keywords is required. For day t ∈ {1, . . . , T } and for ev-
+                                                                         ery subcampaign Cj , the advertiser needs to specify the bid
+   Original contributions. We formulate the optimization                 xj,t ∈ [xj,t , xj,t ], where xj,t , xj,t ∈ R+ are the minimum
+problem as a combinatorial-bandit problem (Chen, Wang,                   and the maximum bid we can set, respectively, and the bud-
+and Yuan 2013), where the different arms are the bid/budget              get yj,t ∈ [y j,t , y j,t ], where y j,t , y j,t ∈ R+ are the minimum
+pairs. In the standard multi-armed bandit problem, we are
+given a set of options called arms, at each turn we choose               and the maximum budget we can set, respectively. The goal
+a single arm, and we observe only its reward. Differently,               is, for every day t ∈ {1, . . . , T }, to ﬁnd the best values of
+in a combinatorial-bandit problem we are given a set of su-              bids and budgets, maximizing the subcampaigns cumulative
+perarms, i.e., an element of the power set of the arms—here              expected revenue. These values can be found by solving the
+corresponding to a combination of bid/budget pairs for each              following optimization problem:
+subcampaign—, whose elements satisfy some set of com-                                            N
+                                                                                                 
+binatorial constraints—in our case, knapsack-like. At each                           max               vj nj (xj,t , yj,t )              (1a)
+                                                                                    xj,t ,yj,t
+round, we simultaneously play of all the arms contained                                          j=1
+in the selected superarm and, subsequently, observe their                                        N
+rewards. We use Gaussian Process (GP) regression mod-                                            
+                                                                                         s.t.          yj,t ≤ y t                        (1b)
+els (Rasmussen and Williams 2006) to estimate, for each
+                                                                                                 j=1
+subcampaign, the expected daily number of clicks for each
+bid/budget pair and the value per click. We estimate the                                         xj,t ≤ xj,t ≤ xj,t            ∀j        (1c)
+value per click of a subcampaign separately from the number                                      y j,t ≤ yj,t ≤ y j,t          ∀j        (1d)
+of clicks since, while the number of daily clicks and, thus, of
+the observed samples is usually large allowing one to obtain             where nj (xj,t , yj,t ) is the expected number of clicks given
+accurate estimates in short time, the acquisitions are usually           the bid xj,t and the budget yj,t for subcampaign Cj and vj
+much more sporadic and the estimation of the value per click             is the value per click for the subcampaign Cj . Basically,
+may require a longer time. As a result, at the very beginning            this is a special case of Multiple-Choice Knapsack prob-
+of the learning phase our algorithm maximizes the number                 lem (Kellerer, Pferschy, and Pisinger 2004) in which the ob-
+of clicks, whereas, subsequently, the objective function is              jective function (1a)—corresponding to the value provided
+gradually tuned by more accurate estimates of the values                 by knapsack—is the weighted sum of the expected number
+per click of each subcampaign. This rationale is the same                of clicks of all the subcampaigns, where the weights are the
+one currently followed by human experts. We design two                   subcampaigns’ value per click. Constraint (1b) is a budget
+Bayesian bandit techniques to balance exploration and ex-                constraint, forcing one not to spend more than the budget
+ploitation in the learning process, that return samples of the           limit, while constraints (1c) and (1d) deﬁne the ranges of
+stochastic variables estimated by the GPs. Finally, we dis-              the variables. Similarly to the knapsack problem, here we
+cretize the bid/budget space, and we formulate the optimiza-             have items–i.e., the subcampaigns—, each of which is char-
+tion problem as a special case of Multiple-Choice Knapsack               acterized by a value and requires a portion of the budget. The
+problem (Sinha and Zoltners 1979) in which we use the sam-               differences are: the occupancy of an item is not a constant,
+ples returned by the bandit algorithms, and we solve it in               being controllable by the assigned budget; we can decide on
+polynomial time by dynamic programming in a fashion sim-                 a further parameter, the bid, that does not have a correspond-
+ilar to the approximation scheme for the knapsack problem.               ing parameter in the knapsack problem; the value of each
+The optimization is repeated every day.                                  item is not constant, but it depends on the decisions taken.
+   We experimentally evaluate, using a realistic simulator                  Since the function of the number of clicks nj (·, ·) and the
+based on the Yahoo! Webscope A3 dataset, the convergence                 parameter specifying the value per click vj need to be es-
+of our algorithm to the optimal (clairvoyant) solution and                   3
+                                                                              We assume that campaign C and spending plan B are given.
+its regret as the size of the problem varies. Furthermore, we                4
+                                                                              For the sake of presentation, from now on we set the day as
+evaluate our algorithm in a real-world campaign with sev-                unitary temporal step of our algorithm. The use of shorter time
+eral subcampaigns in Google AdWords for two consecutive                  units can be used to tackle situations in which the user’s behaviour
+months, obtaining the same number of acquisitions obtained               is non-stationary over the day. The application of the proposed al-
+by human experts, but halving the cost per acquisition.                  gorithm to different time units is straightforward.
+
+
+
+
+                                                                  2380
+timated online, not being a priori known, the optimization                   Algorithm 1 AdComB
+problem can be naturally formulated in a sequential decision                 1: Parameters: sets {Xj }N                            N
+                                                                                                      j=1 of bid values, sets {Yj }j=1 of budget values, prior
+learning fashion (Cesa-Bianchi and Lugosi 2006), or, more                                     (0)
+                                                                                   model {Mj }N
+                                                                                              j=1 , spending plan B, time horizon T
+precisely, as a combinatorial bandit problem (Chen, Wang,                    2: for t ∈ {1, . . . , T } do
+and Yuan 2013).5 Here, we would like to gather as much in-                   3:    for j ∈ {1, . . . N } do
+formation as possible about the stochastic functions during                  4:        if t = 1 then
+                                                                                                        (0)
+the operational life of the system and, at the same time, we                 5:             Mj ← Mj
+do not want to lose too much revenue in doing so (a.k.a. ex-                 6:        else
+ploration/exploitation dilemma). More precisely, the avail-                  7:             Get (ñj,t−1 , c̃j,t−1 , r̃j,t−1 , ṽj,t−1 )
+able options (a.k.a. arms) are all the values of bid xj,t and                8:             Mj ← Update (Mj , (x̂j,t−1 , ŷj,t−1 , ñj,t−1 , c̃j,t−1 ,
+                                                                                                                                             r̃j,t−1 , ṽj,t−1 ))
+budget yj,t satisfying the combinatorial constraints of the
+optimization problem, while nj (·, ·) and vj are stochastic                  9:          Xj,t ← Xj ∩ [xj,t , xj,t ]
+                                                                             10:         Yj,t ← Yj ∩ [y , y j,t ]
+functions deﬁned on the feasible region of the variables that                                               j,t
+                                                                             11:          (nj (·, ·), vj ) ← Sampling (Mj , Xj,t , Yj,t )
+we need to estimate during the time horizon T . A policy U
+solving such a problem is an algorithm returning, for each                   12:       {(x̂j,t , ŷj,t )}j∈N ← Optimize ({nj (·, ·), vj , Xj,t , Yj,t }j∈N , y t )
+                                                                             13:       Set ({(x̂j,t , ŷj,t )}j∈N )
+day t and subcampaign Cj , a bid/budget pair (x̂j,t , ŷj,t ).
+Given a policy U, we deﬁne the pseudo regret as:
+                               T N                          
+                               
+                                                                                                                                             6SHQGLQJ3ODQ
+                       ∗
+        RT (U) := T G − E                vj nj (x̂j,t , ŷj,t ) ,
+                               t=1 j=1                                                                                 %DQGLW
+                 N
+                                                                                            (VWLPDWLRQ                                      2SWLPL]DWLRQ
+                                                                                                                       &KRLFH
+          ∗                     ∗ ∗
+where G :=          j=1 vj nj (xj , yj ) is the expected value
+provided by a clairvoyant algorithm, the set of bid/budget
+pairs {(x∗j , yj∗ )}N
+                                                                                                                      6HDUFK
+                    j=1 is the optimal clairvoyant solution to the
+problem in Equations (1a)–(1d), and the expectation E[·] is                                                           6RFLDO
+
+
+taken w.r.t. the stochasticity of the policy U. Our goal is the                                                     &RQWH[WXDO
+
+design of algorithms minimizing the pseudo regret RT (U).
+                                                                             Figure 1: The information ﬂow in the AdComB algorithm
+                    Proposed Method                                          along the three phases.
+Initially, we provide an overview of our algorithm named
+AdComB—Advertising Combinatorial Bandit algorithm—,
+and, subsequently, we describe in detail the phases compos-                  actual number of clicks ñj,t−1 , the actual total cost of the
+ing the algorithm.                                                           subcampaign c̃j,t−1 , the time when the daily budget y t ﬁn-
+                                                                             ished r̃j,t−1 , if so, and the actual value per click ṽj,t−1 . Sub-
+The Main Algorithm                                                           sequently, the model of each subcampaign Mj is updated
+                                                                             using those observations (Line 8).
+Algorithm 1 reports the high-level pseudocode of our                            In the second phase (Lines 9–11), named Bandit Choice
+method. For the sake of presentation, we distinguish three                   in Fig. 1, the algorithm chooses the values for the function
+phases that are repeated each day t (see Fig. 1). For each                   nj (·, ·) and the parameter vj using the model Mj just up-
+subcampaign Cj , the parameters to the algorithm are: a ﬁ-                   dated. More precisely, for each subcampaign Cj , the algo-
+nite set Xj of feasible bid values, a ﬁnite set Yj of feasible               rithm initially selects the bids Xj,t := Xj ∩ [xj,t , xj,t ] and
+                              (0)
+budget values, a model Mj capturing a prior knowledge                        budgets Yj,t := Yj ∩ [y j,t , y j,t ] that are feasible according to
+about the function nj (·, ·) and of the parameter vj , a spend-              the given ranges (Lines 9–10). Subsequently, the algorithm
+ing plan B and a time horizon T .                                            chooses, according to the probability distributions of Mj ,
+   In the ﬁrst phase (Lines 4–8), named Estimation in                        the samples of the function nj (·, ·) for the feasible values of
+Fig. 1, the algorithm learns, from the observations of days                  bid and budget in Xj,t and Yj,t and for vj (Line 11).
+{1, . . . , t − 1}, the model Mj of the user behavior for each                  In the third phase (Lines 12–13), named Optimization in
+subcampaign Cj . More precisely, the model Mj provides a                     Fig. 1, the algorithm uses the values of nj (·, ·) and of vj as
+probability distribution over the number of clicks nj (x, y)                 parameters of the problem in Equations (1a)–(1d) and solves
+as the bid x and the budget y vary and over the value per                    this problem returning the bid/budget pairs to be set for the
+click vj . The ﬁrst day the algorithm is executed, no obser-                 current day t (Line 13) in each different channel (denoted by
+vation is available, and thus the model Mj is based on the                   Search, Social and Contextual in Fig. 1).6
+             (0)
+prior Mj (Line 5). Conversely, the subsequent days, for                         In what follows, we provide a detailed description of the
+each subcampaign Cj , the algorithm also gets the obser-                     model Mj and of the subroutines Update(·), Sampling(·),
+vations corresponding to day t − 1 (Line 7) including: the
+                                                                                  6
+                                                                                    Notice that, since the bid and the budget can assume a ﬁnite
+    5
+     Another approach to solving the problem is to use a multistage          set of values, the problem in Equations (1a)–(1d) can be easily for-
+method, e.g., backward induction, but it would require a huge com-           mulated as a Mixed Integer Linear Program (see the Supplemental
+putational effort that makes the problem intractable.                        Material for the mathematical programming formulation).
+
+
+
+
+                                                                      2381
+and Optimize(·) used in Algorithm 1.                                      x, the number of clicks increases linearly in the budget y
+                                                                          where the coefﬁcient is the average cost per click given x
+Model and Update Subroutine                                                     nsat (x)
+                                                                                  j
+                                                                          (i.e., csat
+                                                                                 j    (x) ), until the maximum number of obtainable clicks
+As mentioned before, the goal of this subroutine is the
+estimation of the functions nj (·, ·) and the parameter vj .              is achieved. Notice that the values of nsat          sat
+                                                                                                                    j (x) and cj (x) de-
+The crucial issue, in this case, concerns the employment                  pend on the average position in which the ad is displayed
+of a practical estimation model, providing a good tradeoff                when bid x is used and on the daily number of auctions. The
+between accuracy and time needed for the learning pro-                    larger x the larger nsat           sat
+                                                                                                j (x) and cj (x).
+cess. For instance, let us observe that a straightforward ap-                Now we focus on the modeling of the maximum number
+proach employing independent estimates of nj (·, ·) for ev-               of clicks nsat
+                                                                                      j (·) with a GP regression model. The application
+ery bid/budget pair (x, y) is not practical since it would re-            of such techniques to estimate the maximum cost csat    j (·) is
+quire a huge amount of observations, and, thus, too many                  analogous. We model nsat  j (·) in a subcampaign Cj with a GP
+days to have accurate estimates. Suppose, for instance, to                over Xj , i.e., we use a collection of random variables s.t. any
+use 10 bid values and 10 budget values, with a total num-                 ﬁnite subset has a joint Gaussian distribution. Following the
+ber of 100 bid/budget pairs. Such a discretization would                  deﬁnition provided in (Rasmussen and Williams 2006), a GP
+require a period of 100 days only to have a single obser-                 is completely speciﬁed by its mean m : Xj → R and covari-
+vation per estimates and years to have accurate estimates,                ance k : Xj × Xj → R functions. Hence, we denote the GP
+thus making the algorithm useless in practice. Most of the                that models the maximum number of clicks in Cj as follows:
+methods for combinatorial bandits available in the state of
+                                                                                     nsat
+                                                                                      j (x) := GP (m(x), k(x, ·)) , ∀x ∈ Xj .
+the art (Chen, Wang, and Yuan 2013; Chen et al. 2016;
+Gai, Krishnamachari, and Jain 2010; Ontañón 2017) suffers               If we have a priori information about the process, we can
+from the same issue, not exploiting any correlation among                 use it to design a function m(x) over the input space Xj
+the random variables corresponding to the arms rewards.                   which speciﬁes the initial mean value, e.g., if we have in-
+   To address this issue, we assume that the function nj (·, ·)           formation about the maximum number of clicks we might
+presents some regularities and, in particular, that the values            reach θ for any bid, one might consider a linearly increasing
+of the function at different points in the bid/budget space are           function over the bid space as m(x) = maxθt xj,t x. If no a
+correlated. We capture this regularity resorting to GPs (Ras-             priori information is available, we set m(x) = 0, ∀x ∈ Xj .
+mussen and Williams 2006). These models, developed in the                    At the beginning of the optimization procedure (t = 1),
+statistical learning ﬁeld, express the correlation of the nearby          we have the same predictive distribution at each point of the
+points in the input space exploiting a kernel function. More-             input space, i.e., nsat
+                                                                                               j (x) ∼ N (m(x), k(x, x)), where we
+over, they provide a probability distribution over the output
+space—in our case the number of clicks—for each point of                  denote with N (μ, σ 2 ) the Gaussian distribution with mean
+the input space—in our case the space of bid and budget—,                 μ and variance σ 2 . For each day t we obtain a value for the
+thus giving information both on the expected values of the                maximum number of clicks by relying on:
+quantities to estimate as well as their uncertainty.                                             ñsat
+                                                                                                   j,t := d(r̃j,t , ñj,t ),
+   In particular, we propose two approaches for nj (·, ·). A
+straightforward approach, which will be used as a baseline                where d(·, ·) is a function specifying the distribution of the
+in our experimental activity, employs a single GP deﬁned on               clicks over the day. The function d(·, ·) can be estimated
+a 2-dimension input space (details are provided in the Sup-               from historical data coming from past advertising campaigns
+plemental Material). Even if this method provides a ﬂexible               of products belonging to the same category (e.g., toys, in-
+way of modeling the advertising phenomenon, it requires,                  surances, beauty products). The vector of the bid set so far
+                                                                                                               T
+due to the curse of dimensionality, a long initial phase before           x̂j,t−1 := (x̂j,1 , . . . , x̂j,t−1 ) and the vector of maximum
+being effective. This issue is addressed by our second ap-                                                                       T
+                                                                          number of clicks ñsat                 sat        sat
+                                                                                                 j,t−1 := ñj,1 , . . . , ñj,t−1    are used by
+proach which exploits an assumption on the structure of the
+                                                                                                                                    (0)
+problem. More precisely, the dependency of nj (x, y) from                 the algorithm to reﬁne the initial prior model Mj . From
+bid x and budget y is modeled by two 1-dimensional GPs                    the deﬁnition of GP, its restriction over a ﬁnite number of
+combined in a nonlinear fashion. Formally, we assume:                     points is a multivariate Gaussian random variable, which can
+                                                                        be used, for every x ∈ Xj , to predict the expected value
+                                                                                                     2
+                          sat                 y                           μj,t−1 (x) and variance σj,t−1  (x) of the maximum number
+            nj (x, y) := nj (x) min 1, sat           ,       (2)
+                                           cj (x)                         of clicks in the following way:
+                                                                                                                       
+where the two GPs employed for each subcampaign Cj are:                    μj,t−1 (x) = m(x) + K(x, x̂j,t−1 )Φ−1 ñsat      j,t−1 −
+                                                                                                                                          
+– the maximum number of clicks nsat                +
+                                    j : Xj → R that can                                                                                 T
+                                                                                                        (m(x̂j,1 ), . . . , m(x̂j,t−1 )) ,
+be obtained with a given bid x without any budget constraint
+(or equivalently if we let y → +∞);                                        2
+                                                                          σj,t−1 (x) = k(x, x) − K(x, x̂j,t−1 ) Φ−1 K(x, x̂j,t−1 )T ,
+– the maximum cost incurred csat             +
+                                j : Xj → R with a given
+bid x without any budget constraint, as above;                            where we deﬁne Φ := K(x̂j,t−1 , x̂j,t−1 ) + σn2 I, I is the
+where the bid space is deﬁned as Xj := ∪Tt=1 [xj,t , xj,t ]. The          identity matrix of order t − 1, and the (i, h)-element of the
+rationale behind this decoupled model is that, given a bid                matrix K(x, x ) is the value of the kernel computed over
+
+
+
+                                                                   2382
+the i-th element of the generic vector x and the h-th ele-                           provided in the previous section). Similarly, for the value per
+ment of the generic vector x . Hence, the maximum num-                              click we draw a new sample:
+ber of clicks for the bid x is distributed as the Gaussian
+                2
+N (μj,t−1 (x), σj,t−1 (x)).                                                                            v̂j ∼ N (νj,t−1 , φ2j,t−1 ).
+  Regarding the value per click vj , at day t we estimate it by                         Conversely, the AdComB-BUCB algorithm generates
+exploiting the data ṽj,h recorded during the days h < t. Re-                        samples for nsat            sat
+                                                                                                    j (x) and cj (x) exploiting different time-
+sorting to the Central Limit theorem, we have that the mean                          varying quantiles of the posterior distributions. More pre-
+value per click vj is asymptotically Gaussian distributed,                           cisely, we use a high quantile (of order 1 − 1t ) for nsat
+                                                                                                                                            j (x)
+thus, at each day t, it is sufﬁcient to estimate its mean νj,t                                                             1       sat
+                                                                                     and vj and a low quantile (of order t ) for cj (x). This as-
+and variance φ2j,t as follows:                                                       sures us to generate optimistic bounds, that are necessary
+            t−1                            t−1                      2              for the convergence of the algorithm to the optimal solution.
+               h=1 ṽj,h                      h=1 (ṽj,h − νj,t−1 )                  Let us denote with q(μ, σ 2 , p) the quantile of order p of a
+νj,t−1 :=                  ,   φ2j,t−1 :=                                 .
+                t−1                              (t − 1)(t − 2)                      Gaussian distribution with mean μ and variance σ 2 . At day
+                                                                                     t, for each bid x ∈ Xj,t , we generate samples for nsatj (x)
+   Overall, the model Mj corresponding to a subcampaign                                    sat
+                                                                                     and cj (x) as:
+Cj at a day t consists of the following vectors: the values per
+                                            T
+click ṽj,t−1 := (ṽj,1 , . . . , ṽj,t−1 ) , the selected bids x̂j,t−1 ,                                                            1
+                                                                                            nsat                    2
+                                                                                             j (x) = q μj,t−1 (x), σj,t−1 (x), 1 −          ,
+the maximum number of clicks nsat              j,t−1 , and the maximum                                                               t
+        sat                                   sat
+costs cj,t−1 (deﬁned similarly to nj,t−1 ). Therefore, the Up-                                                                       1
+date subroutine of Algorithm 1 includes the incoming data                                         csat                    2
+                                                                                                   j (x) = q ηj,t−1 (x), sj,t−1 (x),        ,
+                                                                                                                                     t
+(ñj,t−1 , c̃j,t−1 , r̃j,t−1 , ṽj,t−1 ), properly transformed, in the
+aforementioned vectors.7                                                             assuring that nsat
+                                                                                                      j (x) is a high-probability upper bound
+                                                                                     for the maximum number of clicks and csat j (x) is a high-
+Sampling Subroutine                                                                  probability lower bound for the maximum costs. Similarly,
+                                                                                     for the value per click vj we assign:
+The models Mj we estimate for each subcampaign pro-
+vide a probability distribution over the function nj (·, ·) and                                                                     1
+of the values vj and, therefore, over the possible instances                                       v̂j = q νj,t−1 , φ2j,t−1 , 1 −       .
+                                                                                                                                    t
+of the optimization problem in Equations (1a)–(1d). The
+Sampling subroutine generates, from Mj , a single instance                              Finally, given the values for nsat            sat
+                                                                                                                        j (x) and cj (x) gener-
+of the optimization problem, assigning a value to nj (x, y)                          ated by one of the two aforementioned methods, we compute
+for every x ∈ Xj , y ∈ Yj and a value to vj . In the                                 nj (x, y) as prescribed by Equation (2) for each x ∈ Xj,t and
+present paper, we propose two novel Bayesian approaches,                             for each y ∈ Yj,t .
+namely AdComB-TS and AdComB-BUCB, taking inspira-
+tion from the Thompson Sampling (TS) algorithm (Thomp-                               Optimize Subroutine
+son 1933) and the BayesUCB algorithm (Kaufmann, Cappé,                              Finally, we need to decide a single bid/budget pair to set
+and Garivier 2012), respectively. We resort to the Bayesian                          at day t for each subcampaign Cj . We resort to a modiﬁed
+approach since, in most of the bandit scenarios, it leads to                         version of the algorithm in (Kellerer, Pferschy, and Pisinger
+better performance than that one of their frequentist coun-                          2004) used for the solution of the knapsack problem. For the
+terparts, see, e.g., (Chapelle and Li 2011; Granmo 2010;                             sake of simplicity, let us assume we set an evenly spaced
+May et al. 2012; Paladino et al. 2017).                                              discretization Y of the daily cumulative budget y t and that
+   The AdComB-TS algorithm generates the values for                                  the feasible values for the budget are a subset of such a dis-
+nsat           sat
+  j (x) and cj (x) by drawing samples from the posterior                             cretization, i.e., Yj,t ⊆ Y, ∀j, t. At ﬁrst, for each value of
+distributions provided by the GPs. More formally, at a given                         budget y ∈ Yj,t we deﬁne zj (y) ∈ Xj,t as the bid maximiz-
+day t for each bid in x ∈ Xj,t , we draw a sample for nsat
+                                                         j (x)                       ing the number of clicks, formally:
+and a sample for csat (x) as follows:
+                    j                                                                                zj (y) := arg max nj (x, y).
+                                                                                                                   x∈Xj,t
+              nsat                       2
+                j (x) ∼ N (μj,t−1 (x), σj,t−1 (x)),
+                                                                                     The value zj (y) is easily found by enumeration. Then, for
+              csat                     2
+               j (x) ∼ N (ηj,t−1 (x), sj,t−1 (x)),                                   each value of budget y ∈ Y we deﬁne wj (y) as the value we
+                                                                                     expect to receive by setting the budget of subcampaign Cj
+where ηj,t−1 (x) and s2j,t−1 (x) are the mean and the variance                       equal to y and the bid equal to zj (y), formally:
+for bid x, respectively, estimated by the GP modeling csat
+                                                         j (x)                                     
+                                                  2
+(we recall that the deﬁnitions of μj,t−1 (x) and σj,t−1 (x) are                                       v̂j nj (zj (y), y) y j,t ≤ y ≤ y j,t
+                                                                                        wj (y) :=                                              .
+                                                                                                      0                  y < y j,t ∨ y > y j,t
+     7
+       The computation cost of the proposed solution can be dramat-
+ically reduced by using an alternative, but much more involved, so-                  This allows one to discard x from the set of the variables
+lution where the inverse of the Gram matrix K(x̂j,t−1 , x̂j,t−1 )−1                  of the optimization problem deﬁned in Equations (1a)–(1d),
+is stored and updated iteratively at each day; see (Bishop 2006).                    letting variables y the only variables to deal with.
+
+
+
+                                                                              2383
+   Finally, the optimization problem is solved in dynamic                  uniform distribution of the clicks over the day, thus the func-
+programming fashion. We use a matrix M (j, y) with j ∈                     tion d(·, ·) has the following expression (r̃j,h is expressed in
+{1, . . . , N } and y ∈ Y . We ﬁll iteratively the matrix as fol-          hours):
+lows. Each row is initialized as M (j, y) = 0 for every j and                                                       24
+                                                                                              d(r̃j,h , ñj,h ) :=       ñj,h .
+y ∈ Y . For j = 1, we set M (1, y) = w1 (y) for every y ∈ Y ,                                                      r̃j,h
+corresponding to the best budget assignment for every value
+of y if the subcampaign Cj were the only subcampaign in                      We compare the AdComB-TS and AdComB-BUCB al-
+the problem. For j > 1, we set for every y ∈ Y :                           gorithms with:8
+                                                                           • AdComB-2D-TS, a version of AdComB using a single
+   M (j, y) =      max          M (j − 1, y  ) + wj (y − y  ) .            GP over the two dimensional bid/budget space to estimate
+                y  ∈Y,y  ≤y
+                                                                             the number of clicks (see the Supplemental Material);
+That is, the value in each cell M (j, y) is found by scan-                 • AdComB-Mean, a version of AdComB selecting at each
+ning all the elements M (j − 1, y  ) for y  ≤ y, taking the                day the average values μj,t−1 (x) and ηj,t−1 (x) for bid x
+corresponding value, adding the value given by assigning a                   and νj,t−1 to be used in the optimization procedure.
+budget of y − y  to subcampaign Cj and, ﬁnally, taking the
+maximum among all these combinations. At the end of the                    For the GPs used in the algorithms, we adopt a squared ex-
+recursion, the optimal value of the optimization problem can               ponential kernel of the form:
+be found in the cell corresponding to maxy∈Y M (N, y). To                                                                  
+                                                                                                               (z − z  )2
+ﬁnd the optimal assignment of the budget, it is sufﬁcient to                           k(z, z  ) := σf2 exp −               ,
+also store the partial assignments of the budget correspond-                                                       l
+ing to the optimal value. The complexity of the aforemen-                  where σf , l ∈ R+ are kernel parameters, whose values are
+tioned algorithm is O(N H 2 ), i.e., it is linear in the number            chosen as prescribed by the GP literature, see (Rasmussen
+of subcampaigns N and quadratic in the number of different                 and Williams 2006) for details.
+values of the budget H := |Y |, where | · | is the cardinal-                  In addition to the pseudo regret Rt (U), we also evaluate
+ity operator. (Let us observe that, although the complexity                the instantaneous reward which is deﬁned as:
+is polynomial in H, it is pseudopolynomial in y j,t .) When
+                                                                                                       N
+                                                                                                       
+H is huge, the algorithm could require a long time. In that
+case, it is sufﬁcient to reduce H by rounding the values of                                Pt (U) :=         vj nj (x̂j,t , ŷj,t ).
+the budget as in the FPTAS of the knapsack problem. This                                               j=1
+produces a (1 − ε)-approximation of the optimal solution.
+                                                                           We average the results over 100 independent runs.
+                                                                              In Fig. 2a, we report Pt (U) of the 4 algorithms, while, in
+               Experimental Evaluation                                     Fig. 2b, we report their average Rt (U). By inspecting the
+We experimentally evaluate our algorithm both in a synthetic               instantaneous reward, we can see that all the algorithms but
+setting, necessary to evaluate the convergence and the regret              AdComB-Mean present a slightly varying reward even at
+of our algorithm, and in a real-world setting, necessary to as-            the end of the of the time horizon since they incorporate
+sess its effectiveness when compared with the performance                  the variance of the GP as information to select the budget
+of human experts.                                                          over time. This variance is larger at the beginning of the
+                                                                           process, thus incentivising exploration, and it fades as the
+Evaluation in the Synthetic Setting                                        number of observations increases, allowing the algorithm to
+The synthetic setting we use has been generated according to               reach the optimum asymptotically. Moving to Fig. 2b, we
+data of the Yahoo! Webscope A3 dataset using the simulator                 observe that the 2 Bayesian algorithms, namely AdComB-
+developed by Farina and Gatti (2017).                                      TS and AdComB-BUCB, present essentially the same per-
+   Experiment 1. We consider N = 4 subcampaigns, each                      formance, providing the best regret for every t ≤ T . For
+with a variable number of daily auctions drawn from z                      t ≤ 20 the regret of AdComB-Mean is essentially the same
+with z ∼ N (1000, 10). Each auction presents 5 slots and                   one of the 2 Bayesian algorithms. Instead, for larger values
+10 advertisers. Each subcampaign is associated with a dif-                 of t its relative performance worsens reaching, at t = 100,
+ferent truncated Gaussian distribution that is used at every               a regret about 35% larger than the one of the AdComB-
+day t to draw the bid of each ad, while, in the same way,                  BUCB algorithm. This is because the exploration performed
+the ads’ click probability is drawn from a Beta distribution;              by AdComB-Mean is not sufﬁcient. As a result, in all the
+see (Farina and Gatti 2017) for details. We set a constant cu-             runs, AdComB-Mean does not change the policy for, ap-
+mulative budget per day y t = 100 over a time horizon of                   proximately, t ≥ 40 and, in some of the 100 independent
+T = 100 days, with limits y j,t = 0, y j,t = 100 for every                 runs, it gets stuck in a suboptimal solution, as we can ob-
+                                                                           serve in Fig. 2a. Conversely, the 2 Bayesian algorithms,
+t, j, and we set bid limits to xj,t = 0 and xj,t = 1 for every
+t, j. Furthermore, we use an evenly spaced discretization of                   8
+                                                                                The comparison with the algorithm by Chen, Wang, and
+|Xj | = 5 bids and |Yj | = 10 budgets over the aforemen-                   Yuan (2013)—in a version accounting for Gaussian distributions—
+tioned intervals. The values per click of each subcampaign                 is unfair. Indeed, this algorithm requires 50 days to have a single
+are constant—thus letting the clicks to be the only source of              sample per random variable, and, for all t ≤ T , it purely explores
+randomness—and drawn uniformly from [0, 1]. We assume a                    the space of arms without any form of exploitation.
+
+
+
+
+                                                                    2384
+                                                           300                                               300
+                                                                                                                                            300
+         18
+                                                                                                             250
+         16                                                200
+Pt (U)                                            Rt (U)                                            RT (U)
+                                                                                                             200                            200
+         14                      AdComB-TS
+                                 AdComB-Mean               100                                               150
+         12
+                                 AdComB-BUCB
+         10                      AdComB-2D-TS                                                                100                            100
+                                                             0
+              0   20   40         60   80   100                  0   20    40       60   80   100                  5    10             20         3   4         5   6
+                             t                                                  t                                              |Xj |                        N
+
+                       (a)                                                (b)                                            (c)                              (d)
+
+Figure 2: Results for the synthetic setting: instantaneous reward of Experiment 1 (a), pseudo regret over time for Experiment
+1 (b), pseudo regret at the end of the time horizon for Experiment 2 (c) and Experiment 3 (d). The optimum value of the
+instantaneous reward G∗ is represented with a dashed line in (a).
+
+
+thanks to a wider exploration, converge to the optimal solu-                                            geneous over time as possible. During the ﬁrst 2 months, the
+tion asymptotically in all the runs (the phenomenon is more                                             bid/budget optimization has been performed by human ex-
+evident on a longer time horizon, see the Supplemental Ma-                                              perts, leading to an average of 350 acquisitions per month
+terial). Finally, we observe that AdComB-2D-TS suffers                                                  with an average cost per acquisition of about 83 e. After the
+from a larger regret than that one of the other 3 algorithms—                                           ﬁrst 2 months, the optimization has been performed by the
+more than 100% compared with the regret of AdComB-TS                                                    AdComB-TS algorithm in a completely automated fashion.
+and AdComB-BUCB at t = 100—and this is mainly accu-                                                     The goal of the company was to reduce the cost per acquisi-
+mulated over the ﬁrst half of the time horizon.                                                         tion, given that the cost of 104 e was considered excessively
+   Experiment 2. The experimental setting is the same used                                              large, keeping the same number of acquisitions per month
+above, except that we use |Xj | ∈ {5, 10, 20}, s.t. the set                                             obtained during the ﬁrst 2 months. We used a discretization
+of bids we used Xj with |Xj | = 20 includes Xj with                                                     of 5 e for the budget values and 0.10 e for the bid values.
+|Xj | = 10 that, in its turn, includes Xj with |Xj | = 5.                                               The algorithm, implemented in Python 2.7.12 and executed
+In Fig. 2c we report the average RT (U) of the 4 algorithms.                                            on Ubuntu 16.04.1 LTS with an Intel(R) Xeon(R) CPU E5-
+Even if increasing the number of bid values may allow one                                               2620 v3 2.40GHz, was used at the midnight of each day to
+to increase the value of the optimal solution, we observe                                               decide the bid/budget pairs for the next day. The maximum
+that the regret slightly increases as |Xj | increases for the                                           computation time of the algorithm during the 2 months was
+AdComB-TS and AdComB-2D-TS algorithms. This is be-                                                      less than 1 minute. During the 2 months AdComB-TS was
+cause the algorithms pays a larger exploration cost. Remark-                                            executed, it obtained 353 conversions with an average cost
+ably, the extra cost from |Xj | = 10 to |Xj | = 20 is small.                                            per acquisition of about 56 e. More precisely, in the ﬁrst
+This result shows that the performance of the algorithms is                                             month the algorithm was used, the cost per acquisition was
+robust to an increase of the number of possible bids.                                                   about 62 e, while, in the second one, about 50 e. Thus, the
+   Experiment 3. The experimental setting is the same used                                              average reduction of the cost per acquisition during the ﬁrst
+in the Experiment 1, except that N ∈ {3, 4, 5, 6}. In Fig. 2d,                                          month of execution of the algorithm has been about 25%,
+we report the average regret RT (U) of the 4 algorithms. All                                            while during the second one about 40%.
+the algorithms (except AdComB-2D-TS) do not suffer from
+a signiﬁcant increase in the regret as the number of the sub-                                                          Conclusions and Future Works
+campaigns increases, showing that they scale well as the
+number of subcampaigns increases.                                                                       In the current paper, we present AdComB, an algorithm ca-
+                                                                                                        pable of deciding automatically the values of the bid and
+                                                                                                        the budget to set in an advertising campaign to maximize
+Evaluation in a Real-world Setting                                                                      in online fashion the value of the campaign given a spend-
+We advertised a campaign for a loan product of a large Ital-                                            ing plan. The algorithm exploits Gaussian Processes to es-
+ian ﬁnance company with the AdComB-TS algorithm (the                                                    timate the users’ model, combinatorial bandit techniques to
+names of the product and the company, and other details                                                 address the exploration/exploitation dilemma, and optimiza-
+omitted below are not provided due to reasons of indus-                                                 tion techniques to solve a knapsack-like problem. We pro-
+trial secrecy). The advertising campaign was composed of                                                pose two ﬂavours of the algorithm, namely AdComB-TS
+N = 13 subcampaigns. The campaign has been advertised                                                   and AdComB-BUCB, differing for the criterion used for the
+for T = 120 days (4 months) in 2017 during which no                                                     bandit choice. Experiments on both a realistic synthetic set-
+further advertising campaigns (e.g., video, radio, television)                                          ting and real-world setting show that our algorithms tackle
+were conducted to avoid mutual effects between the cam-                                                 the problem properly, outperforming other naive algorithms
+paigns. The 4 months during which the experiments have                                                  based on existing solutions and the human expert.
+been conducted were chosen in such a way, according to past                                                As future work, we plan to study the theoretical properties
+observations, the click behaviour of the users was as homo-                                             of the pseudo regret of our algorithm, as well as the study of
+
+
+
+                                                                                              2385
+techniques to provide a proper setup of the subcampaigns.                   Kellerer, H.; Pferschy, U.; and Pisinger, D. 2004. The Multiple-
+While in the present work we assume that the environment,                   Choice Knapsack Problem. Springer. 317–347.
+including the users and the other advertisers, is stationary                King, M.; Atkins, J.; and Schwarz, M. 2007. Internet advertis-
+over time, we will investigate non-stationary environments,                 ing and the generalized second-price auction: Selling billions of
+e.g., including in the model the option that there exists peri-             dollars worth of keywords. AM ECON REV 97(1):242–259.
+odicity in the user behaviour, as well as some sudden change                Kireyev, P.; Pauwels, K.; and Gupta, S. 2016. Do display ads
+due the modiﬁcation of the competitors marketing policy.                    inﬂuence search? attribution and dynamics in online advertising.
+Moreover, another interesting line of research is to design                 INT J RES MARK 33(3):475–490.
+methods to set up the subcampaigns and possibly modify                      Lee, K.-C.; Jalali, A.; and Dasdan, A. 2013. Real time bid
+their targeting over time, basing on their performance.                     optimization with smooth budget delivery in online advertising.
+   Acknowledgments. This research has been funded by the                    In ADKDD, 1–9.
+Mediamatic company, part of the MMM group. We sin-                          Markakis, E., and Telelis, O. 2010. Discrete strategies in key-
+cerely thank Roberto Coronel Da Silva, Enrico Dellavalle,                   word auctions and their inefﬁciency for locally aware bidders.
+and Paola Corbani for their valuable support.                               In WINE, 523–530.
+                                                                            May, B. C.; Korda, N.; Lee, A.; and Leslie, D. S. 2012. Op-
+                         References                                         timistic bayesian sampling in contextual-bandit problems. J
+Bishop, C. M. 2006. Pattern recognition and machine learning.               MACH LEARN RES 13(Jun):2069–2106.
+Springer.                                                                   Ontañón, S. 2017. Combinatorial multi-armed bandits for real-
+Cesa-Bianchi, N., and Lugosi, G. 2006. Prediction, learning,                time strategy games. J ARTIF INTELL RES 58:665–702.
+and games. Cambridge University Press.                                      Paladino, S.; Trovò, F.; Restelli, M.; and Gatti, N. 2017. Uni-
+Chapelle, O., and Li, L. 2011. An empirical evaluation of                   modal thompson sampling for graph-structured arms. In AAAI.
+thompson sampling. In NIPS, 2249–2257.                                      Qin, T.; Chen, W.; and Liu, T.-Y. 2015. Sponsored search auc-
+Chen, W.; Wang, Y.; Yuan, Y.; and Wang, Q. 2016. Combina-                   tions: Recent advances and future directions. ACM T INTEL
+torial multi-armed bandit and its extension to probabilistically            SYST TEC 5(4):60:1–60:34.
+triggered arms. J MACH LEARN RES 17(1):1746–1778.                           Rasmussen, C. E., and Williams, C. K. 2006. Gaussian pro-
+Chen, W.; Wang, Y.; and Yuan, Y. 2013. Combinatorial multi-                 cesses for machine learning, volume 1. MIT Press.
+armed bandit: General framework and applications. In ICML,                  Sinha, P., and Zoltners, A. A. 1979. The multiple-choice knap-
+151–159.                                                                    sack problem. OPER RES 27(3):503–515.
+Ding, W.; Qin, T.; Zhang, X.-D.; and Liu, T. 2013. Multi-armed              Thomaidou, S.; Liakopoulos, K.; and Vazirgiannis, M. 2014. To-
+bandit with budget constraint and variable costs. In AAAI, 232–             ward an integrated framework for automated development and
+238.                                                                        optimization of online advertising campaigns. INTELL DATA
+Farina, G., and Gatti, N. 2017. Adopting the cascade model in               ANAL 18(6):1199–1227.
+ad auctions: Efﬁciency bounds and truthful algorithmic mecha-               Thompson, W. R. 1933. On the likelihood that one unknown
+nisms. J ARTIF INTELL RES 59:265–310.                                       probability exceeds another in view of the evidence of two sam-
+Gai, Y.; Krishnamachari, B.; and Jain, R. 2010. Learning mul-               ples. BIOMETRIKA 25(3/4):285–294.
+tiuser channel allocations in cognitive radio networks: A com-              Trovò, F.; Paladino, S.; Restelli, M.; and Gatti, N. 2016. Bud-
+binatorial multi-armed bandit formulation. In DySPAN, 1–9.                  geted multi-armed bandit in continuous action space. In ECAI,
+IEEE.                                                                       560–568.
+Gatti, N.; Lazaric, A.; Rocco, M.; and Trovò, F. 2015. Truthful            Varian, H. R., and Harris, C. 2014. The VCG auction in theory
+learning mechanisms for multi-slot sponsored search auctions                and practice. AM ECON REV 104(5):442–445.
+with externalities. ARTIF INTELL 227:93–139.
+                                                                            Wang, J.; Zhang, W.; and Yuan, S. 2016. Display advertising
+Geyik, S. C.; A-Saxena; and Dasdan, A. 2014. Multi-touch                    with real-time bidding (RTB) and behavioural targeting. CoRR
+attribution based budget allocation in online advertising. In AD-           abs/1610.03013.
+KDD, 1–9.
+                                                                            Weinan, W.; Rong, Y.; Wang, J.; Zhu, T.; and Wang, X. 2016.
+Geyik, S. C.; Faleev, S.; Shen, J.; O’Donnell, S.; and Kolay, S.            Feedback control of real-time display advertising. In WSDM,
+2016. Joint optimization of multiple performance metrics in on-             407–416.
+line video advertising. In SIGKDD, 471–480.
+                                                                            Xia, Y.; Li, H.; Qin, T.; Yu, N.; and Liu, T.-Y. 2015. Thompson
+Granmo, O.-C. 2010. Solving two-armed bernoulli bandit prob-                sampling for budgeted multi-armed bandits. In IJCAI, 3960–
+lems using a bayesian learning automaton. IJICC 3(2):207–234.               3966.
+IAB. 2016. Iab internet advertising revenue report 2016, full               Xu, J.; Lee, K.-C.; Li, W.; Qi, H.; and Lu, Q. 2015. Smart pac-
+year results. https://www.iab.com. Online; accessed 21 July                 ing for effective online ad campaign optimization. In SIGKDD,
+2017.                                                                       2217–2226.
+Italia, E. M.; Nuara, A.; Trovò, F.; Restelli, M.; Gatti, N.; and          Zhang, W.; Zhang, Y.; Gao, B.; Yu, Y.; Yuan, X.; and Liu, T.-
+Dellavalle, E. 2017. Internet advertising for non-stationary en-            Y. 2012. Joint optimization of bid and budget allocation in
+vironments. In AMEC, 1–15.                                                  sponsored search. In SIGKDD, 1177–1185.
+Kaufmann, E.; Cappé, O.; and Garivier, A. 2012. On bayesian                Zhang, W.; Yuan, S.; and Wang, J. 2014. Optimal real-time
+upper conﬁdence bounds for bandit problems. In AISTATS, 592–                bidding for display advertising. In SIGKDD, 1077–1086.
+600.
+
+
+
+
+                                                                     2386
+
