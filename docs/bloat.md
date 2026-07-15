@@ -174,7 +174,7 @@ The bloat: restating a theorem, operator definition, or proof already establishe
 The fix: cite the first statement.
 
 - Strained: "...who prove that under $\sum_t \alpha_t = \infty$ and $\sum_t \alpha_t^2 < \infty$..., $Q$ converges to $Q^\star$, the fixed point of $\mathcal{T}^\star$ defined by... . The operator is a $\gamma$-contraction in the sup norm."
-- Plain: "It converges to $Q^\star$ under the standard step-size and visitation conditions, with the $\gamma$-contraction of the Bellman operator supplying the argument (Theorem~\ref{thm:qlearning_convergence}, Section~\ref{sec:planning_learning})."
+- Plain: "It converges to $Q^\star$ under the standard step-size and visitation conditions, with the $\gamma$-contraction of the Bellman operator supplying the argument (Theorems~\ref{thm:qlearning_convergence} and~\ref{thm:q_factor_contraction}, Section~\ref{sec:planning_learning})."
 
 ## The 10% Constraint (Final Test)
 
