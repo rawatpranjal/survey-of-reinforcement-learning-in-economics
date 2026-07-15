@@ -50,3 +50,30 @@ session would get it wrong without it.
   replaced by `ch03a_bm/`), `arxiv_submission 2/` (stale snapshot, forked bib), the abandoned
   `.claude/worktrees/` checkout, `planning_learning_v2.tex`. All recoverable from git history.
   _Salvaged `Kang2025` from the forked bib into `docs/refs.bib` before deleting it._
+
+## Reference PDFs: 16 were the wrong paper (2026-07-15)
+
+- **The `scripts/download_chXX_*.sh` scripts fabricated arXiv IDs, and curl saved whatever
+  was at that ID under the intended filename.** They were auto-generated (by a
+  `generate_download_scripts.py` that is not in the repo) from metadata that was itself
+  invented: the Bennett-Kallus entry read `Authors: Bennett, Daniel T.` (the real author is
+  Andrew Bennett) and pointed at arXiv 2306.12351, which is a paper on the union-closed
+  conjecture. The real paper is 2110.15332. `curl` cannot tell the difference, so the repo
+  accumulated astronomy, fluid-dynamics and pure-maths papers wearing RL filenames.
+- A sweep of all 658 PDFs under `chXX/papers/` found **16 that were a different paper
+  entirely**; 6 were cited in the survey. `tamar2015_coherent_risk.pdf` was the TRPO paper,
+  so a coherent-risk citation pointed at trust-region optimization. `ch03b_deeprl_practice`
+  held 6 of the 16, in the chapter that carries the deep-RL limitations argument. 13 were
+  re-downloaded and verified against page 1; 3 were deleted (2 were "Super-RL: A general
+  framework for offline reinforcement learning", a title whose only match anywhere on the web
+  is this repo's own corrupted copy, so it appears to name no real paper).
+- Seven of the corrupted `.md` extractions were **tracked and public on GitHub**, not just
+  local. The `.pdf` files are gitignored but the `.md` are not, so a bad download ships.
+- The download scripts were untracked local files and have been deleted. **Do not regenerate
+  them.** Use `websource "<title>"` (it resolves via Crossref/OpenAlex rather than a
+  guessed ID) and verify page 1 before trusting the file.
+- `scripts/check_paper_pdfs.py` re-runs the sweep. It compares filename tokens against the
+  first two pages and errs toward flagging: the ~24 standing flags are the Bertsekas book
+  split into section-labelled chunks, which the heuristic cannot judge. **It cannot catch a
+  right-title/wrong-version PDF**, which is how a Charpentier 2020 preprint sat behind a 2021
+  journal citation.
