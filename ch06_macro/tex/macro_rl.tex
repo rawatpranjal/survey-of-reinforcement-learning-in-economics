@@ -24,7 +24,7 @@ knowledge of the economy. The two interpretations share the same
 training code; the distinction is in what the analyst uses the output
 to claim.
 
-This chapter is organised around four lenses on what RL does for
+This chapter is organised around four roles RL plays for
 macroeconomics. Section~\ref{sec:macro:setup} fixes notation and
 defines the four problem classes the chapter uses.
 Section~\ref{sec:macro:solver_single_agent} and
@@ -32,7 +32,7 @@ Section~\ref{sec:macro:solver} treat RL as a global solver, first for
 representative-agent macro models that classical dynamic programming
 already handles, and then for heterogeneous-agent models where DP
 breaks down. The simulation in
-Section~\ref{sec:macro:simulation} concretises the comparison on a
+Section~\ref{sec:macro:simulation} makes the comparison concrete on a
 textbook RBC. Section~\ref{sec:macro:mfg} takes the continuum limit
 to mean field games with common noise, in two variants by game
 structure: symmetric mean-field and hierarchical Stackelberg.
@@ -177,8 +177,8 @@ HallHoffarth2023constraints, Carmona2021mfg, Fang2026dpi,
 Thoeni2025nmfg}; \citet{Fernandez2024dl} survey this line. The
 distinction is that those methods compute equation residuals offline,
 while RL trains the network from a reward signal under the agent's
-own policy. The chapter restricts attention to the RL lens and
-surfaces the equation-residual literature only as a comparison point
+own policy. The chapter restricts attention to the RL approach and
+notes the equation-residual literature only for comparison
 where relevant.
 
 \subsection{RL for single-agent macro models}
@@ -203,7 +203,7 @@ a stochastic variant with shocks, the trained agent's consumption and
 investment policy lies close to the deterministic steady-state
 benchmark. The paper also documents training runs that fail to
 converge under high discount factors and suboptimal critic
-hyperparameters; the instability foreshadows the heterogeneous-agent
+hyperparameters; the same instability reappears in the heterogeneous-agent
 setting in
 Section~\ref{sec:macro:solver}, where long-horizon credit assignment
 across an idiosyncratic-shock distribution amplifies the same problem.
@@ -413,7 +413,7 @@ The RL problem is to find a policy that is a best response to the
 distribution it induces under the noise process. Convergence to a
 mean-field Nash equilibrium is monitored by exploitability.
 
-The Krusell-Smith environment appears here under a different lens
+The Krusell-Smith environment appears here in a different form
 than in Section~\ref{sec:macro:solver}. SRL conditions agents on the
 current price vector and treats it as a Markovian sufficient
 statistic; RSPG instead lets agents carry a recurrent memory of past
@@ -1075,8 +1075,7 @@ sample one hundred weight vectors, train one policy per weight, and
 collect the non-dominated policies into the solution set. The output
 is a frontier of policies rather than a single policy. A Gini-based
 equity index across regions is reported alongside the climate-output
-frontier.} JUSTICE and RICE-N together frame the question of whether
-RL converges to one equilibrium or many. RICE-N reaches one
+frontier.} JUSTICE and RICE-N together raise the question of whether RL converges to one equilibrium or many. RICE-N reaches one
 realisation at a time from a family of possible equilibria; JUSTICE
 enumerates the Pareto frontier directly. A single-objective RICE
 optimiser collapses the climate-equity trade-off into one
@@ -1232,14 +1231,13 @@ RL learning dynamics reproduce empirical anomalies that rational
 expectations with borrowing constraints cannot generate jointly.
 As a planner, RL discovers tax schedules, climate-cooperation
 mechanisms, and monetary-fiscal reaction functions that closed-form
-optimisation does not. The four roles share an algorithmic toolbox
-but answer different questions, and the empirical and theoretical
+optimisation does not. The four roles share the same algorithms but answer different questions, and the empirical and theoretical
 literatures around each are at different stages of maturity.
 
 \subsubsection{Common methodological issues}
 \label{sec:macro:common_issues}
 
-Reading across the lenses surfaces issues that no single section
+Reading across the four roles reveals issues that no single section
 makes explicit. The first concerns convergence theory. Of the
 algorithms surveyed in this chapter, only the temporal mean-field
 construction of \citet{YangShan2026tmf} carries a classical
@@ -1265,8 +1263,8 @@ yield computable bounds. The honest reading of the literature is
 that convergence here means training stopped changing the policy,
 not that the iterate provably reaches a model equilibrium.
 
-The four lenses also target four different equilibrium concepts,
-and papers within a lens diverge further
+The four roles also target four different equilibrium concepts,
+and papers within a role diverge further
 (Section~\ref{sec:macro:setup}). The restricted perceptions
 equilibrium of \citet{Yang2025srl} assumes agents condition on the
 current price vector as if it were Markov, which is not satisfied by
@@ -1313,7 +1311,7 @@ scarring at the household level but has not been tested for
 consistency once embedded in an Aiyagari-style equilibrium where
 its policy would shift the cross-sectional distribution.
 
-Three cross-cutting findings deserve to be surfaced separately from
+Three cross-cutting findings are worth stating separately from
 their parent sections. The first is that tabular and grid-based RL
 competes with or beats deep RL on macro problems.
 \citet{Wang2025mpu} benchmarks nine algorithms on US Federal
@@ -1328,7 +1326,7 @@ learning cannot. \citet{Chen2021drl} shows deep RL stabilises in
 indeterminate and explosive DSGE regimes that least-squares
 learning rules out by E-stability (the expectational-stability
 condition under which a perceived law of motion is learnable by
-least-squares updating), suggesting the same toolbox
+least-squares updating), suggesting the same set of algorithms
 extends the equilibrium set under bounded rationality rather than
 merely reproducing it. The third is sociological. The three
 methodological clusters covered in this chapter, structural solvers

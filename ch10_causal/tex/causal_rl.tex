@@ -137,7 +137,7 @@ Theorem~\ref{thm:backdoor_mdp} yields a concrete estimation procedure. Given log
 \end{equation}
 and solves the causal Bellman equation using the estimated interventional transitions to obtain $\hat{V}^\pi$.
 
-This is the cleanest case because the analyst observes enough variables to repair the state. The rest of the chapter asks what can still be learned when that repair is unavailable, only partially credible, or statistically high-dimensional.
+This is the cleanest case because the analyst observes enough variables to repair the state. The rest of the chapter turns to what can still be learned when that repair is unavailable, only partially credible, or statistically high-dimensional.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Alternative Identification Strategies}
@@ -230,7 +230,7 @@ Mediator-based RL is most attractive when the action changes an observable chann
 \label{subsec:cfope_scm}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The point-identification strategies of the preceding subsections recover the target-policy value $V(\widetilde\pi)$ from observational data under explicit graphical assumptions. A complementary route, originating in \citet{buesing2019woulda}, operates one level deeper. Cast the partially observable Markov decision process as a structural causal model, infer a posterior over its exogenous noise from the observed trajectory, and roll out under the counterfactual policy with that posterior held fixed. The output is not just a value estimate but a counterfactual trajectory the agent would have produced, sample by sample.
+The point-identification strategies of the preceding subsections recover the target-policy value $V(\widetilde\pi)$ from observational data under explicit graphical assumptions. A complementary route, originating in \citet{buesing2019woulda}, operates one level deeper. This route casts the partially observable Markov decision process as a structural causal model, infers a posterior over its exogenous noise from the observed trajectory, and rolls out under the counterfactual policy with that posterior held fixed. The output is not just a value estimate but a counterfactual trajectory the agent would have produced, sample by sample.
 
 The transition mechanism is $s_{t+1} = f^s(s_t, a_t, u^s_t)$ with exogenous noise $u^s_t$, the observation mechanism is $o_t = f^o(s_t, u^o_t)$, and the action mechanism is $a_t = f^\pi(h_t, u^a_t)$ given the history $h_t$. Given an observed trajectory $\hat\tau$, the counterfactual rule proceeds in three steps.
 
@@ -273,7 +273,7 @@ Figure~\ref{fig:simulation_dag} displays the complete causal graph. Market condi
 
 The action affects the next state only through the mediator: $P(s{+}1 \mid s, M_t, Z_t)$ depends on $M_t$ and $Z_t$ but not on $A_t$ or $U_t$ directly. The four transition probabilities are $P(s{+}1 \mid s, M{=}1, Z{=}1) = 0.90$, $P(s{+}1 \mid s, M{=}1, Z{=}0) = 0.50$, $P(s{+}1 \mid s, M{=}0, Z{=}1) = 0.40$, and $P(s{+}1 \mid s, M{=}0, Z{=}0) = 0.15$. This enables all four identification strategies simultaneously: $Z_t$ satisfies the backdoor criterion, $M_t$ satisfies the front-door criterion, $\text{IV}_t$ satisfies relevance and exclusion, and $W_t^{(1)}, W_t^{(2)}$ satisfy the proximal conditions.\footnote{Rewards are $r(s,a) = -1$ for $s < 4$, $\gamma = 0.9$. The target policy always promotes. The true interventional transition probability is $P(s{+}1 \mid s, \operatorname{do}(\text{promote})) = 0.615$.}
 
-I compare six estimators: oracle, naive (biased per Lemma~\ref{lem:naive_bias}), backdoor (Equation~\ref{eq:backdoor_estimator}), front-door (Equation~\ref{eq:frontdoor}), Wald IV (Equation~\ref{eq:wald}), and proximal (Equations~\ref{eq:bridge} and \ref{eq:proximal_adj}).\footnote{Each configuration uses 2{,}000 trajectories averaged over 20 seeds.} These estimators correspond to the point-identification rows of Table~\ref{tab:causal_rl_taxonomy}. The simulation intentionally leaves out sensitivity bounds and orthogonal-score refinements so that the figure isolates the identification logic from higher-order statistical efficiency.
+I compare six estimators: oracle, naive (biased per Lemma~\ref{lem:naive_bias}), backdoor (Equation~\ref{eq:backdoor_estimator}), front-door (Equation~\ref{eq:frontdoor}), Wald IV (Equation~\ref{eq:wald}), and proximal (Equations~\ref{eq:bridge} and \ref{eq:proximal_adj}).\footnote{Each configuration uses 2{,}000 trajectories averaged over 20 seeds.} These estimators correspond to the point-identification rows of Table~\ref{tab:causal_rl_taxonomy}. The simulation intentionally leaves out sensitivity bounds and orthogonal-score refinements so that the figure reflects only the identification logic, not higher-order statistical efficiency.
 
 Figure~\ref{fig:confounded_ope} reports bias and RMSE across confounding strengths (20 seeds, 2{,}000 trajectories per seed). The naive estimator's bias grows monotonically with $\rho$ because observational transitions overestimate promotion success; the promote action is more likely when $U_t = 1$, which correlates with favorable conditions, so $\hat{P}_{\text{obs}}$ exceeds the true interventional probability, and this per-step bias compounds through the Bellman recursion. The backdoor and front-door estimators eliminate bias at all $\rho$, validating Theorem~\ref{thm:backdoor_mdp} and Equation~\eqref{eq:frontdoor}. The IV estimator maintains low bias but higher variance due to the Wald ratio's sensitivity to instrument strength; panel~(c) illustrates this classic bias-variance tradeoff. The proximal estimator achieves low bias with moderate variance, confirming that bridge functions recover causal effects from noisy proxies.
 
@@ -289,7 +289,7 @@ Figure~\ref{fig:confounded_ope} reports bias and RMSE across confounding strengt
 \label{subsec:cfope_sim}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-A second synthetic instance illustrates the counterfactual machinery of Section~\ref{subsec:cfope_scm} on a contextual-bandit substrate that strips the temporal complication and isolates the model-misspecification question. The DGP is a linear structural causal model in two features,
+A second synthetic example illustrates the counterfactual machinery of Section~\ref{subsec:cfope_scm} on a contextual-bandit substrate that strips the temporal complication and isolates the model-misspecification question. The DGP is a linear structural causal model in two features,
 \begin{equation}
 y = 1 + 0.5\, x_1 - 0.3\, x_2 + 2\, a + a \cdot x_1 + u,
 \qquad u \sim \mathcal N(0,\, 0.5^2),
