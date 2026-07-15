@@ -1,212 +1,424 @@
-## The Representation of Legal Contracts
-
-## Aspassia Daskalopulu 1 , Marek Sergot 2
-
-1 Department of Information Systems and Computing, Brunel University, Uxbridge,
-
-Middlesex UB8 3PH.
-
-E-mail: Aspassia.Daskalopulu@brunel.ac.uk.
-
-Tel.: +44- 1895- 274000 extension 2831.
-
-Fax: +44- 1895-251686
-
-2 Department of Computing, Imperial College of Science, Technology and Medicine, 180
-
-Queen's Gate, London SW7 2BZ.
-
-E-mail: mjs@doc.ic.ac.uk.
-
-Tel: +44-171-594 8218
-
-Abstract: The paper outlines ongoing research on logic-based tools for the analysis and representation of legal contracts, of the kind frequently encountered in large-scale engineering projects  and  complex,  long-term  trading  agreements.  We  consider  both  contract  formation and  contract  performance,  in  each  case  identifying  the  representational  issues  and  the prospects for providing automated support tools.
-
-Keywords :    Artificial  Intelligence  and  Law;  Contract  Drafting;  Document  Assembly; Knowledge Representation.
-
-## 1. Introduction
-
-Over  the  last  twenty  years  or  so  a  growing  body  of  research  in  Artificial  Intelligence  has focussed on the representation of legislation and regulations (for a comprehensive discussion see (Sergot, 1991)).  The motivation for this has been twofold:  on the one hand there have been opportunities for developing advisory systems for legal practitioners; on the other hand the Law is a complex domain in which diverse modes of reasoning are employed, offering ample opportunity to test existing artificial intelligence techniques as well as to develop new ones.  A variety of paradigms have been employed for the representation of legal or para-legal expertise  with  a  view  to  modelling  legal  data  and  different  modes  of  reasoning  and developing  practical  applications. Areas  that  have  attracted research  interest  include information retrieval from large corpora of legal texts and cases, e.g. (Rissland et al., 1995; Hafner,  1987),    interpretation  of  legal  text,  e.g.  (Allen  et  al.,  1993),  argumentation,  e.g. (Prakken, 1997; Sartor, 1994), and legislative drafting, e.g. (Allen, 1982).  Current research trends include the creation of legal ontologies, that is explicit conceptualisations of the legal domain (see for example (Visser et al., 1997)).
-
-The idea of applying similar techniques to the representation of legal contracts has come up from time to time, given that contracts serve a function similar to that of legislation:  they are meant  to  regulate  the  actions  of  (usually)  two  parties  while  they  interact  (usually  in  a professional context).  The topic however has not been explored in depth.  Some authors have even seemed to suggest that the development of electronic tools to support contractual activity is uninteresting, either because the domain of investigation-contractual content-is comparatively trivial, or because the tasks associated with the domain-contractual activityare  straightforward  and  do  not  require  automation.    The  ESPRIT-funded  ALDUS  project (ALDUS, 1992) investigated the potential for developing systems to assist with the drafting of contracts.  It concluded that there were no real opportunities for developing economically useful  tools.    Our  view,  however,  is  that  such  projects  have  looked  at  the  wrong  kind  of contracts.    ALDUS  concerned  itself  almost  exclusively  with  the  Sale  of  Goods,  where contracts do tend to be very simple.  But not all contracts are as simple as that.  In other areas both contractual content and contractual activity can be extremely complex, and automated support  can  be  time-saving  and  cost-effective.    The  development  of  appropriate  tools  is challenging: knowledge  elicitation  and  representation require  the  integration  of  many paradigms from diverse areas of Artificial Intelligence and confront a number of fundamental representational problems.
-
-This  paper  reports  on  research  that  aims  to  develop  logic-based  tools  for  the  analysis  and representation of legal contracts.  Section 2 presents the areas of contractual activity where automated support might be sought and sets the context for the ensuing discussion.  Section 3 discusses  the  representation  requirements  of  different  kinds  of  tools  that  seek  to  support contract formation and contract performance.  Section 4 presents a representation scheme that has been developed for legal contract assembly.
-
-## 2. Contractual activity
-
-In  common  usage  the  term  'contract'  refers  both  to  a  legally  binding agreement between (usually)  two  parties  and  to  the document that  records  such  an  agreement,  if  it  is  put  in writing.  In this paper the terms agreement and document are used when such a distinction needs  to  be  made  explicit,  and  they  should  be  understood  as  referring  to contractual agreement and document respectively.
-
-The  common  perception  of  contractual  activity  is  that  it  can  roughly  be  regarded  as comprising  two  phases:    Contract formation ,  where  the  parties  involved  specify  their requirements of each other, negotiate on the various aspects of the exchange which will take place and come to some agreement.  And contract performance ,  where the agreement is in force and the business exchange between the parties actually takes place.  Consequently there are  two  broad  classes  of  electronic  tools  that  one  could  consider,  one  for  each  phase  of contractual activity.
-
-## Contract formation tools include those that
-
-- (i) determine whether a given agreement is legally binding (whether a legally valid offer and acceptance exist);
-- (ii) enable parties to specify their requirements and check whether these are compatible or suggest  adjustments  in  order  to  make  them  so  (one  could  choose  to  call  these negotiation tools); and, in the case of written agreements
-- (iii) assist drafters in putting the final product of the negotiation, the document, in written form (one could choose to call these drafting tools).
-
-## Contract performance tools are those that, given a specific agreement
-
-- (i) advise parties about their behaviour during the business exchange, reminding them of what needs to be done and when (one could call these diary tools);
-- (ii) monitor  the  parties'  compliance  with  the  agreement  and,  in  the  case  of  violations, suggest available remedies or advise on the possible consequences.
-
-Not  all  of  these  tools  are  useful  for  all  kinds  of  contracts.    According  to  legal  theorists  a contractual  situation  arises  when  (usually)  two  parties  enter  voluntarily  into  an  agreement, assuming  obligations  towards  each  other,  for  the  purpose  of  exchanging  some  product  or service  for  a  (usually)  financial  reward  (cf.  Atiyah,  1989;  Stone  1994).    Hence  contractual situations can be identified in business exchanges ranging from the relatively straightforward (the  purchase  of  a  ticket  for  a  bus  journey,  a  simple  Sale  of  Goods,  standardised  tenancy agreements)  to  the  complex  (the  establishment  of  a  long-term  trading  agreement  between organisations or a complex trading procedure involving third parties).  For contracts at the simple  end  of  this  scale,  electronic  support  is  likely  to  be  unwanted.    Where  contracts  are based on standard terms and conditions parties form and execute them without any apparent difficulty, when it comes to monitoring compliance the question is often whether goods were delivered on time and whether the required payment was made.  So projects such as ALDUS are  right  in  concluding  that  contractual  activity  is  hardly  in  need  of  electronic  supportinsofar as one focuses on contracts at the simplest end of the scale.
-
-The research reported in this paper has been addressing the representation of contracts at the other end of the scale, with particular attention to contracts that govern long-term exchanges
-
-between parties.  Such agreements are frequently encountered in engineering.  Most of the sample  documents  used  as  experimental  material  were  provided  through  a  collaborative project supported by British Gas.  They concern the supply of natural gas from hydrocarbon field owners.  The sample documents that were examined run to 200-300 pages each and are often  accompanied  by  drawings,  and  various  technical  appendices.    These  are  not  one-off exchanges.  The 'life span' of an agreement can be up to 20-25 years with a review every five years or so.  Consequently the contracts cover a large number of aspects.  Some are typical of contracts  in  general-such  as  a  specification  of  the  period  of  the  agreement,  delivery quantities,  prices,  billing  and  payment  arrangements,  and  so  on.    Some  are particular to engineering  contracts-such  as  provision  of  technical  services,  arrangements  for  technical reviews,  the  appointment  of  experts,  the  arbitration  of  disputes,  the  resolution  of force majeure claims,  insurance  arrangements,  warranties,  indemnities,  and  so  on.    Some  are specific to the particular kind of engineering-extraction of natural gas from a  hydrocarbon field cannot be turned on and off at will, so there are many complex provisions dealing with shutdown procedures, adjustments for over- and under-delivery, monitoring of quality, …
-
-The  size  and  complexity  of  contracts  in  these  and  other  areas  highlights  the  need  for electronic  support  in  all  aspects  of  contractual  activity.    As  regards  contract  formation,  the process  of  negotiating  and  establishing  a  new  agreement  is  long  and  requires  careful preparation.  It is typically undertaken by a team rather than one individual (and this raises problems  of  co-authorship  and  co-ordination).    The  associated  costs  often  account  for  a significant  proportion  of  the  cost  of  the  project  as  a  whole.    Though  there  is  no  formal requirement in English Law for an agreement to be put in writing in order for it to be legally binding (cf. Atiyah, 1989; Stone, 1994), complex business and engineering agreements are recorded in written form.  It is essential to provide an agreed point of reference, especially
-
-where there are large amounts of detail or where the agreement is to remain in force for a considerable  length  of  time,  during  which  adjustments  need  to  be  made  (for  example  to pricing information because of inflation or to other details if some of the circumstances of the organisations  involved  change).    During  the  negotiation  several  drafts  of  the  contractual documents  are  produced.    This  is  because  contractual  documents  are  sensitive  and  an omission or a mistake might have significant financial and legal consequences; moreover as the  agreement  covers  a  multitude  of  interrelated  aspects,  changes  in  some  parts  often propagate to other parts of the document.  There is a need both for negotiation tools and for drafting tools.
-
-It is often the case that any large organisation will have a large number of related agreements ongoing  at  any  time.    The  associated  documents  are  frequently  consulted-some  parts  of them even on a daily basis-both by experienced and junior staff with varying degrees of understanding of the legal contents of the agreement.  During the performance of the contract, force majeure procedures or even litigation are not unusual and the associated costs are very high.  Tools that enable retrieval of contract content (both values for certain parameters and the legal implications of the agreement for the parties involved) are therefore desirable.
-
-The  next  section  considers  the  representation  requirements  of  tools  that  support  contract formation and contract performance.
-
-## 3. Contractual Content and Representation Requirements
-
-The development of any advisory system for some domain requires a representation of the domain and problem-solving expertise associated with it.  This raises problems of knowledge elicitation  ( what information  to  represent  and where to  obtain  it  from)  and  knowledge representation and application ( how to represent and reason with such information). Developing contract formation and contract performance tools necessitates the elicitation and representation  of  contractual  content.    The  question  therefore  arises  of  what is contractual content.  Is it the content of agreements and/or the content of documents that is being sought? One  might  expect  that  in  the  case  of  written  agreements  the  relevant  documents  record accurately all that was agreed between the parties.  Indeed the Law of Contract (in England and in most other jurisdictions) states that if the contents of a given written agreement need to be established by a court of law, the parole evidence rule applies, that is, the courts generally hold  that  the  contractual  document  contains all that  the  parties  agreed  and  only  that  (cf. Atiyah, 1989; Stone, 1994).  However, the Law of Contract also states that what is agreed includes express terms-those which are explicitly recorded in the contractual documentand implied terms-those that one might expect to find in all contracts of a particular kind, especially where a legislative Act exists, and with which the parties agree to comply, without recording  them  explicitly  (an  example  is  the  Sale  of  Goods  Act  which  contains  provisions regarding the fitness for purpose of the goods sold).  For some purposes it might therefore be sufficient to represent the contents of contractual documents and only those, whereas for other purposes a more extensive representation is required integrating specific domain knowledge about the nature of the business exchange and relevant legislation.
-
-What follows presents informally the functions that provisions in contractual documents can have  and  considers  the  kinds  of  tools  outlined  in  the  previous  section.    The  following discussion  is  based  on  engineering  contracts  from  our  collaborative  project  but  they  are representative of contracts in general.
-
-Our sample contracts indicated that contractual provisions play the following roles, amongst others:
-
-- (i) They define various terms, that is they fix the meaning for some particular terms in the context of the agreement.  The term 'Day' for example can be defined to mean some period of time not necessarily comprising 24 hours.
-- (ii) They prescribe certain behaviour for the parties, usually under certain circumstances, or during particular periods for the duration of the contract.
-- (iii) They specify procedures that need to be followed by the parties when certain states of affairs are to be established, such as the appointment of an arbitrator to settle a dispute, the process of a financial claim, the change of delivery times and quantities, the early termination of the agreement and so on.
-- (iv) They contain formulae that are used to calculate values for various parameters, such as the price of goods during particular periods or adjustments to prices or quantities.
-- (v) They  specify  conditions,  under  which  other  provisions  apply.    These  are  sometimes referred to as secondary provisions.
-
-The list above is  not  intended  to  be  a  formal  classification  of  contractual  clauses,  nor  is  it exhaustive.    A  particular  contract  clause  may  be  of  more  than  one  of  the  aforementioned kinds;  a  provision  may  prescribe  an  obligation  and  at  the  same  time  define  a  term  (and
-
-likewise for the other kinds of functions).  The purpose of the list is to show  the different forms and functions that may need to be captured when document content is represented.
-
-A contract can be regarded as a collection of different conceptual models that are interrelated, and various paradigms can be employed to represent them .  At one level of abstraction, a contract is an organized collection of concepts .  At another level, a contract is a collection of obligations,  permissions,  entitlements,  powers  and  so  on  (Jones  et  al.,  1992,  1993,  1996; Jones, 1990).  These are notions that have been studied extensively in legal theory (Hohfeld, 1913; Kanger, 1985; Kanger et al., 1966, Lindahl, 1977; and many others).  At a third level a contract can be regarded as a collection of procedures (protocols) that specify its operational aspects (how the business exchange is to be conducted in practice).  These have temporal and action  aspects  that  are  at  the  core  of  much  current  research  in  Artificial  Intelligence, Computer  Science  and  Philosophical  Logic.    And  from  another  standpoint  still,  a  contract may be represented  as  a  collection  of  parameters  (the  parties,  the  product  in  question,  the price, the delivery quantities, the delivery date and so on).  Contractual activities are not all concerned with all aspects of a contract.  Each focuses on some particular parts.  Alternative views of contracts need to be represented and sometimes integrated into a single system to support  a  variety  of  functions.    However,  as  mentioned  earlier,  information  that  is  not contained in  contractual  documents  is  also  required  to  support  some  aspects  of  contractual activity.  In what follows we expand on this with reference to the tools outlined earlier.
-
-Those tools that are intended to identify legally binding agreements need to establish whether a  valid  offer  and  acceptance  exists.    The  Law  (whether  in  England  or  elsewhere)  specifies explicitly circumstances under which an agreement would not be legally binding (for example when it  is  formed  under duress or  when  it  involves  unlawful  activity,  or  when  one  of  the
-
-parties is a minor) (cf. Atiyah, 1989).  Such tools need therefore to operate on a representation of the notions of 'offer', 'acceptance', 'validity', 'duress', "minor" and 'unlawful activity'. This  suggests  that  the  general  problem  of  identifying  legally  binding  agreements  is  one  of classification .    Fundamental  concepts  must  be  represented  and  organized  in  a  way  that enables other concepts to be defined in terms of them or as instances of them.  This is the kind of representation task that accounts for the much of Artificial Intelligence and Law research over the past 20 years.  Logic programs have been employed for this purpose (Sergot et al., 1986) as well as a variety of other formalisms (for an overview see (Sergot, 1991)).  Gardner's work (1987) for  example  concentrated  on  offer/acceptance  representation  using  augmented transition networks  and  a  special rule-based language. The  central  problem  in  the representation  of classification  norms is  the  treatment  of open-textured concepts,  that  is concepts  whose  meaning  is  not  provided  by  a  legislative  definition  but  rather  through example  and  decisions  of  courts  of  law  (cf.  Sanders,  1991;  Bench-Capon  et  al.,  1988; Gardner, 1987; McCarty, 1980).
-
-Tools that are intended to support contract negotiation, on the other hand, have very different representation  requirements.    One  way  to  view  contracts  is  as  a  collection  of  separate  but interrelated  sub-agreements.    The  parties  involved  have  a  common  goal,  to  realise  the business exchange, to co-operate, but each wants this to happen under the 'best' terms for them.  What makes a particular arrangement good for a party is relevant to how it affects their broader business goals.  Often the goals of the two parties are not mutually satisfiable as they stand,  and  revision  (some  mutual  compromise)  is  required.    A  negotiation  tool  would therefore be useful if it allowed parties to specify their goals and determined whether these are  satisfiable,  or  would  be  satisfiable,  if  certain  terms  were  agreed;  if  resolution  of  some conflict were required then it  would be useful for the tool to indicate alternative terms (that
-
-entail  change  in  the  original  set  of  goals).    Obviously  in  its  full  generality  this  is  a  huge problem raising a whole range of issues to which various techniques could be applied.  One promising approach is to take an argumentation view of negotiation.  Argumentation has been researched intensively in recent years.  Prakken (1997) provides an excellent account of legal argumentation  in  particular  and  also  an  overview  of  recent  advances  in  argumentation generally.    As  negotiating  parties  argue  for  their  own  interests,  their  success  in  getting  the 'best' for them relies on how persuasive their arguments are.  A representation scheme that can model persuasive argument might prove useful in this context (for a discussion see (Reed, 1997) in this issue).
-
-Drafting  tools  raise  similar  concerns  as  negotiation  tools,  and  this  is  no  coincidence.    The drafters' quest is for 'well-formed' documents, and good form entails, among other things, requirements of consistency and completeness-that contractual provisions are not contradictory  and  that  they  cover  all  cases  that  they  are  intended  to  cover.    There  are theoretical proposals for defining consistency and completeness for a set of norms (Alchourron et al., 1971) but application of these methods is not a practical possibility.  It would  require  an  exhaustive  generation  of  all  the  possible  factual  circumstances  (the 'Universe of Cases' in Alchourron's and Bulygin's terms) which is quite unrealistic except in some very special cases.  The methods can be applied if we restrict attention to some very narrow,  very  specific  part  of  the  contract.    For  example  one  problem  which  we  studied concerned  the  formulation  of  a  complex  set  of  pricing  provisions  where  the  outcome  is determined by the occurrence of certain combinations of events and the times at which they occur.    Here  it  was  possible  to  generate  all  possible  combinations  of  events  and  times,  to establish that they had all been accounted for and that the provisions were not contradictory.
-
-There  is  also  the  question  of  designing  a  set  of  norms,  that  is  deciding  what  obligations, permission,  entitlements,  rights  and  so  on  should  be  included  in  the  contract.    Some automated  support  for  this  question  can  also  be  provided.    Sergot  (1997,  1998)  presents  a generalised  and  extended  version  of  the  Kanger-Lindahl  theory  of  normative  positions (Lindahl, 1977).  This a theory which attempts to apply a combination of deontic logic  (the logic  of  obligation  and  permission)  and  the  logic  of  action/agency  to  the  formalisation    of what  Hohfeld  (1913)  called  'the  fundamental  legal  conceptions':  duty,  right,  and  other complex normative concepts.  The generalised theory includes automated inference methods which have been implemented in computer programs intended to  facilitate application of the theory  to  the  analysis  of  practical  problems,  either  for  the  purpose  of  interpretation  and disambiguation of legal texts, or in the design and specification of a new set of norms.  The objective is to clarify and expand an incomplete and imprecise statement of requirements into a  precise  formal  specification  at  some  desired  level  of  detail.    The  role  of  the  system  is  to guide this process, ensuring overall consistency and identifying any possibilities that remain to be explored.
-
-It  is  difficult  to  demarcate  precisely  between  the  design  of  the  agreement  (and  hence  the object of negotiation tools) and the design of the document (and hence the object of drafting tools).  Though the document records the agreement, it is often the case that what is being negotiated is the document itself, for example in terms of the text that expresses provisions. As contractual  documents  are  taken  to  contain  all  that  certain  parties  agreed  by  Law,  it  is important for the text to express as closely as possible what the parties' intended.  Section 4 considers the drafting problem in greater detail and presents an approach that concentrates the design of documents.
-
-Contract performance tools aim to advise parties on the effects of individual provisions, once an agreement is in force, to assist in planning the daily business exchange (in terms of what actions need to be performed and when) and to monitor the parties' compliance with the contract.  We want to be able to extract parameter values, formulae for pricing or delivery times and detailed procedures as they apply in changing circumstances.  We might want to monitor the parties' compliance with provisions of the contract.  This is not a straightforward matter.  It touches on fundamental problems in the field of deontic logic-contrary to duty obligations ( for example Prakken et al., 1996; 1997), the interplay between time and obligation (for example van Eck, 1982), the proper treatment of legal competence or 'power' . 'Power' refers to the ability of a party to create legal relations: for instance, in cases of breach, to vary the terms of an agreement, to terminate the contract, or to take other prescribed remedial action, usually by means of specific pre-agreed procedures (Jones et al., 1996).  It is an open question whether such issues need to be resolved before practical applications can be attempted.
-
-## 4. Contract Drafting
-
-This section presents a representation scheme for contractual documents intended to support contract  drafting.    The  proposed  representation  has  been  adopted  in    a  prototype  system whose implementation details are documented in (Daskalopulu et al., 1995).  As mentioned in the previous section, it is hard to separate questions about agreement design from questions about document  design  and  each  aspect  of the problem  has  different representation requirements.    However  there  are  some  issues  that  are  pertinent  only  to  the  design  of documents and it is on those that this section concentrates.
-
-The approach taken here views contract drafting as conducted at two levels:
-
-- (i) at the macro-level, drafters need to establish the coarse structure of the documents, and their overall coherence;
-- (ii) at the micro-level, the emphasis is on formulating individual provisions in detail, while maintaining consistency and completeness.
-
-Contract  drafting  at  the  micro-level  is  the  area  where  questions  relevant  to  the  design  of agreements  have  been  touched  on  already.    Micro-drafting  of  the  document  concerns  the choice  of  specific  words  to  express  provisions.    There  are  proposals  in  the  literature  that address such concerns.  For example, Layman Allen has been arguing for the use of symbolic logic  in  legislative  drafting  since  1957  (Allen,  1957;  Allen  et  al.,  1993). Some  of  these proposals have been applied in practice to the drafting of legislation notably by legislatures of some  of  the  United  States.    We  have  not  explored  the  use  of  these  techniques  and  the associated  support  software  for  the  micro-drafting  of  contracts.    The  tasks  are  however identical so there seems to be no obstacle to apply them in this way.
-
-We view contract drafting at the macro-level as a form of computer-aided design, where the drafter uses basic blocks of text to construct a document in much the same way that a graphics designer uses basic geometric shapes to construct a picture.  To emphasise the use of preconstructed building blocks it might be more appropriate to call such a process 'assembly' rather than 'drafting'.  The idea is not novel.  A similar view has been expressed by other researchers  (cf.  Gordon,  1989;  Fiedler,  1985;  Lauritsen,  1992)  who  nevertheless  did  not develop it into practical applications.
-
-In engineering, for example, it is standard practice for contracts to be drafted using modelforms issued by the relevant professional bodies (the Institution of Electrical Engineers, for example, has been producing such model-forms since 1903).  These forms (e.g. (IEE, 1991)) are  typically  accompanied  by  a  detailed  commentary  which  explains  the  role  of  each individual provision in the document, its history and its overall effect.  Where model-forms are not available a pre-existing contract of a similar type is frequently used.
-
-In our terms, model-forms or pre-existing documents provide the starting point for developing generic documents These are descriptions of classes of documents.  Drafting a new contract corresponds  to  creating  a  new  document  instance  from  this  class.    Apart  from  changes  in specific data values-or 'parameters'-many of the provisions are acceptable in the standard form.    But    there  are  also  sub-units  or  passages  of  the  document  which  do  not  suit  the circumstances at hand and which require some modification.  Such modification may range from being comparatively minor, such as a change of a few words, to being drastic, where whole  passages  are  completely  re-written.    When  drafters  modify  a  given  portion  of  a document, they create in effect different versions of that portion of the document.  These are stored in the generic document and so become available as models for drafters in the future.
-
-For example Section 4-1 ('Precedence of Documents') in the model form contract (IEE, 1988) reads:
-
-Unless otherwise provided in the Contract the Conditions as amended by the Letter of  Acceptance shall prevail over any other document forming part of the Contract and in the case of conflict between the General Conditions the Special Conditions shall prevail.  Subject thereto the Specification shall prevail over any other document forming part of the Contract.
-
-But in the actual contract, a different text had been included in this section:
-
-The documents forming the Contract are to be taken as mutually explanatory of one another and in the case of ambiguities or discrepancies  the same shall be explained and adjusted by the Engineer who shall thereupon issue to the Contractor appropriate instructions in writing.
-
-In another example, Section 14-6 ('Rate of Progress') of the model-form contract (IEE, 1988), which originally reads:
-
-The  Engineer  shall  notify  the  Contractor  if  the  Engineer  decides  that  the  rate  of progress of the Works or of any Section is too slow to meet the Time for Completion and that this is not due to a circumstance for which the Contractor is entitled to an extension of time under Sub-Clause 33-1.  (emphasis added)
-
-had been modified to replace the occurrences of 'shall' and 'decides' by 'may' and 'considers' respectively.  The point is that in neither case is there any indication as to why the modified version had been preferred over the original wording.  In supporting CAD-like contract drafting it is important to record reasons for such modifications so that in subsequent drafting situations,
-
-drafters  can  make  informed  choices  about  which  versions  of  existing  provisions  to  select  to create a new document instance, and about which provisions to formulate in detail (at the microlevel, creating their own version) because none of the existing ones are appropriate.
-
-A representation scheme is therefore required for generic documents (which 'grow' over time, as new versions of their provisions are created) and document instances.  Generic documents are represented as collections of
-
-- (i) assertions (in a logic database) that reflect the structural arrangement of their contents (a document comprises parts, which in turn comprise sections, and those comprise individual provisions which can be further analysed in terms of their constituent sentences and so on) rather than the text itself;  and
-- (ii) constraints that govern the interrelationships of document sub-components.
-
-Document instances are represented as structured terms that comprise identifiers for the versions of  the  provisions  that  the  drafter  selects  or  creates.    Such  identifiers  effectively  point  to  the actual  text  files  for  those  provisions  which  are  held  separately.    The  text  of  the  document instance can be reconstructed in its entirety by a simple program that retrieves the appropriate fragments of  text,  instantiates  any  parameters  with  specific  values  and  collates  the  fragments into the final document.
-
-A natural question for such representations is what document unit to take as the basic building block.  For the engineering contracts in our implementation the section seems to be the most appropriate unit generally but a feature of the scheme is that one does not need to commit to any
-
-particular  choice  of  unit.    In  fact  different  parts  of  the  same  document  can  be  represented  at different levels of detail.
-
-The  assembly  process  is  guided  by  constraints.    These,  as  stated  earlier,  reflect  the  ways  in which  document  sub-components  are  interrelated  and  compliance  with  them  is  a  necessary requirement for the coherence of the document instance.  Such constraints reflect:
-
-- (i) Textual dependency between document sub-components, for example when one document sub-unit  contains  a  cross-reference  to  another.    If  the  first  sub-unit  is  included  in  the document instance then the referenced unit must also be included to maintain coherence.
-- (ii) 'Semantic' or 'pragmatic' dependency between document sub-components.  For example where  the  drafter  includes  a  provision  about  third  party  agreements  in  the  document instance, then a provision about third party liability must be included.  The presence of a document sub-unit may (a) necessitate the presence of another document sub-unit, or (b) preclude  it.    A  third  possibility  is  'exclusive  or'  where  exactly  one  of  a  number  of alternative sub-units must be included in the document instance.
-- (iii) General  (common  sense)  domain  requirements  (the  two  contracting  parties  must  be distinct, the document must specify the date on which the agreement comes into force, this must be later than the date on which it was drafted, ...).
-
-Constraints are represented as part of the generic document and so inherited by all document instances.    Constraint  checking  can  be  done  at  the  drafter's  request  or  automatically  in  an incremental fashion as the assembly process takes place.  The drafter can choose to be notified about the result of checking by messages detailing pathological features or to have compliance
-
-with constraints automatically  enforced.  Further details of the system are provided in (but cf. Daskalopulu et al., 1995).
-
-## 5. Concluding Remarks
-
-This  paper  discussed  the  development  of  tools  to  assist  in  various  aspects  of  contractual activity, both in relation to contract formation and in relation to contract performance.  Such tools  require  different  information  to  be  represented:  domain  knowledge,  the  relevant legislation  (the  Law  of  Contract),  the  parties'  beliefs,  preferences  and  business  goals.    The common ground for all tools is a representation of contractual content.  This term lends itself to ambiguity.  Contractual content can refer to the content of the agreement between parties and/or  to  the  content  of  the  document  that  records  the  agreement.    Though  contractual documents are supposed to reflect the corresponding agreement accurately, it is not unusual for them to be vague about aspects that one would expect to be specified explicitly, such as sanctions in the case of violations.
-
-Some aspects of contractual activity can be supported effectively using contractual documents as the primary sources of information.  We described a representation scheme that supports contract drafting as a CAD-like assembly process subject to constraints.  The approach does not  represent  the  detailed  text  but  rather  the  structure  and  the  interrelationships  between constituent  parts  of  contractual  documents.    It  offers  practical  support  wherever  contract drafting  is  done  on  the  basis  of  previous  examples  or  model  forms.    We  refer  to  this  as drafting at  the  macro-level.    Contract  drafting  at  the  micro-level,  that  is  the  formulation  of detailed provisions presents a real challenge.  A number of tools can be provided for certain
-
-tasks  and  we  mentioned  some,  but  in  general  it  is  difficult  to  demarcate  the  design  of  the document from the design of the agreement.  There is an unlimited range of possible tools that could be deployed to support agreement negotiation and design.
-
-Some projects in the past have concluded that there is no significant demand for automated tools that deal with legal contracts.  We argue that this is not so-if we consider the kind of contracts that are typically encountered in engineering projects, long-term business agreements and complex third party trading arrangements.
-
-## 6. References
-
-Alchourrón, C. E. &amp; Bulygin, E. (1971).  Normative Systems.  Springer-Verlag, New York.
-
-- ALDUS (1992).  The ALDUS project:  Artificial Legal Draftsman for Use in Sales, ESPRIT Commission.
-- Allen,  L.  E.  (1957).    Symbolic  Logic:    A  Razor-Edged  Tool  for  Drafting  and  Interpreting Legal Documents. The Yale Law Journal . 66. 833-879.
-- Allen,  L.  E.  (1982).    Towards  a  Normalized  Language  to  Clarify  the  Structure  of  Legal Discourse.    In  Martino  (ed.) Deontic  Logic,  Computational  Linguistics  and  Legal Information Systems , North-Holland.
-- Allen,  L.  E.  &amp;  Saxon,  C.  S.  (1993).    A-Hohfeld:    A  Language  for  Robust  Structural Representation of Knowledge in the Legal Domain to Build Interpretation-Assistance Expert  Systems.    In  Meyer  &amp;  Wieringa  (eds) Deontic  Logic  in  Computer  Science: Normative Systems Specification , John Wiley &amp; Sons.
-- Atiyah, P. S. (1989). An introduction to the Law of Contract..  Clarendon Press (4th edition), Oxford.
-
-- Bench-Capon, T. J. M. &amp; Sergot, M. J. (1988).  Towards a rule-based representation of open texture in law. In Computer Power and Legal Language , Quorum Books, New York.
-- Daskalopulu, A. &amp; Sergot, M. J. (1995).  A Constraint-Driven System for Contract Assembly. In Proceedings  of  the  Fifth  International  Conference  on  Artificial  Intelligence  and Law , University of Maryland, College Park, ACM Press.  62-69.
-- deKleer, J. (1986).  An assumption based TMS. Artificial Intelligence . 28. 127-162.
-- van Eck, J. A. (1982).  A System of Temporally Relative Modal and Deontic Predicate Logic and its Philosophical Applications. Logique et Analyse . 100 .  249-381.
-- Fiedler, H. (1985).  Expert Systems as a Tool for Drafting Legal Decisions.  In Martino (ed.) Proceedings of the Second International Conference on Logic, Informatics and Law , Florence.  265-274.
-- Gardner,  A.  (1987).    An  Artificial  Intelligence  Approach  to  Legal  Reasoning.    MIT  Press, Cambridge Massachusetts.
-- Gordon, T. F. (1992).  A Theory Construction Approach to Legal Document Assembly.  In Martino (ed.) Expert Systems in Law , Elsevier Publishers B.V.
-- Hafner,  C.  D.  (1987).    Conceptual  Organization  of  Case  Law  Knowledge  Bases.    In Proceedings of the First International Conference on Artificial Intelligence and Law, Boston Massachussetts , ACM Press.
-- Hohfeld,  W.  N.  (1913).    Some  Fundamental  Legal  Conceptions  as  Applied  in  Judicial Reasoning. Yale Law Journal . 23.
-- IEE (1988).  Model Form of General Conditions of Contracts:  Home or Overseas Contracts with Erection (MF/1).  The Institution of Electrical Engineers, London.
-
-- IEE (1991).  Model Form of General Conditions of Contract:  Home or Overseas Contracts for the Supply of Electrical of Mechanical Plant (MF/2).  The Institution of Electrical Engineers, London.
-- Jones,  A.  J.  I.  (1990).    Deontic  Knowledge  and  Legal  Knowledge  Representation. Ratio Juris . 3:2 .  237-244.
-- Jones, A. J. I. &amp; Sergot, M. J. (1992).  Deontic Logic in the Representation of Law: Towards a Methodology. Artificial Intelligence and Law . 1:1 .  45-64.
-- Jones,  A.  J.  I.  &amp;  Sergot,  M.  J.  (1993).    On  the  Characterisation  of  Law  and  Computer Systems:  The Normative Systems Perspective.  In Meyer &amp; Wieringa (eds) Deontic Logic in Computer Science: Normative Systems Specification , John Wiley &amp; Sons.
-- Jones, A. J. I. &amp; Sergot, M. J. (1996).  A Formal Characterisation of Institutionalized Power. Journal of the Interest Group in Pure and Applied Logics. 4:3 .  429-445.
-- Also in: ValdØ s, Krawietz, von Wright, Zimmerling (eds), Normative Systems in Legal and Moral Theory , Duncker &amp; Humblot, Berlin.  1997.
-- Kanger, S. (1985).  On Realization of Human Rights.  In Holmstrom &amp; Jones (eds) Action, Logic and Social Theory .  Acta Philosophica Fennica, 38.
-- Kanger, S. &amp; Kanger, H. (1966).  Rights and Parliamentarism. Theoria . 32. 85-115.
-- Lauritsen, M. (1992).  Technology Report:  Building Legal Practice Systems with Today's Commercial Authoring Tools. Artificial Intelligence and Law . 1:1 .  87-102.
-- Lindhal,  L.  (1977).    Position  and  Change-A  Study  in  Law  and  Logic. Synthese  Library , 112 , D. Reidel, Dordrecht.
-- McCarty,  L.  T.  (1980).    The  TAXMAN  Project:  Towards  a  Cognitive  Theory  of  Legal Argument.  In Niblett (ed.) Computer Science and Law , Cambridge University Press, New York.
-
-- Prakken, H. (1997).  Logical Tools for Modelling Legal Argument:  A Study in Defeasible Reasoning in Law.  Kluwer, Dordrecht.
-- Prakken, H. &amp; Sergot, M. J. (1996).  Contrary-to-duty Obligations. Studia Logica . 57:(1/2). 91-115.
-- Prakken, H. &amp;  Sergot, M.  J.  (1997).    Dyadic  Deontic  Logic  and  Contrary-to-Duty Obligations.  In Nute (ed.) Defeasible Deontic Logic , Kluwer, The Netherlands.
-- Reed, C. A. (1997).  Representing and Applying Knowledge for Argumentation in a Social Context. AI and Society . This issue.
-- Rissland, E. L. &amp; Daniels, J. L. (1995).  A Hybrid CBR-IR Approach to Legal Information Retrieval. In Proceedings  of  the Fifth International Conference  on  Artificial Intelligence and Law , University of Maryland, College Park, ACM Press.
-- Sanders,  K.  E.  (1991).    Representing  and  reasoning  about  open-textured  predicates.    In Proceedings of the Third International Conference on Artificial Intelligence and Law, Oxford, ACM Press.
-- Sartor, G. (1994).  A formal model of legal argumentation. Ratio Juris. 7. 212-226.
-- Sergot, M. J. (1991).  The Representation of Law in Computer Programs.  In Bench-Capon (ed.) Knowledge-Based Systems and Legal Applications , Academic Press.
-- Sergot, M. J. (1997).  A Computational Theory of Normative Positions.  Technical Report, Department of Computing, Imperial College London.  Submitted for publication.
-- Sergot,  M.  J.  (1998).    A  Method  for  Automating  the  Analysis  of  Normative  Positions.    In Proceedings  of  the  Fourth  International  Workshop  on  Deontic  Logic  in  Computer Science , Bologna, Italy (January 1998).
-
-- Sergot, M. J., Sadri, F., Kowalski, R. A., Kriwaczek, F., Hammond, P.&amp; Cory, H. T. (1986). The British Nationality Act as a Logic Program. Communications of the ACM. 29:5. 370-386.
-- Stone, R. (1994). Contract Law. Cavendish Publishing Ltd, London.
-- Visser,  P.  &amp;  Bench-Capon,  T.  J.  M.  &amp;  van  den  Herik,  J.  (1997).    A  Method  for Conceptualising  Legal  Domains:  An  Example  from  the  Dutch  Unemployment Benefits Act. Artificial Intelligence and Law . 5. 207-242.
+                 A Natural Policy Gradient
+
+
+                                   Sham Kakade
+                      Gatsby Computational Neuroscience Unit
+                     17 Queen Square, London, UK WC1N 3AR
+                            http: //www.gatsby.ucl.ac.uk
+                               sham @gatsby.ucl.ac.uk
+
+
+
+                                      Abstract
+
+        We provide a natural gradient method that represents the steepest
+        descent direction based on the underlying structure of the param-
+        eter space. Although gradient methods cannot make large changes
+        in the values of the parameters, we show that the natural gradi-
+        ent is moving toward choosing a greedy optimal action rather than
+        just a better action. These greedy optimal actions are those that
+        would be chosen under one improvement step of policy iteration
+        with approximate, compatible value functions, as defined by Sut-
+        ton et al. [9]. We then show drastic performance improvements in
+        simple MDPs and in the more challenging MDP of Tetris.
+
+
+1    Introduction
+There has been a growing interest in direct policy-gradient methods for approximate
+planning in large Markov decision problems (MDPs). Such methods seek to find
+a good policy 7r among some restricted class of policies, by following the gradient
+of the future reward. Unfortunately, the standard gradient descent rule is non-
+covariant. Crudely speaking, the rule !:l.()i = oJ] f / a()i is dimensionally inconsistent
+since the left hand side has units of ()i and the right hand side has units of l/()i
+(and all ()i do not necessarily have the same dimensions).
+In this paper, we present a covariant gradient by defining a metric based on the
+underlying structure of the policy. We make the connection to policy iteration
+by showing that the natural gradient is moving toward choosing a greedy optimal
+action. We then analyze the performance of the natural gradient in both simple
+and complicated MDPs. Consistent with Amari's findings [1], our work suggests
+that the plateau phenomenon might not be as severe using this method.
+
+2    A Natural Gradient
+A finite MDP is a tuple (S, So, A, R, P) where: S is finite set of states, So is a start
+state, A is a finite set of actions, R is a reward function R : S x A --+ [0, Rmax], and
+P is the transition model. The agent 's decision making procedure is characterized
+by a stochastic policy 7r(a; s) , which is the probability of taking action a in state
+s (a semi-colon is used to distinguish the random variables from the parameters of
+the distribution). We make the assumption that every policy 7r is ergodic, ie has a
+well-defined stationary distribution p7f. Under this assumption, the average reward
+(or undiscounted reward) is 1]( 7r) == 2:: s ,a p7f (s )7r(a; S)R(s, a), the state-action value
+is Q7f(S, a) == E7f{2:::oR(st,at) -1](7r)lso = s,ao = a} and the value function is
+J7f(s) == E7f(a' ;s) {Q7f(s, a')}, where and St and at are the state and action at time t.
+We consider the more difficult case where the goal of the agent is to find a policy that
+maximizes the average reward over some restricted class of smoothly parameterized
+policies, fr = {7rO : 8 E ~m}, where tro represents the policy 7r(a; S, 8).
+The exact gradient of the average reward (see [8, 9]) is:
+
+                          \11](8) = Lp7f(s)\17r(a;s, 8)Q7f(s ,a)                           (1)
+                                       s,a
+
+where we abuse notation by using 1](8) instead of 1](7ro). The steepest descent
+direction of 1](8) is defined as the vector d8 that minimizes 1](8 + d8) under
+the constraint that the squared length Id812 is held to a small constant. This
+squared length is defined with respect to some positive-definite matrix G(8), ie
+Id812 == 2::ij Gij (8)d8 i d8j = d8 T G(8)d8 (using vector notation). The steepest de-
+scent direction is then given by G- 1 \11](8) [1]. Standard gradient descent follows
+the direction \11](8) which is the steepest descent under the assumption that G(8)
+is the identity matrix, I. However, this as hoc choice of a metric is not necessarily
+appropriate. As suggested by Amari [1], it is better to define a metric based not
+on the choice of coordinates but rather on the manifold (ie the surface) that these
+coordinates parameterize. This metric defines the natural gradient.
+Though we slightly abuse notation by writing 1](8), the average reward is technically
+a function on the set of distributions {7rO : 8 E ~m}. To each state s, there
+corresponds a probability manifold, where the distribution 7r(a; S, 8) is a point on
+this manifold with coordinates 8. The Fisher information matrix of this distribution
+7r(a; s,8) is
+                    F (8) = E               [81o g 7r(a; s,8) olog 7r(a; s,8)]             (2)
+                      s    -    7f(a;s,O)          08 i            08 j        '
+
+and it is clearly positive definite. As shown by Amari (see [1]), the Fisher infor-
+mation matrix, up to a scale, is an invariant metric on the space of the parameters
+of probability distributions. It is invariant in the sense that it defines the same
+distance between two points regardless of the choice of coordinates (ie the param-
+eterization) used, unlike G = I.
+Since the average reward is defined on a set of these distributions , the straightfor-
+ward choice we make for the metric is:
+
+
+                                                                                           (3)
+
+where the expectation is with respect to the stationary distribution of 7ro. Notice
+that although each Fs is independent of the parameters of the MDP's transition
+model, the weighting by the stationary distribution introduces dependence on these
+parameters. Intuitively, Fs (8) measures distance on a probability manifold corre-
+sponding to state sand F(8) is the average such distance. The steepest descent
+direction this gives is:
+                                                                                           (4)
+3     The Natural Gradient and Policy Iteration
+We now compare policy improvement under the natural gradient to policy iteration.
+For an appropriate comparison, consider the case in which Q7r (s, a) is approximated
+by some compatible function approximator r(s ,a;w) parameterized by w [9, 6].
+
+3.1     Compatible Function Approximation
+
+For vectors (), w E ~m, we define:
+                    'IjJ (s , a)7r = \7logn(a;s,()),      r(s,a;w) = wT 'ljJ7r(s,a)                        (5)
+where [\7logn(a ;s, ())]i = 8logn(a;s, ())!8()i. Let w minimize the squared error
+f(W, n) == L,s ,a p7r (s )n(a; s, ())(r (s, a; w) _Q7r (s, a))2. This function approximator is
+compatible with the policy in the sense that if we use the approximations f7r (s, a; w)
+in lieu of their true values to compute the gradient (equation 1), then the result
+would still be exact [9, 6] (and is thus a sensible choice to use in actor-critic schemes).
+Theorem 1. Let w minimize the squared error f(W, no). Then
+
+                                               w = ~1}(()) .
+Proof. Since w minimizes the squared error, it satisfies the condition 8f!8wi = 0,
+which implies:
+
+                   LP7r(s)n(a;s,())'ljJ7r (s,a)('ljJ7r (s,a?w - Q7r(s,a)) = O.
+                   s,a
+or equivalently:
+
+
+      s,a                                                   s,a
+By definition of 'ljJ7r, \7n(a;s,()) = n(a;s,())'ljJ7r(s,a) and so the right hand side is
+equal to \71}. Also by definition of 'ljJ7r, F( ()) = L,s ,a p7r (s )n( a; s, ()) 'ljJ7r (s, a)'ljJ7r (s, a) T.
+Substitution leads to:
+                                     F(())w = \71}(()) .
+Solving for w gives w = F(()) - l\71}(()), and the result follows from the definition of
+the natural gradient.                                                                 D
+
+Thus, sensible actor-critic frameworks (those using f7r(s , a; w)) are forced to use the
+natural gradient as the weights of a linear function approximator. If the function ap-
+proximation is accurate, then good actions (ie those with large state-action values)
+have feature vectors that have a large inner product with the natural gradient.
+
+3.2     Greedy Policy Improvement
+
+A greedy policy improvement step using our function approximator would choose
+action a in state s if a E argmaxa, f7r (s, a'; w). In this section, we show that the
+natural gradient tends to move toward this best action, rather than just a good
+action.
+Let us first consider policies in the exponential family (n(a ;s, ()) IX exp(()T¢sa)
+where ¢sa is some feature vector in ~m). The motivation for the exponential family
+is because it has affine geometry (ie the flat geometry of a plane), so a translation of
+a point by a tangent vector will keep the point on the manifold. In general, crudely
+speaking, the probability manifold of 7r(a; s, 0) could be curved, so a translation of
+a point by a tangent vector would not necessarily keep the point on the manifold
+(such as on a sphere). We consider the general (non-exponential) case later.
+We now show, for the exponential family, that a sufficiently large step in the natural
+gradient direction will lead to a policy that is equivalent to a policy found after a
+greedy policy improvement step.
+Theorem 2. For 7r(a; s, 0) ex: exp(OT 1>sa), assume that ~'TJ(O) is non-zero and that
+w minimizes the approximation error. Let7roo (a;s) =lima-+oo7r(a;s , O+a~'TJ(O)).
+Then 7r 00 (a; s) 1- 0 if and only if a E argmaxa, F' (s, a'; w).
+
+Proof. By the previous result, F'(s,a ;w) = ~'TJ(O)T'lj;7r(s,a). By definition of
+7r(a; s, 0) , 'lj;7r (s, a) = 1>sa - E 7r (a';s ,O) (1)sa'). Since E 7r (a';s,O) (1)sa') is not a function
+of a, it follows that
+
+                        argmax a , r(s, a'; w) = argmax a , ~'TJ(Of 1>sa' .
+
+After a gradient step, 7r(a; s, 0 + a~'TJ(O)) ex: exp(OT 1>sa + a~'TJ(O)T 1>sa). Since
+~'TJ(O) 1- 0, it is clear that as a -+ 00 the term ~'TJ(O)T 1>sa dominates , and so
+7r 00 (a, s) = 0 if and only if a f{. argmax a , ~ 'TJ( 0) T 1>sa' .                D
+
+It is in this sense that the natural gradient tends to move toward choosing the best
+action. It is straightforward to show that if the standard non-covariant gradient
+rule is used instead then 7r oo (a; s) will select only a better action (not necessarily
+the best), ie it will choose an action a such that F'(s ,a;w) > E 7r (a';s){F'(s,a';w)}.
+Our use of the exponential family was only to demonstrate this point in the extreme
+case of an infinite learning rate.
+Let us return to case of a general parameterized policy. The following theorem shows
+that the natural gradient is locally moving toward the best action, determined by
+the local linear approximator for Q7r (s, a).
+Theorem 3. Assume that w minimizes the approximation error and let the update
+to the parameter be 0' = 0 + a~'TJ(O). Then
+                       7r(a; s, 0') = 7r(a; s, 0)(1 + r(s , a; w)) + 0(a 2 )
+
+Proof. The change in 0, ,6.0, is a~'TJ(O), so by theorem 1, ,6.0 = aw. To first order,
+
+                   7r(a; s, 0')        7r(a; s, 0) + fJ7r(a~;, O)T ,6.0 + 0(,6.0 2 )
+
+                                       7r(a; s, 0)(1 + 'lj;(s, af ,6.0) + 0(,6.0 2 )
+                                       7r(a; s, 0)(1 + a'lj;(s, af w) + 0(a 2 )
+                                       7r(a;s,O)(l + ar(s,a;w)) + 0(a 2 ) ,
+where we have used the definition of 'lj; and f.                                                       D
+
+It is interesting to note that choosing the greedy action will not in general improve
+the policy, and many detailed studies have gone into understanding this failure [3].
+However, with the overhead of a line search, we can guarantee improvement and
+move toward this greedy one step improvement. Initial improvement is guaranteed
+since F is positive definite.
+4   Metrics and Curvatures
+
+Obviously, our choice of F is not unique and the question arises as to whether or
+not there is a better metric to use than F. In the different setting of parameter
+estimation, the Fisher information converges to the Hessian, so it is asymptotically
+efficient [1], ie attains the Cramer-Rao bound. Our situation is more similar to
+the blind source separation case where a metric is chosen based on the underlying
+parameter space [1] (of non-singular matrices) and is not necessarily asymptotically
+efficient (ie does not attain second order convergence). As argued by Mackay [7],
+one strategy is to pull a metric out of the data-independent terms of the Hessian (if
+possible), and in fact, Mackay [7] arrives at the same result as Amari for the blind
+source separation case.
+Although the previous sections argued that our choice is appropriate, we would like
+to understand how F relates to the Hessian V 2 TJ(B), which, as shown in [5], has the
+form:
+
+
+           sa
+                                                                                   (6)
+Unfortunately, all terms in this Hessian are data-dependent (ie are coupled to state-
+action values) . It is clear that F does not capture any information from these last
+two terms, due to their VQ7r dependence. The first term might have some relation
+to F due the factor of V 2 7f. However, the Q values weight this curvature of our
+policy and our metric is neglecting such weighting.
+Similar to the blind source separation case, our metric clearly does not necessarily
+converge to the Hessian and so it is not necessarily asymptotically efficient (ie does
+not attain a second order convergence rate). However, in general, the Hessian will
+not be positive definite and so the curvature it provides could be of little use until
+B is close to a local maxima. Conjugate methods would be expected to be more
+efficient near a local maximum.
+
+5   Experiments
+
+We first look at the performance of the natural gradient in a few simple MDPs
+before examining its performance in the more challenging MDP of Tetris. It is
+straightforward to estimate F in an online manner, since the derivatives V log 7f
+must be computed anyway to estimate VTJ(B). If the update rule
+
+                     f f- f + V log 7f(at; St,B)Vlog7f(at; St,Bf
+is used in a T-Iength trajectory, then fiT is a consistent estimate of F. In our
+first two examples, we do not concern ourselves with sampling issues and instead
+numerically integrate the exact derivative (B t = Bo + J~ VTJ(BddB). In all of our
+simulations, the policies tend to become deterministic (V log 7f -+ 0) and to prevent
+F from becoming singular, we add about 10- 3 1 at every step in all our simulations.
+We simulated the natural policy gradient in a simple I-dimensional linear quadratic
+regulator with dynamics x(t + 1) = .7x(t) + u(t) + E(t) and noise distribution
+E ~ G(O,l).       The goal is to apply a control signal u to keep the system at
+x = 0, (incurring a cost of X(t)2 at each step). The parameterized policy used
+was 7f(u; x, B) ex exp(Blx 2 + B2X). Figure lA shows the performance improvement
+when the units of the parameters are scaled by a factor of 10 (see figure text). No-
+tice that the time to obtain a score of about 22 is about three orders of magnitude
+          -
+              '--''''' '~''• ~......
+                                        unsealed      -
+                                        $=10 s=1 ......
+                                         1        2
+                                   -'::',$,=1 $2=10 _. - -
+                                                                    B 8'
+                                                                      ~a
+                                                                       i
+                                                                         C 21
+                                                                     (' ,\2
+                                                                              "E 1 Ir _ _ _ _ _ _
+                                                                              ~
+                                                                                                                    rl
+                                                                                                                    I
+                                                                                                                  -11
+                                                                                                                             D 5
+                                                                                                                              ',0    ..
+
+
+                                       ":.                           ~R=O)    ~0 0
+                                                                                '::---0~5C------:-'-----:-':
+                                                                                                          '5C------::'
+                                                                                                                    2                     "
+
+
+                                        \: .:-.                      h        ~21             time x 10
+                                                                                                          7
+                                                                                                              /:--------1.   Q-               "\"
+
+                                             "::>:"                  W        ~, L------------                -         -                           .\';
+
+                                                                      ~                                                             L---::-,::::;·7J~========-~
+                                             ~2:=':3=::l4'
+ 20                                                       --"-,-,
+      L       _2
+               -=----':
+                     -'':::::;0:::=:::'                                           0 a   0.5   1     1.5       2   2.5   3                                  5   8.,   10   15
+                            I09 10 (time)                                                         time
+
+Figure 1: A) The cost Vs. 10glo(time) for an LQG (with 20 time step trajectories).
+The policy used was 7f(u; x, ()) ex: exp(()lslX2 + ()2S2X) where the rescaling constants,
+Sl and S2, are shown in the legend. Under equivalent starting distributions (()lSl =
+()2S2 = -.8) , the right-most three curves are generated using the standard gradient
+method and the rest use the natural gradient. B) See text. C top) The average
+reward vs. time (on a 107 scale) of a policy under standard gradient descent using
+the sigmoidal policy parameterization (7f(I; s, ()i) ex: exp(()i)/(1 + exp(()i)), with the
+initial conditions 7f(i , 1) = .8 and 7f(j, 1) = .1. C bottom) The average reward vs.
+time (unscaled) under standard gradient descent (solid line) and natural gradient
+descent (dashed line) for an early window of the above plot. D) Phase space plot
+for the standard gradient case (the solid line) and the natural gradient case (dashed
+line) .
+
+
+faster. Also notice that the curves under different rescaling are not identical. This
+is because F is not an invariant metric due to the weighting by Ps.
+The effects of the weighting by p(s) are particularly clear in a simple 2-state MDP
+(Figure IB), which has self- and cross-transition actions and rewards as shown.
+Increasing the chance of a self-loop at i decreases the stationary probability of j.
+Using a sigmoidal policy parameterization (see figure text) and initial conditions
+corresponding to p(i) = .8 and p(j) = .2, both self-loop action probabilities will ini-
+tially be increased under a gradient rule (since one step policy improvement chooses
+the self-loop for each state). Since the standard gradient weights the learning to
+each parameter by p(s) (see equation 1), the self-loop action at state i is increased
+faster than the self loop probability at j, which has the effect of decreasing the ef-
+fective learning-rate to state j even further. This leads to an extremely fiat plateau
+with average reward 1 (shown in Figure lC top), where the learning for state j is
+thwarted by its low stationary probability. This problem is so severe that before the
+optimal policy is reached p(j) drops as low as 10- 7 from its initial value of .2, which
+is disastrous for sampling methods. Figure 1 C bottom shows the performance of
+the natural gradient (in a very early time window of Figure lC top). Not only is
+the time to the optimal policy decreased by a factor of 107 , the stationary distri-
+bution of state i never drops below .05. Note though the standard gradient does
+increase the average reward faster at the start, but only to be seduced by sticking
+at state i. The phase space plot in Figure ID shows the uneven learning to the
+different parameters, which is at the heart of the problem. In general, if a table
+lookup Boltzmann policy is used (ie 7f( a; s , ()) ex: exp( () sa)), it is straightforward to
+show that the natural gradient weights the components of ~'fJ uniformly (instead of
+using p(s)), thus evening evening out the learning to all parameters.
+The game of Tetris provides a challenging high dimensional problem. As shown in
+[3], greedy policy iteration methods using a linear function approximator exhibit
+drastic performance degradation after providing impressive improvement (see [3]
+for a description of the game, methods , and results). The upper curve in Figure2A
+replicates these results. Tetris provides an interesting case to test gradient methods,
+A 5000, - - - - - - - - - - - - - ,         B 7000, - - - - - - - - - - , - - - - ,   C
+      4000                                     6000
+
+                                               5000
+ ~3000
+                                             ~4000
+ ·0
+ a... 2000                                   &3000
+
+                                               2000
+      1000
+                                               1000
+
+                                                                                          500      1000      1500   2000
+                 1 I09,O( lteralions)   2                                                       Iterations
+
+Figure 2: A) Points vs. 10g(Iterations) . The top curve duplicates the same results
+in [3] using the same features (which were simple functions of the heights of each
+column and the number of holes in the game). We have no explanation for this per-
+formance degradation (nor does [3]). The lower curve shows the poor performance
+of the standard gradient rule. B) The curve on the right shows the natural policy
+gradient method (and uses the biased gradient method of [2] though this method
+alone gave poor performance). We found we could obtain faster improvement and
+higher asymptotes if the robustifying factor of 10- 3 I that we added to F was more
+carefully controlled (we did not carefully control the parameters). C) Due to the
+intensive computational power required of these simulations we ran the gradient in a
+smaller Tetris game (height of 10 rather than 20) to demonstrate that the standard
+gradient updates (right curve) would eventually reach the same performance of the
+natural gradient (left curve).
+
+
+which are guaranteed not to degrade the policy. We consider a policy compatible
+with the linear function approximator used in [3] (ie 7f(a ;s, (}) ex: exp((}T¢sa) where
+¢sa are the same feature vectors). The features used in [3] are the heights of each
+column, the differences in height between adjacent columns, the maximum height,
+and the number of 'holes' . The lower curve in Figure 2A shows the particularly
+poor performance of the standard gradient method. In an attempt to speed learn-
+ing, we tried a variety of more sophisticated methods to no avail, such as conjugate
+methods, weight decay, annealing, the variance reduction method of [2], the Hes-
+sian in equation 6, etc. Figure 2B shows a drastic improvement using the natural
+gradient (note that the timescale is linear). This performance is consistent with our
+theoretical results in section 3, which showed that the natural gradient is moving
+toward the solution of a greedy policy improvement step. The performance is some-
+what slower than the greedy policy iteration (left curve in Figure 2B) which is to be
+expected using smaller steps. However, the policy does not degrade with a gradient
+method. Figure 2 shows that the performance of the standard gradient rule (right
+curve) eventually reaches the the same performance of the natural gradient, in a
+scaled down version of the game (see figure text).
+
+
+6            Discussion
+
+Although gradient methods cannot make large policy changes compared to greedy
+policy iteration, section 3 implies that these two methods might not be that dis-
+parate, since a natural gradient method is moving toward the solution of a policy
+improvement step. With the overhead of a line search, the methods are even more
+similar. The benefit is that performance improvement is now guaranteed, unlike in
+a greedy policy iteration step.
+It is interesting, and unfortunate, to note that the F does not asymptotically con-
+verge to the Hessian, so conjugate gradient methods might be more sensible asymp-
+totically. However, far from the converge point, the Hessian is not necessarily
+informative, and the natural gradient could be more efficient (as demonstrated in
+Tetris). The intuition as to why the natural gradient could be efficient far from the
+maximum, is that it is pushing the policy toward choosing greedy optimal actions.
+Often, the region (in parameter space) far from from the maximum is where large
+performance changes could occur. Sufficiently close to the maximum, little perfor-
+mance change occurs (due to the small gradient), so although conjugate methods
+might converge faster near the maximum, the corresponding performance change
+might be negligible. More experimental work is necessary to further understand the
+effectiveness of the natural gradient.
+Acknowledgments
+We thank Emo Todorov and Peter Dayan for many helpful discussions. Funding is
+from the NSF and the Gatsby Charitable Foundation.
+
+References
+ [I] S. Amari. Natural gradient works efficiently in learning.     Neural Computation,
+     10(2):251- 276, 1998.
+ [2] J. Baxter and P. Bartlett. Direct gradient-based reinforcement learning. Technical
+     report, Australian National University, Research School of Information Sciences and
+     Engineering, July 1999.
+ [3] D. P. Bertsekas and J. N. Tsitsiklis. Neuro-Dynamic Programming. Athena Scientific,
+     1996.
+ [4] P. Dayan and G. Hinton. Using em for reinforcement learning. Neural Computation,
+     9:271- 278 , 1997.
+ [5] S. Kakade. Optimizing average reward using discounted reward. COLT. in press.,
+     200l.
+ [6] V. Konda and J. Tsitsiklis. Actor-critic algorithms. Advances in N eural Information
+     Processing Systems, 12, 2000.
+ [7] D . MacKay. Maximum likelihood and covariant algorithms for independent compo-
+     nent analysis. Technical report , University of Cambridge, 1996.
+ [8] P. Marbach and J . Tsitsiklis. Simulation-based optimization of markov reward pro-
+     cesses. Technical report, Massachusetts Institute of Technology, 1998.
+ [9] R. Sutton, D. McAllester, S. Singh, and Y. Mansour. Policy gradient methods for
+     reinforcement learning with function approximation. Neural Information Processing
+     Systems, 13, 2000.
+[10] L. Xu and M. 1. Jordan. On convergence properties of the EM algorithm for gaussian
+     mixtures. Neural Computation, 8(1):129- 151, 1996.
+
