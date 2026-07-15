@@ -212,7 +212,7 @@ Where classical solutions exist, RL underperforms. The base-stock policy remains
 \subsection{Real-Time Bidding}
 \label{sec:rtb}
 
-Real-time bidding for display advertising presents a budget pacing problem, where an advertiser must allocate a fixed budget $B_0$ across a campaign of $T$ auctions to maximize total conversions. Each impression is a second-price auction; the advertiser submits a bid and pays the second-highest bid if they win. The challenge is that bidding aggressively depletes budget early, while conservative bidding leaves value on the table.
+Real-time bidding for display advertising presents a budget pacing problem, where an advertiser must allocate a fixed budget $B_0$ across a campaign of $T$ auctions to maximize total conversions. Each impression is a second-price auction; the advertiser submits a bid and pays the second-highest bid if they win. The challenge is that bidding aggressively depletes budget early, while conservative bidding forgoes attainable value.
 
 \citet{Wu2018rtb} formalized this as an MDP with state $s_t = (B_t, t, w_t)$, where $B_t$ is remaining budget, $t$ is auctions remaining, and $w_t$ is the recent win rate. The action is a bid multiplier $\lambda_t \in [\lambda_{\min}, \lambda_{\max}]$, so the actual bid is $b_t = \lambda_t \cdot \bar{b}$, where $\bar{b}$ is a base bid calibrated to the estimated value-per-impression. The clearing price $c_t$ is drawn from a distribution $F_c$ estimated from historical data; the advertiser wins if $b_t \geq c_t$. The per-auction reward is:
 \begin{equation}

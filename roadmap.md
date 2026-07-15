@@ -8,11 +8,43 @@ research lives in the `docs/` wiki (indexed at `docs/index.md`).
 
 ## STATUS
 
-_Updated 2026-07-14._
+_Updated 2026-07-15._
 
-- **Where the paper is.** arXiv survey, Phases A-C closed. `main.pdf` builds at 265pp with
-  zero undefined references. The 2026-07-14 judge-audit triage cycle
-  (`audits/_TRIAGE_2026-07-14.md`) is fully closed: all 20 ranked items fixed or decided.
+- **Where the paper is.** arXiv survey, Phases A-C closed. `main.pdf` builds at 269pp with
+  zero undefined references and zero undefined citations. The 2026-07-14 judge-audit triage
+  cycle (`audits/_TRIAGE_2026-07-14.md`) is fully closed: all 20 ranked items fixed or
+  decided. A PDF was handed to the user for coauthor circulation on 2026-07-15.
+- **Landed 2026-07-15 (ch12 sims + paper-wide de-strain sweep, commits 16bcacf..HEAD on
+  `main`).** ch12 gained the two-echelon supply-chain sim with a learned NN world model
+  (16bcacf, fresh cold-cache audit 25%) and a per-period-regret panel (06d2bdc); tocdepth set
+  to 2 so the ToC omits subsubsections (2089b95); three prose passes over ch12 (680d64f,
+  ea25624, 2a63fc9) that also authored the Phase 3 plain-construction rules P1-P6 in
+  `docs/bloat.md`. Then the sweep those rules were written for, see below.
+- **De-strain sweep DONE 2026-07-15 on branch `destrain-sweep`.** The 2026-07-14 session
+  surveyed 19 prose files, inventoried 67 strained clauses with a verbatim OLD -> NEW each,
+  cut a worktree, and stopped waiting for a scope answer that never came; the inventory was
+  recovered from that session's transcript with `jq` and now lives at `docs/destrain_sweep.md`.
+  58 of 67 rows landed. 9 were rejected by a fresh per-file verifier and the sweep's own
+  inventory turned out to be 13% defective: reader agents proposing plainer wording reliably
+  produce rewrites that read better and assert something different. The worst was
+  `rl_for_ci.tex:250`, where "the MABUC instance is causal Thompson sampling" became "MABUC
+  is causal Thompson sampling", equating a problem setting with one of the three algorithms
+  the chapter runs on it. Also caught: a sentence that no longer parsed and stranded a `\ref`
+  (appA:325), a claim contradicting its own chapter's baseline (applications:115), a false
+  subsection-scope claim (planning_learning_v3:695), and a false exhaustiveness claim about
+  dynamic programming (planning_learning_v3:12). Rejected rows keep their shipped wording and
+  are listed in the tracker so nobody re-applies them.
+- **The ch12 gate was not honest and is now fixed.** The three prose commits each claimed
+  "content preserved (verified by fresh diff gate)". The mechanical half held (63 cite keys
+  removed and 63 added, byte-identical multisets; refs a strict superset; no equation or
+  theorem environment touched) but nothing read for meaning, so a `forecaster` -> `model`
+  substitution slipped through and left the chapter's opening sentence defining world models
+  as "learned models of state transitions and rewards". Fixed in d86a57e. The lesson is in
+  `docs/destrain_sweep.md`: the invariant check passed that defect without complaint, so it
+  never substitutes for a fresh per-file semantic read.
+- **Workstream side-effects.** Backlog S1 (ch11 reconnect + orphan triage) and S4 (runner
+  registry + dead write paths) are effectively done via the triage fixes. S6 partially done
+  (stale-stdout wave). Registry now 59 scripts, all paths verified.
 - **Landed 2026-07-14 (triage close-out, commits 3b84e25..610d949 on `main`).** Ranks 1-9,
   12, 13 were fixed earlier in the cycle. This session closed the rest: rank 19 ch09 legacy
   archive (41 files) + registry fixes; rank 8 job_search full 54-min rerun, ablation footnote
