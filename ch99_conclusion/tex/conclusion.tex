@@ -9,7 +9,7 @@ The inference tradition concentrates its effort on specifying the objective func
 The control tradition inverts this emphasis: it takes the objective and the dynamics as given and asks whether the optimal policy can be computed, approximated, and deployed under real-time and robustness constraints.
 Dynamic programming stands at the intersection of the two cultures.
 Both \citet{Bellman1957} and the structural econometrics program of \citet{Rust1987} rest on the Bellman equation; they differ in what is treated as known and what must be estimated.
-Reinforcement learning enters this picture not as a third culture but as a computational toolkit that relaxes the information requirements of dynamic programming while preserving its mathematical foundations.
+Reinforcement learning appears here not as a third culture but as a computational toolkit that relaxes the information requirements of dynamic programming while preserving its mathematical foundations.
 
 The chapters of this survey have mapped how that toolkit interacts with the applied decision sciences.
 On one side, RL extends the reach of structural modeling to state spaces where traditional dynamic programming is infeasible, without requiring the analyst to abandon structural assumptions.
@@ -24,7 +24,7 @@ TD-based methods make structural models tractable at scales where the nested fix
 This prescriptive capability, not just estimating model parameters but computing the policies those parameters imply, extends across the survey.
 The dispatch, revenue management, and inventory simulations of Section~\ref{section:applications} show that RL can compute practically deployable policies in domains where neither analytical solutions nor small-state DP are available.
 
-Multi-agent settings expose a second contribution.
+A second contribution appears in multi-agent settings.
 Game-theoretic solution concepts are often intractable to compute directly; PPAD-hardness of Nash equilibrium \citep{Shapley1964} is a foundational obstacle.
 The simulations of Section~\ref{section:rl_games} show that independent Q-learning agents converge to Nash equilibrium in symmetric normal-form games through trial and error, providing ``as-if'' microfoundations for equilibrium play under bounded rationality \citep{FudenbergLevine1998}.
 The durable-goods monopoly simulation in that section reproduces the Coase conjecture limit as the horizon lengthens, confirming that RL recovers well-known theoretical predictions without any equilibrium concept being hard-coded.
@@ -56,7 +56,7 @@ The Bradley-Terry model implicitly assumes a cardinal, individually consistent p
 Axiom-aware aggregation, which tests for GARP violations and Condorcet cycles before constructing the reward model, outperforms naive aggregation in the simulation under annotator heterogeneity, with the performance gap widening as the degree of heterogeneity increases \citep{varian1982nonparametric, skalse2023invariance}.
 The broader lesson is that the axiomatic toolkit of revealed-preference theory can serve as a regularizer on reward learning, replacing the untestable parametric assumption with a testable behavioral constraint.
 
-Robust and constrained RL (Section~\ref{section:dist_robust_constrained}) is a third locus of cross-pollination.
+Robust and constrained RL (Section~\ref{section:dist_robust_constrained}) is a third area of exchange between the two fields.
 The ambiguity sets of robust MDPs formalize a notion of model uncertainty that is structurally related to the multiplier preferences of \citet{HansenSargent2001}: the decision-maker pessimizes over a neighborhood of probability measures rather than maximizing against a point prior.
 The consumption-savings simulation in that section shows that a distributional RL agent achieves better conditional value at risk under worst-case demand shocks than a standard expected-return agent, at a cost in expected payoff that can be analytically related to the ambiguity set radius.
 This connection between robust macroeconomic decision theory and distributional RL has received little formal treatment and represents a natural area for cross-disciplinary work.
