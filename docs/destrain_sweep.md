@@ -69,10 +69,15 @@ rewrite is welcome but must clear the same verifier.
 removed; it now reads "within a role". The chapter's only remaining "lens" hits are a LaTeX
 comment at line 2 and line 222, which is a different sense (the behavioural lens).
 
-## Known, not addressed
+## Also fixed, 2026-07-15
 
-`ch12_world_models` defines "world model" twice: `s01_intro.tex:4` ("learned forecasters of
+`ch12_world_models` defined "world model" twice: `s01_intro.tex:4` ("learned forecasters of
 state transitions and rewards") and `s04_deep_mbrl.tex:6` ("A world model is an estimated
-model of next states and rewards", inside a nine-term glossary). Pre-existing, introduced in
-`9238bab`, untouched by any de-strain commit. A Rule 1 redundancy (one canonical location per
-idea) rather than a strain defect.
+model of next states and rewards", opening a nine-term glossary). Pre-existing, introduced in
+`9238bab`, untouched by any de-strain commit. A Rule 1 redundancy rather than a strain defect,
+and the glossary form was circular besides.
+
+Resolved in `c27edbf`. The intro is canonical per the Rule 1 hierarchy, so the glossary entry
+was deleted and the count became eight. The glossary lost nothing it needs: its other eight
+terms are all new, and `planning update` and `model loss` already used "world model" as a term
+the intro had established.
