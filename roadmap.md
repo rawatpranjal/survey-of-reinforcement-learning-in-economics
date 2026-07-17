@@ -8,7 +8,21 @@ research lives in the `docs/` wiki (indexed at `docs/index.md`).
 
 ## STATUS
 
-_Updated 2026-07-15._
+_Updated 2026-07-17._
+
+- **Landed 2026-07-17 (ch13 field-deployments chapter, PRs #15 and #16 on `main`).** New
+  evidence-gated "Reinforcement Learning in the Field" chapter (`ch13_field_deployments/`,
+  wired at `docs/main.tex` and the thesis wrapper), organized by deployment surface with a
+  strict evidence-tier screen. Retired the old ch04 "RL for Optimal Control" applications
+  chapter, migrated its bus-engine DP-vs-DQN benchmark into theory (`sec:bus_engine`), and
+  repointed every `section:applications` reference. 24 primary sources sourced and read;
+  `papers/` stays local (gitignored), read notes and source manifest track them. The one
+  open sourcing gap, the OpenAI InstructGPT/ChatGPT product posts (live pages Cloudflare-403
+  to curl and WebFetch), was closed via Internet Archive snapshots; the RLHF subsection now
+  cites both posts for the deployment claim (RLHF models served as the default API models).
+  `main.pdf` now 276pp, zero undefined references or citations. Residual, non-fatal: the
+  compact journal wrappers still omit some sections they `\ref`, and the physical/design
+  canonical case (MuZero-RC vs AlphaChip) is not recorded as locked in the plan.
 
 - **Where the paper is.** arXiv survey, Phases A-C closed. `main.pdf` builds at 269pp with
   zero undefined references and zero undefined citations. The 2026-07-14 judge-audit triage
