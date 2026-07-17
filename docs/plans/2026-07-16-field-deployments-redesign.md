@@ -24,6 +24,15 @@ Implemented on 2026-07-16.
 - Patched `journals/build.sh` so journal wrappers can input master chapter sources while resolving their existing chapter-relative figure and table paths.
 - Residual build warnings remain outside the field-deployments rewrite: the compact journal wrappers omit some sections and preliminary theorem labels they still reference, and the thesis wrapper has pre-existing unresolved citation/reference warnings. No fatal LaTeX errors or missing-source-file errors remain in the checked logs.
 
+## Claim Verification Pass (2026-07-17)
+
+Every Tier-1/Tier-2/contrast case was independently re-verified against the on-disk primary source. One fresh reader per paper read the full markdown and ruled each chapter claim SUPPORTED / CONTRADICTED / NOT_FOUND with a verbatim quote, checking every number and date exactly. Fourteen sources, roughly sixty atomic claims.
+
+- Thirteen sources CLEAN. All numeric claims matched the source verbatim: the five YouTube A/B figures (+0.07/+0.53/+0.85/-0.66/-0.52), Taobao 8.67%/18.03% and the January 26 2021 start, Meta bidding 200k campaigns / 1.2B steps / 50B impressions / +0.17%/+0.16%, Alibaba RTB m=24 and 100M instances for 1000 ads, DiDi 1.3%/5.3%, DeepStock 100% and >1M SKU-warehouse, MuZero-RC 6.28% offline versus 4% production, BCOOLER 9%/13%, hotel 11.80% RevPAR, Tmall July 2018.
+- One correction applied. The CVNet clause attributed "distillation" to value stabilization; the source uses distillation for feature marginalization (a reduced-feature value for real-time planning when destination features are absent). Only Lipschitz regularization is tied to stability, context randomization to temporal invariance. Sentence rewritten accordingly.
+- Advisory, no change needed: Wu2018rtb's own text claims industry deployment but reports no live-traffic metrics, so the contrast label holds; the AlphaChip sequential-placement mechanic is verbatim in the DeepMind post rather than the paywalled Nature body, but both are cited together.
+- Cleanup in the same pass: the fifteen `\paragraph{}` case headers became `\subsubsection{}` (matches the rest of the monograph, hidden from the ToC by tocdepth 2), one em-dash pair and two judgment words ("sobering") removed.
+
 ## Executive Decision
 
 Collapse the old standalone "RL for Optimal Control" / applied-operations chapter into the late **Reinforcement Learning in the Field** chapter, except for material that is clearly theoretical or not actually RL.
