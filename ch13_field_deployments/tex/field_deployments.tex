@@ -1,0 +1,209 @@
+The preceding chapters describe reinforcement learning as theory, algorithm, and simulation method. This chapter asks a narrower question: where has reinforcement learning actually survived contact with production systems, physical processes, marketplaces, or manufactured artifacts?
+
+The starting point is sobering. If games, language-model post-training, and robotics are set aside, the public list of successful reinforcement-learning deployments in business and operational settings is short enough to enumerate case by case. Games have a deep benchmark and survey tradition, with many deep-RL systems reaching human-level or super-human performance in controlled virtual environments \citep{Shao2019VideoGamesSurvey}. RLHF has become a central part of language-model post-training and now has its own survey literature \citep{Kaufmann2023RLHFSurvey}. Robotics has a long physical-control tradition, with recent surveys explicitly assessing real-world DRL successes and the remaining difficulty of deployment in the physical world \citep{Ibarz2021robot,Tang2024RoboticsSurvey}. These are important domains, but they are not typical business applications. Their success conditions---closed game rules, dense simulated experience, preference-labeled model training, or specialized robotic hardware loops---do not automatically transfer to pricing, dispatch, inventory, bidding, or industrial operations.
+
+The public record beyond those domains is neither empty nor broad. There are primary-source cases in recommendations, bidding, dispatch, inventory, video encoding, and chip design; RLHF is included later as a training-time success case, not as evidence that ordinary business control problems have been solved at comparable breadth. The gap between academic application discourse and publicly documented business impact is large. Fielded systems usually give RL a narrow control surface, surround it with logging and counterfactual evaluation, and leave a conventional controller, optimizer, auction stack, codec, or serving system in the loop.
+
+That distinction matters because ``real-world RL'' is easy to overcount. A system trained on real logs is not necessarily deployed. A high-fidelity simulator is not a field trial. A production ML controller is not necessarily RL. The cases below are included only when public primary sources describe deployment, live experimentation, shipped design artifacts, or realistic operational trials with enough detail to identify what the RL component actually controlled.
+
+\subsection{Hierarchy of Evidence Standards}
+
+The labels in this chapter grade public evidence, not algorithmic elegance or private commercial value. A Platinum label requires evidence that RL is not only deployed but dominant in the setting. Gold requires credible production or shipped-artifact evidence. Silver records operational use without the same public performance evidence. Bronze records real trials or unusually clear paths to deployment. Contrast cases are useful scientifically, but they do not establish live operational control.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.16\textwidth}>{\raggedright\arraybackslash}X@{}}
+\toprule
+Label & Meaning \\
+\midrule
+Platinum & Public evidence indicates that RL is the dominant deployed approach in the setting: the system is operationally central, durable, and no close non-RL method appears publicly competitive for the same role. \\
+Gold & A primary source reports production traffic, a launched operational mode, a controlled production workflow, or a shipped design artifact, with credible live, field, scale, or competitive evidence. \\
+Silver & A primary source reports deployed or operational use, but public evidence does not establish dominance, strong A/B performance, or broad durable rollout. \\
+Bronze & A primary source reports an early field trial, pilot, deployment path, or deployment-shaped system with realistic state, action, reward, and operational constraints, but not established production use. \\
+Contrast & Simulator, offline replay, benchmark, or real-data study without public proof of live control. \\
+\bottomrule
+\end{tabularx}
+\caption{Evidence labels used in this chapter.}
+\label{tab:field_evidence_labels}
+\end{table}
+
+The case inventory in Table~\ref{tab:field_case_inventory} is deliberately conservative. It separates production traffic from field trials, design-time artifact generation from runtime control, and simulator evidence from deployment evidence. In this first pass no case is assigned Platinum: the public sources establish important deployments, but they do not prove that RL is the only viable approach in the relevant business process.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\begin{tabular}{p{0.18\linewidth}p{0.18\linewidth}p{0.52\linewidth}}
+\toprule
+Case & Label & What the source establishes \\
+\midrule
+YouTube recommendations & Gold & Production top-$K$ candidate generation with REINFORCE and live YouTube experiments \citep{Chen2019YouTubeTopK}. \\
+Meta notifications & Gold & Horizon-trained RL policies replaced supervised notification systems for some Facebook notifications \citep{Gauci2019Horizon}. \\
+Taobao cold-start ranking & Gold & RL-LTV was deployed on Taobao for cold-start recommendation, with live A/B results \citep{Ji2021RLLTV}. \\
+Meta production bidding & Gold & Offline RL optimized parameters of an existing production auto-bidding policy and was A/B tested at scale \citep{Korenkevych2023MetaBidding}. \\
+Alibaba sponsored-search RTB & Gold & Robust-MDP bidding control was deployed and tested in Alibaba's search auction platform \citep{Zhao2018SponsoredSearchRTB}. \\
+DiDi dispatch & Gold & RL dispatch was A/B tested in multiple cities and launched as primary dispatch in a major market \citep{SadeghiEshkevari2022DiDiScalable}. \\
+DeepStock inventory & Gold & DRL with inventory-policy regularization was rolled out across Tmall SKU-warehouse replenishment \citep{Xie2026DeepStock}. \\
+MuZero-RC video encoding & Gold & MuZero-RC controlled VP9 rate control on part of YouTube live traffic \citep{Mandhane2022MuZeroRC,DeepMind2022MuZeroRCPost}. \\
+AlphaChip floorplanning & Gold artifact & RL-generated layouts were used in Google TPU and other shipped chip designs \citep{Mirhoseini2021GraphPlacement,GoldieMirhoseini2024AlphaChipPost}. \\
+InstructGPT RLHF & Gold training-time & PPO against a learned reward model shaped deployed language-model behavior, but not inference-time control \citep{ouyang2022training}. \\
+BCOOLER HVAC & Bronze & RL produced live supervisory-control recommendations at two commercial buildings \citep{Luo2022BCOOLER}. \\
+Tmall pricing, hotel revenue management & Bronze & Real field experiments controlled prices or revenue-management decisions, without broad rollout evidence \citep{Liu2019,Chen2023hotelrl}. \\
+Financial execution, RTB simulator, inventory benchmark & Contrast & Real data or benchmark evidence without public proof of live deployed control \citep{Nevmyvaka2006execution,Wu2018rtb,Gijsbrechts2022inventory}. \\
+\bottomrule
+\end{tabular}
+\caption{Public primary-source evidence for field RL cases.}
+\label{tab:field_case_inventory}
+\end{table}
+
+\subsection{Digital Traffic: Recommendations and Notifications}
+
+\paragraph{YouTube recommendations: Gold.}
+YouTube's top-$K$ off-policy REINFORCE system is the cleanest public recommendation case \citep{Chen2019YouTubeTopK}. The operational problem is simple to state and hard to solve: for a user arriving at YouTube, the system must choose a small set of videos from a catalog with millions of possible actions. The user's interests shift over time, new videos continuously enter the catalog, and most user-item pairs are never observed. A myopic supervised ranker can learn which videos were clicked after earlier systems exposed them, but it does not by itself solve the sequential problem of how today's recommendation changes tomorrow's state of the user and the logged data available to the platform.
+
+The important boundary is what the RL policy actually controlled. It did not replace the whole YouTube recommender. The RL component was a neural candidate generator: it nominated a top-$K$ set of videos, and a separate ranking model then scored and ordered candidates before they appeared on the Homepage or watch-page side panel. In the terminology of this chapter, the deployed control surface was narrow. RL changed which items entered the ranking funnel; it did not own final page composition, business rules, or the broader serving stack.
+
+The paper casts this candidate-generation problem as an MDP. The state $s \in \mathcal{S}$ is a continuous representation of the user's recent interaction history and context, implemented with a recurrent recommender model. The action $a \in \mathcal{A}$ is a video selected from the available catalog. The reward $r(s,a)$ is an immediate user-activity signal, with the live-experiment discussion focusing on ViewTime and related engagement outcomes; the return aggregates future reward with discount factor $\gamma$. In compact form, the policy-gradient objective is
+\begin{equation}
+J(\theta)
+= \mathbb{E}_{\tau \sim \pi_\theta}
+\left[
+\sum_{t \geq 0} \gamma^t r(s_t,a_t)
+\right],
+\end{equation}
+where $\pi_\theta(a\mid s)$ is the neural recommendation policy and the trajectory records the user's subsequent states and interactions with the recommender.
+
+That objective is not enough to make the system deployable. YouTube could not freely generate fresh exploratory trajectories from every new policy: observing reward means recommending videos to real users. The learner therefore relied heavily on logged feedback from earlier recommender policies. A naive REINFORCE update on those logs would be biased toward actions already favored by the behavior policies, creating the familiar ``rich get richer'' effect in which popular nominations remain popular partly because they were observed more often. The production recipe learned a behavior-policy model and used off-policy importance correction to reduce this bias, with capping to control variance.\footnote{The exact estimator in \citet{Chen2019YouTubeTopK} is more involved than the schematic objective above. The practical point for this chapter is the deployment requirement: the serving policy was trained from logged recommendations produced by older policies, so the gradient estimate had to correct for the mismatch between the logged behavior policy and the candidate policy being updated.}
+
+The second deployment obstacle was that a real recommender does not choose only one item. Standard policy-gradient learning tends to concentrate probability mass on the single best-looking action. For a top-$K$ recommender, that is the wrong geometry: the system needs several high-quality candidates so the downstream ranker can assemble a useful page. Chen et al. therefore introduce a top-$K$ off-policy correction. In their simulations and live experiments, the correction keeps meaningful probability mass on other high-value items rather than forcing the learned policy toward a top-1 collapse.
+
+Operationally, the policy sat between logged user histories and the downstream ranking stack. Training used sampled softmax because normalizing over millions of candidate videos was too expensive; serving used approximate nearest-neighbor retrieval to recover high-probability actions from the learned embedding space. Each recommended video generated logged propensities, clicks or non-clicks, and later activity signals, which were joined back into the next training batches with a lag of less than 24 hours. The experiments were therefore sequential production tests rather than a single static benchmark: once a new candidate generator entered the system, it also changed the data available for the next comparison.
+
+The live evidence is unusually explicit for a production RL paper. The authors evaluate the method on a production RNN candidate-generation model in use at YouTube. The model is one of many candidate generators, its outputs are ranked by a separate model, and the live experiments train continuously on new events with less than a 24-hour lag. The long-term reward used in the experiments is aggregated over roughly 4--10 hours, and the reported online metric in the paper's main discussion is ViewTime. Table~\ref{tab:youtube_topk_live} summarizes the live results that matter for the field-deployment claim.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.27\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.20\textwidth}@{}}
+\toprule
+Intervention & Live comparison & Reported effect \\
+\midrule
+Exploratory data & Train with a 5\% stochastic-policy traffic slice rather than only deterministic-policy logs & +0.07\% ViewTime \\
+Standard off-policy correction & Weight logged examples by learned behavior-policy importance ratios & +0.53\% videos viewed; no significant ViewTime change \\
+Top-$K$ off-policy correction & Train the production candidate generator with $K=16$ top-$K$ correction & +0.85\% ViewTime; -0.16\% videos viewed \\
+Top-1 ablation & Set $K=1$, reducing the correction toward the standard top-1 case, versus production $K=16$ & -0.66\% ViewTime \\
+Uncapped-weight regression & Loosen the importance-weight cap from $e^3$ to $e^5$ & -0.52\% ViewTime \\
+\bottomrule
+\end{tabularx}
+\caption{Live YouTube experiments reported by \citet{Chen2019YouTubeTopK}. Effects are relative to the relevant control model in each sequential experiment, so rows should be read as component tests rather than additive gains.}
+\label{tab:youtube_topk_live}
+\end{table}
+
+Read these results as production component tests. The RL policy operated inside candidate generation, used logged production data with explicit off-policy correction, and was evaluated in live traffic before its outputs entered the ordinary ranking stack. The paper reports sub-percent ViewTime movements, not a wholesale replacement of YouTube recommendation.
+
+\paragraph{Meta notifications: Gold.}
+Horizon, Facebook's applied RL platform, gives a second digital-traffic case \citep{Gauci2019Horizon}. The strongest sourced example is notification control: for a notification candidate, the policy chooses whether to send or drop, using person and notification features and a reward that combines activity, meaningful interaction, and a penalty for sending. Horizon's surrounding infrastructure matters as much as the DQN-style policy. The paper emphasizes preprocessing, distributed training, optimized serving, and counterfactual policy evaluation because online errors affect real people.
+
+The Horizon paper also mentions Facebook 360 adaptive bitrate, but the sourced passage does not provide enough public detail to classify it as confirmed production RL. This chapter treats that as Bronze at most, not as a core case.
+
+\paragraph{Taobao cold-start recommendation: Gold.}
+\citet{Ji2021RLLTV} frame cold-start item recommendation on Taobao as an item-lifetime-value problem. The state is item-level history, including exposure, interaction, sale, and time features; the learned action contributes an RL score to a dual-rank system. The live evidence is a one-week Taobao A/B test beginning on January 26, 2021, with reported cold-start-item gains of 8.67\% in item page views and 18.03\% in gross merchandise value relative to the Vanilla-CTR baseline.
+
+Operationally, RL-LTV runs at the item-day frequency rather than the request-serving frequency. User logs are aggregated by item and by day into item episodes; the actor produces an LTV-oriented score $y_{\mathrm{rl}}$, and the critic estimates future item value. The online ranker keeps the conventional CTR score $y_{\mathrm{ctr}}$ and combines it with $y_{\mathrm{rl}}$ through a dual-rank module whose mixing weight is bounded in the experiment. The serving system therefore receives a ranking score, while the RL training loop updates from daily item histories.
+
+The formal action space is broader than the live control surface. The paper's action includes both an RL score and a price-like component, but the source notes that only the RL score was effective in the live system. The deployed policy therefore controlled ranking investment, not full item pricing.
+
+\subsection{Bidding and Auction Control}
+
+\paragraph{Simulator precursor: contrast.}
+\citet{Wu2018rtb} is a useful precursor, not production evidence. The paper formulates budget-constrained display-ad bidding as an MDP, trains a model-free RL policy, and evaluates on large real datasets. It reports click gains in dataset experiments and argues that the method is deployable, but it does not report live production traffic. It belongs in the contrast row because the evidence stops at real-data evaluation.
+
+\paragraph{Meta production bidding: Gold.}
+The Meta bidding case has direct production evidence. \citet{Korenkevych2023MetaBidding} do not deploy a black-box neural bidder. Instead, offline RL tunes parameters of an existing differentiable base policy. The neural actor and critic are training machinery; after optimization, only the base-policy parameters are deployed. The online surface is therefore legible to the production system and to advertisers, and the method avoids unsafe online exploration by learning from logged production data.
+
+Operationally, the control problem is campaign budget pacing across repeated auctions. A campaign is an episode; at each minute, the base policy emits a scalar bidding control that is reused across the auctions available at that time step and then scaled by expected conversion rate inside the production auction system. The observable state is campaign-level and partial, including signals such as budget consumption, opportunity progress, and past bid information. The reward is the aggregated value of auction outcomes won by the campaign during the step. For production training, Meta logged roughly 200,000 week-long ad campaigns, corresponding to about 1.2 billion time steps, from the default production policy with small exploration noise.
+
+The paper reports A/B tests over roughly 50 billion impressions with small but statistically significant metric and revenue gains. The public table reports a +0.17\% pre-test effect and a +0.16\% back-test effect on the internal performance metric, with revenue gains in both tests.
+
+\paragraph{Alibaba sponsored-search RTB: Gold.}
+\citet{Zhao2018SponsoredSearchRTB} give a complementary auction case in Alibaba sponsored search. The system controls bidding through an hourly robust-MDP layer that selects a bidding model, rather than emitting every bid directly from an unconstrained neural policy. The source reports deployment in Alibaba's e-commerce search auction platform and online A/B tests with gains in purchase amount per cost, return on investment, and conversion rate.
+
+Operationally, Alibaba moves the RL decision from individual impressions to a 24-step daily episode. The state at each hour contains remaining budget, the time period, and aggregated auction features such as impressions, clicks, cost, click-through rate, conversion rate, and pay per click. The action sets the parameter of a linear real-time bidding model based on predicted conversion rate; the search auction engine then uses that model to return impression-level bid prices online. Training uses a simulator built from complete auction logs and predicted conversion behavior because the platform cannot afford random bidding exploration in the live auction system. For online evaluation, the authors report collecting more than 100 million auction instances for 1000 ads one day in advance, then using the trained models to generate real bidding decisions online.
+
+\subsection{Marketplaces, Pricing, and Revenue Management}
+
+\paragraph{DiDi dispatch: Gold.}
+\citet{SadeghiEshkevari2022DiDiScalable} provide the canonical marketplace-control case. The DiDi system uses learned value information inside the dispatching pipeline. Real-time matching remains a structured assignment problem, with cancellation-risk controls and market-specific smoothing around the RL update. The paper reports online A/B testing in multiple cities and later launch as the primary dispatch mode in one major international market, with more than 1.3\% driver-income improvement in A/B tests and up to 5.3\% improvement in major metrics after full deployment analysis.
+
+An earlier DiDi account gives the production lineage behind this design \citep{Qin2021dispatch}. DiDi's core dispatcher was already a batched combinatorial optimizer: open orders and available drivers were pooled for a short dispatch window, edge weights were assigned to candidate order-driver pairs, and a linear assignment problem generated the matching. RL entered as policy evaluation rather than as a replacement optimizer. A tabular TD(0) system, and later CVNet, estimated long-term driver-location values from trip and idle-movement data; the trained values were served inside the existing optimizer so matching could consider downstream location value while retaining the production matching interface. The CVNet paper specifies the later value model: hierarchical hexagon coarse coding maps locations at multiple resolutions into a neural state-value approximation, while Lipschitz regularization, context randomization, and distillation stabilize the value used by matching when real-time destination features are unavailable \citep{Tang2019cvnet}.
+
+Operationally, the system separates the latency-critical assignment path from the learning path. Every two seconds, the low-latency module forms the current order-driver graph and solves a Hungarian maximum matching problem. The edge weights combine smoothed immediate reward, residual spatial value, completion probability, and business penalties such as pickup distance. A separate high-throughput module receives the recent assignments every 10 seconds and updates the spatial value table, reward-smoothing state, edge-standardization parameters, and learning-rate state for later dispatch rounds.
+
+In the published system, DiDi did not present an unconstrained multi-agent RL controller that directly commands every driver. The RL component values downstream consequences and alters the dispatch objective; the platform still solves a matching problem under operational constraints. One proposed graph-pruning mechanism based on limited-memory UCB was not deployed at large scale because the production infrastructure did not have a simple way to query real-time global feedback for the relevant performance metrics.
+
+\paragraph{Tmall dynamic pricing: Bronze.}
+\label{sec:ecommerce_pricing}
+\citet{Liu2019} report online field experiments for dynamic pricing on Tmall, beginning in July 2018 and lasting months across thousands of items. The action is a price or discount, the state is a collection of product and market features, and the reward is based on a difference in revenue conversion rates rather than raw revenue. The project is not a standard A/B test: the source states that showing different prices to different customers at the same time was not legally available, so the evaluation relies on field comparisons such as difference-in-differences and similar products.
+
+This is Bronze evidence. It is live market control and therefore much stronger than offline pricing simulation, but the public source establishes field experiments rather than broad durable rollout.
+
+\paragraph{Hotel revenue management: Bronze.}
+\label{sec:hotel}
+\citet{Chen2023hotelrl} study a budget hotel chain's revenue-management problem. The RL layer recommends an average discount; a linear program translates the recommendation into capacity allocations across customer segments. This design made the action interpretable to hotel managers while still letting the policy learn from realized booking outcomes. The source reports implementation in a pilot study and synthetic-control evaluation, with revenue per available room improving by 11.80\%.
+
+This is also the clearest example in the chapter of in-field learning. The system updates Q-values after completed episodes, so the training/execution boundary is blurrier than in a frozen-policy deployment. That makes it operationally interesting, but also explains why the action surface was deliberately simple.
+
+\subsection{Inventory and Operational Control}
+\label{sec:inventory}
+
+\paragraph{Inventory benchmark: contrast.}
+The pre-DeepStock inventory evidence is sobering. \citet{Gijsbrechts2022inventory} show that deep RL can match strong heuristics on some classic inventory problems, but only after expensive tuning, and it is often dominated by specialized policies. The paper is valuable precisely because it does not claim deployment. It shows that stylized inventory benchmarks are not enough to justify field adoption.
+
+\paragraph{DeepStock: Gold.}
+\citet{Xie2026DeepStock} is therefore a qualitatively different case. The paper reports a 100\% deployment of DRL with policy regularizations on Tmall, eventually covering more than one million SKU-warehouse combinations. The technical move is not ``more neural network.'' It is policy regularization grounded in base-stock inventory structure, which stabilizes training and narrows the search toward policies that supply-chain operators already understand.
+
+The reported operational effects include lower stockouts and turnover days in a pilot, rollout across international and domestic products, and later inventory-turnover reductions without worsened stockout performance. Because the source is a 2026 arXiv preprint, it should be read as primary-source industrial evidence rather than independently audited public accounting. Under the evidence hierarchy, it is Gold: the primary source directly reports full-scale operational deployment.
+
+\subsection{Physical and Design Systems}
+
+\paragraph{MuZero-RC video encoding: Gold runtime control.}
+\citet{Mandhane2022MuZeroRC} apply MuZero to VP9 video-compression rate control. The action is a frame-level quantization parameter, the state summarizes the encoding context and target bitrate, and the reward trades off video quality against bitrate-constraint satisfaction. In offline evaluation, MuZero-RC reduces compressed size at fixed quality relative to libvpx's default two-pass variable-bitrate controller.
+
+The deployment evidence comes from the official DeepMind/YouTube post \citep{DeepMind2022MuZeroRCPost}, which reports production launch on a portion of YouTube live traffic and an average bitrate reduction. I treat MuZero-RC as the canonical physical/design runtime-control case: it replaced a narrow codec control component, not the whole video platform.
+
+\paragraph{AlphaChip floorplanning: Gold design artifact.}
+\citet{Mirhoseini2021GraphPlacement} and \citet{GoldieMirhoseini2024AlphaChipPost} establish a different kind of field evidence. AlphaChip treats chip floorplanning as a sequential placement problem: starting from an empty layout, the agent places components and receives reward based on final layout quality. The Nature paper states that the method was used for Google's next-generation AI accelerators, and the later DeepMind post reports use across TPU generations and other chips.
+
+This is Gold evidence, but it is not runtime control. AlphaChip's RL policy produces design artifacts that enter a conventional chip-design and manufacturing pipeline. It is a shipped-artifact case, not a live feedback-controller case. That distinction prevents an apples-to-oranges comparison with YouTube, DiDi, or bidding systems.
+
+\paragraph{BCOOLER HVAC: Bronze.}
+\citet{Luo2022BCOOLER} report live RL experiments with Trane commercial-building cooling systems. The policy produces supervisory setpoint recommendations for chiller plants, filters actions through comfort and equipment constraints, and relinquishes control to the existing optimizer if no feasible candidate action remains. The reported energy savings at the two live sites are about 9\% and 13\%.
+
+This is Bronze rather than Gold because the public source establishes two live field experiments, not a broad durable rollout. It is also the right source to use for RL in commercial cooling. This chapter does not count Google data-center cooling as confirmed RL unless a public primary source establishes an RL controller rather than predictive control or MPC.
+
+\subsection{RLHF and Post-Training}
+
+\paragraph{InstructGPT: Gold training-time RL.}
+\citet{ouyang2022training} is a field case only if the category is defined carefully. The RL component is not a runtime controller that takes actions in the deployed API environment. It is post-training: demonstrations train a supervised policy, human comparisons train a reward model, and PPO optimizes the language-model policy against that reward model with a KL penalty. The prompt distribution comes from OpenAI API usage and held-out API prompts are central to evaluation.
+
+The paper reports large human-preference gains over GPT-3 baselines on the API prompt distribution. The deployment evidence should be read narrowly: RL shaped the policy before deployment, while later API behavior came from ordinary model inference. The claim here is therefore limited to the InstructGPT paper's training-time RL evidence, not to every later product release that used related alignment methods.
+
+\subsection{Contrast Cases}
+\label{sec:execution}
+
+Financial order execution illustrates the boundary between real data and deployment. \citet{Nevmyvaka2006execution} train and evaluate RL execution policies on 1.5 years of millisecond NASDAQ limit-order-book data. The objective is economically real, and the data are much richer than a toy simulator. But the paper evaluates learned policies through a historical/generative methodology, not through a live production trading deployment. It is therefore a contrast case, not a confirmed field deployment. The same logic applies to the budget-constrained RTB simulator \citep{Wu2018rtb} and the inventory benchmark \citep{Gijsbrechts2022inventory}: all are useful evidence about problem structure, but none belongs in the confirmed production column.
+
+\subsection{Lessons from the Field}
+\label{sec:field_lessons}
+
+The field evidence changes the practical interpretation of RL in five ways.
+
+First, deployment usually means \emph{a learned control increment}, not a complete autonomous agent. YouTube uses RL for candidate generation; Meta bidding deploys optimized parameters of a base policy; DiDi embeds value estimates in matching; hotel revenue management turns an RL discount into an LP allocation; MuZero-RC replaces a codec subroutine. This is not a disappointment. It is why the systems are deployable.
+
+Second, the strongest cases are in domains with repeated, logged, high-volume decisions. Recommendations, bidding, dispatch, and inventory all produce dense operational logs and frequent feedback. The logs make offline learning, counterfactual evaluation, and cautious A/B testing possible. Sparse physical systems can still use RL, but the public examples rely on narrower control surfaces, stronger simulators, or field trials with explicit safety fallbacks.
+
+Third, classical structure remains load-bearing. DeepStock uses base-stock regularization. Meta bidding keeps the production bidding rule. DiDi keeps assignment optimization. BCOOLER filters actions through constraints and can fall back to the existing optimizer. The successful systems do not ask a generic RL algorithm to rediscover all operational knowledge from scratch.
+
+Fourth, field evaluation is domain-specific. Digital products can run randomized A/B tests. Pricing may need difference-in-differences or similar-product comparisons because simultaneous differential prices are unavailable or unacceptable. Physical control uses alternating live periods, normalization, and hard constraints. Manufactured artifacts require EDA validation and downstream hardware evidence rather than online traffic metrics.
+
+Fifth, public evidence is uneven. Papers are most informative when they state the control surface, deployment path, metric, and integration constraints. They are least informative when they say ``real-world'' but only report offline replay, or when they mention internal deployment without enough detail to distinguish RL from predictive control, MPC, supervised learning, or a simulator-trained policy. The conservative reading is not to deny RL's field successes; it is to count them only where the source proves what was actually controlled.

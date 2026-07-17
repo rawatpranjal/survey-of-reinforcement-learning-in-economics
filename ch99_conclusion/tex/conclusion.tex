@@ -20,9 +20,9 @@ What emerges from this exchange is not a merger of the two traditions but a prod
 
 The most direct contribution of RL to economic modeling is computational.
 Dynamic discrete choice models face a curse of dimensionality that limits exact dynamic programming to relatively small, discrete state spaces \citep{rust2008dp}.
-TD-based methods make structural models tractable at scales where the nested fixed-point algorithm is infeasible. As the simulation in Section~\ref{section:rl_econ_models} demonstrates, a DQN trained on the bus-engine replacement environment matches the analytical optimum within two percent at state-space sizes where value iteration exhausts memory \citep{Rust1987}.
+TD-based methods make structural models tractable at scales where the nested fixed-point algorithm is infeasible. The bus-engine simulation in Section~\ref{sec:bus_engine} shows a DQN trained on a Rust-style replacement environment matching exact dynamic programming within one percent on the fleet sizes where both are computed \citep{Rust1987}.
 This prescriptive capability, not just estimating model parameters but computing the policies those parameters imply, extends across the survey.
-The dispatch, revenue management, and inventory simulations of Section~\ref{section:applications} show that RL can compute practically deployable policies in domains where neither analytical solutions nor small-state DP are available.
+The field cases in Section~\ref{section:field_deployments} show that RL can compute practically valuable policies in domains where neither analytical solutions nor small-state DP are available, provided the deployed control surface is narrow and surrounded by evaluation and operational safeguards.
 
 A second contribution appears in multi-agent settings.
 Game-theoretic solution concepts are often intractable to compute directly; PPAD-hardness of Nash equilibrium \citep{Shapley1964} is a foundational obstacle.
@@ -101,7 +101,7 @@ When agents performing Bellman backups face multiple equilibria, value iteration
 The equilibrium refinement literature provides focal-point concepts, but these require common knowledge of rationality that decentralized learning does not provide \citep{FudenbergLevine1998}.
 
 The survey's simulation evidence also points to an infrastructure gap.
-Industrial deployments described in Section~\ref{section:applications} required dedicated engineering teams and months of hyperparameter search; the academic simulations here required comparable effort at much smaller scale.
+Industrial deployments described in Section~\ref{section:field_deployments} required dedicated engineering teams and months of hyperparameter search; the academic simulations here required comparable effort at much smaller scale.
 Shared, well-documented simulation environments modeled on the economic problems studied in this survey, analogous to what ALE provided for game-playing \citep{mnih2015}, would accelerate the empirical research program substantially.
 
 \subsection{Conclusion}
