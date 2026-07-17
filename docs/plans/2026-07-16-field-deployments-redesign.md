@@ -487,7 +487,7 @@ Conversion rule:
 Current known caveat:
 
 - Updated 2026-07-16: the local corpus in `ch13_field_deployments/papers/` has been reconverted with Docling 2.45.0. The conversion used placeholder image export plus whole-document, chunked, and page-level fallback as needed. The conversion report is `ch13_field_deployments/papers/_websource_logs/docling-2.45-final-report.tsv`.
-- OpenAI product pages are browser-verifiable but local `curl` downloads are blocked by Cloudflare 403. The InstructGPT paper PDF is locally sourced; the product posts remain a sourcing caveat unless separately fetched.
+- Resolved 2026-07-17: the OpenAI product pages are Cloudflare-403 to `curl` and WebFetch on the live domain, but the InstructGPT (Jan 27 2022) and ChatGPT (Nov 30 2022) posts were sourced through their Internet Archive snapshots and are now local originals plus markdown under `ch13_field_deployments/papers/`, with a read note at `papers/read_notes/openai-product-posts.md`. The InstructGPT post supplies the deployment claim the paper alone did not, that the RLHF models were the default API models.
 
 ## Current Source Corpus
 
@@ -521,7 +521,7 @@ The source gate currently passes for the local originals and markdown files in `
 
 Remaining caveat:
 
-- OpenAI product posts remain blocked locally by Cloudflare 403. The chapter therefore limits RLHF deployment claims to the locally sourced InstructGPT paper and records product posts as a sourcing caveat rather than evidence for a stronger claim.
+- Closed 2026-07-17. The OpenAI product posts were sourced through Internet Archive snapshots (the live pages are Cloudflare-403 to `curl` and WebFetch), converted to markdown, and read. `openai-product-posts` is now READ_DONE in the source manifest. The RLHF subsection now cites both posts for the deployment claim while preserving the training-time-versus-runtime distinction.
 
 ## Read Note Template
 
