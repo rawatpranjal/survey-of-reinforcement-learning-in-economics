@@ -80,9 +80,37 @@ ch10_conclusion/notes_for_conclusion.md
 # Timestamped tex backups (git history already covers these)
 **/tex/backups/
 
-# Compiled chapter PDFs are build outputs; keep only the assembled main.pdf
+# Compiled chapter PDFs are build outputs
 docs/*.pdf
-!docs/main.pdf
 
 # /search skill scratch output
 search/
+
+# Journal submission strategy and correspondence (internal)
+journals/
+docs/journal_target.md
+
+# Internal QA / bullshit-score audits
+audits/
+
+# Internal project memory and roadmap
+memory.md
+roadmap.md
+
+# Dissertation drafts
+thesis/
+thesis_v2/
+
+# Internal chapter drafting notes
+ch01_history/notes/
+ch08_offline_rl/CHAPTER_NOTES.md
+ch12_world_models/CHAPTER_NOTES.md
+ch12_world_models/PHASE5_ENRICHMENT_NOTES.md
+ch12_world_models/economist_readability_notes.md
+
+# Third-party reference PDFs outside papers/ dirs, and own compiled draft PDFs
+/1-s2.0-S0304406821001737-main.pdf
+/ibarz-et-al-2021-how-to-train-your-robot-with-deep-reinforcement-learning-lessons-we-have-learned.pdf
+ch03_theory/planning_learning.pdf
+ch03_theory/sims/brock_mirman_convergence.pdf
+ch07_bandits/*.pdf
