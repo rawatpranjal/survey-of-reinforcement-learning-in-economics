@@ -24,8 +24,10 @@ if [[ -z "$VERSION_DIR" ]]; then
 fi
 
 JOURNALS_ROOT="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$JOURNALS_ROOT/.." && pwd)"
 SHARED="$JOURNALS_ROOT/shared"
 TARGET="$JOURNALS_ROOT/$VERSION_DIR"
+DOCS_ROOT="$REPO_ROOT/docs"
 
 if [[ ! -d "$TARGET" ]]; then
   echo "No such version directory: $TARGET" >&2
@@ -36,8 +38,32 @@ if [[ ! -f "$TARGET/$ENTRY" ]]; then
   exit 1
 fi
 
-export TEXINPUTS=".:$SHARED:$TARGET:${TEXINPUTS:-}"
+export TEXINPUTS=".:$SHARED:$TARGET:$DOCS_ROOT:${TEXINPUTS:-}"
 export BIBINPUTS=".:$SHARED:${BIBINPUTS:-}"
+
+TEMP_LINKS=()
+cleanup_links() {
+  for link in "${TEMP_LINKS[@]}"; do
+    rm -f "$link"
+  done
+}
+trap cleanup_links EXIT
+
+# Master chapters assume the master build directory is docs/, so their local
+# figure/table paths look like ../chXX_topic/.... Journal wrappers compile from
+# journals/<version>/ while inputting those master chapters directly. Temporary
+# links make ../chXX_topic resolve during journal builds without forking chapter
+# sources or leaving persistent workspace clutter.
+for source_dir in "$REPO_ROOT"/ch* "$REPO_ROOT"/app*; do
+  [[ -d "$source_dir" ]] || continue
+  name="$(basename "$source_dir")"
+  link="$JOURNALS_ROOT/$name"
+  if [[ -e "$link" || -L "$link" ]]; then
+    continue
+  fi
+  ln -s "../$name" "$link"
+  TEMP_LINKS+=("$link")
+done
 
 JOB="${ENTRY%.tex}"
 cd "$TARGET"
