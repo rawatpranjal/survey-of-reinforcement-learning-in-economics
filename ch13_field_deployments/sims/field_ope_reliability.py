@@ -88,6 +88,14 @@ REGIME_LABEL = {"ab": "A/B", "observational": "Observational"}
 ESTIMATORS = ["dm", "pdis", "dr"]  # scope-rl estimator_name keys
 ESTIMATOR_LABEL = {"dm": "DM", "pdis": "PDIS", "dr": "DR"}
 CAND_ORDER = ["no_promo", "disc5", "disc10", "myopic", "uniform", "cql"]
+CAND_LABEL = {
+    "no_promo": "No promo",
+    "disc5": r"5\% discount",
+    "disc10": r"10\% discount",
+    "myopic": "Myopic incumbent",
+    "uniform": "Uniform",
+    "cql": "CQL (offline RL)",
+}
 
 # Training budgets (one place; hashed into every component so a change re-runs cleanly).
 # fqe_steps MUST be a multiple of FQE_EPOCH_LEN (10000): d3rlpy runs n_steps//n_steps_per_epoch
@@ -326,12 +334,90 @@ def write_table(agg, path):
     print(f"  Table written: {path}")
 
 
+def _cand_stats(data):
+    """Per candidate: true field value (on-policy value, pooled over seeds and regimes),
+    and, per regime, the fitted-Q direct-method error and the per-trajectory importance-
+    sampling effective sample size. These are the mechanism behind the reliability table."""
+    res = data["results"]
+    stats = {}
+    for nm in CAND_ORDER:
+        onp_all = [
+            res[f"{rg}_s{s}"]["epv"][nm]["on_policy"] for rg in REGIMES for s in SEEDS
+        ]
+        row = {"true": _mean_se(onp_all)}
+        for rg in REGIMES:
+            dmerr = [
+                res[f"{rg}_s{s}"]["epv"][nm]["dm"]
+                - res[f"{rg}_s{s}"]["epv"][nm]["on_policy"]
+                for s in SEEDS
+            ]
+            ess = [res[f"{rg}_s{s}"]["diag"]["per_cand"][nm]["ess"] for s in SEEDS]
+            row[rg] = {"dm_err": _mean_se(dmerr), "ess": _mean_se(ess)}
+        stats[nm] = row
+    return stats
+
+
+def write_candidates_table(data, path):
+    """Per-candidate mechanism table: why the ranking inverts. The true-best policy carries
+    the largest negative DM error (FQE under-values it under state-occupancy shift) and an
+    effective sample size near one (IS cannot weight it over the horizon), while the log's
+    own uniform policy is the only one importance sampling can weight."""
+    stats = _cand_stats(data)
+    order = sorted(CAND_ORDER, key=lambda nm: stats[nm]["true"][0], reverse=True)
+    lines = [
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\small",
+        r"\caption{Per-candidate mechanism behind the reliability of "
+        r"Table~\ref{tab:field_ope_reliability}. True value is the Monte-Carlo on-policy "
+        r"field value; DM error is the fitted-Q direct-method estimate minus the true value "
+        r"(negative means under-valued); IS effective sample size is $(\sum w)^2/\sum w^2$ "
+        r"over the log's 500 trajectories. Rows are rank-ordered by true value; the true-best "
+        r"policy has the largest negative DM error and an effective sample size near one, "
+        r"while the uniform policy that generated the A/B log is the only one importance "
+        r"sampling can weight. Mean (standard error) over "
+        + str(N_SEEDS)
+        + r" seeds.}",
+        r"\label{tab:field_ope_candidates}",
+        r"\begin{tabular}{lccccc}",
+        r"\toprule",
+        r" & & \multicolumn{2}{c}{DM error} & "
+        r"\multicolumn{2}{c}{IS eff.\ sample size} \\",
+        r"\cmidrule(lr){3-4}\cmidrule(lr){5-6}",
+        r"Candidate & True value & A/B & Obs. & A/B & Obs. \\",
+        r"\midrule",
+    ]
+    for nm in order:
+        s = stats[nm]
+        lines.append(
+            f"{CAND_LABEL[nm]} & {_fmt(*s['true'])} & {_fmt(*s['ab']['dm_err'])} "
+            f"& {_fmt(*s['observational']['dm_err'])} & {_fmt(*s['ab']['ess'])} "
+            f"& {_fmt(*s['observational']['ess'])} \\\\"
+        )
+    lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}", ""]
+    with open(path, "w") as f:
+        f.write("\n".join(lines))
+    print(f"  Candidates table written: {path}")
+
+
 def write_macros(data, agg, path):
     """Emit the few prose numbers as LaTeX macros so nothing is hand-typed."""
+    res = data["results"]
     gap = data["refcov"]["coverage_gap_frac"] * 100
     dm_ab = agg["dm"]["ab"]["rank_corr"][0]
     dr_ab = agg["dr"]["ab"]["rank_corr"][0]
     dr_ob = agg["dr"]["observational"]["rank_corr"][0]
+    # mechanism numbers for the prose: the true-best policy's DM error and IS ESS under A/B
+    dmerr_best_ab = _mean_se(
+        [
+            res[f"ab_s{s}"]["epv"]["no_promo"]["dm"]
+            - res[f"ab_s{s}"]["epv"]["no_promo"]["on_policy"]
+            for s in SEEDS
+        ]
+    )[0]
+    ess_best_ab = _mean_se(
+        [res[f"ab_s{s}"]["diag"]["per_cand"]["no_promo"]["ess"] for s in SEEDS]
+    )[0]
     macros = {
         "fieldopecoveragegap": f"{gap:.0f}",
         "fieldopedmab": f"{dm_ab:.2f}",
@@ -339,6 +425,8 @@ def write_macros(data, agg, path):
         "fieldopedrobs": f"{dr_ob:.2f}",
         "fieldopeseeds": str(N_SEEDS),
         "fieldopehorizon": str(RUN_CFG["horizon"]),
+        "fieldopedmerrbestab": f"{dmerr_best_ab:.2f}",
+        "fieldopeessbest": f"{ess_best_ab:.1f}",
     }
     with open(path, "w") as f:
         for k, v in macros.items():
@@ -554,6 +642,7 @@ def emit_diagnostics(data):
 def generate_outputs(data):
     agg = aggregate(data)
     write_table(agg, os.path.join(OUT_DIR, f"{SCRIPT_NAME}_table.tex"))
+    write_candidates_table(data, os.path.join(OUT_DIR, f"{SCRIPT_NAME}_candidates.tex"))
     write_macros(data, agg, os.path.join(OUT_DIR, f"{SCRIPT_NAME}_macros.tex"))
     write_figure(data, agg, os.path.join(OUT_DIR, f"{SCRIPT_NAME}_mechanism.png"))
     print_summary(data, agg)

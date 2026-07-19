@@ -2,48 +2,29 @@ Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst othe
 Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
 Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
 See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
-  Computing: ab_s0
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__ab_s0.pkl
-  Computing: ab_s1
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__ab_s1.pkl
-  Computing: ab_s2
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__ab_s2.pkl
-  Computing: ab_s3
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__ab_s3.pkl
-  Computing: ab_s4
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__ab_s4.pkl
-  Computing: ab_s5
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__ab_s5.pkl
-  Computing: ab_s6
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__ab_s6.pkl
-  Computing: ab_s7
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__ab_s7.pkl
-  Computing: ab_s8
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__ab_s8.pkl
-  Computing: ab_s9
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__ab_s9.pkl
-  Computing: observational_s0
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__observational_s0.pkl
-  Computing: observational_s1
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__observational_s1.pkl
-  Computing: observational_s2
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__observational_s2.pkl
-  Computing: observational_s3
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__observational_s3.pkl
-  Computing: observational_s4
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__observational_s4.pkl
-  Computing: observational_s5
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__observational_s5.pkl
-  Computing: observational_s6
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__observational_s6.pkl
-  Computing: observational_s7
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__observational_s7.pkl
-  Computing: observational_s8
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__observational_s8.pkl
-  Computing: observational_s9
-  Cache saved: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability__observational_s9.pkl
+  Cache hit: ab_s0
+  Cache hit: ab_s1
+  Cache hit: ab_s2
+  Cache hit: ab_s3
+  Cache hit: ab_s4
+  Cache hit: ab_s5
+  Cache hit: ab_s6
+  Cache hit: ab_s7
+  Cache hit: ab_s8
+  Cache hit: ab_s9
+  Cache hit: observational_s0
+  Cache hit: observational_s1
+  Cache hit: observational_s2
+  Cache hit: observational_s3
+  Cache hit: observational_s4
+  Cache hit: observational_s5
+  Cache hit: observational_s6
+  Cache hit: observational_s7
+  Cache hit: observational_s8
+  Cache hit: observational_s9
   Cache hit: refcov
   Table written: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/field_ope_reliability_table.tex
+  Candidates table written: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/field_ope_reliability_candidates.tex
   Macros written: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/field_ope_reliability_macros.tex
   Figure written: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/field_ope_reliability_mechanism.png
 ========================================================================
