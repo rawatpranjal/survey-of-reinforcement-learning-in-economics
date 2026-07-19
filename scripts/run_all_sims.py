@@ -103,6 +103,11 @@ REGISTRY = [
     ("appA", "appA_preliminaries/sims/lipschitz_continuity.py", "A"),
     ("appA", "appA_preliminaries/sims/banach_contraction.py", "A"),
     ("appA", "appA_preliminaries/sims/robbins_monro.py", "A"),
+    # ch13 OPE-reliability sim is NOT listed here: it needs its own pinned venv
+    # (scope-rl / d3rlpy / torch) that the default sys.executable runner does not have.
+    # Run it directly:
+    #   cd ch13_field_deployments/sims && ./.venv/bin/python field_ope_reliability.py \
+    #       > field_ope_reliability_stdout.txt 2>&1
 ]
 
 
