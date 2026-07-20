@@ -28,7 +28,61 @@ Financial execution, RTB simulator, inventory benchmark & Real data or benchmark
 \label{tab:field_case_inventory}
 \end{table}
 
-\subsection{Digital Traffic: Recommendations and Notifications}
+\subsection{The Anatomy of a Production Reinforcement Learning System}
+\label{subsec:production_rl_anatomy}
+
+A reinforcement learning method that works in a simulator is not yet a system that can run on a live product surface, and the distance between the two is mostly infrastructure. Facebook's Horizon platform \citep{Gauci2019Horizon} is the clearest public account of what that infrastructure contains, so it is worth setting out as a template before the individual cases. The running example, here and in the source, is notification sending. For each notification candidate the system decides whether to send it or drop it, and a Horizon-trained policy replaced a supervised system for some Facebook notifications and raised activity and meaningful interactions. The policy itself is an ordinary deep Q-network. What makes it deployable is everything around it, namely how decisions are logged, how transitions are assembled, how the formulation is screened, how the policy is evaluated before anyone sees it, and how the loop is closed by retraining. Figure~\ref{fig:horizon_pipeline} shows the loop, and the deployments in the rest of this chapter each occupy part of it rather than all of it.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{../ch13_field_deployments/sims/horizon_pipeline.png}
+\caption{The Horizon production loop \citep{Gauci2019Horizon}. A serving policy $\mu$ logs each decision with its propensity and metrics, the Timeline pipeline assembles transitions, a data-understanding check screens the formulation, an offline learner is trained and scored by counterfactual policy evaluation, and the policy is rolled out on a fraction of traffic with exploration and retrained daily on the data it generates.}
+\label{fig:horizon_pipeline}
+\end{figure}
+
+The objects can be named once and reused for the later cases. The decision process is a Markov decision process $\mathcal{M}=(\mathcal{S},\mathcal{A},P,R,\gamma)$ with state-dependent feasible actions $\mathcal{A}(s)$, since a production system usually has a different set of actions available in each state. The system that generated the historical data is the logging policy $\mu(a\mid s)$, and the recorded number $\mu(A_t\mid S_t)$, the probability it assigned to the action it took, is the propensity. Horizon does not store a reward. It stores a vector of business metrics $M_t$ and forms the reward at training time from a user-supplied weight vector $w$,
+\begin{equation}
+R_t = w^\top M_t .
+\end{equation}
+Logged events are assembled by the Timeline pipeline into one record per transition,
+\begin{equation}
+\big(i,\; t,\; S_t,\; A_t,\; \mu(A_t\mid S_t),\; M_t,\; \mathcal{A}(S_t),\; S_{t+1},\; A_{t+1},\; \Delta t,\; \mathcal{A}(S_{t+1})\big),
+\end{equation}
+where $i$ identifies the decision unit, $t$ orders the steps, and $\Delta t$ is the time gap to the next decision. Learning targets a policy $\pi$ whose worth is the discounted return $V(\pi)=\mathbb{E}_\pi\!\left[\sum_t \gamma^t R_t\right]$, estimated before deployment by a counterfactual value $\hat V(\pi)$ built from the logged propensities.
+
+Formulation comes before any algorithm. Horizon's data-understanding tool fits a probabilistic model of next states and rewards from the same data used for training,\footnote{A neural network whose final layer is a Gaussian mixture, so that it outputs a distribution over next states and rewards rather than point estimates.} and uses it to test whether the proposed problem behaves like a Markov decision process at all. The tool then applies two checks. If no state feature helps predict the next state, the problem has no sequential structure and reinforcement learning adds nothing over a supervised score. If no state feature both responds to the action and predicts reward, the problem collapses to a bandit, where estimating the return of each action suffices. For notifications the case for a sequential formulation is exactly this, since the supervised system it replaced could not capture the value that arrives long after the send decision.
+
+Two fields in the record carry information a plain $(s,a,r,s')$ tuple lacks. The propensity $\mu(A_t\mid S_t)$ is what later allows the policy to be scored without deploying it, so the serving system logs it alongside the action and the metrics at decision time. The feasible set $\mathcal{A}(S_t)$ records which actions were available, so the Q-learning update maximizes only over actions that could actually be taken. For notifications the decision unit is the sequence of candidates for one person, the action is send or drop, and the metrics carry interactions and activity together with the send itself, so the reward can charge a penalty for sending and hold down volume.
+
+The choice of algorithm follows from the action space.\footnote{A discrete-action deep Q-network for small action sets, a parametric-action variant that scores concatenated state-action pairs when the set is very large, and DDPG or SAC when the action is continuous.} Notification sending is a binary action, so the policy is a discrete-action deep Q-network, and the first version is trained entirely on the incumbent system's logs. That data is off-policy, and an offline learner can attach unrealistic value to state-action pairs it never observed,\footnote{Extrapolation error in the sense of \citet{Fujimoto2019}; retraining on self-generated data pulls the estimates back toward the region the data support.} so the platform leans on daily retraining toward on-policy data and on counterfactual evaluation before exposure.
+
+Evaluation is counterfactual. A set of estimators runs automatically on the logged data and predicts the new policy's value from data the old policy generated,\footnote{Horizon runs six, namely a step-wise direct method, step-wise importance sampling, and step-wise doubly robust estimator, together with sequential doubly robust, sequential weighted doubly robust, and MAGIC estimators for longer horizons. These are the off-policy estimators of Section~\ref{section:offline_rl} and Section~\ref{section:causal_rl}.} and the estimates decide which policies are worth an online test. The notification policy acts by comparing the two action-values, sending with probability
+\begin{equation}
+\pi(\text{send}\mid s) = \sigma\!\big(Q(s,\text{send}) - Q(s,\text{drop})\big),
+\end{equation}
+where $\sigma$ is the logistic function, and a proportional-integral-derivative controller tunes a threshold on this probability to keep the action rate close to the system it replaced. A policy that passes is deployed to a fraction of production traffic with some exploration retained during serving, and it is retrained daily on the data it then generates. Horizon reports that the A/B comparison starts neutral and improves as the training data shifts from off-policy toward on-policy. Table~\ref{tab:horizon_pipeline} collects the stages with their notification instantiation.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.15\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.09\textwidth}@{}}
+\toprule
+Stage & Horizon mechanism & Notification instantiation & Source \\
+\midrule
+Formulation & Data-understanding model checks the Markov and bandit reductions & Sending affects value that arrives after the decision & \S4 \\
+Logging & Propensity $\mu(A_t\mid S_t)$, feasible actions, and metrics map & Serving logs send or drop and its probability & \S2, \S8 \\
+Transitions & Timeline join into $(S_t,A_t,R_t,S_{t+1})$ with a time gap & Candidate sequence for one person & \S2 \\
+Reward & $R_t=w^\top M_t$ formed at training time & Interactions and activity, penalty on sending & \S2, \S9.1 \\
+Algorithm & DQN, parametric-action DQN, DDPG, or SAC by action space & Discrete-action DQN & \S5, \S9.1 \\
+Evaluation & Six counterfactual estimators on logged data & Screen before any exposure & \S7.2 \\
+Deployment & Fraction of traffic with exploration, daily retraining & $\sigma(Q_{\text{send}}-Q_{\text{drop}})$ with a controller-tuned threshold & \S6, \S9.1 \\
+\bottomrule
+\end{tabularx}
+\caption{The Horizon production loop \citep{Gauci2019Horizon} and its instantiation for push notifications. Section numbers refer to the source paper.}
+\label{tab:horizon_pipeline}
+\end{table}
+
+\subsection{Digital Traffic: Recommendations}
 
 \subsubsection{YouTube recommendations}
 \label{sec:youtube_topk}
@@ -78,9 +132,6 @@ Uncapped-weight regression & Loosen the importance-weight cap from $e^3$ to $e^5
 \caption{Live YouTube experiments reported by \citet{Chen2019YouTubeTopK}. Effects are relative to the relevant control model in each sequential experiment, so rows should be read as component tests rather than additive gains.}
 \label{tab:youtube_topk_live}
 \end{table}
-
-\subsubsection{Meta notifications}
-Horizon, Facebook's applied RL platform, gives a second digital-traffic case \citep{Gauci2019Horizon}. The strongest sourced example is notification control: for a notification candidate, the policy chooses whether to send or drop, using person and notification features and a reward that combines activity, meaningful interaction, and a penalty for sending. The decision process is the sequence of notification candidates for one person, an episodic formulation whose finite horizon spans the multiple weeks of training data, with discounted accumulated reward over the discrete send-or-drop pair. Horizon's surrounding infrastructure matters as much as the DQN-style policy. The paper emphasizes preprocessing, distributed training, optimized serving, and counterfactual policy evaluation because online errors affect real people.\footnote{The Horizon paper also mentions Facebook 360 adaptive bitrate, but the sourced passage lacks enough public detail to classify it as confirmed production RL, so it is not counted as a core case.}
 
 \subsubsection{Taobao cold-start recommendation}
 \citet{Ji2021RLLTV} frame cold-start item recommendation on Taobao as an item-lifetime-value problem. The state is item-level history, including exposure, interaction, sale, and time features; the learned action contributes an RL score to a dual-rank system. The live evidence is a one-week Taobao A/B test beginning on January 26, 2021, with reported cold-start-item gains of 8.67\% in item page views and 18.03\% in gross merchandise value relative to the Vanilla-CTR baseline.
