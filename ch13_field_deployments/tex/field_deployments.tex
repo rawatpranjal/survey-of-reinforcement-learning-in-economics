@@ -31,27 +31,84 @@ Financial execution, RTB simulator, inventory benchmark & Real data or benchmark
 \subsection{Digital Traffic: Recommendations and Notifications}
 
 \subsubsection{YouTube recommendations}
-YouTube's top-$K$ off-policy REINFORCE system is the cleanest public recommendation case \citep{Chen2019YouTubeTopK}. The operational problem is simple to state and hard to solve: for a user arriving at YouTube, the system must choose a small set of videos from a catalog with millions of possible actions. The user's interests shift over time, new videos continuously enter the catalog, and most user-item pairs are never observed. A myopic supervised ranker can learn which videos were clicked after earlier systems exposed them, but it does not by itself solve the sequential problem of how today's recommendation changes tomorrow's state of the user and the logged data available to the platform.
+\label{sec:youtube_topk}
+YouTube's top-$K$ off-policy REINFORCE candidate generator is the cleanest public recommendation case \citep{Chen2019YouTubeTopK}. What the policy controlled was narrow. It nominated a top-$K$ set of videos from a catalog of order $10^6$, and a separate ranking model then scored and ordered those candidates before they reached the Homepage or watch-page side panel, so reinforcement learning changed which items entered the ranking funnel without owning final page composition or the broader serving stack.\footnote{The user state shifts over time, new videos continuously enter the catalog, and most user-item pairs are never observed, so a supervised ranker trained on past clicks cannot by itself account for how today's recommendation changes tomorrow's user state and the logged data available for the next update. That sequential structure is what motivates the reinforcement-learning treatment, and the deployed control surface remains a candidate generator, not end-to-end recommendation by reinforcement learning.}
 
-The important boundary is what the RL policy actually controlled. It did not replace the whole YouTube recommender. The RL component was a neural candidate generator: it nominated a top-$K$ set of videos, and a separate ranking model then scored and ordered candidates before they appeared on the Homepage or watch-page side panel. In the terminology of this chapter, the deployed control surface was narrow. RL changed which items entered the ranking funnel; it did not own final page composition, business rules, or the broader serving stack.
+The paper casts candidate generation as a discounted Markov decision process.
 
-The paper casts this candidate-generation problem as an MDP. The state $s \in \mathcal{S}$ is a continuous representation of the user's recent interaction history and context, implemented with a recurrent recommender model. The action $a \in \mathcal{A}$ is a video selected from the available catalog. The reward $r(s,a)$ is an immediate user-activity signal, with the live-experiment discussion focusing on ViewTime and related engagement outcomes; the return aggregates future reward with discount factor $\gamma$. The trajectory is continuing rather than episodic, the paper marks no episode boundary and trains continuously on new events, so the horizon is effectively unbounded and only the discount limits it. In compact form, the policy-gradient objective is
+\begin{definition}[Candidate-generation MDP \citep{Chen2019YouTubeTopK}]
+\label{def:yt_mdp}
+The environment is a tuple $(\mathcal{S}, \mathcal{A}, P, r, \rho_0, \gamma)$. The state $s \in \mathcal{S}$ is a continuous representation of the user's interaction history and context, produced by a recurrent recommender model. The action $a \in \mathcal{A}$ is one video drawn from the catalog. The reward $r(s,a)$ is an immediate engagement signal, ViewTime in the live experiments. The discount is $\gamma \in [0,1)$ and $\rho_0$ is the initial-state distribution.
+\end{definition}
+
+\noindent The trajectory is continuing rather than episodic. The paper marks no episode boundary and trains continuously on new events, so the horizon is effectively unbounded and only the discount limits it. Following the policy-gradient conventions of Section~\ref{section:rl_algorithms}, the objective and its REINFORCE gradient are
 \begin{equation}
-J(\theta)
-= \mathbb{E}_{\tau \sim \pi_\theta}
-\left[
-\sum_{t \geq 0} \gamma^t r(s_t,a_t)
-\right],
+\label{eq:yt_reinforce}
+J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\!\left[\sum_{t \geq 0} \gamma^t r(s_t,a_t)\right], \qquad
+\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\!\left[\sum_{t \geq 0} R_t\, \nabla_\theta \log \pi_\theta(a_t \mid s_t)\right],
 \end{equation}
-where $\pi_\theta(a\mid s)$ is the neural recommendation policy and the trajectory records the user's subsequent states and interactions with the recommender.
+where $\pi_\theta(a \mid s)$ is the softmax recommendation policy and $R_t = \sum_{t' \geq t} \gamma^{t'-t} r(s_{t'}, a_{t'})$ is the discounted return from time $t$. On trajectories generated by $\pi_\theta$ this Monte Carlo estimate is unbiased.
 
-That objective is not enough to make the system deployable. YouTube could not freely generate fresh exploratory trajectories from every new policy: observing reward means recommending videos to real users. The learner therefore relied heavily on logged feedback from earlier recommender policies. A naive REINFORCE update on those logs would be biased toward actions already favored by the behavior policies, creating the familiar ``rich get richer'' effect in which popular nominations remain popular partly because they were observed more often. The production recipe learned a behavior-policy model and used off-policy importance correction to reduce this bias, with capping to control variance.\footnote{The exact estimator in \citet{Chen2019YouTubeTopK} is more involved than the schematic objective above. The practical point for this chapter is the deployment requirement: the serving policy was trained from logged recommendations produced by older policies, so the gradient estimate had to correct for the mismatch between the logged behavior policy and the candidate policy being updated.}
+The estimate is not usable as written, because observing a reward means recommending a real video to a real user, so the learner instead trains on trajectories logged under earlier and parallel recommenders, collectively a behavior policy $\beta$.\footnote{The symbol $\beta$ denotes the logging policy throughout this subsection, following the off-policy literature. The discount is $\gamma$ and the softmax temperature is $T$, so no symbol clashes. Other chapters write $\pi_b$ for the same object.} The exact off-policy correction reweights each trajectory by the importance ratio
+\begin{equation}
+\label{eq:yt_isratio}
+\rho(\tau) = \frac{p_{\pi_\theta}(\tau)}{p_\beta(\tau)} = \prod_{t \geq 0} \frac{\pi_\theta(a_t \mid s_t)}{\beta(a_t \mid s_t)},
+\end{equation}
+since the initial-state and transition factors cancel. The exact off-policy gradient is then
+\begin{equation}
+\label{eq:yt_exact}
+\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \beta}\!\left[\rho(\tau) \sum_{t \geq 0} R_t\, \nabla_\theta \log \pi_\theta(a_t \mid s_t)\right],
+\end{equation}
+and the product of many propensity ratios makes its variance explode. The production recipe keeps only the current-action ratio, dropping the state-visitation ratio and all future-action ratios, which yields the biased but far lower-variance first-order estimator
+\begin{equation}
+\label{eq:yt_firstorder}
+\nabla_\theta J(\theta) \approx \sum_{t \geq 0} \mathbb{E}_{s_t \sim d^\beta_t,\, a_t \sim \beta}\!\left[ w_t\, R_t\, \nabla_\theta \log \pi_\theta(a_t \mid s_t) \right], \qquad w_t = \frac{\pi_\theta(a_t \mid s_t)}{\beta(a_t \mid s_t)}.
+\end{equation}
+This corrects the immediate action-selection bias but not the mismatch in states or future actions.\footnote{The impact of dropping these terms on the learned policy's total reward is bounded by $O\big(\mathbb{E}_{s \sim d^\beta}[D_{TV}(\pi_\theta \Vert \beta)(s)]\big)$, a result of Achiam et al. invoked by \citet{Chen2019YouTubeTopK}, where $D_{TV}$ is the total-variation distance between $\pi_\theta(\cdot \mid s)$ and $\beta(\cdot \mid s)$. The behavior policy $\beta$ is not logged, since several logging agents are deterministic or outside YouTube's control. It is estimated by a second softmax head $\hat\beta$ that shares the recurrent user state with the main policy and has its gradient blocked from updating that state.}
 
-The second deployment obstacle was that a real recommender does not choose only one item. Standard policy-gradient learning tends to concentrate probability mass on the single best-looking action. For a top-$K$ recommender, that is the wrong geometry: the system needs several high-quality candidates so the downstream ranker can assemble a useful page. Chen et al. therefore introduce a top-$K$ off-policy correction. In their simulations and live experiments, the correction keeps meaningful probability mass on other high-value items rather than forcing the learned policy toward a top-1 collapse.
+A real recommender returns a set of items, not one. Two assumptions make the set problem tractable.
 
-Operationally, the policy sat between logged user histories and the downstream ranking stack. Training used sampled softmax because normalizing over millions of candidate videos was too expensive; serving used approximate nearest-neighbor retrieval to recover high-probability actions from the learned embedding space. Each recommended video generated logged propensities, clicks or non-clicks, and later activity signals, which were joined back into the next training batches with a lag of less than 24 hours. The experiments were therefore sequential production tests rather than a single static benchmark: once a new candidate generator entered the system, it also changed the data available for the next comparison.
+\begin{assumption}[Single-reward slate \citep{Chen2019YouTubeTopK}]
+\label{asmp:yt_onehot}
+At most one item in the returned set $A$ receives non-zero reward, and the expected return of an item is independent of the other items in $A$.
+\end{assumption}
 
-The live evidence is unusually explicit for a production RL paper. The authors evaluate the method on a production RNN candidate-generation model in use at YouTube. The model is one of many candidate generators, its outputs are ranked by a separate model, and the live experiments train continuously on new events with less than a 24-hour lag. The long-term reward used in the experiments is aggregated over roughly 4--10 hours, and the reported online metric in the paper's main discussion is ViewTime. Table~\ref{tab:youtube_topk_live} summarizes the live results that matter for the field-deployment claim, which are sub-percent ViewTime movements, component tests rather than a wholesale replacement of YouTube recommendation.
+The set is built by drawing $K$ items independently from $\pi_\theta$ and de-duplicating, so an item's chance of reaching the user is its inclusion probability.
+
+\begin{definition}[Slate inclusion probability]
+\label{def:yt_alpha}
+For $K$ independent draws from $\pi_\theta(\cdot \mid s)$, the probability that item $a$ appears at least once in the de-duplicated set is
+\begin{equation}
+\label{eq:yt_alpha}
+\alpha_\theta(a \mid s) = 1 - \big(1 - \pi_\theta(a \mid s)\big)^K.
+\end{equation}
+\end{definition}
+
+\noindent Because $\sum_a \alpha_\theta(a \mid s) > 1$ in general, $\alpha_\theta$ is an inclusion probability, not a distribution over items. Under Assumption~\ref{asmp:yt_onehot} the slate objective reduces to a sum over inclusion probabilities,
+\begin{equation}
+\label{eq:yt_jk}
+J_K(\theta) = \mathbb{E}_s\!\left[ \sum_{a \in \mathcal{A}} \alpha_\theta(a \mid s)\, Q(s,a) \right],
+\end{equation}
+where $Q(s,a)$ is the expected return of item $a$. Differentiating $\alpha_\theta$ and applying the off-policy correction of \eqref{eq:yt_firstorder} gives the central result of the paper, the top-$K$ off-policy gradient
+\begin{equation}
+\label{eq:yt_topk}
+\boxed{\nabla_\theta J_K(\theta) \approx \mathbb{E}_{s \sim d^\beta,\, a \sim \beta}\!\left[ \frac{\pi_\theta(a \mid s)}{\beta(a \mid s)}\, \lambda_K(s,a)\, R(s,a)\, \nabla_\theta \log \pi_\theta(a \mid s) \right]}
+\end{equation}
+which differs from the standard correction of \eqref{eq:yt_firstorder} only by the multiplier
+\begin{equation}
+\label{eq:yt_lambda}
+\lambda_K(s,a) = K\,\big(1 - \pi_\theta(a \mid s)\big)^{K-1}.
+\end{equation}
+The multiplier reweights each update by how far the item is from being included already.\footnote{Writing $\alpha = 1-(1-\pi)^K$, the chain rule gives $\nabla_\theta \log \alpha_\theta = (\pi/\alpha)\,(\partial \alpha/\partial \pi)\, \nabla_\theta \log \pi_\theta$ with $\partial \alpha/\partial \pi = K(1-\pi)^{K-1}$. The $\alpha$ factor cancels against the inclusion-event importance weight $\alpha/\beta$, leaving $\pi/\beta$ times $\lambda_K$.} As $\pi_\theta(a \mid s) \to 0$ the multiplier approaches $K$, so a promising but under-weighted item is pushed up about $K$ times as hard as under the standard correction. As $\pi_\theta(a \mid s) \to 1$ it approaches $0$, so once an item is nearly certain to appear the update stops spending probability mass on it. At $K=1$, $\lambda_K = 1$ and the standard correction is recovered.\footnote{The inclusion probability reaches one half at $\pi_\theta(a \mid s) = 1 - 2^{-1/K} \approx (\log 2)/K$, so an item needs probability only of order $1/K$, not near one, to have an even chance of appearing in the slate.}
+
+Because the estimated $\hat\beta$ can be very small, the raw weight is capped,
+\begin{equation}
+\label{eq:yt_cap}
+\bar{w}_c(s,a) = \min\!\left\{ \frac{\pi_\theta(a \mid s)}{\hat\beta(a \mid s)},\, c \right\},
+\end{equation}
+which adds bias but bounds the instability from rare logged actions, and the effective per-example weight becomes $\bar{w}_c(s,a)\, \lambda_K(s,a)$.
+
+The live evidence is unusually explicit for a production reinforcement-learning paper. The method was evaluated on a production RNN candidate generator in use at YouTube, trained continuously on new events with a lag under 24 hours, with the long-term reward aggregated over roughly 4 to 10 hours and ViewTime as the headline online metric.\footnote{Training used sampled softmax because normalizing the policy over millions of videos is too expensive, and serving used approximate nearest-neighbor retrieval over the learned embeddings. Each recommendation logged its propensity, the click or non-click, and later activity, joined into the next training batch, so the experiments were sequential production tests rather than one static benchmark, and a new candidate generator changed the data available for the next comparison.} Table~\ref{tab:youtube_topk_live} collects the live results that carry the field-deployment claim, which are sub-percent ViewTime movements from component tests, not a wholesale replacement of YouTube recommendation.
 
 \begin{table}[t]
 \centering
