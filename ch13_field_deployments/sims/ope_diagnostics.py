@@ -17,9 +17,26 @@ FQE_EPOCH_LEN = 10000
 # Thresholds (one place; imported by the driver and the tests).
 THRESH = {
     "fqe_scale_frac": 0.25,  # DM(best) must be >= this * true(best), else FQE_UNTRAINED
-    "truth_rel_tol": 0.15,  # |MC_true - scoperl_onpolicy| / true > this -> TRUTH_MISMATCH
+    # tightened from 0.15 once the scope-rl discount off-by-one (on-policy value = gamma *
+    # standard-convention value) is corrected in the pipeline; the loose tolerance was
+    # exactly wide enough to hide that bug.
+    "truth_rel_tol": 0.05,  # |MC_true - scoperl_onpolicy| / true > this -> TRUTH_MISMATCH
     "ess_min": 5.0,  # trajectory-IS effective sample size below this -> IS_DEGENERATE
     "rank_inv": -0.5,  # rank correlation below this -> RANK_INVERSION (informational)
+    # calibration gates on the behavior-policy candidate. Measured FQE refit noise at
+    # the frozen budget: cal-error sd 0.04 (ab, exact behavior candidate) to 0.07
+    # (incumbent/mixture, clone or on-support candidate), all means within 1.5 SE of
+    # zero over 10 seeds. Per-cell FATAL therefore sits at ~3 sd (catastrophic fits
+    # only) and the bias gate on the SEED-POOLED mean is what catches a systematic
+    # miscalibration (the greedy-TD-target bug produced +0.26 pooled, 5x this gate).
+    "dm_cal_warn": 0.10,  # per-cell |DM - truth| above this -> INFO DM_CAL_WARN
+    "dm_cal_fatal": 0.20,  # per-cell |DM - truth| above this -> FATAL FQE_MISCALIBRATED
+    "dm_cal_bias": 0.05,  # |mean cal error over seeds| above this -> FATAL FQE_MISCALIBRATED
+    # BC clone argmax match rate below this -> CLONE_INFIDELITY. 0.90, not higher: the
+    # residual disagreements of a converged myopic clone sit on argmax near-ties (the
+    # rule's action boundary), and no bias enters the results table because the true
+    # value is computed for the clone head itself; the gate protects the row LABEL.
+    "clone_fidelity_min": 0.90,
 }
 
 
@@ -29,7 +46,13 @@ THRESH = {
 class AlertBank:
     """Collects alerts across a run. FATAL alerts make the run INVALID."""
 
-    FATAL_KINDS = {"FQE_UNTRAINED", "TRUTH_MISMATCH", "SUPPORT_HOLE"}
+    FATAL_KINDS = {
+        "FQE_UNTRAINED",
+        "TRUTH_MISMATCH",
+        "SUPPORT_HOLE",
+        "FQE_MISCALIBRATED",
+        "CLONE_INFIDELITY",
+    }
 
     def __init__(self):
         self.alerts = []  # list of dicts: {kind, severity, where, detail}
@@ -186,6 +209,101 @@ def check_rank_inversion(rank_corr_by_est, where, bank):
             flagged.append(est)
             bank.add("RANK_INVERSION", where, f"{est}: rank corr {rc:.3f}")
     return {"flagged": flagged}
+
+
+def check_dm_calibration(dm_by_cand, truth_by_cand, cal_cand, where, bank, fatal=True):
+    """Per-cell calibration check for the fitted-Q direct method: on the calibration
+    candidate (the behavior policy itself, or the closest on-support candidate),
+    coverage is perfect, so any DM error is pure fit error. A single cell's error is
+    dominated by refit noise, so the per-cell FATAL sits at dm_cal_fatal (~3 sd of
+    measured noise) and errors in the warn band surface as INFO DM_CAL_WARN. The
+    systematic-bias gate lives in check_dm_calibration_bias, on the seed-pooled mean.
+    The old fqe_scale_frac check only caught Q at random init; these catch Q trained
+    but still biased where it has no coverage excuse."""
+    dm, truth = dm_by_cand[cal_cand], truth_by_cand[cal_cand]
+    err = dm - truth
+    ok = abs(err) <= THRESH["dm_cal_fatal"]
+    if not ok:
+        bank.add(
+            "FQE_MISCALIBRATED" if fatal else "DM_CAL_WARN",
+            where,
+            f"{cal_cand}: DM {dm:.3f} vs truth {truth:.3f} "
+            f"(err {err:+.3f}, per-cell fatal {THRESH['dm_cal_fatal']:.2f})",
+        )
+    elif abs(err) > THRESH["dm_cal_warn"]:
+        bank.add(
+            "DM_CAL_WARN",
+            where,
+            f"{cal_cand}: DM {dm:.3f} vs truth {truth:.3f} "
+            f"(err {err:+.3f}, warn band {THRESH['dm_cal_warn']:.2f})",
+        )
+    return {"cal_cand": cal_cand, "err": float(err), "ok": ok}
+
+
+def check_dm_calibration_bias(cal_errs, regime, cal_cand, bank, fatal=True):
+    """Seed-pooled calibration-bias gate: FATAL FQE_MISCALIBRATED if the MEAN DM
+    error on the calibration candidate across seeds exceeds dm_cal_bias. Refit noise
+    averages out over seeds, so a pooled mean this large is systematic (the
+    greedy-TD-target bug produced a pooled +0.26 here, five times this gate)."""
+    errs = np.asarray(cal_errs, dtype=float)
+    mean = float(errs.mean())
+    ok = abs(mean) <= THRESH["dm_cal_bias"]
+    if not ok:
+        bank.add(
+            "FQE_MISCALIBRATED" if fatal else "DM_CAL_WARN",
+            f"{regime}/pooled",
+            f"{cal_cand}: mean cal error {mean:+.3f} over {errs.size} seeds "
+            f"(bias gate {THRESH['dm_cal_bias']:.2f})",
+        )
+    return {"mean_err": mean, "n": int(errs.size), "ok": ok}
+
+
+def check_clone_fidelity(fidelity_by_cand, where, bank):
+    """FATAL CLONE_INFIDELITY if a BC candidate clone's argmax match rate against
+    its reference rule falls below threshold (an unfaithful clone silently changes
+    which policy the menu contains; the old observational log's imitation collapsed
+    to the max discount this way)."""
+    flagged = []
+    for nm, rate in fidelity_by_cand.items():
+        if rate < THRESH["clone_fidelity_min"]:
+            flagged.append(nm)
+            bank.add(
+                "CLONE_INFIDELITY",
+                where,
+                f"{nm}: clone argmax match rate {rate:.3f} "
+                f"< {THRESH['clone_fidelity_min']:.2f}",
+            )
+    return {"flagged": flagged}
+
+
+def check_mixture_log(
+    component_counts, n_components, pscore_min, epsilon, n_actions, where, bank
+):
+    """FATAL SUPPORT_HOLE if some mixture component was never drawn across the log's
+    episodes, or a logged propensity fell below the analytic floor eps/N (both would
+    invalidate the stratified-IS argument for the mixture regime)."""
+    counts = np.asarray(component_counts)
+    ok = True
+    if len(counts) != n_components or (counts == 0).any():
+        ok = False
+        bank.add(
+            "SUPPORT_HOLE",
+            where,
+            f"mixture components drawn {counts.tolist()} (some never drawn)",
+        )
+    floor = epsilon / n_actions - 1e-9
+    if pscore_min < floor:
+        ok = False
+        bank.add(
+            "SUPPORT_HOLE",
+            where,
+            f"logged pscore {pscore_min:.6f} below analytic floor {floor:.6f}",
+        )
+    return {
+        "component_counts": counts.tolist(),
+        "pscore_min": float(pscore_min),
+        "ok": ok,
+    }
 
 
 def check_support(cov, where, bank):
