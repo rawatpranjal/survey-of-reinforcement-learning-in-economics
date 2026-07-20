@@ -12,317 +12,505 @@ See the migration guide at https://gymnasium.farama.org/introduction/migration_g
   Cache hit: ab_s7
   Cache hit: ab_s8
   Cache hit: ab_s9
-  Cache hit: observational_s0
-  Cache hit: observational_s1
-  Cache hit: observational_s2
-  Cache hit: observational_s3
-  Cache hit: observational_s4
-  Cache hit: observational_s5
-  Cache hit: observational_s6
-  Cache hit: observational_s7
-  Cache hit: observational_s8
-  Cache hit: observational_s9
+  Cache hit: incumbent_s0
+  Cache hit: incumbent_s1
+  Cache hit: incumbent_s2
+  Cache hit: incumbent_s3
+  Cache hit: incumbent_s4
+  Cache hit: incumbent_s5
+  Cache hit: incumbent_s6
+  Cache hit: incumbent_s7
+  Cache hit: incumbent_s8
+  Cache hit: incumbent_s9
+  Cache hit: mixture_s0
+  Cache hit: mixture_s1
+  Cache hit: mixture_s2
+  Cache hit: mixture_s3
+  Cache hit: mixture_s4
+  Cache hit: mixture_s5
+  Cache hit: mixture_s6
+  Cache hit: mixture_s7
+  Cache hit: mixture_s8
+  Cache hit: mixture_s9
   Cache hit: refcov
-  Table written: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/field_ope_reliability_table.tex
-  Candidates table written: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/field_ope_reliability_candidates.tex
-  Macros written: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/field_ope_reliability_macros.tex
-  Figure written: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/field_ope_reliability_mechanism.png
+  Table written: /Users/pranjal/Code/rl-ch13-repair/ch13_field_deployments/sims/field_ope_reliability_table.tex
+  Candidates table written: /Users/pranjal/Code/rl-ch13-repair/ch13_field_deployments/sims/field_ope_reliability_candidates.tex
+  Macros written: /Users/pranjal/Code/rl-ch13-repair/ch13_field_deployments/sims/field_ope_reliability_macros.tex
+  Figure written: /Users/pranjal/Code/rl-ch13-repair/ch13_field_deployments/sims/field_ope_reliability_mechanism.png
 ========================================================================
-OPE RELIABILITY UNDER TWO LOGGING REGIMES -- ch13 capstone
+OPE RELIABILITY UNDER THREE LOGGING REGIMES -- ch13 capstone
 ========================================================================
 
 Config:
-  n_traj         500
-  bc_steps       1200
-  cql_steps      2000
-  fqe_steps      20000
-  n_on_policy    500
-  true_n_ep      8000
-  cand_epsilon   0.3
-  gamma          0.95
-  K              8
-  horizon        40
-  seeds          [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  n_traj             500
+  bc_steps           8000
+  bc_myopic          1500ep_5x
+  menu_seed          fixed_v2
+  cql_steps          2000
+  fqe_steps          50000
+  fqe_hidden         (256, 256)
+  n_on_policy        500
+  true_n_ep          8000
+  cand_epsilon       0.3
+  incumbent_epsilon  0.3
+  mix_epsilon        0.3
+  cql_on             ab_log
+  truth_convention   gamma0_v2
+  gamma              0.95
+  K                  8
+  horizon            40
+  seeds              [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 Off-policy SELECTION reliability (mean [SE] over seeds):
-estimator  regime                   regret@1          rank_corr
----------------------------------------------------------------
-DM         A/B                 0.347 (0.005)     -0.846 (0.047)
-DM         Observational       0.338 (0.023)     -0.874 (0.037)
-PDIS       A/B                 0.234 (0.031)     -0.291 (0.103)
-PDIS       Observational       0.324 (0.037)     -0.754 (0.073)
-DR         A/B                 0.197 (0.042)     -0.229 (0.125)
-DR         Observational       0.354 (0.010)     -0.749 (0.087)
+estimator  regime                         regret@1          rank_corr
+---------------------------------------------------------------------
+DM         A/B (uniform)             0.210 (0.048)     -0.040 (0.116)
+DM         Incumbent (narrow)        0.246 (0.039)     -0.326 (0.136)
+DM         Historical mixture        0.038 (0.018)      0.697 (0.053)
+PDIS       A/B (uniform)             0.265 (0.035)     -0.297 (0.110)
+PDIS       Incumbent (narrow)        0.326 (0.010)     -0.646 (0.083)
+PDIS       Historical mixture        0.268 (0.040)      0.029 (0.103)
+DR         A/B (uniform)             0.175 (0.046)      0.051 (0.127)
+DR         Incumbent (narrow)        0.181 (0.043)     -0.166 (0.116)
+DR         Historical mixture        0.073 (0.033)      0.423 (0.113)
+
+Paired DM rank-corr contrast (mixture - A/B, within seed): +0.737 (0.092)
 
 True field value of each candidate (independent MC, seed 0, mean [SE]):
   no_promo   3.981 [0.011]
   disc5      3.898 [0.011]
   disc10     3.795 [0.010]
   uniform    3.636 [0.010]
-  myopic     3.602 [0.010]
-  cql        3.567 [0.010]
+  myopic     3.620 [0.010]
+  cql        3.611 [0.010]
+
+Reference-coverage gaps (softened no-promo candidate vs each log):
+  A/B (uniform)         74.9% below the log's 1st pctile
+  Incumbent (narrow)    89.8% below the log's 1st pctile
+  Historical mixture     0.0% below the log's 1st pctile
 
 Output files:
-  /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/field_ope_reliability_table.tex
-  /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/field_ope_reliability_mechanism.png
+  /Users/pranjal/Code/rl-ch13-repair/ch13_field_deployments/sims/field_ope_reliability_table.tex
+  /Users/pranjal/Code/rl-ch13-repair/ch13_field_deployments/sims/field_ope_reliability_candidates.tex
+  /Users/pranjal/Code/rl-ch13-repair/ch13_field_deployments/sims/field_ope_reliability_mechanism.png
 
 ========================================================================
 STEP DIAGNOSTICS -- detailed, per (regime, seed)
 ========================================================================
 
-[ab/s0] fqe_epochs=2 log_entropy=1.792 action_counts=[3325, 3272, 3323, 3334, 3340, 3406] support_holes=[]
+[ab/s0] fqe_epochs=5 log_entropy=1.792 action_counts=[3325, 3272, 3323, 3334, 3340, 3406] support_holes=[] wallclock=1088s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.962
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.981   3.734   3.076    2.698    3.927    2.15   500
-  disc5        3.898   3.662   3.410    1.254    3.205    1.05   500
-  disc10       3.795   3.575   3.737    1.112    3.768    6.36   500
-  myopic       3.602   3.388   4.285    1.650    3.654    1.03   500
-  uniform      3.636   3.434   3.471    3.596    3.592  500.00   500
-  cql          3.567   3.408   4.093    5.340    3.238    1.01   500
-  rank_corr: DM=-0.943 PDIS=-0.314 DR=0.257
+  no_promo     3.981   3.931   3.750    2.698    4.212    2.15   500
+  disc5        3.898   3.855   3.569    1.254    3.112    1.05   500
+  disc10       3.795   3.763   3.742    1.112    3.756    6.36   500
+  myopic       3.620   3.579   3.816    1.609    3.825    4.81   500
+  uniform      3.636   3.614   3.606    3.596    3.609  500.00   500
+  cql          3.611   3.608   3.859    3.128    3.459    2.31   500
+  rank_corr: DM=-0.543 PDIS=-0.257 DR=0.086
 
-[ab/s1] fqe_epochs=2 log_entropy=1.792 action_counts=[3307, 3329, 3394, 3341, 3306, 3323] support_holes=[]
+[ab/s1] fqe_epochs=5 log_entropy=1.792 action_counts=[3307, 3329, 3394, 3341, 3306, 3323] support_holes=[] wallclock=1136s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.950
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.972   3.737   3.042    1.311    3.277    1.33   500
-  disc5        3.895   3.688   3.408    1.813    3.605    1.02   500
-  disc10       3.795   3.596   3.441    1.205    2.927    1.04   500
-  myopic       3.593   3.426   4.268    1.053    3.985    1.31   500
-  uniform      3.624   3.432   3.891    3.558    3.549  500.00   500
-  cql          3.643   3.454   4.013    2.714    2.605    2.42   500
-  rank_corr: DM=-0.943 PDIS=0.029 DR=-0.314
+  no_promo     3.972   3.933   3.755    1.311    3.791    1.33   500
+  disc5        3.895   3.882   3.615    1.813    3.807    1.02   500
+  disc10       3.795   3.786   3.387    1.205    3.297    1.04   500
+  myopic       3.616   3.621   3.789    0.979    3.693    2.46   500
+  uniform      3.624   3.613   3.664    3.558    3.570  500.00   500
+  cql          3.575   3.578   3.752    2.709    4.002    2.63   500
+  rank_corr: DM=-0.086 PDIS=-0.429 DR=-0.086
 
-[ab/s2] fqe_epochs=2 log_entropy=1.792 action_counts=[3323, 3281, 3337, 3347, 3298, 3414] support_holes=[]
+[ab/s2] fqe_epochs=5 log_entropy=1.792 action_counts=[3323, 3281, 3337, 3347, 3298, 3414] support_holes=[] wallclock=1187s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.965
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.973   3.776   3.242    1.195    3.202    1.17   500
-  disc5        3.891   3.699   3.479   16.503    5.375    3.18   500
-  disc10       3.788   3.598   3.714    1.403    3.495    1.21   500
-  myopic       3.587   3.405   4.179    1.289    4.080    1.16   500
-  uniform      3.620   3.464   3.809    3.616    3.606  500.00   500
-  cql          3.674   3.502   3.887    9.430    3.823    1.63   500
-  rank_corr: DM=-0.943 PDIS=-0.029 DR=-0.371
+  no_promo     3.973   3.974   3.549    1.195    3.449    1.17   500
+  disc5        3.891   3.894   3.830   16.503    7.481    3.18   500
+  disc10       3.788   3.787   3.747    1.403    3.526    1.21   500
+  myopic       3.620   3.621   3.762    1.223    3.668    1.66   500
+  uniform      3.620   3.646   3.685    3.616    3.647  500.00   500
+  cql          3.758   3.788   3.803    4.153    4.128    1.48   500
+  rank_corr: DM=-0.029 PDIS=0.086 DR=-0.086
 
-[ab/s3] fqe_epochs=2 log_entropy=1.792 action_counts=[3340, 3330, 3317, 3293, 3287, 3433] support_holes=[]
+[ab/s3] fqe_epochs=5 log_entropy=1.792 action_counts=[3340, 3330, 3317, 3293, 3287, 3433] support_holes=[] wallclock=1137s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.961
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.977   3.730   3.146    1.990    3.987    1.50   500
-  disc5        3.900   3.667   3.528    1.158    3.259    1.14   500
-  disc10       3.796   3.568   3.758    1.238    1.760    1.02   500
-  myopic       3.585   3.390   4.190    3.989    4.583    1.15   500
-  uniform      3.633   3.439   3.397    3.572    3.561  500.00   500
-  cql          3.700   3.481   3.949    3.485    1.965    2.83   500
-  rank_corr: DM=-0.657 PDIS=-0.829 DR=-0.257
+  no_promo     3.977   3.926   3.525    1.990    3.510    1.50   500
+  disc5        3.900   3.860   3.661    1.158    3.574    1.14   500
+  disc10       3.796   3.755   3.650    1.238    2.024    1.02   500
+  myopic       3.616   3.583   3.731    2.316    4.314    1.15   500
+  uniform      3.633   3.620   3.586    3.572    3.578  500.00   500
+  cql          3.692   3.673   3.781    3.562    3.710    1.73   500
+  rank_corr: DM=-0.486 PDIS=-0.657 DR=-0.771
 
-[ab/s4] fqe_epochs=2 log_entropy=1.792 action_counts=[3256, 3308, 3372, 3435, 3328, 3301] support_holes=[]
+[ab/s4] fqe_epochs=5 log_entropy=1.792 action_counts=[3256, 3308, 3372, 3435, 3328, 3301] support_holes=[] wallclock=1070s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.965
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.974   3.700   3.246    1.826    3.468    1.17   500
-  disc5        3.890   3.625   3.464    1.754    3.314    2.06   500
-  disc10       3.789   3.532   3.744    8.866    6.254    1.51   500
-  myopic       3.594   3.351   4.117    2.243    3.892    3.18   500
-  uniform      3.626   3.394   3.887    3.547    3.544  500.00   500
-  cql          3.583   3.356   3.812    3.898    2.459    1.02   500
-  rank_corr: DM=-0.943 PDIS=-0.429 DR=-0.143
+  no_promo     3.974   3.895   4.293    1.826    4.271    1.17   500
+  disc5        3.890   3.816   3.745    1.754    3.356    2.06   500
+  disc10       3.789   3.718   3.906    8.866    5.265    1.51   500
+  myopic       3.618   3.559   3.847    1.587    4.067    1.18   500
+  uniform      3.626   3.573   3.630    3.547    3.604  500.00   500
+  cql          3.611   3.568   3.721    2.523    2.901    1.34   500
+  rank_corr: DM=0.486 PDIS=0.143 DR=0.314
 
-[ab/s5] fqe_epochs=2 log_entropy=1.792 action_counts=[3215, 3283, 3334, 3345, 3448, 3375] support_holes=[]
+[ab/s5] fqe_epochs=5 log_entropy=1.792 action_counts=[3215, 3283, 3334, 3345, 3448, 3375] support_holes=[] wallclock=1013s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.953
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     4.000   3.813   3.162    1.394    3.482    2.17   500
-  disc5        3.923   3.729   3.484   12.529    6.678    2.76   500
-  disc10       3.819   3.658   3.704    2.605    3.859    1.71   500
-  myopic       3.604   3.457   4.270    2.057    3.021    2.49   500
-  uniform      3.647   3.461   3.980    3.630    3.615  500.00   500
-  cql          3.619   3.475   4.033    5.725    3.470    1.02   500
-  rank_corr: DM=-0.943 PDIS=-0.029 DR=0.543
+  no_promo     4.000   4.013   3.781    1.394    3.980    2.17   500
+  disc5        3.923   3.925   3.873   12.529    6.874    2.76   500
+  disc10       3.819   3.851   3.658    2.605    4.210    1.71   500
+  myopic       3.642   3.677   3.841    1.207    3.873    6.02   500
+  uniform      3.647   3.644   3.658    3.630    3.598  500.00   500
+  cql          3.579   3.634   3.858    3.407    4.019    1.30   500
+  rank_corr: DM=0.086 PDIS=-0.143 DR=0.371
 
-[ab/s6] fqe_epochs=2 log_entropy=1.792 action_counts=[3379, 3343, 3385, 3266, 3319, 3308] support_holes=[]
+[ab/s6] fqe_epochs=5 log_entropy=1.792 action_counts=[3379, 3343, 3385, 3266, 3319, 3308] support_holes=[] wallclock=1040s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.944
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.958   3.782   3.153    1.467    3.189    1.15   500
-  disc5        3.884   3.716   3.508    1.479    3.848    1.16   500
-  disc10       3.784   3.633   4.032    1.531    3.468    1.00   500
-  myopic       3.581   3.446   4.354    1.317    3.771    1.54   500
-  uniform      3.618   3.478   3.500    3.638    3.658  500.00   500
-  cql          3.739   3.594   3.815   10.265   -0.987    1.00   500
-  rank_corr: DM=-0.600 PDIS=-0.086 DR=-0.200
+  no_promo     3.958   3.981   3.920    1.467    3.949    1.15   500
+  disc5        3.884   3.911   3.791    1.479    3.890    1.16   500
+  disc10       3.784   3.824   3.908    1.531    3.892    1.00   500
+  myopic       3.609   3.669   3.839    0.997    3.709    1.32   500
+  uniform      3.618   3.661   3.710    3.638    3.688  500.00   500
+  cql          3.630   3.670   3.916    5.747    3.275    1.01   500
+  rank_corr: DM=0.600 PDIS=-0.314 DR=0.771
 
-[ab/s7] fqe_epochs=2 log_entropy=1.792 action_counts=[3423, 3328, 3281, 3356, 3279, 3333] support_holes=[]
+[ab/s7] fqe_epochs=5 log_entropy=1.792 action_counts=[3423, 3328, 3281, 3356, 3279, 3333] support_holes=[] wallclock=1105s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.956
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.977   3.680   2.965    2.114    3.254    1.05   500
-  disc5        3.896   3.618   3.286    2.301    3.671    5.59   500
-  disc10       3.796   3.524   3.712    1.303    4.083    1.70   500
-  myopic       3.591   3.337   4.189    0.982    4.127    1.00   500
-  uniform      3.629   3.387   3.892    3.520    3.513  500.00   500
-  cql          3.627   3.380   3.975   19.922    6.328    1.19   500
-  rank_corr: DM=-1.000 PDIS=0.029 DR=-0.771
+  no_promo     3.977   3.873   3.568    2.114    3.424    1.05   500
+  disc5        3.896   3.808   3.705    2.301    4.060    5.59   500
+  disc10       3.796   3.710   3.595    1.303    3.750    1.70   500
+  myopic       3.615   3.540   3.679    0.903    3.589    1.06   500
+  uniform      3.629   3.565   3.507    3.520    3.538  500.00   500
+  cql          3.657   3.571   3.847    5.984    4.092    1.22   500
+  rank_corr: DM=-0.029 PDIS=0.086 DR=-0.086
 
-[ab/s8] fqe_epochs=2 log_entropy=1.791 action_counts=[3407, 3185, 3365, 3251, 3401, 3391] support_holes=[]
+[ab/s8] fqe_epochs=5 log_entropy=1.791 action_counts=[3407, 3185, 3365, 3251, 3401, 3391] support_holes=[] wallclock=1079s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.956
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.958   3.780   2.988    0.999    2.628    2.39   500
-  disc5        3.876   3.707   3.519    0.939    3.649    1.15   500
-  disc10       3.778   3.614   3.738    2.366    3.315    1.44   500
-  myopic       3.577   3.422   4.231    2.606    4.180    1.13   500
-  uniform      3.621   3.414   3.619    3.588    3.592  500.00   500
-  cql          3.637   3.493   3.903    4.814    1.298    1.82   500
-  rank_corr: DM=-0.657 PDIS=-0.771 DR=-0.314
+  no_promo     3.958   3.979   3.602    0.999    3.246    2.39   500
+  disc5        3.876   3.902   3.651    0.939    3.710    1.15   500
+  disc10       3.778   3.804   3.720    2.366    3.633    1.44   500
+  myopic       3.608   3.646   3.746    1.569    3.819    2.22   500
+  uniform      3.621   3.594   3.571    3.588    3.623  500.00   500
+  cql          3.578   3.596   3.793    3.477    3.501    1.02   500
+  rank_corr: DM=-0.143 PDIS=-0.886 DR=-0.086
 
-[ab/s9] fqe_epochs=2 log_entropy=1.792 action_counts=[3284, 3352, 3336, 3345, 3402, 3281] support_holes=[]
+[ab/s9] fqe_epochs=5 log_entropy=1.792 action_counts=[3284, 3352, 3336, 3345, 3402, 3281] support_holes=[] wallclock=1095s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.953
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.960   3.753   3.122    1.029    2.975    1.02   500
-  disc5        3.876   3.688   3.297    2.714    3.267    2.15   500
-  disc10       3.775   3.592   3.847    1.302    3.618    2.08   500
-  myopic       3.582   3.389   4.352    2.387    3.636    1.04   500
-  uniform      3.614   3.411   3.431    3.587    3.581  500.00   500
-  cql          3.685   3.490   3.947    3.819    3.795    1.32   500
-  rank_corr: DM=-0.829 PDIS=-0.486 DR=-0.714
+  no_promo     3.960   3.950   3.438    1.029    3.108    1.02   500
+  disc5        3.876   3.882   3.783    2.714    3.858    2.15   500
+  disc10       3.775   3.781   3.806    1.302    3.770    2.08   500
+  myopic       3.610   3.594   3.905    1.370    3.384    4.31   500
+  uniform      3.614   3.591   3.585    3.587    3.560  500.00   500
+  cql          3.696   3.705   3.777    2.357    3.766    1.49   500
+  rank_corr: DM=-0.257 PDIS=-0.600 DR=0.086
 
-[observational/s0] fqe_epochs=2 log_entropy=1.399 action_counts=[326, 830, 2221, 2954, 3990, 9679] support_holes=[]
+[incumbent/s0] fqe_epochs=5 log_entropy=1.597 action_counts=[1075, 1657, 2615, 3554, 3200, 7899] support_holes=[] wallclock=1088s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.962
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.981   3.734   2.696    0.461    2.801    2.78   500
-  disc5        3.898   3.662   2.793    0.656    2.913    1.24   500
-  disc10       3.795   3.575   3.179    0.393    3.291    1.25   500
-  myopic       3.595   3.381   3.661    1.787    3.625    8.82   500
-  uniform      3.636   3.434   3.754    0.714    3.781    2.12   500
-  cql          3.560   3.350   3.672    1.561    3.606    1.27   500
-  rank_corr: DM=-0.829 PDIS=-0.771 DR=-0.771
+  no_promo     3.981   3.931   4.009    1.070    3.828    1.60   500
+  disc5        3.898   3.855   3.419    1.187    3.633    5.05   500
+  disc10       3.795   3.763   3.827    0.378    3.779    2.57   500
+  myopic       3.620   3.579   3.524    3.642    3.537   74.08   500
+  uniform      3.636   3.614   3.537    1.221    3.747    2.36   500
+  cql          3.611   3.608   3.435    3.314    3.811    1.47   500
+  rank_corr: DM=0.371 PDIS=-0.829 DR=0.486
 
-[observational/s1] fqe_epochs=2 log_entropy=1.406 action_counts=[360, 747, 2317, 3073, 3955, 9548] support_holes=[]
+[incumbent/s1] fqe_epochs=5 log_entropy=1.594 action_counts=[1040, 1651, 2639, 3611, 3159, 7900] support_holes=[] wallclock=1125s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.950
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.972   3.737   2.700    0.433    2.889    1.05   500
-  disc5        3.895   3.688   2.731    0.453    2.875    1.05   500
-  disc10       3.795   3.596   3.314    0.486    3.289    1.64   500
-  myopic       3.587   3.412   3.640    2.847    3.607    2.49   500
-  uniform      3.624   3.432   3.359    1.130    3.788    1.11   500
-  cql          3.564   3.390   3.682    1.447    3.141    4.48   500
-  rank_corr: DM=-1.000 PDIS=-0.943 DR=-0.543
+  no_promo     3.972   3.933   3.482    0.854    3.754    1.00   500
+  disc5        3.895   3.882   3.222    0.588    3.200    1.44   500
+  disc10       3.795   3.786   3.465    0.595    3.268    2.13   500
+  myopic       3.616   3.621   3.488    3.730    3.473   73.38   500
+  uniform      3.624   3.613   3.521    1.612    3.434    2.58   500
+  cql          3.575   3.578   3.358    1.019    3.795    3.00   500
+  rank_corr: DM=-0.200 PDIS=-0.600 DR=-0.371
 
-[observational/s2] fqe_epochs=2 log_entropy=1.381 action_counts=[307, 639, 2540, 2963, 3713, 9838] support_holes=[]
+[incumbent/s2] fqe_epochs=5 log_entropy=1.597 action_counts=[1065, 1701, 2694, 3520, 3101, 7919] support_holes=[] wallclock=1043s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.965
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.973   3.776   2.720    0.142    2.765    3.06   500
-  disc5        3.891   3.699   3.407    0.388    3.288    2.50   500
-  disc10       3.788   3.598   3.587    0.537    3.439    2.54   500
-  myopic       3.584   3.398   3.673    1.718    3.635    7.83   500
-  uniform      3.620   3.464   2.859    0.327    2.932    1.40   500
-  cql          3.556   3.375   3.698    1.829    3.831    1.06   500
-  rank_corr: DM=-0.829 PDIS=-0.829 DR=-0.829
+  no_promo     3.973   3.974   3.355    0.390    3.228    1.00   500
+  disc5        3.891   3.894   3.402    0.548    3.434    1.15   500
+  disc10       3.788   3.787   3.401    3.625    7.488    1.14   500
+  myopic       3.620   3.621   3.713    3.998    3.589   73.42   500
+  uniform      3.620   3.646   3.446    1.617    3.421    1.33   500
+  cql          3.758   3.788   3.620    0.787    3.696    2.58   500
+  rank_corr: DM=-0.714 PDIS=-0.943 DR=-0.371
 
-[observational/s3] fqe_epochs=2 log_entropy=1.397 action_counts=[331, 800, 2222, 3002, 3958, 9687] support_holes=[]
+[incumbent/s3] fqe_epochs=5 log_entropy=1.597 action_counts=[1082, 1643, 2655, 3619, 3121, 7880] support_holes=[] wallclock=1073s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.961
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.977   3.730   2.150    3.021    2.827    1.85   500
-  disc5        3.900   3.667   2.844    0.686    3.099    1.04   500
-  disc10       3.796   3.568   3.249    0.735    3.220    1.00   500
-  myopic       3.581   3.382   3.645    1.834    3.413    2.02   500
-  uniform      3.633   3.439   3.052    0.854    3.329    3.07   500
-  cql          3.560   3.365   3.617    1.858    3.780    2.68   500
-  rank_corr: DM=-0.886 PDIS=-0.143 DR=-1.000
+  no_promo     3.977   3.926   3.027    0.990    2.967    1.16   500
+  disc5        3.900   3.860   3.321    1.166    3.174    2.43   500
+  disc10       3.796   3.755   3.399    1.060    3.239    2.15   500
+  myopic       3.616   3.583   3.603    3.458    3.544   76.51   500
+  uniform      3.633   3.620   3.404    1.717    3.755    1.43   500
+  cql          3.692   3.673   3.449    1.137    3.587    3.48   500
+  rank_corr: DM=-0.943 PDIS=-0.829 DR=-0.829
 
-[observational/s4] fqe_epochs=2 log_entropy=1.395 action_counts=[333, 806, 2232, 2878, 4043, 9708] support_holes=[]
+[incumbent/s4] fqe_epochs=5 log_entropy=1.594 action_counts=[1039, 1675, 2701, 3405, 3230, 7950] support_holes=[] wallclock=1061s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.965
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.974   3.700   1.943    0.370    1.842    3.17   500
-  disc5        3.890   3.625   2.564    0.494    2.664    1.04   500
-  disc10       3.789   3.532   2.934    0.448    2.989    2.21   500
-  myopic       3.587   3.337   3.658    2.397    3.330    5.41   500
-  uniform      3.626   3.394   3.741    0.801    3.117    1.00   500
-  cql          3.562   3.316   3.667    6.695    4.646    3.16   500
-  rank_corr: DM=-0.829 PDIS=-0.943 DR=-1.000
+  no_promo     3.974   3.895   3.461    0.420    3.403    1.48   500
+  disc5        3.890   3.816   3.572    0.956    3.973    1.14   500
+  disc10       3.789   3.718   3.547    1.057    3.482    1.28   500
+  myopic       3.618   3.559   3.669    3.305    3.468   69.27   500
+  uniform      3.626   3.573   3.557    0.859    3.452    1.16   500
+  cql          3.611   3.568   3.451    0.626    3.359    1.01   500
+  rank_corr: DM=-0.257 PDIS=-0.486 DR=0.200
 
-[observational/s5] fqe_epochs=2 log_entropy=1.389 action_counts=[329, 636, 2468, 2891, 4016, 9660] support_holes=[]
+[incumbent/s5] fqe_epochs=5 log_entropy=1.597 action_counts=[1059, 1667, 2674, 3514, 3190, 7896] support_holes=[] wallclock=1003s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.953
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     4.000   3.813   2.853    0.625    2.975    1.00   500
-  disc5        3.923   3.729   3.005    0.340    2.951    2.17   500
-  disc10       3.819   3.658   3.494    0.247    3.319    1.03   500
-  myopic       3.608   3.459   3.676    2.916    3.654    1.80   500
-  uniform      3.647   3.461   3.666    0.737    3.550    1.05   500
-  cql          3.583   3.445   3.738    2.656    2.813    4.03   500
-  rank_corr: DM=-1.000 PDIS=-0.714 DR=-0.086
+  no_promo     4.000   4.013   3.561    1.478    3.598    4.59   500
+  disc5        3.923   3.925   3.557    1.160    3.752    1.01   500
+  disc10       3.819   3.851   3.959    0.808    3.946    1.13   500
+  myopic       3.642   3.677   3.714    3.385    3.528    6.70   500
+  uniform      3.647   3.644   3.560    1.331    3.347    1.07   500
+  cql          3.579   3.634   3.495    1.238    3.780    2.42   500
+  rank_corr: DM=0.371 PDIS=-0.029 DR=0.086
 
-[observational/s6] fqe_epochs=2 log_entropy=1.404 action_counts=[320, 817, 2400, 3158, 3639, 9666] support_holes=[]
+[incumbent/s6] fqe_epochs=5 log_entropy=1.606 action_counts=[1125, 1727, 2726, 3588, 3030, 7804] support_holes=[] wallclock=1110s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.944
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.958   3.782   2.232    0.332    2.358    2.13   500
-  disc5        3.884   3.716   2.596    0.650    2.906    2.66   500
-  disc10       3.784   3.633   3.539    0.276    3.437    1.62   500
-  myopic       3.580   3.446   3.663    1.610    3.483    2.29   500
-  uniform      3.618   3.478   2.847    0.577    3.045    1.24   500
-  cql          3.559   3.420   3.716    6.648    5.839    3.98   500
-  rank_corr: DM=-0.943 PDIS=-0.714 DR=-0.943
+  no_promo     3.958   3.981   3.514    0.963    3.740    2.03   500
+  disc5        3.884   3.911   3.558    0.799    3.532    1.13   500
+  disc10       3.784   3.824   3.789    0.548    3.437    1.29   500
+  myopic       3.609   3.669   3.701    3.383    3.681   94.20   500
+  uniform      3.618   3.661   3.631    1.274    3.666    1.05   500
+  cql          3.630   3.670   3.733    0.992    3.638    1.28   500
+  rank_corr: DM=-0.429 PDIS=-0.714 DR=-0.029
 
-[observational/s7] fqe_epochs=2 log_entropy=1.399 action_counts=[365, 762, 2311, 3081, 3732, 9749] support_holes=[]
+[incumbent/s7] fqe_epochs=5 log_entropy=1.597 action_counts=[1102, 1657, 2716, 3512, 3069, 7944] support_holes=[] wallclock=1066s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.956
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.977   3.680   2.498    0.284    2.565    2.33   500
-  disc5        3.896   3.618   2.590    0.727    3.008    1.67   500
-  disc10       3.796   3.524   3.627    0.328    3.569    1.79   500
-  myopic       3.589   3.343   3.593    5.010    4.468    1.96   500
-  uniform      3.629   3.387   3.178    0.574    3.247    3.19   500
-  cql          3.559   3.310   3.583    2.076    3.701    2.40   500
-  rank_corr: DM=-0.600 PDIS=-0.771 DR=-0.886
+  no_promo     3.977   3.873   3.411    0.797    3.282    1.31   500
+  disc5        3.896   3.808   3.157    0.718    3.206    1.45   500
+  disc10       3.796   3.710   3.687    0.490    3.644    1.78   500
+  myopic       3.615   3.540   3.566    3.383    3.539   66.20   500
+  uniform      3.629   3.565   3.311    1.603    3.524    1.04   500
+  cql          3.657   3.571   3.458    0.939    3.205    2.02   500
+  rank_corr: DM=-0.314 PDIS=-0.771 DR=-0.314
 
-[observational/s8] fqe_epochs=2 log_entropy=1.395 action_counts=[361, 711, 2299, 3071, 3842, 9716] support_holes=[]
+[incumbent/s8] fqe_epochs=5 log_entropy=1.595 action_counts=[1082, 1628, 2634, 3463, 3259, 7934] support_holes=[] wallclock=1126s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.956
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.958   3.780   2.394    0.304    2.486    1.15   500
-  disc5        3.876   3.707   2.739    0.607    2.890    1.06   500
-  disc10       3.778   3.614   3.487    0.932    3.667    1.00   500
-  myopic       3.577   3.417   3.610    3.070    3.752    4.01   500
-  uniform      3.621   3.414   3.504    1.180    3.762    2.08   500
-  cql          3.540   3.382   3.661    2.217    3.443    7.92   500
-  rank_corr: DM=-0.943 PDIS=-0.829 DR=-0.657
+  no_promo     3.958   3.979   3.569    0.444    3.611    1.00   500
+  disc5        3.876   3.902   3.254    0.524    3.264    1.30   500
+  disc10       3.778   3.804   3.737    0.475    3.702    2.30   500
+  myopic       3.608   3.646   3.681    3.511    3.617   73.54   500
+  uniform      3.621   3.594   3.602    1.274    3.517    3.47   500
+  cql          3.578   3.596   3.740    1.122    3.886    1.47   500
+  rank_corr: DM=-0.543 PDIS=-0.771 DR=-0.257
 
-[observational/s9] fqe_epochs=2 log_entropy=1.390 action_counts=[311, 655, 2525, 2913, 3931, 9665] support_holes=[]
+[incumbent/s9] fqe_epochs=5 log_entropy=1.597 action_counts=[989, 1704, 2730, 3576, 3166, 7835] support_holes=[] wallclock=1092s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.953
   candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
-  no_promo     3.960   3.753   2.014    0.365    1.919    2.05   500
-  disc5        3.876   3.688   1.986    0.313    1.974    2.10   500
-  disc10       3.775   3.592   3.557    0.399    1.235    2.06   500
-  myopic       3.583   3.390   3.648    3.107    3.960    1.09   500
-  uniform      3.614   3.411   3.177    0.638    2.652    5.15   500
-  cql          3.551   3.354   3.678    1.688    3.592    5.43   500
-  rank_corr: DM=-0.886 PDIS=-0.886 DR=-0.771
+  no_promo     3.960   3.950   2.816    0.435    2.790    1.13   500
+  disc5        3.876   3.882   3.147    1.499    3.150    1.32   500
+  disc10       3.775   3.781   3.582    1.009    3.708    1.00   500
+  myopic       3.610   3.594   3.693    3.155    3.569   71.04   500
+  uniform      3.614   3.591   3.304    1.204    3.113    3.45   500
+  cql          3.696   3.705   3.814    4.876    3.506    1.30   500
+  rank_corr: DM=-0.600 PDIS=-0.486 DR=-0.257
+
+[mixture/s0] fqe_epochs=5 log_entropy=1.786 action_counts=[3232, 3000, 3107, 3198, 3358, 4105] support_holes=[] wallclock=1094s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.962
+  mixture components drawn: [79, 67, 69, 64, 76, 78, 67] pscore_min=0.0500
+  candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
+  no_promo     3.981   3.931   3.893    0.905    3.855   79.00   500
+  disc5        3.898   3.855   3.923    0.788    3.787   67.00   500
+  disc10       3.795   3.763   3.557    1.195    3.021   69.00   500
+  myopic       3.620   3.579   3.593    1.449    3.821    9.96   500
+  uniform      3.636   3.614   3.618    1.944    3.853    7.08   500
+  cql          3.611   3.608   3.642    0.775    3.586    1.00   500
+  rank_corr: DM=0.543 PDIS=-0.257 DR=0.257
+
+[mixture/s1] fqe_epochs=5 log_entropy=1.781 action_counts=[2862, 2844, 2945, 3645, 3554, 4150] support_holes=[] wallclock=1141s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.950
+  mixture components drawn: [67, 63, 62, 85, 80, 80, 63] pscore_min=0.0500
+  candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
+  no_promo     3.972   3.933   3.889    0.913    3.887   67.00   500
+  disc5        3.895   3.882   3.550    0.818    3.569   63.00   500
+  disc10       3.795   3.786   3.781    0.845    3.765   62.00   500
+  myopic       3.616   3.621   3.624    0.786    3.635   12.30   500
+  uniform      3.624   3.613   3.461    0.948    3.382    1.17   500
+  cql          3.575   3.578   3.529    0.667    3.486    1.01   500
+  rank_corr: DM=0.771 PDIS=0.371 DR=0.771
+
+[mixture/s2] fqe_epochs=5 log_entropy=1.787 action_counts=[2749, 3233, 3522, 3142, 3616, 3738] support_holes=[] wallclock=1105s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.965
+  mixture components drawn: [62, 75, 80, 61, 81, 58, 83] pscore_min=0.0500
+  candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
+  no_promo     3.973   3.974   4.064    1.354    4.096   62.00   500
+  disc5        3.891   3.894   3.771    1.003    3.882   75.00   500
+  disc10       3.788   3.787   3.765    1.029    3.511   80.00   500
+  myopic       3.620   3.621   3.754    1.256    3.798   12.94   500
+  uniform      3.620   3.646   3.579    2.115    3.637    1.08   500
+  cql          3.758   3.788   3.646    1.314    4.688    1.04   500
+  rank_corr: DM=0.714 PDIS=-0.086 DR=0.600
+
+[mixture/s3] fqe_epochs=5 log_entropy=1.788 action_counts=[3123, 3152, 3349, 3094, 3341, 3941] support_holes=[] wallclock=1126s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.961
+  mixture components drawn: [74, 72, 73, 58, 72, 64, 87] pscore_min=0.0500
+  candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
+  no_promo     3.977   3.926   3.805    1.221    4.241   74.00   500
+  disc5        3.900   3.860   3.624    0.799    3.678   72.00   500
+  disc10       3.796   3.755   3.872    1.162    3.865   73.00   500
+  myopic       3.616   3.583   3.590    1.413    3.635   12.99   500
+  uniform      3.633   3.620   3.590    2.352    4.028    4.92   500
+  cql          3.692   3.673   3.658    0.625    3.675    2.76   500
+  rank_corr: DM=0.657 PDIS=-0.429 DR=0.600
+
+[mixture/s4] fqe_epochs=5 log_entropy=1.786 action_counts=[3068, 3227, 2978, 3726, 3034, 3967] support_holes=[] wallclock=1068s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.965
+  mixture components drawn: [75, 75, 61, 85, 63, 72, 69] pscore_min=0.0500
+  candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
+  no_promo     3.974   3.895   3.889    0.816    3.601   75.00   500
+  disc5        3.890   3.816   3.831    1.865    3.894   75.00   500
+  disc10       3.789   3.718   3.779    0.739    3.578   61.00   500
+  myopic       3.618   3.559   3.709    1.221    3.686   39.95   500
+  uniform      3.626   3.573   3.491    2.361    3.509    4.20   500
+  cql          3.611   3.568   3.487    0.855    3.617    1.03   500
+  rank_corr: DM=0.829 PDIS=-0.257 DR=-0.086
+
+[mixture/s5] fqe_epochs=5 log_entropy=1.783 action_counts=[2839, 3124, 3017, 3206, 3591, 4223] support_holes=[] wallclock=998s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.953
+  mixture components drawn: [65, 70, 65, 63, 78, 75, 84] pscore_min=0.0500
+  candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
+  no_promo     4.000   4.013   4.227    1.302    4.442   65.00   500
+  disc5        3.923   3.925   3.843    1.400    3.931   70.00   500
+  disc10       3.819   3.851   3.798    0.964    3.522   65.00   500
+  myopic       3.642   3.677   3.590    1.101    3.687   12.00   500
+  uniform      3.647   3.644   3.562    2.203    3.705    2.80   500
+  cql          3.579   3.634   3.520    0.723    3.488    2.70   500
+  rank_corr: DM=1.000 PDIS=0.314 DR=0.771
+
+[mixture/s6] fqe_epochs=5 log_entropy=1.787 action_counts=[2694, 3417, 3314, 3606, 3242, 3727] support_holes=[] wallclock=1074s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.944
+  mixture components drawn: [60, 82, 74, 81, 69, 65, 69] pscore_min=0.0500
+  candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
+  no_promo     3.958   3.981   4.133    1.745    4.133   60.00   500
+  disc5        3.884   3.911   3.759    5.289    3.357   82.00   500
+  disc10       3.784   3.824   3.792    1.661    4.007   74.00   500
+  myopic       3.609   3.669   3.664    1.568    3.247    9.89   500
+  uniform      3.618   3.661   3.656    2.821    4.246    7.96   500
+  cql          3.630   3.670   3.776    0.741    3.745    1.30   500
+  rank_corr: DM=0.829 PDIS=0.257 DR=-0.029
+
+[mixture/s7] fqe_epochs=5 log_entropy=1.781 action_counts=[2903, 2889, 3224, 3710, 3046, 4228] support_holes=[] wallclock=1066s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.956
+  mixture components drawn: [68, 67, 69, 82, 64, 78, 72] pscore_min=0.0500
+  candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
+  no_promo     3.977   3.873   3.627    1.082    3.696   68.00   500
+  disc5        3.896   3.808   3.825    0.776    3.800   67.00   500
+  disc10       3.796   3.710   3.671    0.806    3.696   69.00   500
+  myopic       3.615   3.540   3.588    0.921    3.598   42.96   500
+  uniform      3.629   3.565   3.524    1.205    3.543    2.16   500
+  cql          3.657   3.571   3.439    0.848    3.512    1.00   500
+  rank_corr: DM=0.600 PDIS=-0.314 DR=0.600
+
+[mixture/s8] fqe_epochs=5 log_entropy=1.788 action_counts=[3384, 3003, 3223, 3462, 3029, 3899] support_holes=[] wallclock=1108s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.956
+  mixture components drawn: [85, 68, 73, 76, 62, 73, 63] pscore_min=0.0500
+  candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
+  no_promo     3.958   3.979   3.910    1.806    2.619   85.00   500
+  disc5        3.876   3.902   3.876    0.938    3.935   68.00   500
+  disc10       3.778   3.804   3.694    1.688    3.764   73.00   500
+  myopic       3.608   3.646   3.758    2.142    2.734    9.84   500
+  uniform      3.621   3.594   3.696    1.249    3.666    1.65   500
+  cql          3.578   3.596   3.773    0.569    3.721    2.04   500
+  rank_corr: DM=0.600 PDIS=0.314 DR=-0.029
+
+[mixture/s9] fqe_epochs=5 log_entropy=1.777 action_counts=[2480, 3273, 3074, 3653, 3146, 4374] support_holes=[] wallclock=1049s
+  clone fidelity: no_promo=1.000 disc5=1.000 disc10=1.000 myopic=0.953
+  mixture components drawn: [55, 77, 63, 78, 63, 79, 85] pscore_min=0.0500
+  candidate     true   onpol      DM     PDIS       DR  IS_ESS  surv
+  no_promo     3.960   3.950   3.765    4.964    4.439   55.00   500
+  disc5        3.876   3.882   3.978    1.104    4.019   77.00   500
+  disc10       3.775   3.781   3.941    0.937    4.255   63.00   500
+  myopic       3.610   3.594   3.769    0.781    3.709   12.50   500
+  uniform      3.614   3.591   3.635    1.677    3.708    1.48   500
+  cql          3.696   3.705   3.826    0.681    3.663    1.00   500
+  rank_corr: DM=0.429 PDIS=0.371 DR=0.771
 
 ========================================================================
 STEP DIAGNOSTICS -- aggregated over seeds (mean [SE])
 ========================================================================
 
-A/B log:
+A/B (uniform) log:
   candidate            true         IS_ESS           DM_err
-  no_promo    3.748 (0.013)  1.509 (0.166)   -0.634 (0.030)
-  disc5       3.680 (0.012)  2.127 (0.456)   -0.241 (0.024)
-  disc10      3.589 (0.013)  1.908 (0.508)    0.154 (0.045)
-  myopic      3.401 (0.012)  1.502 (0.233)    0.842 (0.020)
-  uniform     3.431 (0.010) 500.000 (0.000)    0.256 (0.074)
-  cql         3.463 (0.022)  1.526 (0.205)    0.479 (0.041)
+  no_promo    3.946 (0.013)  1.509 (0.166)   -0.228 (0.082)
+  disc5       3.873 (0.012)  2.127 (0.456)   -0.151 (0.029)
+  disc10      3.778 (0.014)  1.908 (0.508)   -0.066 (0.050)
+  myopic      3.609 (0.015)  2.620 (0.564)    0.187 (0.022)
+  uniform     3.612 (0.010) 500.000 (0.000)    0.008 (0.013)
+  cql         3.639 (0.022)  1.554 (0.169)    0.172 (0.027)
 
-Observational log:
+Incumbent (narrow) log:
   candidate            true         IS_ESS           DM_err
-  no_promo    3.748 (0.013)  2.055 (0.255)   -1.328 (0.098)
-  disc5       3.680 (0.012)  1.653 (0.206)   -0.954 (0.112)
-  disc10      3.589 (0.013)  1.616 (0.172)   -0.192 (0.066)
-  myopic      3.397 (0.012)  3.773 (0.856)    0.250 (0.012)
-  uniform     3.431 (0.010)  2.142 (0.421)   -0.118 (0.113)
-  cql         3.371 (0.013)  3.641 (0.645)    0.300 (0.009)
+  no_promo    3.946 (0.013)  1.632 (0.345)   -0.525 (0.101)
+  disc5       3.873 (0.012)  1.743 (0.388)   -0.512 (0.051)
+  disc10      3.778 (0.014)  1.677 (0.182)   -0.139 (0.056)
+  myopic      3.609 (0.015) 67.834 (7.193)    0.026 (0.023)
+  uniform     3.612 (0.010)  1.894 (0.313)   -0.125 (0.033)
+  cql         3.639 (0.022)  2.003 (0.263)   -0.084 (0.043)
+
+Historical mixture log:
+  candidate            true         IS_ESS           DM_err
+  no_promo    3.946 (0.013) 69.000 (2.914)   -0.026 (0.046)
+  disc5       3.873 (0.012) 71.600 (1.802)   -0.076 (0.043)
+  disc10      3.778 (0.014) 68.900 (1.952)   -0.013 (0.034)
+  myopic      3.609 (0.015) 17.536 (4.013)    0.055 (0.027)
+  uniform     3.612 (0.010)  3.449 (0.791)   -0.031 (0.023)
+  cql         3.639 (0.022)  1.487 (0.230)   -0.010 (0.036)
+
+A/B (uniform): pooled DM calibration bias on uniform: +0.008 over 10 seeds (gate 0.05)
+
+Incumbent (narrow): pooled DM calibration bias on myopic: +0.026 over 10 seeds (gate 0.05)
+
+Historical mixture: pooled DM calibration bias on uniform: -0.031 over 10 seeds (gate 0.05)
 
 ========================================================================
 ALERTS FIRED
 ========================================================================
-[INFO] IS_DEGENERATE  x102
+[INFO] DM_CAL_WARN  x4
+    incumbent/s1: myopic: DM 3.488 vs truth 3.621 (err -0.133, warn band 0.10)
+    incumbent/s4: myopic: DM 3.669 vs truth 3.559 (err +0.111, warn band 0.10)
+    mixture/s1: uniform: DM 3.461 vs truth 3.613 (err -0.152, warn band 0.10)
+    mixture/s8: uniform: DM 3.696 vs truth 3.594 (err +0.102, warn band 0.10)
+[INFO] IS_DEGENERATE  x114
     ab/s0: no_promo: ESS 2.15 < 5, surviving trajectories 500
     ab/s0: disc5: ESS 1.05 < 5, surviving trajectories 500
-    ab/s0: myopic: ESS 1.03 < 5, surviving trajectories 500
-    ab/s0: cql: ESS 1.01 < 5, surviving trajectories 500
+    ab/s0: myopic: ESS 4.81 < 5, surviving trajectories 500
+    ab/s0: cql: ESS 2.31 < 5, surviving trajectories 500
     ab/s1: no_promo: ESS 1.33 < 5, surviving trajectories 500
     ab/s1: disc5: ESS 1.02 < 5, surviving trajectories 500
     ab/s1: disc10: ESS 1.04 < 5, surviving trajectories 500
-    ab/s1: myopic: ESS 1.31 < 5, surviving trajectories 500
-    ab/s1: cql: ESS 2.42 < 5, surviving trajectories 500
+    ab/s1: myopic: ESS 2.46 < 5, surviving trajectories 500
+    ab/s1: cql: ESS 2.63 < 5, surviving trajectories 500
     ab/s2: no_promo: ESS 1.17 < 5, surviving trajectories 500
     ab/s2: disc5: ESS 3.18 < 5, surviving trajectories 500
     ab/s2: disc10: ESS 1.21 < 5, surviving trajectories 500
-    ... (+90 more)
-[INFO] RANK_INVERSION  x42
-    ab/s0: dm: rank corr -0.943
-    ab/s1: dm: rank corr -0.943
-    ab/s2: dm: rank corr -0.943
-    ab/s3: dm: rank corr -0.657
-    ab/s3: pdis: rank corr -0.829
-    ab/s4: dm: rank corr -0.943
-    ab/s5: dm: rank corr -0.943
-    ab/s6: dm: rank corr -0.600
-    ab/s7: dm: rank corr -1.000
-    ab/s7: dr: rank corr -0.771
-    ab/s8: dm: rank corr -0.657
-    ab/s8: pdis: rank corr -0.771
-    ... (+30 more)
+    ... (+102 more)
+[INFO] RANK_INVERSION  x17
+    ab/s0: dm: rank corr -0.543
+    ab/s3: pdis: rank corr -0.657
+    ab/s3: dr: rank corr -0.771
+    ab/s8: pdis: rank corr -0.886
+    ab/s9: pdis: rank corr -0.600
+    incumbent/s0: pdis: rank corr -0.829
+    incumbent/s1: pdis: rank corr -0.600
+    incumbent/s2: dm: rank corr -0.714
+    incumbent/s2: pdis: rank corr -0.943
+    incumbent/s3: dm: rank corr -0.943
+    incumbent/s3: pdis: rank corr -0.829
+    incumbent/s3: dr: rank corr -0.829
+    ... (+5 more)
 ========================================================================
 
-Diagnostics dump: /Users/pranjal/Code/rl-ch13-ope/ch13_field_deployments/sims/cache/field_ope_reliability_diagnostics.json
+Diagnostics dump: /Users/pranjal/Code/rl-ch13-repair/ch13_field_deployments/sims/cache/field_ope_reliability_diagnostics.json

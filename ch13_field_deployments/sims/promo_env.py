@@ -161,6 +161,22 @@ def constant_batch(action_idx):
     return pol
 
 
+def softened_batch(base_pol, epsilon):
+    """Epsilon-greedy softening of a batched policy: with prob 1-epsilon play
+    base_pol's action, else uniform. Matches EpsilonGreedyHead's action law, so
+    idealized coverage/occupancy rollouts describe the SAME softened policy OPE
+    evaluates (not its deterministic greedy core)."""
+
+    def pol(env, obs, rng):
+        greedy = np.asarray(base_pol(env, obs, rng)).astype(int)
+        B = obs.shape[0]
+        explore = rng.random(B) < epsilon
+        random_a = rng.integers(N_ACTIONS, size=B)
+        return np.where(explore, random_a, greedy)
+
+    return pol
+
+
 def vec_rollout_value(env, batch_policy, n_episodes, seed):
     """True discounted-return field value of a batched policy in the hidden env
     (Monte Carlo over n_episodes run in lockstep; no oracle). Returns (mean, se)."""
