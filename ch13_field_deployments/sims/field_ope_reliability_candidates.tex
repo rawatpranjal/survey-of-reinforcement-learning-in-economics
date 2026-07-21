@@ -1,7 +1,7 @@
 \begin{table}[t]
 \centering
 \small
-\caption{Per-candidate mechanism behind Table~\ref{tab:field_ope_reliability}. True value is the on-policy field value of the softened candidate; DM error is the fitted-Q direct-method estimate minus the true value (negative means under-valued); IS effective sample size is $(\sum w)^2/\sum w^2$ over the log's 500 trajectories. Rows are rank-ordered by true value. Cell entries are means over 10 seeds.}
+\caption{Per-candidate mechanism behind Table~\ref{tab:field_ope_reliability}. True value is the on-policy field value of the softened candidate; DM error is the fitted-Q direct-method estimate minus the true value (negative means under-valued); importance-sampling (IS) effective sample size is $(\sum w)^2/\sum w^2$ over the log's 500 trajectories. Rows are rank-ordered by true value. Cell entries are means over 10 seeds.}
 \label{tab:field_ope_candidates}
 \begin{tabular}{lccccccc}
 \toprule
@@ -12,7 +12,7 @@ Candidate & True value & A/B & Incumb. & Mixture & A/B & Incumb. & Mixture \\
 No promo & 3.946 & -0.228 & -0.525 & -0.026 & 1.5 & 1.6 & 69.0 \\
 5\% discount & 3.873 & -0.151 & -0.512 & -0.076 & 2.1 & 1.7 & 71.6 \\
 10\% discount & 3.778 & -0.066 & -0.139 & -0.013 & 1.9 & 1.7 & 68.9 \\
-CQL (offline RL) & 3.639 & +0.172 & -0.084 & -0.010 & 1.6 & 2.0 & 1.5 \\
+Conservative Q-learning (CQL; offline RL) & 3.639 & +0.172 & -0.084 & -0.010 & 1.6 & 2.0 & 1.5 \\
 Uniform & 3.612 & +0.008 & -0.125 & -0.031 & 500.0 & 1.9 & 3.4 \\
 Myopic incumbent & 3.609 & +0.187 & +0.026 & +0.055 & 2.6 & 67.8 & 17.5 \\
 \bottomrule
