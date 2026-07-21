@@ -108,7 +108,7 @@ CAND_LABEL = {
     "disc10": r"10\% discount",
     "myopic": "Myopic incumbent",
     "uniform": "Uniform",
-    "cql": "CQL (offline RL)",
+    "cql": "Conservative Q-learning (CQL; offline RL)",
 }
 # candidates that coincide with a mixture component (their aligned stratum gives IS
 # a real effective sample size under the mixture log)
@@ -455,8 +455,8 @@ def write_table(agg, path):
         r"\begin{table}[t]",
         r"\centering",
         r"\small",
-        r"\caption{Off-policy selection reliability of three estimators (DM, per-decision "
-        r"importance sampling, doubly robust) under three logging regimes, on the targeted-"
+        r"\caption{Off-policy selection reliability of three estimators (direct method, DM; "
+        r"per-decision importance sampling, PDIS; doubly robust, DR) under three logging regimes, on the targeted-"
         r"promotions MDP. Regret@1 is the value gap between the selected and the best "
         r"deployment policy (reward units, lower is better); rank correlation is Spearman "
         r"between estimated and true policy value (higher is better). Cells are mean "
@@ -522,7 +522,7 @@ def write_candidates_table(data, path):
         r"\caption{Per-candidate mechanism behind Table~\ref{tab:field_ope_reliability}. "
         r"True value is the on-policy field value of the softened candidate; DM error is "
         r"the fitted-Q direct-method estimate minus the true value (negative means "
-        r"under-valued); IS effective sample size is $(\sum w)^2/\sum w^2$ over the log's "
+        r"under-valued); importance-sampling (IS) effective sample size is $(\sum w)^2/\sum w^2$ over the log's "
         + str(RUN_CFG["n_traj"])
         + r" trajectories. Rows are rank-ordered by true value. Cell entries are means "
         r"over " + str(N_SEEDS) + r" seeds.}",
