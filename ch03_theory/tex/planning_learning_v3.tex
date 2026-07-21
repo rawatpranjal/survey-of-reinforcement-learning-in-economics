@@ -477,9 +477,133 @@ Three classes of algorithms restore convergence, each neutralizing a different c
 
 \emph{Target networks} weaken bootstrapping. Instead of updating toward $r + \gamma Q(s'; \theta)$, where the target moves with each parameter update, DQN \citep{mnih2015} updates toward $r + \gamma Q(s'; \theta^-)$, where $\theta^-$ is a slowly-updated copy of the parameters.\footnote{Experience replay \citep{Lin1992} complements target networks by breaking temporal correlation in the training data. The two mechanisms address different sources of instability: target networks stabilize the bootstrap target, while replay stabilizes the sampling distribution.} The regression target becomes quasi-static, converting the coupled fixed-point problem into a sequence of supervised learning problems. \citet{zhang2021target} prove that this two-timescale scheme converges to a regularized TD fixed point with linear function approximation. \citet{Fellows2023} show that target networks recondition the Jacobian of the TD update: the spectral radius of the composed update operator (Theorem~\ref{thm:prelim_spectral}) depends on the target network update frequency $k$, and for sufficiently large $k$ the spectral radius drops below 1 even in off-policy settings with nonlinear function approximation.
 
-\emph{Gradient TD methods} fix the projection mismatch. \citet{sutton2009gtd} reformulate the projected Bellman error as a saddle-point problem $\min_\theta \max_y L(\theta, y)$, yielding algorithms (GTD, GTD2, TDC) that perform true stochastic gradient descent on the mean-squared projected Bellman error.\footnote{The saddle-point formulation introduces auxiliary variables $y$ of the same dimension as $\theta$, doubling the parameter count and requiring a second learning rate. \citet{bhandari2021finite} provide finite-time convergence rates for these two-timescale algorithms.} These methods converge off-policy with linear function approximation because they eliminate the semi-gradient approximation that causes the norm mismatch.
+\emph{Gradient TD methods} fix the projection mismatch. \citet{sutton2009gtd_nips} introduce GTD, the first temporal-difference algorithm that is stable under off-policy training with linear function approximation and whose cost per step is linear in the number of parameters, by descending the squared norm of the expected TD(0) update. \citet{sutton2009gtd} reformulate the projected Bellman error directly, yielding GTD2 and TDC, which perform true stochastic gradient descent on the mean-squared projected Bellman error.\footnote{The formulation introduces an auxiliary weight vector of the same dimension as $\theta$, doubling the parameter count and requiring a second step size. \citet{bhandari2021finite} give finite-time rates for plain TD(0) and TD($\lambda$), not for the gradient-TD family. Section~\ref{sec:bellman_estimation} states the asymptotic guarantees that do cover GTD2 and TDC.} These methods converge off-policy with linear function approximation because they eliminate the semi-gradient approximation that causes the norm mismatch.
 
 \emph{Regularization} shrinks the projection operator. \citet{lim2024regularized} add an $\ell_2$ penalty $-\eta\theta$ to the Q-learning update. This changes the projection from $\Pi = X(X^\top D X)^{-1} X^\top D$ to $\Pi_\eta = X(X^\top D X + \eta I)^{-1} X^\top D$. As the regularization strength $\eta$ increases, the projection ``shrinks'' toward the origin. For sufficiently large $\eta$, $\gamma\|\Pi_\eta\| < 1$, restoring the contraction property. The algorithm converges to a biased but stable fixed point, with the bias controlled by $\eta$.
+
+\subsubsection{Approaches to Estimating the Bellman Equation}
+\label{sec:bellman_estimation}
+
+The methods collected under the heading of value-function approximation are not one method. Each starts from the Bellman equation $V = T^\pi V$, which in general admits no exact solution inside $\mathrm{span}(\Phi)$ once the feature space is smaller than the state space, and each responds by minimizing a different scalar measure of the failure of a candidate $V_\theta = \Phi\theta$ to satisfy it. Two algorithms can share a population target and differ only in the solver, and two algorithms can share a solver and aim at different points. Throughout this subsection the data are on-policy, so that $\Pi$ is orthogonal and the projected operator contracts (Theorem~\ref{thm:proj_bellman}); the off-policy failure mode and its remedies are the subject of Sections~\ref{sec:deadly_triad} and~\ref{sec:deadly_triad_resolutions}.
+
+\begin{definition}[Value error, Bellman error, projected Bellman error]
+\label{def:msve_msbe_mspbe}
+Let $d^\pi$ be the stationary distribution of the evaluated policy, assumed strictly positive on every state so that $\|\cdot\|_{d^\pi}$ is a norm, let $D = \mathrm{diag}(d^\pi)$ and $\|v\|_{d^\pi}^2 = v^\top D v$, let $\Phi$ have full column rank, and let $\Pi = \Phi(\Phi^\top D \Phi)^{-1}\Phi^\top D$ be the $d^\pi$-orthogonal projection onto $\mathrm{span}(\Phi)$. For $V_\theta = \Phi\theta$ define
+\begin{align}
+\mathrm{MSVE}(\theta) &= \|V_\theta - V^\pi\|_{d^\pi}^2, \label{eq:msve}\\
+\mathrm{MSBE}(\theta) &= \|V_\theta - T^\pi V_\theta\|_{d^\pi}^2, \label{eq:msbe}\\
+\mathrm{MSPBE}(\theta) &= \|V_\theta - \Pi T^\pi V_\theta\|_{d^\pi}^2 . \label{eq:mspbe}
+\end{align}
+\end{definition}
+
+The three criteria order the estimation problem. Minimizing~\eqref{eq:msve} is the object of interest and is unavailable, since it presumes knowledge of the $V^\pi$ that is being estimated. Criteria~\eqref{eq:msbe} and~\eqref{eq:mspbe} are computable from transitions and are the population targets of, respectively, Bellman-residual minimization and the entire TD family \citep[eqs.~3 and 5]{sutton2009gtd}. They are not the same target. The Bellman error charges a candidate for the full discrepancy $V_\theta - T^\pi V_\theta$, including the part of $T^\pi V_\theta$ that no member of $\mathrm{span}(\Phi)$ can represent, while the projected Bellman error charges only the representable part. The gap is exactly the unrepresentable residual $\|T^\pi V_\theta - \Pi T^\pi V_\theta\|_{d^\pi}^2$, and it is generally nonzero, so the two minimizers differ.\footnote{\citet{sutton2009gtd} exhibit the difference with a backward-bootstrapping example in which two states share a feature and are therefore forced to share a value. Minimizing the Bellman error spends approximation capacity trying to reduce a residual that projection would discard anyway, while minimizing the projected Bellman error recognizes that the two states are projected onto the same value regardless.} \citet{LagoudakisParr2003} note the one case in which they agree, namely when $V^\pi$ lies in $\mathrm{span}(\Phi)$, since both criteria then reach zero at $V_\theta = V^\pi$.
+
+Bellman-residual minimization takes~\eqref{eq:msbe} literally. With $\Psi = (I - \gamma P^\pi)\Phi$ and $r^\pi$ the expected reward vector, $\mathrm{MSBE}(\theta) = \|\Psi\theta - r^\pi\|_{d^\pi}^2$, a linear least-squares problem whose normal equations are
+\begin{equation}
+\Psi^\top D \Psi\, \theta_{\mathrm{BR}} = \Psi^\top D\, r^\pi ,
+\label{eq:brm_normal}
+\end{equation}
+with $\Psi^\top D \Psi$ invertible under the rank condition of Definition~\ref{def:msve_msbe_mspbe}. The estimator is well defined for any sampling distribution, which is its advantage over the projected fixed point, and its empirical version is biased, which is its cost. A single successor state per transition makes the sample criterion an estimate of the Bellman error plus a variance term, the double-sampling problem already noted for the semi-gradient update in Section~\ref{sec:deadly_triad}. Proposition~\ref{prop:td_variance} states that bias exactly.
+
+The projected fixed point $V_\theta = \Pi T^\pi V_\theta$, unique by Theorem~\ref{thm:proj_bellman}, is equivalently the zero of~\eqref{eq:mspbe} and solves the linear system\footnote{Substituting $\Pi = \Phi(\Phi^\top D\Phi)^{-1}\Phi^\top D$ and $T^\pi\Phi\theta = r^\pi + \gamma P^\pi \Phi\theta$ into $\Phi\theta = \Pi T^\pi \Phi\theta$ and cancelling the injective $\Phi(\Phi^\top D\Phi)^{-1}$ leaves $\Phi^\top D\big(\Phi\theta - r^\pi - \gamma P^\pi\Phi\theta\big) = 0$, which is~\eqref{eq:lstd_system}. Full column rank of $\Phi$ makes $A$ nonsingular here, so the fixed-point value function and the parameter that represents it are simultaneously unique.}
+\begin{equation}
+A\,\theta_{\mathrm{TD}} = b, \qquad A = \Phi^\top D (I - \gamma P^\pi)\Phi, \qquad b = \Phi^\top D\, r^\pi .
+\label{eq:lstd_system}
+\end{equation}
+\citet{BradtkeBarto1996} estimate $A$ and $b$ by their sample moments and solve the resulting system directly, an algorithm they call least-squares TD. It targets the same point as TD(0) and differs only in the solver, replacing stochastic approximation by a moment estimator, so it carries no step size at all.\footnote{\citet{BradtkeBarto1996} obtain their convergence result by reading~\eqref{eq:lstd_system} as an instrumental-variables regression in which the features $\phi(s)$ instrument for the noisy regressor $\phi(s) - \gamma\phi(s')$, the same device that identifies a linear model with errors in the regressors. They note that the absence of a step size ``eliminat[es] the possibility of achieving poor performance by an unlucky choice of parameters.''} \citet{LagoudakisParr2003} carry the construction to action values, where LSTDQ solves~\eqref{eq:lstd_system} on the chain of state-action pairs, and embed it in approximate policy iteration to obtain LSPI. Because LSTDQ needs only $\pi(s')$ rather than actions drawn from $\pi$, one batch of transitions can evaluate any policy, which makes LSPI an off-line off-policy algorithm and gives their Theorem 7.1, that the policy sequence eventually attains performance within a constant multiple of the worst per-iteration value-approximation error.
+
+The Bellman-residual criterion can be repaired rather than abandoned. \citet{Antos2008} subtract from it the part that no function in the class can represent, and the corrected criterion turns out to be the projected Bellman error.
+
+\begin{proposition}[Corrected Bellman residual equals the projected Bellman error]
+\label{prop:antos_equivalence}
+Let $\mathcal{F} = \mathrm{span}(\Phi)$ and define, for $V_\theta \in \mathcal{F}$,
+\[
+L_{\mathrm{BR}}(\theta) = \|V_\theta - T^\pi V_\theta\|_{d^\pi}^2 - \inf_{h \in \mathcal{F}} \|h - T^\pi V_\theta\|_{d^\pi}^2 .
+\]
+Then $L_{\mathrm{BR}}(\theta) = \mathrm{MSPBE}(\theta)$ for every $\theta$. Its minimizer is therefore the projected fixed point $\theta_{\mathrm{TD}}$ of~\eqref{eq:lstd_system}, at which $L_{\mathrm{BR}} = 0$.
+\end{proposition}
+
+\begin{proof}
+The infimum is attained at $h = \Pi T^\pi V_\theta$ by definition of the orthogonal projection (Theorem~\ref{thm:prelim_hilbert}), so the subtracted term equals $\|T^\pi V_\theta - \Pi T^\pi V_\theta\|_{d^\pi}^2$. For the first term, decompose $V_\theta - T^\pi V_\theta = (V_\theta - \Pi T^\pi V_\theta) + (\Pi T^\pi V_\theta - T^\pi V_\theta)$. The first summand lies in $\mathcal{F}$, because $V_\theta$ and $\Pi T^\pi V_\theta$ both do, and the second is $d^\pi$-orthogonal to $\mathcal{F}$, because it is the projection residual. The Pythagorean identity gives
+\[
+\|V_\theta - T^\pi V_\theta\|_{d^\pi}^2 = \|V_\theta - \Pi T^\pi V_\theta\|_{d^\pi}^2 + \|\Pi T^\pi V_\theta - T^\pi V_\theta\|_{d^\pi}^2 ,
+\]
+and subtracting the second term leaves $\|V_\theta - \Pi T^\pi V_\theta\|_{d^\pi}^2$, which is~\eqref{eq:mspbe}. For the minimizer, the criterion is nonnegative and vanishes at the projected fixed point, which exists and is unique as a value function by Theorem~\ref{thm:proj_bellman} and corresponds to a unique parameter because $\Phi$ has full column rank.
+\end{proof}
+
+The correction matters because it is estimable without a generative model. \citet{Antos2008} implement the subtracted term with an auxiliary function fitted to the same data, which cancels the variance term that biases the raw empirical criterion, and observe that under a linear parameterization ``the solution of (8) and that of LSTD coincide and the algorithm proposed here becomes equivalent to LSPI.'' The next proposition isolates the variance term that the correction removes.
+
+\begin{proposition}[Squared TD error is not the Bellman error]
+\label{prop:td_variance}
+Let $\delta = r(s,a) + \gamma V_\theta(s') - V_\theta(s)$ with $s \sim d^\pi$, $a \sim \pi$, $s' \sim P(\cdot \mid s,a)$, and write $Y = r(s,a) + \gamma V_\theta(s')$ for the bootstrap target. Then
+\[
+\mathbb{E}\big[\delta^2\big] = \mathrm{MSBE}(\theta) + \mathbb{E}_{s \sim d^\pi}\!\big[\mathrm{Var}\big(Y \mid s\big)\big] ,
+\]
+and the second term is nonnegative, vanishing only when the target is deterministic given $s$.
+\end{proposition}
+
+\begin{proof}
+Condition on $s$ and decompose the second moment, $\mathbb{E}[\delta^2 \mid s] = \big(\mathbb{E}[\delta \mid s]\big)^2 + \mathrm{Var}(\delta \mid s)$, which is the definition of conditional variance. Given $s$ only $V_\theta(s)$ is fixed, so $\mathrm{Var}(\delta \mid s) = \mathrm{Var}(Y \mid s)$, with the randomness coming from the action and the successor state together. The conditional mean is $\mathbb{E}[\delta \mid s] = (T^\pi V_\theta)(s) - V_\theta(s)$ by definition of the Bellman operator, which averages over both the action and the successor. Taking the expectation over $s \sim d^\pi$ turns the squared conditional mean into $\mathrm{MSBE}(\theta)$ by~\eqref{eq:msbe} and leaves the stated variance term.
+\end{proof}
+
+Minimizing the empirical squared TD error therefore does not minimize the Bellman error. It minimizes the Bellman error plus a penalty on the conditional variance of the bootstrap target, which \citet{Antos2008} describe as ``an unwanted variance term'' that acts ``like a penalty factor, favoring smooth solutions.''\footnote{Under a deterministic policy and a reward that is deterministic given the state and action, the only surviving randomness is the successor state, and the penalty reduces to $\gamma^2 \mathbb{E}_{d^\pi}[\mathrm{Var}(V_\theta(s') \mid s)]$, the form in which \citet{Antos2008} state it for action values.} Two independent successors drawn from the same state remove it, since the cross term then factorizes, but that requires a generative model rather than logged transitions.
+
+Gradient-TD methods reach the same fixed point as least-squares TD by stochastic approximation, at cost linear rather than quadratic in the number of features.
+
+\begin{theorem}[Convergence of GTD2 and TDC, \citealp{sutton2009gtd}]
+\label{thm:gtd_convergence}
+Let $(\phi_k, r_k, \phi'_k)$ be an i.i.d.\ sequence with uniformly bounded second moments, let $A = \mathbb{E}[\phi_k(\phi_k - \gamma\phi'_k)^\top]$, $b = \mathbb{E}[r_k \phi_k]$ and $C = \mathbb{E}[\phi_k\phi_k^\top]$, and assume $A$ and $C$ are nonsingular. If the step sizes satisfy $\beta_k = \eta\alpha_k$ for a constant $\eta > 0$, with $\alpha_k, \beta_k \in (0,1]$, $\sum_k \alpha_k = \infty$ and $\sum_k \alpha_k^2 < \infty$, the GTD2 iterates converge with probability one to the solution of $A\theta = b$. If instead $\alpha_k, \beta_k > 0$ with $\sum_k \alpha_k = \sum_k \beta_k = \infty$, $\sum_k \alpha_k^2 < \infty$, $\sum_k \beta_k^2 < \infty$ and $\alpha_k/\beta_k \to 0$, so that the auxiliary weights move on the faster timescale, the TDC iterates converge with probability one to the same point.
+\end{theorem}
+
+The two variants differ in the timescale condition rather than the destination, and the destination is the projected fixed point~\eqref{eq:lstd_system} that Theorem~\ref{thm:proj_bellman} already showed to be unique on-policy.\footnote{Both proofs are ordinary-differential-equation arguments in the style of Borkar and Meyn. For GTD2 the auxiliary weights and the parameters are stacked into a single iterate whose associated ODE is globally asymptotically stable, which is why a constant ratio suffices; for TDC the fast auxiliary recursion is treated as equilibrated at each step of the slow one. \citet{sutton2009gtd_nips} give the corresponding result for plain GTD, whose objective is the squared norm of the expected TD update rather than the projected Bellman error.} What gradient-TD buys is not a better fixed point on-policy but stability off-policy, where the semi-gradient recursion has none.
+
+A unified geometry covers the whole family. \citet{scherrer2010} shows that the TD fixed point and the Bellman-residual minimizer both solve a projected equation $\hat v_X = \Pi_X T^\pi \hat v_X$ for oblique projections $\Pi_X$ differing only in the projection direction, with $X_{\mathrm{TD}} = D\Phi$ and $X_{\mathrm{BR}} = D(I - \gamma P^\pi)\Phi$, and that the resulting approximation is the projection of $V^\pi$ onto $\mathrm{span}(\Phi)$ orthogonally to $\mathrm{span}((I-\gamma P^\pi)^\top X)$. Neither direction is the one that would minimize the distance to $V^\pi$, which is the formal counterpart of the empirical observation that neither method dominates the other. The same analysis locates the instability of Section~\ref{sec:deadly_triad}, since the TD projection is guaranteed nonexpansive only when the sampling distribution is stationary for $P^\pi$, while the Bellman-residual system~\eqref{eq:brm_normal} is always invertible.
+
+Table~\ref{tab:bellman_estimators} classifies the five families by population target, by whether the estimator is incremental or batch, and by whether it is stable off-policy.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lllcl}
+\toprule
+Estimator & Form & Population target & Off-policy stable & Treated in \\
+\midrule
+Semi-gradient TD / Q & Incremental & Projected Bellman error & No & Section~\ref{sec:deadly_triad} \\
+Fitted value / Q iteration & Batch & Projected Bellman error & With coverage & Section~\ref{sec:lqc_fvi_fqi} \\
+Target networks, DQN & Incremental & Projected Bellman error & In practice & Section~\ref{sec:deadly_triad_resolutions} \\
+Raw Bellman residual & Batch & Bellman error & Yes & Equation~\eqref{eq:brm_normal} \\
+Corrected Bellman residual & Batch & Projected Bellman error & Yes & Proposition~\ref{prop:antos_equivalence} \\
+LSTD, LSTDQ, LSPI & Batch & Projected Bellman error & Yes & Equation~\eqref{eq:lstd_system} \\
+GTD, GTD2, TDC & Incremental & Projected Bellman error & Yes & Theorem~\ref{thm:gtd_convergence} \\
+\bottomrule
+\end{tabular}
+\caption{Estimators of the Bellman equation by population target, update form, and off-policy stability. Fitted iteration is stable off-policy only under a concentrability condition on the data distribution \citep{MunosSzepesvari2008}; target networks have no general guarantee with nonlinear approximation.}
+\label{tab:bellman_estimators}
+\end{table}
+
+The incremental and batch distinction in Table~\ref{tab:bellman_estimators} is a statement about the solver and should not be confused with the distinction between online and offline reinforcement learning, which is a statement about data access. An offline learner is restricted to a fixed dataset and may never query the environment, whatever solver it runs, and this restriction rather than the provenance of the data is what defines the setting, since logged transitions and simulator rollouts are equally admissible. The position is familiar in econometrics, where the analyst works with one sample that was not generated for the question at hand and cannot commission a new one. The two axes cross freely. Least-squares TD is a batch solver that runs perfectly well on a stream, and semi-gradient TD is an incremental solver that runs perfectly well on a fixed replay buffer. Section~\ref{section:offline_rl} takes up the offline setting proper, where the binding constraint is coverage of the state-action space rather than the choice of estimator.
+
+\subsubsection{Simulation Study: Comparing Estimators of the Bellman Equation}
+\label{sec:bellman_estimation_sim}
+
+The estimators above are compared on a three-state machine-maintenance chain in which a machine is in a good, fatigued, or worn condition, the operator either runs it or maintains it, and the fixed policy runs the machine in the first two conditions and maintains it in the third.\footnote{Rewards are $5$, $3$ and $0$ for running in the three conditions and $-1$, $-2$, $-4$ for maintaining, the discount factor is $0.9$, and the transition matrix makes deterioration likely under running and repair likely under maintenance. The features are $\phi(s) = (1, x(s))^\top$ with a deterioration score $x = 0, 1, 2$, so the two-parameter class cannot represent the true value function exactly. Sampling is i.i.d.\ from the stationary distribution $d^\pi = (0.481, 0.394, 0.124)$, which makes the weighting matrix $D$ exact and keeps the comparison on-policy. Batch estimators use $20{,}000$ transitions and incremental estimators $400{,}000$, both over 30 seeds, so the incremental and batch columns of the table are not matched on sample budget; the incremental step size is $\alpha_t = 0.05/(1 + t/10^4)$ with auxiliary ratio $\beta_t = 2\alpha_t$, so TDC is run in the practical constant-ratio form rather than the strict two-timescale schedule of Theorem~\ref{thm:gtd_convergence}. The auxiliary recursion is a least-mean-squares fit and is stable only while $\beta_t\|\phi\|^2 < 2$, which with these features bounds $\beta_0$ below $0.4$.} Every population quantity is available in closed form, which turns the theoretical claims into arithmetic. The question is whether the estimators that share a population target reach the same point, and how far the ones that do not are separated.
+
+Table~\ref{tab:bellman_estimators_results} reports the results. Minimizing the corrected Bellman-residual criterion through its own normal equations, which never reference~\eqref{eq:lstd_system}, returns the least-squares TD parameter to within $2\times10^{-14}$, and the criterion evaluates to zero there and to strictly positive values at four perturbations of it, so Proposition~\ref{prop:antos_equivalence} is demonstrated rather than assumed. Raw Bellman-residual minimization is a different point, closer to solving the Bellman equation, with residual norm $0.623$ against $0.769$, and further from the true value, with value error $1.008$ against $0.840$, exactly the trade the two criteria describe. Among the empirical estimators, the two that solve~\eqref{eq:lstd_system} by different routes are indistinguishable, least-squares TD and fitted value iteration both at value error $0.857$, and the two stochastic-approximation methods approach the same fixed point, the seed-averaged parameter landing $0.027$ from it for TDC and $0.068$ for semi-gradient TD(0). Averaging the per-seed distances instead of averaging the parameters leaves the sampling scatter in, which is what Figure~\ref{fig:bellman_estimation_methods} plots, and those curves end at $0.093$ and $0.193$ respectively. The single-successor Bellman-residual estimator is the one badly displaced case, at value error $1.974$ against the $1.014$ of its double-successor counterpart, and the displacement is the variance term of Proposition~\ref{prop:td_variance}, a bias in the population criterion the estimator actually minimizes rather than sampling noise, so it does not vanish as the sample grows.\footnote{Section~\ref{section:deeprl_practice} runs the same contrast with neural function approximation, where the Bellman-error and value-error rankings can invert.}
+
+\begin{table}[t]
+\centering
+\small
+\input{../ch03_theory/sims/bellman_estimation_methods.tex}
+\caption{Estimators of the Bellman equation on the machine-maintenance chain, ranked within each block by distance to the true value function. Population rows are closed form; empirical rows are means over 30 seeds with standard errors in parentheses. The first column is the distance to the true value function and the second the norm of the Bellman residual, both in the $d^\pi$-weighted norm. The batch estimators use $20{,}000$ transitions and the incremental ones $400{,}000$.}
+\label{tab:bellman_estimators_results}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\textwidth]{../ch03_theory/sims/bellman_estimation_methods.png}
+\caption{Distance from the running parameter iterate to the least-squares TD fixed point, averaged over 30 seeds with a standard-error band, on a log scale. Semi-gradient TD(0) is in blue and TDC in orange.}
+\label{fig:bellman_estimation_methods}
+\end{figure}
 
 %\subsection{When Value-Based RL Works}
 %\label{sec:when_value_works}

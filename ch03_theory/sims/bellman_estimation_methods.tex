@@ -1,0 +1,17 @@
+\begin{tabular}{llcc}
+\toprule
+Estimator & Type & $\|\hat v - v^\pi\|_D$ & $\|T^\pi\hat v - \hat v\|_D$\\
+\midrule
+Orthogonal projection of $v^\pi$ & Pop. & $0.8392$ & $0.7885$\\
+Antos corrected BRM & Pop. & $0.8401$ & $0.7686$\\
+LSTD projected fixed point & Pop. & $0.8401$ & $0.7686$\\
+Raw Bellman-residual min. & Pop. & $1.0081$ & $0.6233$\\
+\midrule
+TDC (gradient TD) & Emp. & $0.8459\,(\pm0.0014)$ & $0.7780\,(\pm0.0048)$\\
+Fitted value iteration & Emp. & $0.8566\,(\pm0.0036)$ & $0.7677\,(\pm0.0028)$\\
+LSTD & Emp. & $0.8566\,(\pm0.0036)$ & $0.7677\,(\pm0.0028)$\\
+Semi-gradient TD(0) & Emp. & $0.8726\,(\pm0.0059)$ & $0.7804\,(\pm0.0069)$\\
+Raw BRM, two-sample & Emp. & $1.0138\,(\pm0.0030)$ & $0.6238\,(\pm0.0001)$\\
+Raw BRM, one-sample & Emp. & $1.9742\,(\pm0.0027)$ & $1.2286\,(\pm0.0019)$\\
+\bottomrule
+\end{tabular}

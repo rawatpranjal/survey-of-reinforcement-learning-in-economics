@@ -90,6 +90,10 @@ If the agent follows an $\varepsilon$-greedy policy, SARSA converges to $Q^{\var
 
 This result explains the asymmetry between Tesauro's success and Baird's failure. TD-Gammon used bootstrapping and function approximation but was on-policy, with training data coming from the same self-play policy whose value was being estimated. Baird's counterexample used all three components and diverged. Baird also proposed a constructive solution, namely residual gradient algorithms that perform gradient descent on the mean-squared Bellman residual, guaranteeing convergence at the cost of a different fixed point.
 
+\subsubsection{Least-Squares Temporal Difference Learning (1996)}
+
+\citet{BradtkeBarto1996} replaced the stochastic-approximation solver of TD(0) with a moment estimator. TD(0) with linear features converges to the parameter solving $A\theta = b$, where $A$ and $b$ are expectations of feature products under the stationary distribution; least-squares TD estimates those two expectations from the sample and solves the linear system directly. The estimator has no step size, so it cannot be slowed or destabilized by a poor choice of one, and it extracts more from each transition, at a cost quadratic rather than linear in the number of features. The convergence argument treats the system as an instrumental-variables regression, with the current features instrumenting for a regressor that is measured with error. The population target is the same projected fixed point that TD(0) approaches, so the two algorithms differ in solver rather than in destination (Section~\ref{sec:bellman_estimation}).
+
 \subsubsection{Actor-Critic Methods (2000)}
 
 The idea of maintaining both a policy (\textit{actor}) and a value function (\textit{critic}) dates to \citet{barto1983neuronlike}, who used a two-component system to solve the pole-balancing task. Actor-critic methods address the high variance of REINFORCE by replacing Monte Carlo returns with bootstrapped TD targets as the learning signal. The critic learns a value function $V(s)$ by TD updates.
@@ -119,6 +123,10 @@ The natural gradient is
 This direction is invariant to reparameterization of the policy. In the tabular softmax\footnote{The softmax function maps a vector $\mathbf{z}$ to a probability distribution: $\text{softmax}(z_i) = \exp(z_i)/\sum_j \exp(z_j)$. A softmax policy parameterizes action probabilities as $\pi_\theta(a|s) = \text{softmax}(\theta_{s,a})$.} case, a single natural gradient step with unit step size recovers one step of exact policy iteration (Section~\ref{sec:policy_gradient}).
 
 The computational bottleneck is inverting $F(\theta) \in \mathbb{R}^{d \times d}$. Practical implementations use conjugate gradient methods to solve $F(\theta) x = \nabla_\theta J(\theta)$ without forming $F$ explicitly. This approach was later scaled to deep neural networks by TRPO and PPO.
+
+\subsubsection{Least-Squares Policy Iteration (2003)}
+
+\citet{LagoudakisParr2003} carried least-squares TD to action values and embedded it in policy iteration. Their LSTDQ solves the same linear system on the chain of state-action pairs, and because forming the system requires only the action the target policy would take at each recorded successor state, one fixed batch of transitions can evaluate any policy. LSPI alternates this evaluation with greedy improvement until the policy stops changing. The resulting algorithm is off-line and off-policy, which made it a standard batch method before the deep reinforcement learning literature took up the same problem, and it carries a stability guarantee bounding the eventual policy's suboptimality by a constant multiple of the worst per-iteration value-approximation error (Section~\ref{sec:bellman_estimation}).
 
 \subsubsection{Fitted Value Iteration and Fitted Q-Iteration (2005)}
 \label{sec:fvi_fqi_algorithms}

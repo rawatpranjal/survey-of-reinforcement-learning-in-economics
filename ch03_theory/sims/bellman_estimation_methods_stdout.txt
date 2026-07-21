@@ -1,0 +1,70 @@
+  Computing: population
+  Cache saved: /Users/pranjal/Code/rl-bellman-est/ch03_theory/sims/cache/bellman_estimation_methods__population.pkl
+  Computing: empirical
+  Cache saved: /Users/pranjal/Code/rl-bellman-est/ch03_theory/sims/cache/bellman_estimation_methods__empirical.pkl
+======================================================================
+Comparing Estimators of the Bellman Equation
+Three-state machine-maintenance MDP, gamma = 0.9
+======================================================================
+
+-- Population objects (verification anchors, study note) --
+mu (stationary)         : [0.4813 0.3942 0.1245]   note (0.4813, 0.3942, 0.1245)
+v^pi                    : [34.7903 28.0305 25.0477]   note (34.7903, 28.0305, 25.0477)
+theta_proj              : [34.403  -5.4265]   note (34.4030, -5.4265)
+v_proj                  : [34.403  28.9764 23.5499]   note (34.4030, 28.9764, 23.5499)
+theta_LSTD              : [34.3673 -5.3711]   note (34.3673, -5.3711)
+v_LSTD                  : [34.3673 28.9962 23.6251]   note (34.3673, 28.9962, 23.6252)
+theta_BRM               : [33.8835 -4.6189]   note (33.8835, -4.6189)
+v_BRM                   : [33.8835 29.2646 24.6458]   note (33.8835, 29.2646, 24.6458)
+theta_Antos (own normal eqs)    : [34.3673 -5.3711]   deviation from theta_LSTD 2.25e-14
+Antos corrected J at theta_LSTD : 0.00e+00   (Prop 2: minimized, == 0)
+Antos corrected J at perturbations : [0.0025, 0.0025, 0.0598, 0.0598]   (all > 0)
+
+-- Antos decomposition at v=(30,26,22) --
+raw squared Bellman residual : 0.6469   note 0.6469
+unrepresentable component    : 0.0834   note 0.0834
+corrected (raw - unrep)      : 0.5634   note 0.5634
+corrected (direct ||v-PiTv||): 0.5634   (should match)
+
+-- Conditional-variance decomposition at state F, theta=(30,-4) --
+TD errors by successor (G,F,W): [ 4.   0.4 -3.2]   note (4, 0.4, -3.2)
+E[delta | F]                  : -0.3200   note -0.32
+E[delta^2 | F]                : 4.7680   note 4.768
+squared residual = E[delta|F]^2 : 0.1024   note 0.1024
+Var(target | F)               : 4.6656   note 4.6656
+E[phi delta] at theta=(30,-4) : [ 0.3485 -0.2357]   note (0.3485, -0.2357)
+
+-- Action values (control) --
+q^pi(.,O) : [34.7903 28.0305 22.8114]   note (34.7903, 28.0305, 22.8114)
+q^pi(.,M) : [30.0071 27.6561 25.0477]   note (30.0071, 27.6561, 25.0477)
+
+-- Summary norms (population) --
+Method                            ||v-v^pi||_D    ||Tv-v||_D
+Orthogonal projection                   0.8392        0.7885
+LSTD projected fixed point              0.8401        0.7686
+Antos corrected BRM                     0.8401        0.7686
+Raw Bellman-residual min.               1.0081        0.6233
+
+-- Empirical estimators (mean +/- SE over seeds) --
+Method                         theta_0   theta_1  ||v-v^pi||_D   ||Tv-v||_D
+LSTD                           34.3772   -5.3670        0.8566       0.7677
+Semi-gradient TD(0)            34.3050   -5.3986        0.8726       0.7804
+TDC (gradient TD)              34.3548   -5.3952        0.8459       0.7780
+Fitted value iteration         34.3772   -5.3670        0.8566       0.7677
+Raw BRM two-sample             33.8791   -4.6233        1.0138       0.6238
+Raw BRM one-sample             32.7395   -2.8483        1.9742       1.2286
+
+-- Cross-checks --
+empirical LSTD -> population LSTD : 0.0107
+two-sample BRM -> population BRM  : 0.0063
+one-sample BRM -> population BRM  : 2.1080  (biased, larger)
+||mean_seeds(theta_TD) - theta_LSTD||   : 0.0681
+||mean_seeds(theta_TDC) - theta_LSTD||  : 0.0272
+mean_seeds||theta_TD - theta_LSTD||     : 0.1927   (figure endpoint)
+mean_seeds||theta_TDC - theta_LSTD||    : 0.0926   (figure endpoint)
+
+[verify] structural properties hold. v_pi vs note: max dev 4.95e-05 (ok).
+
+Outputs:
+  /Users/pranjal/Code/rl-bellman-est/ch03_theory/sims/bellman_estimation_methods.tex
+  /Users/pranjal/Code/rl-bellman-est/ch03_theory/sims/bellman_estimation_methods.png
