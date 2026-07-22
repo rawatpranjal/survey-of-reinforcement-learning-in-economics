@@ -1,7 +1,44 @@
 \section{Mathematical Preliminaries}
 \label{appendix:mathprelim}
 
-This appendix collects the mathematical results the survey rests on but does not develop in the main text. It assumes only probability, calculus, and linear algebra at the level of a first graduate sequence. From there it builds the handful of tools that recur across the chapters. Every dynamic-programming convergence proof turns on the contraction-mapping principle. Whether a sampled iterate converges to its target is a stochastic-approximation question. Policy optimization and constrained control draw on convex analysis and duality. The estimation and Markov-chain arguments need only a few probability and matrix facts. Each result is stated, proved, and illustrated by a small simulation. The chapters point here in a footnote wherever they use one of these results, and each result points back to the chapters that use it. The material runs in four parts. They cover linear algebra and matrix analysis, probability, calculus and convex analysis, and the fixed-point and stochastic-approximation results that bridge to dynamic programming.
+This appendix collects the mathematical results the survey rests on but does not develop in the main text. It assumes only probability, calculus, and linear algebra at the level of a first graduate sequence. From there it builds the handful of tools that recur across the chapters. Every dynamic-programming convergence proof turns on the contraction-mapping principle. Whether a sampled iterate converges to its target is a stochastic-approximation question. Policy optimization and constrained control draw on convex analysis and duality. The estimation and Markov-chain arguments need only a few probability and matrix facts. Each result is stated, proved, and illustrated by a small simulation. The chapters point here in a footnote wherever they use one of these results, and each result points back to the chapters that use it. A short preliminary section first collects elementary objects and inequalities that the chapters lean on in footnotes. The material then runs in four parts. They cover linear algebra and matrix analysis, probability, calculus and convex analysis, and the fixed-point and stochastic-approximation results that bridge to dynamic programming.
+
+\subsection{Elementary Objects and Inequalities}
+\label{prelim:elementary}
+
+This section holds targeted clarifications, objects one level below the four parts that follow. Each entry states a definition in plain words, gives a small numerical example, and notes where the survey uses it. Chapter footnotes point here directly.
+
+\subsubsection{Affine Functions and Upper Envelopes}
+\label{prelim:affine_envelope}
+
+A function is \emph{affine} if its graph is a straight line, $f(x) = a + bx$, a linear part plus a constant shift. The \emph{pointwise maximum} of finitely many affine functions, $g(x) = \max_i \{a_i + b_i x\}$, takes at each $x$ the value of whichever line is highest there. Its graph is an \emph{upper envelope}, a convex piecewise-linear curve that follows one line until another overtakes it, with a kink at each crossing. Take $f_1(x) = 1 + \tfrac{1}{2}x$ and $f_2(x) = 2 - x$. The second line is higher for $x < \tfrac{2}{3}$ and the first for $x > \tfrac{2}{3}$, so the envelope $g(x) = \max\{f_1(x), f_2(x)\}$ has its kink at the crossing $x = \tfrac{2}{3}$, where $g = \tfrac{4}{3}$ (Figure~\ref{fig:prelim_elementary}, panel a). A line that touches the graph of a convex function at a point and never rises above the graph is a \emph{supporting line}, in higher dimensions a supporting hyperplane, and each $f_i$ supports $g$ on the piece where it attains the maximum. The Bellman optimality operator is exactly such an envelope, the pointwise maximum of affine policy operators (Section~\ref{sec:newton_connection}), and Theorem~\ref{thm:prelim_envelope} studies how such maxima respond to a parameter.
+
+\subsubsection{A Difference of Maxima}
+\label{prelim:maxdiff}
+
+For any two real-valued functions $f$ and $g$ on a finite set,
+\begin{equation}
+\big| \max_a f(a) - \max_a g(a) \big| \;\leq\; \max_a |f(a) - g(a)|.
+\label{eq:prelim_maxdiff}
+\end{equation}
+Maximizing cannot amplify a disagreement, the two maxima differ by no more than the largest pointwise gap. The proof is two lines. Let $a_1$ attain $\max_a f$. Then $\max_a f - \max_a g \leq f(a_1) - g(a_1) \leq \max_a |f(a) - g(a)|$, since $g(a_1) \leq \max_a g$, and exchanging the roles of $f$ and $g$ bounds the other sign. As a numerical example with two actions, let $f = (3, 5)$ and $g = (4.5, 4)$. The maxima are $5$ and $4.5$, a gap of $0.5$, while the pointwise gaps are $1.5$ and $1$, so the bound $0.5 \leq 1.5$ holds with room to spare. The Q-factor contraction (Theorem~\ref{thm:q_factor_contraction}) rests on this inequality.
+
+\subsubsection{Norms for Value Functions}
+\label{prelim:norms}
+
+A \emph{norm} assigns a vector a single nonnegative size. The $L^p$ family on $\mathbb{R}^n$ is $\|x\|_p = (\sum_i |x_i|^p)^{1/p}$. At $p = 1$ it sums absolute entries and at $p = 2$ it is Euclidean length. As $p$ grows the largest entry dominates the sum, and in the limit $\|x\|_\infty = \max_i |x_i|$, the \emph{supremum norm}, the size of the worst coordinate. For $x = (3, -4, 1)$ the values are $\|x\|_1 = 8$, $\|x\|_2 = \sqrt{26} \approx 5.10$, and $\|x\|_\infty = 4$. The unit balls, the sets of vectors of size one, are drawn in Figure~\ref{fig:prelim_elementary}, panel b. A value function on a finite state space is such a vector with one entry per state, so the supremum norm reads as the worst-case error over states. A \emph{weighted} $L^2$ norm $\|V\|_d^2 = \sum_s d(s)\, V(s)^2$, with $d$ a probability distribution over states, instead counts each state in proportion to its weight. In the survey the weight is how often a policy visits the state, so errors at rarely visited states barely register (Section~\ref{sec:deadly_triad}).
+
+\subsubsection{Telescoping Sums and the Geometric Series}
+\label{prelim:telescoping}
+
+Two summation identities recur in every convergence argument of the survey. A \emph{telescoping sum} of consecutive differences collapses to its endpoints, $\sum_{k=0}^{K-1} (x_{k+1} - x_k) = x_K - x_0$, because each interior term is added once and subtracted once. The \emph{geometric series} $\sum_{k=0}^{\infty} \gamma^k = \frac{1}{1-\gamma}$ for $|\gamma| < 1$ converts a per-step shrink factor $\gamma$ into a finite total. At $\gamma = 0.9$ the total is $10$ and at $\gamma = 0.99$ it is $100$, which is why bounds carry factors of $1/(1-\gamma)$ that grow as the discount approaches one.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{../appA_preliminaries/sims/elementary_concepts.png}
+\caption{Panel (a): two affine functions (dashed) and their upper envelope (solid), with the kink at $x = 2/3$. Panel (b): unit balls of the $L^1$, $L^2$, and $L^\infty$ norms in the plane.}
+\label{fig:prelim_elementary}
+\end{figure}
 
 \subsection{Linear Algebra and Matrix Analysis}
 \label{prelim:linalg}

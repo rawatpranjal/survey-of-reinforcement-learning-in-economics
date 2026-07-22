@@ -459,7 +459,7 @@ the agent's best estimate of the transition kernel, typically estimated
 from data or specified by a simulator.} Under the rectangularity assumption (the uncertainty sets are independent
 across state-action pairs, so the joint set is a Cartesian product),
 $T$ is a $\gamma$-contraction in
-the sup-norm, so robust value iteration and policy iteration converge
+the sup-norm.\footnote{\citet{Iyengar2005} establishes this via a direct epsilon-argument, the same swap-style technique as the proof of Lemma~\ref{lem:bellman_contraction} (Section~\ref{sec:planning_learning}). An equivalent route is Blackwell's sufficient conditions (Theorem~\ref{thm:blackwell}): monotonicity holds because every $p \in \mathcal{P}(s,a)$ is nonnegative, and discounting holds with equality, $T(V+c) = TV + \gamma c$, because every $p \in \mathcal{P}(s,a)$ sums to one, so the constant shift passes unchanged through both the inner minimum and the outer maximum.} So robust value iteration and policy iteration converge
 with the same guarantees as their standard counterparts (recall
 Section~\ref{section:rl_algorithms}); the only change is substituting $T$
 for the standard Bellman operator.\footnote{Rectangularity means
