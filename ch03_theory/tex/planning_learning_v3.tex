@@ -58,6 +58,29 @@ Since $\gamma < 1$, Lemma~\ref{lem:bellman_contraction} makes $T$ a contraction 
 
 Value iteration applies $T$ repeatedly, $V_{k+1} = TV_k$, and Corollary~\ref{cor:vi_convergence} delivers the geometric bound $\|V_k - V^*\|_\infty \leq \gamma^k \|V_0 - V^*\|_\infty$ \citep{denardo1967}.\footnote{This is the Contraction Mapping Theorem. The identical mathematical structure governs convergence of value function iteration in consumption-savings models, competitive equilibrium computation, and Bellman equation solution.} This is Picard iteration, with linear convergence at rate $\gamma$.\footnote{Picard iteration is $x_{k+1} = f(x_k)$ for finding roots of $x = f(x)$. When $f$ is a contraction, convergence is geometric. The rate $\gamma$ means each iteration reduces the error by a fixed proportion; more patient agents (higher $\gamma$) face slower convergence because the operator contracts less per step.} The iteration count to reduce error by a factor of $\delta$ is $k = \log(\delta) / \log(1/\gamma)$ \citep{bertsekas1996}.
 
+Corollary~\ref{cor:vi_convergence} shows the iteration converges, but not yet that its limit is the object of interest. The fixed point $V^*$ was defined by the equation $V^* = TV^*$, not as the best value achievable across policies, and the \emph{principle of optimality} identifies the two.
+
+\begin{theorem}[Principle of optimality]
+\label{thm:verification}
+Let $\Pi$ denote the class of all policies, including those that randomize and condition on the entire past history. The fixed point $V^*$ of Corollary~\ref{cor:vi_convergence} is the optimal value function, $V^*(s) = \sup_{\pi \in \Pi} V^\pi(s)$ for every $s \in \mathcal{S}$, and the stationary deterministic policy $\pi^*(s) \in \argmax_{a} \{ r(s,a) + \gamma \sum_{s'} P(s'|s,a) V^*(s') \}$ attains the supremum, $V^{\pi^*} = V^*$.\footnote{This is the fundamental theorem of Markov decision processes \citep[Ch.~6]{puterman1994}. On a finite state and action space the greedy $\argmax$ is always attained; on the continuous, unbounded problems of Section~\ref{sec:continuous_unbounded} a measurable selection theorem supplies a measurable $\pi^*$ that attains the maximum.}
+\end{theorem}
+
+\begin{proof}
+The argument has two halves, that no policy exceeds $V^*$ and that the greedy policy meets it. For the first, fix any $\pi \in \Pi$ and let $a_t$ be its (possibly randomized, history-conditioned) action at time $t$. Because $V^* = TV^*$ takes the maximum over actions state by state, an average over the first action drawn by $\pi$ cannot exceed that maximum,
+\[
+V^*(s) \;\geq\; \mathbb{E}_{a_0 \sim \pi}\Big[ r(s,a_0) + \gamma \sum_{s'} P(s'|s,a_0)\, V^*(s') \Big] = \mathbb{E}_\pi\big[ r_0 + \gamma V^*(s_1) \,\big|\, s_0 = s \big].
+\]
+Applying the same one-step inequality at $s_1$ under $\pi$'s continuation and taking expectations forward,
+\begin{align*}
+V^*(s)
+  &\geq \mathbb{E}_\pi\Big[ \textstyle\sum_{t=0}^{n-1} \gamma^t r_t \,\Big|\, s_0 = s \Big] + \gamma^n\, \mathbb{E}_\pi\big[ V^*(s_n) \,\big|\, s_0 = s \big]
+    && \text{(unroll $n$ steps)} \\
+  &\longrightarrow V^\pi(s)
+    && \text{(let $n \to \infty$),}
+\end{align*}
+since the tail $\gamma^n \mathbb{E}_\pi[V^*(s_n)]$ vanishes as $n \to \infty$ with $V^*$ bounded and $\gamma < 1$. Thus $V^*(s) \geq V^\pi(s)$, and as $\pi$ was arbitrary, $V^* \geq \sup_{\pi \in \Pi} V^\pi$. For the second half, the greedy policy $\pi^*$ satisfies $T^{\pi^*} V^* = TV^* = V^*$ by construction, so $V^*$ is a fixed point of the affine operator $T^{\pi^*} V = r^{\pi^*} + \gamma P^{\pi^*} V$. That operator is a $\gamma$-contraction with unique fixed point $V^{\pi^*}$, the value of following $\pi^*$ forever, by the Banach argument of Corollary~\ref{cor:vi_convergence} applied to $T^{\pi^*}$. Hence $V^{\pi^*} = V^*$, the supremum is attained, and $V^* = \sup_{\pi \in \Pi} V^\pi = V^{\pi^*}$.
+\end{proof}
+
 \subsubsection{Policy Iteration as Newton's Method}
 
 Policy iteration takes a different approach. At the current value estimate $\tilde{V}$, define the greedy policy $\tilde{\pi}(s) = \argmax_a \{ r(s,a) + \gamma \sum_{s'} P(s'|s,a) \tilde{V}(s') \}$. The \emph{policy evaluation} step solves the linear fixed-point equation $V = T^{\tilde{\pi}} V$ exactly, where $T^{\tilde{\pi}}$ is the policy-specific Bellman operator
@@ -102,6 +125,27 @@ The consequence is finite termination. Since there are at most $|\mathcal{A}|^{|
 
 \citet{bertsekas2022newton} extends this interpretation to a broad class of dynamic programming problems. The Newton structure applies whenever the Bellman operator can be written as a pointwise maximum over linear operators: $T = \max_\pi T^\pi$. This includes not only infinite horizon problems with discounting but also optimal stopping problems (job search, option exercise), average cost optimization (inventory, queueing), and minimax formulations for adversarial settings.\footnote{\citet{rust1996numerical} surveys successive approximation and policy iteration methods for economic models, comparing their performance on the bus engine replacement problem. \citet{zhang2023distributed} extends randomized policy iteration to multi-agent problems where the control is $m$-dimensional, reducing per-iteration complexity from exponential to linear in $m$.}\footnote{These problems appear under different names such as ``stochastic shortest path'' for optimal stopping, ``average-cost MDP'' for long-run average optimization, and ``model predictive control'' (or receding-horizon control) for finite-horizon replanning.} The practical implication is that algorithms with policy-improvement structure (evaluate a policy exactly or approximately, then improve) inherit Newton-like convergence behavior, while pure value-iteration methods (apply $T$ directly) are limited to linear convergence.\footnote{\citet{blackwell1965} proves that for discounted MDPs with finite state and action spaces, a stationary deterministic policy $\pi: \mathcal{S} \to \mathcal{A}$ exists that is optimal for all initial states simultaneously. This ``uniform optimality'' has three implications: (1) the search space reduces from history-dependent or stochastic policies to static maps, justifying neural networks that condition only on current state; (2) the optimal policy is independent of the initial distribution $d_0$, so changing where episodes start does not require retraining; (3) PI and VI are guaranteed to converge to the same globally optimal policy regardless of initialization.}
 
+\subsubsection{Dynamic Programming as a Linear Program}
+\label{sec:dp_as_lp}
+
+Value iteration and policy iteration both solve the Bellman equation by successive approximation. A third classical route replaces the fixed-point equation with a \emph{linear program}, which exposes the convex geometry that the discounted occupancy $d^{\pi_\theta}$ of the policy gradient theorem (Section~\ref{sec:policy_gradient}) later makes central.
+
+The primal program searches over value functions. Any $V$ with $V \geq TV$ pointwise dominates $V^*$, since iterating the monotone operator from such a $V$ drives it down toward the fixed point, $V \geq TV \geq T^2 V \geq \cdots \to V^*$, and $V^*$ itself is feasible with equality. Writing the maximum inside $TV$ as one linear constraint per action turns the search for the smallest feasible $V$ into
+\begin{equation}
+\min_{V} \; \sum_s \nu_0(s)\, V(s) \quad \text{s.t.} \quad V(s) \geq r(s,a) + \gamma \sum_{s'} P(s'|s,a)\, V(s') \ \ \forall (s,a),
+\label{eq:primal_lp}
+\end{equation}
+where $\nu_0$ is any strictly positive state weighting, whose choice leaves the minimizer $V^*$ unchanged \citep{manne1960,depenoux1963}. The objective is linear and the feasible region is an intersection of half-spaces, so \eqref{eq:primal_lp} is a linear program with $|\mathcal{S}|$ variables and $|\mathcal{S}||\mathcal{A}|$ constraints.
+
+The dual searches over \emph{state-action occupancy measures}. Assigning a multiplier $d(s,a) \geq 0$ to each primal constraint gives
+\begin{equation}
+\max_{d \geq 0} \; \sum_{s,a} d(s,a)\, r(s,a) \quad \text{s.t.} \quad \sum_a d(s',a) = \nu_0(s') + \gamma \sum_{s,a} P(s'|s,a)\, d(s,a) \ \ \forall s'.
+\label{eq:dual_lp}
+\end{equation}
+The dual constraint is a flow-conservation identity, the discounted rate at which the process enters $s'$ equals the rate at which it leaves, and $d(s,a)$ counts the discounted visits to $(s,a)$. Every stationary policy induces a feasible occupancy $d^\pi(s,a) = \sum_{t \geq 0} \gamma^t\, \mathbb{P}(s_t = s, a_t = a)$, whose state marginal, normalized to a probability distribution, is the discounted state occupancy $d^{\pi_\theta}$ of the policy gradient theorem. Conversely every feasible $d$ recovers a stationary policy through $\pi(a|s) = d(s,a) / \sum_{a'} d(s,a')$, a bijection between stationary policies and the feasible set \citep[Ch.~6.9]{puterman1994}. That set is a convex polytope whose vertices are the deterministic policies, and maximizing the linear objective over it lands the optimum at a vertex. Policy optimization, nonconvex in the policy parameters, is thus a linear program in occupancy space.
+
+For an economist the reading is immediate. The primal minimizes a cost over shadow values $V(s)$, the dual allocates discounted visitation subject to flow conservation, and strong duality equates the two optima. The multipliers on the flow constraints are the shadow prices of an extra unit of occupancy, the same marginal-value reading carried by $V^*$. This is the native formulation of constrained Markov decision processes \citep{altman1999}, where a budget constraint $\sum_{s,a} d(s,a)\, c(s,a) \leq b$ appends one linear inequality to \eqref{eq:dual_lp} and its multiplier prices the constraint, the structure the robust and constrained methods later in this survey build on.
+
 \subsubsection{Simulation Study: The Brock--Mirman Economy}
 \label{sec:brock_mirman_sim}
 
@@ -132,6 +176,25 @@ VI requires 567 iterations, PI converges in 11.}
 \end{figure}
 
 \input{../ch03_theory/sims/brock_mirman_results.tex}
+
+\subsubsection{Continuous States and Unbounded Returns}
+\label{sec:continuous_unbounded}
+
+The contraction theory above assumes a finite state space and bounded rewards. The Brock--Mirman economy just solved satisfies neither. Its capital state is continuous and its felicity $\log(c_t)$ is unbounded below as consumption approaches zero, so the value function has infinite supremum norm and Lemma~\ref{lem:bellman_contraction} does not apply as stated. Discretizing to a finite grid restores the finite-state theory for the computed problem, but the underlying model, like the recursive models of \citet{stokey1989} and most of macroeconomics, lives on a continuous state with returns unbounded above or below.
+
+The remedy is to measure distance in a \emph{weighted supremum norm}. Fix a weight $w: \mathcal{S} \to [1, \infty)$ that grows at least as fast as the value function and define
+\begin{equation}
+\|V\|_w = \sup_{s \in \mathcal{S}} \frac{|V(s)|}{w(s)}.
+\label{eq:weighted_norm}
+\end{equation}
+A value function unbounded in the ordinary supremum norm can be finite in $\|\cdot\|_w$ once $w$ absorbs its growth; for the log-utility model $w(k) = 1 + |\log k|$ suffices. The Bellman operator contracts in this norm under a drift condition on the transition kernel.
+
+\begin{theorem}[Weighted-norm contraction]
+\label{thm:weighted_contraction}
+Suppose there exist a weight $w \geq 1$ and constants $\bar{r} < \infty$ and $\lambda < 1/\gamma$ such that $|r(s,a)| \leq \bar{r}\, w(s)$ and $\sum_{s'} P(s'|s,a)\, w(s') \leq \lambda\, w(s)$ for all $(s,a)$. Then $T$ maps $\|\cdot\|_w$-bounded functions to $\|\cdot\|_w$-bounded functions and is a contraction of modulus $\gamma\lambda < 1$ in $\|\cdot\|_w$, so it has a unique fixed point $V^*$ with $\|V^*\|_w < \infty$, and value iteration converges to it geometrically \citep{wessels1977,bertsekas2018abstract}.
+\end{theorem}
+
+The drift condition $\sum_{s'} P(s'|s,a)\, w(s') \leq \lambda\, w(s)$ is the discrete-time analogue of a Lyapunov condition, bounding the expected weight after one transition by a factor $\lambda$ that discounting must outpace, $\gamma\lambda < 1$. The weight may itself grow in expectation, $\lambda > 1$ is allowed, and it is discounting that keeps future returns summable even when per-period returns grow with the state. The proof repeats the swap argument of Lemma~\ref{lem:bellman_contraction} with every quantity divided by $w(s)$, and the reward bound $|r| \leq \bar{r}\, w$ makes $T$ carry $\|\cdot\|_w$-bounded functions to $\|\cdot\|_w$-bounded functions.\footnote{The economics literature reaches the same conclusion through order-theoretic rather than metric arguments. \citet{boyd1990} solves the Ramsey problem in a weighted norm of exactly this form, and \citet{stokey1989} treat bounded returns directly and unbounded returns through monotone convergence. On a continuous state the greedy policy of Theorem~\ref{thm:verification} exists only if the maximization admits a measurable selection, guaranteed under continuity of $r$ and $P$ with a compact feasible action set.} With the contraction in hand, the fixed-point, verification, and policy-iteration results of this section carry over to the continuous, unbounded setting unchanged, now measured in $\|\cdot\|_w$.
 
 \subsection{Value Learning Methods}
 \label{sec:stochastic_approx}
