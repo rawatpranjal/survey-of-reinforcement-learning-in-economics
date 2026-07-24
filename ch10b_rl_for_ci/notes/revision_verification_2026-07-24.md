@@ -29,6 +29,15 @@ SNMM application. Full text is also present for the two excluded Robins (1986)
 and Liu et al. (2018) citations, with the OCR limitation on Robins's
 mathematical notation recorded in the source header and claim ledger.
 
+The Dynamic Treatment Regimes section now starts from the familiar A/B test.
+It distinguishes Fast Track's randomized prevention-program comparison from
+the adaptive home-visiting decision inside the intervention. The added context
+states the trial arms, target population, outcomes, semester timing,
+family-functioning questionnaire, visit assignment, recorded longitudinal
+sequence, and the confounding in a naive comparison of families with many and
+few visits. These details were checked against Murphy's full text and added to
+the claim-source ledger.
+
 The four substantive empirical applications now contain three evidence-bearing
 paragraphs each. The ADHD SMART, HeartSteps, hemodiafiltration, and Project
 STAR blocks state the study design, explain how the estimator maps to the
@@ -147,17 +156,22 @@ schematic.
 - All five scripts compile with `python -m py_compile`.
 - All 12 generated figures and result tables round-trip byte-identically
   through `--plots-only`.
-- The standalone chapter is 35 pages. It has no undefined citations, no
+- The standalone chapter is 36 pages. It has no undefined citations, no
   internal undefined references, and no overfull boxes. Its unresolved
   references point only to chapters omitted by the standalone driver.
-- The full book is 306 pages with no undefined citations or references, LaTeX
-  errors, or overfull boxes.
+- The open-issues table produces a float-size warning. Visual inspection
+  confirms that the full table remains inside the physical page and is not
+  clipped.
+- The full book is 307 pages with no undefined citations or references or
+  LaTeX errors. No overfull boxes originate in ch10b; the full-book log retains
+  preexisting overfull warnings from other chapters.
 - The chapter PDF was inspected page by page at the diagram, theorem, four
   empirical applications, four simulation blocks, both new inference tables,
   the policy-inference caveat, and the open-issues table. Labels are legible
   and no result is detached from its section.
-- The arXiv package compiles independently in a fresh temporary directory to
-  306 pages. The final tarball is 18 MB with 217 archive entries. Its manifest
+- The arXiv package compiles independently in its regenerated submission
+  directory to 307 pages. The final tarball is 18 MB with 217 archive entries.
+  Its manifest
   includes every ch10b figure and table and the previously omitted full-book
   dependencies exposed by this build.
 - Every numerical sentence in the four simulation writeups matches the frozen
