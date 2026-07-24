@@ -513,11 +513,27 @@ def compute_shared(cfg):
     # Monte Carlo fails here for precisely the reason under study: the mass of
     # E[rho^2] sits in rare trajectories, so at H = 64 a hundred thousand episodes
     # return a sample variance BELOW the H = 32 value, which is impossible for the
-    # true quantity. The transition kernel cancels from the ratio, leaving the
-    # sub-stochastic kernel K(s'|s) = sum_a [pi_e(a|s)^2 / pi_b(a|s)] P(s'|s,a),
-    # and E_b[rho_{1:H}^2] is the total mass of init * K^H. Since E_b[rho] = 1,
-    # the variance is that mass minus one.
-    K = np.einsum("sa,sar->sr", (pi_e**2) / np.maximum(pi_b, 1e-300), P)
+    # true quantity.
+    #
+    # Squaring the ratio leaves one power of pi_b in the denominator, so the
+    # per-step weight is w(s,a) = pi_e(a|s)^2 / pi_b(a|s). The transition kernel
+    # cancels from the RATIO, since both measures share it, but it stays in the
+    # trajectory measure as the propagator, giving
+    #     K(s'|s) = sum_a w(s,a) P(s'|s,a),
+    # and E_b[rho_{1:H}^2] is the total mass of init * K^H.
+    #
+    # K is not sub-stochastic. Its row sums are sum_a pi_e(a|s)^2 / pi_b(a|s),
+    # which equals 1 + chi^2(pi_e(.|s) || pi_b(.|s)) and so is at least one, with
+    # equality only where the two policies agree. That is the growth mechanism:
+    # every step multiplies the mass by one plus the per-state chi-square
+    # divergence, which is why the second moment compounds geometrically in H.
+    # Since E_b[rho] = 1, the variance is that mass minus one.
+    assert np.all(pi_b[pi_e > 0] > 0), (
+        "pi_e is not absolutely continuous with respect to pi_b; the importance "
+        "ratio is undefined and E_b[rho] = 1 fails, so var = E[rho^2] - 1 would "
+        "silently be wrong"
+    )
+    K = np.einsum("sa,sar->sr", (pi_e**2) / pi_b, P)
     weight_growth, m, h_done = {}, init_dist.astype(float).copy(), 0
     for H in sorted(cfg["H_GRID"]):
         while h_done < H:
@@ -1022,7 +1038,14 @@ def print_report(data):
     wg = shared["weight_growth"]
     Hs = sorted(wg)
     print("Weight-variance growth in the horizon (curse of horizon, measured directly)")
-    print("  (exact, from the sub-stochastic kernel, not a Monte Carlo estimate)")
+    print(
+        "  (exact: total mass of init * K^H, K(s'|s) = sum_a "
+        "[pi_e(a|s)^2/pi_b(a|s)] P(s'|s,a); not a Monte Carlo estimate)"
+    )
+    print(
+        "  row sums of K are 1 + chi^2(pi_e(.|s) || pi_b(.|s)) >= 1, "
+        "so each step multiplies the mass by one plus a divergence"
+    )
     print(f"{'H':>6} {'Var(rho_1:H)':>18} {'E[rho^2]':>18} {'Var(marginal ratio)':>21}")
     for H in Hs:
         g = wg[H]

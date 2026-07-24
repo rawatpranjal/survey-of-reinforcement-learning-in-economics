@@ -1,5 +1,4 @@
-  Computing: shared
-  Cache saved: /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/cache/ope_estimators__shared.pkl
+  Cache hit: shared
   Cache hit: sweep_n
   Cache hit: sweep_h
   Cache hit: ablation
@@ -32,7 +31,8 @@ Experiment (a): sample-size sweep at H=16 (truth +5.611033)
   2000    +0.002(0.005)/0.111   +0.132(0.069)/1.555   +0.003(0.027)/0.601   +0.049(0.020)/0.460   -0.018(0.016)/0.366   -0.018(0.015)/0.344   +0.006(0.010)/0.214
 
 Weight-variance growth in the horizon (curse of horizon, measured directly)
-  (exact, from the sub-stochastic kernel, not a Monte Carlo estimate)
+  (exact: total mass of init * K^H, K(s'|s) = sum_a [pi_e(a|s)^2/pi_b(a|s)] P(s'|s,a); not a Monte Carlo estimate)
+  row sums of K are 1 + chi^2(pi_e(.|s) || pi_b(.|s)) >= 1, so each step multiplies the mass by one plus a divergence
      H       Var(rho_1:H)           E[rho^2]   Var(marginal ratio)
      4             2.8357             3.8357              0.131531
      8            14.3883            15.3883              0.471142
