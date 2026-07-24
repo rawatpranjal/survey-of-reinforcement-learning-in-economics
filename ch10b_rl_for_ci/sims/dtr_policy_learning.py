@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
 dtr_policy_learning.py
-Chapter (OPE and Dynamic Treatment Effects), Section subsec:dynamic_offline_policy.
+Chapter 10b (Off-Policy Evaluation and Dynamic Treatment Effects),
+Simulation Study: Doubly Robust Policy Learning.
+
+The numerical design uses a stylized Fast Track-inspired setting. The first
+state coordinate is a home-visiting targeting score, the second is an
+auxiliary child or caregiver measure, and each binary action is an additional
+home visit. It is not a reconstruction of the Fast Track trial.
 
 Offline dynamic policy LEARNING by doubly robust backward induction
 (Sakaguchi 2024 / Athey-Wager AIPW scores), against single-nuisance
@@ -634,7 +640,7 @@ def generate_outputs(data):
 
     print()
     print("=" * 72)
-    print("  Doubly robust backward-induction offline policy learning")
+    print("  Stylized Fast Track home visiting: doubly robust policy learning")
     print("=" * 72)
     print()
     print(
@@ -772,7 +778,7 @@ def generate_outputs(data):
     ax.axhline(oracle["c2_star"], **BENCH_STYLE)
     ax.set_xlabel(r"$\hat c_1$")
     ax.set_ylabel(r"$\hat c_2$")
-    ax.set_title(r"(c) Backward-AIPW thresholds vs $(c_1^*, c_2^*)$")
+    ax.set_title(r"(c) Home-visit thresholds vs $(c_1^*, c_2^*)$")
     ax.legend(frameon=False, fontsize=8, loc="upper left")
 
     fig.tight_layout()

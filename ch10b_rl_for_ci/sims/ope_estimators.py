@@ -1,8 +1,12 @@
-# Off-policy evaluation estimators on a tabular customer-retention MDP.
+# Off-policy evaluation estimators on a stylized home-visiting MDP.
 # ch10b_rl_for_ci, Off-Policy Evaluation and Dynamic Treatment Effects.
 #
-# Monte Carlo study of the OPE estimator canon on a 5-state promotional
-# targeting MDP with an exact dynamic-programming oracle. Three experiments:
+# The five states record family functioning from greatest need to strongest
+# functioning. Action 1 is an additional home visit. This Fast Track-inspired
+# setting is stylized and does not reconstruct the trial.
+#
+# Monte Carlo study of the OPE estimator canon with an exact dynamic-programming
+# oracle. Three experiments:
 # (a) sample-size sweep at H=16 (ground-truth recovery; bias/SD/RMSE),
 # (b) horizon sweep at n=500 (curse of horizon; marginalized escape),
 # (c) 2x2 nuisance-misspecification ablation at H=16, n=500 (double
@@ -56,15 +60,15 @@ SCRIPT_NAME = "ope_estimators"
 # ---------------------------------------------------------------------------
 
 ENV_PARAMS = {
-    "N_STATES": 5,  # engagement level 0 (near-churn) .. 4 (loyal)
-    "N_ACTIONS": 2,  # 0 = hold, 1 = promote
-    "UP_HOLD": 0.15,
-    "DOWN_HOLD": 0.30,  # a=0: up/stay/down
-    "UP_PROMO": 0.45,
-    "DOWN_PROMO": 0.15,  # a=1: up/stay/down
-    "MARGIN": 0.25,
-    "PROMO_COST": 0.5,
-    "COST_OFFSET": 0.1,
+    "N_STATES": 5,  # family functioning 0 (greatest need) .. 4 (strongest)
+    "N_ACTIONS": 2,  # 0 = no additional visit, 1 = additional visit
+    "UP_NO_VISIT": 0.15,
+    "DOWN_NO_VISIT": 0.30,  # a=0: up/stay/down
+    "UP_VISIT": 0.45,
+    "DOWN_VISIT": 0.15,  # a=1: up/stay/down
+    "STATUS_REWARD": 0.25,
+    "VISIT_BURDEN": 0.5,
+    "BURDEN_OFFSET": 0.1,
     "INIT_STATES": (1, 2, 3),  # uniform initial distribution
     "BEHAVIOR_BASE": 0.6,
     "BEHAVIOR_SLOPE": 0.1,  # pi_b(1|s) = 0.6 - 0.1 s
@@ -126,7 +130,7 @@ EST_COLORS = {
 }
 
 # ---------------------------------------------------------------------------
-# Environment: promotional targeting MDP (tabular, finite horizon, gamma = 1)
+# Environment: home-visiting MDP (tabular, finite horizon, gamma = 1)
 # ---------------------------------------------------------------------------
 
 
@@ -136,8 +140,8 @@ def build_env(p):
     P = np.zeros((S, A, S))
     for s in range(S):
         for a in range(A):
-            up = p["UP_PROMO"] if a == 1 else p["UP_HOLD"]
-            down = p["DOWN_PROMO"] if a == 1 else p["DOWN_HOLD"]
+            up = p["UP_VISIT"] if a == 1 else p["UP_NO_VISIT"]
+            down = p["DOWN_VISIT"] if a == 1 else p["DOWN_NO_VISIT"]
             stay = 1.0 - up - down
             # clip at boundaries, folding excess mass into "stay"
             if s == S - 1:
@@ -153,8 +157,11 @@ def build_env(p):
                 P[s, a, s - 1] = down
     r = np.zeros((S, A))
     for s in range(S):
-        r[s, 0] = p["MARGIN"] * s
-        r[s, 1] = p["MARGIN"] * s - p["PROMO_COST"] * (1.0 - p["COST_OFFSET"] * s)
+        r[s, 0] = p["STATUS_REWARD"] * s
+        r[s, 1] = (
+            p["STATUS_REWARD"] * s
+            - p["VISIT_BURDEN"] * (1.0 - p["BURDEN_OFFSET"] * s)
+        )
     init_dist = np.zeros(S)
     for s in p["INIT_STATES"]:
         init_dist[s] = 1.0 / len(p["INIT_STATES"])
@@ -795,9 +802,9 @@ def generate_outputs(data):
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel(r"episodes $n$")
+    ax.set_xlabel(r"logged trajectories $n$")
     ax.set_ylabel(r"relative RMSE")
-    ax.set_title(f"(a) Sample-size sweep, $H={SWEEP_N_CONFIG['H']}$")
+    ax.set_title(f"(a) Home visiting, $H={SWEEP_N_CONFIG['H']}$")
     ax.legend(fontsize=7, ncol=2)
 
     # (b) relative RMSE vs H, log y
@@ -812,7 +819,7 @@ def generate_outputs(data):
     ax.set_yscale("log")
     ax.set_xlabel(r"horizon $H$")
     ax.set_ylabel(r"relative RMSE")
-    ax.set_title(f"(b) Horizon sweep, $n={SWEEP_H_CONFIG['N_EPISODES']}$")
+    ax.set_title(f"(b) Horizon stress test, $n={SWEEP_H_CONFIG['N_EPISODES']}$")
     ax.legend(fontsize=7, ncol=2)
 
     # (c) ablation bias with 95% Monte Carlo CI whiskers for mean bias
@@ -942,9 +949,12 @@ def print_report(data):
     truths = shared["truths"]
     J16 = truths[16]
     print("=" * 78)
-    print("OPE estimators on the tabular retention MDP")
+    print("OPE estimators on the stylized Fast Track home-visiting MDP")
     print("=" * 78)
-    print("States=5 Actions=2 gamma=1 init=uniform{1,2,3}")
+    print(
+        "States=5 (0 greatest need, 4 strongest functioning) "
+        "Actions=2 (0 no extra visit, 1 extra visit) gamma=1 init=uniform{1,2,3}"
+    )
     print("pi_b(1|s)=0.6-0.1s  pi_e(1|s)=0.9 (s<=1) / 0.1 (s>=2)")
     print(f"step ratio range: [{shared['rho_min']:.3f}, {shared['rho_max']:.3f}]")
     print(

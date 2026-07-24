@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """
 dtr_qlearning_vs_murphy.py
-Chapter 15 (RL for Causal Inference), Section subsec:gmethods_bridge.
+Chapter 10b (Off-Policy Evaluation and Dynamic Treatment Effects),
+Simulation Study: Murphy's Recursion and Q-Learning.
 
-Simulation study on the Murphy/Q-learning equivalence. Three research
-questions, three panels:
+The numerical design uses a stylized Fast Track-inspired home-visiting
+context. Higher state values indicate stronger family functioning, and the
+binary treatment is an additional home visit. It is not a reconstruction of
+the Fast Track trial.
+
+The study examines the Murphy/Q-learning equivalence in three panels:
 
 (Q1) Tabular sample-size sweep. On a synthetic two-stage DTR with finite
      state under sequential ignorability, do Murphy's batch backward
@@ -378,7 +383,7 @@ ORACLE_OUTER_GH_NODES_HD = 192
 
 N_GRID_HD = [500, 2000, 5000, 20000]
 N_SEEDS_HD = 20
-N_FQI_EPOCHS = 1000  # cap; early stop on full-batch MSE plateau (see _fit_full_batch)
+N_FQI_EPOCHS = 1000
 DQN_EPOCHS = 50
 TARGET_UPDATE_EPOCHS = 5
 BATCH_SIZE_HD = 64
@@ -411,7 +416,7 @@ ORACLE_HD_CONFIG = {
 FQI_HD_CONFIG = {
     **SHARED_CONFIG_HD,
     "N_FQI_EPOCHS": N_FQI_EPOCHS,
-    "early_stop": "mse_rel_1e-5_window100",
+    "train_budget": "fixed_full_batch_epochs_v1",
 }
 # 'seed_scheme' makes the per-seed RNG offset part of the cache key. The DQN
 # cohort uses default_rng(N*100+s) (paired with NN-FQI); the literal offset is
@@ -599,25 +604,14 @@ def evaluate_policy_hd(Q1, Q2, M=50000, seed=42):
 
 
 def _fit_full_batch(net, X, target, lr, max_epochs):
-    """Full-batch Adam regression with early stopping: stop once the MSE has
-    not improved by a relative 1e-5 for 100 consecutive epochs. Returns the
-    number of epochs actually run."""
+    """Run a fixed number of full-batch Adam regression epochs."""
     opt = optim.Adam(net.parameters(), lr=lr)
-    best = float("inf")
-    last_improve = 0
-    ep = 0
-    for ep in range(max_epochs):
+    for _ in range(max_epochs):
         opt.zero_grad()
         loss = ((net(X) - target) ** 2).mean()
         loss.backward()
         opt.step()
-        cur = float(loss.item())
-        if cur < best * (1.0 - 1e-5):
-            best = cur
-            last_improve = ep
-        elif ep - last_improve >= 100:
-            break
-    return ep + 1
+    return max_epochs
 
 
 def neural_fqi_estimate(S1, A1, S2, A2, Y, n_epochs, lr, hidden_dim, seed):
@@ -885,7 +879,7 @@ def generate_outputs(data):
 
     print()
     print("=" * 72)
-    print("  Plug-in g-computation (Murphy reference) vs Q-learning")
+    print("  Stylized Fast Track home visiting: g-computation vs Q-learning")
     print("=" * 72)
     print()
     print(
@@ -925,7 +919,7 @@ def generate_outputs(data):
     print()
     print(
         f"  (Q3) High-dim V(pi_hat)/V* vs cohort size N "
-        f"[FQI <= {N_FQI_EPOCHS} full-batch epochs with early stop, "
+        f"[FQI {N_FQI_EPOCHS} full-batch epochs, "
         f"DQN {DQN_EPOCHS} data passes, target update every "
         f"{TARGET_UPDATE_EPOCHS} passes]"
     )
@@ -987,7 +981,7 @@ def generate_outputs(data):
     ax.set_xscale("log")
     ax.set_xlabel(r"Cohort size $N$")
     ax.set_ylabel(r"$V(\hat\pi) / V^*$")
-    ax.set_title(r"(Q1) Tabular: same $V^*$ from both estimators")
+    ax.set_title(r"(Q1) Tabular family status: same $V^*$")
     ax.legend(frameon=False, loc="lower right", fontsize=9)
 
     # Panel 2: tabular V vs epochs at fixed N
@@ -1015,7 +1009,7 @@ def generate_outputs(data):
     ax.set_xscale("log")
     ax.set_xlabel(r"$Q$-learning replay epochs")
     ax.set_ylabel(r"$V(\hat\pi) / V^*$")
-    ax.set_title(rf"(Q2) Tabular: budget matters at $N={N_AT_EPOCHS_PANEL}$")
+    ax.set_title(rf"(Q2) Replay budget at $N={N_AT_EPOCHS_PANEL}$")
     ax.legend(frameon=False, loc="lower right", fontsize=9)
 
     # Panel 3: high-dim V vs N
@@ -1055,7 +1049,7 @@ def generate_outputs(data):
     ax.set_xscale("log")
     ax.set_xlabel(r"Cohort size $N$")
     ax.set_ylabel(r"$V(\hat\pi) / V^*$")
-    ax.set_title(rf"(Q3) Continuous state ($p={P_FEAT}$): policy recovery")
+    ax.set_title(rf"(Q3) Family covariates ($p={P_FEAT}$): recovery")
     ax.legend(frameon=False, loc="lower right", fontsize=9)
 
     fig.tight_layout()
@@ -1119,7 +1113,7 @@ def main():
     )
     print(
         f"  HIGH-DIM: p={P_FEAT}, N_seeds={N_SEEDS_HD}, N_GRID_HD={N_GRID_HD}, "
-        f"FQI epoch cap={N_FQI_EPOCHS} (early stop), "
+        f"FQI epochs={N_FQI_EPOCHS} (fixed), "
         f"DQN data passes={DQN_EPOCHS}, "
         f"target update passes={TARGET_UPDATE_EPOCHS}, "
         f"hidden={HIDDEN_DIM}, lr={LR_NN}"

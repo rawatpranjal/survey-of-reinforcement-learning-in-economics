@@ -17,13 +17,23 @@ retained in the chapter.
 Every cited paper was checked from full text, and the ledger records the exact
 claim, source location, and disposition.
 
-The follow-up pass adds named potential-outcome assumptions, plain-language
+The follow-up pass adds four potential-outcome assumptions, plain-language
 data-generating processes before every simulation, estimator-level standard
 errors, lead empirical applications, a literature-role index, and a dedicated
-open-issues section. Four missing or stale bibliography records were repaired.
+open-issues section. A final prose pass removes unnecessary connective
+language, keeps exposition in the present, and makes the role of each cited
+paper explicit. Four missing or stale bibliography records were repaired.
 Seven targeted sources passed both the source-integrity and full-text gates,
 including the sequential HeartSteps OPE application and the repeated-session
-SNMM application.
+SNMM application. Full text is also present for the two excluded Robins (1986)
+and Liu et al. (2018) citations, with the OCR limitation on Robins's
+mathematical notation recorded in the source header and claim ledger.
+
+All four numerical simulations use one stylized Fast Track-inspired
+home-visiting context. Each writeup states that the design is a methodological
+analogue rather than a reconstruction of the trial. Each simulation appears at
+the end of its section under a numbered `Simulation Study:` heading, with two
+prose paragraphs, one consolidated table, and one figure.
 
 ## Simulation audit
 
@@ -34,7 +44,8 @@ SNMM application.
    and DQN uses a frozen stage-2 target for the stage-1 update.
 2. The two neural methods use paired cohorts, a common two-layer 64-unit MLP,
    the same smooth sign-changing contrast, and separate evaluation draws.
-3. The DQN budget is fixed at 50 data passes for every cohort size, with a hard
+3. FQI runs 1,000 full-batch epochs at every cohort size. DQN uses 50 data
+   passes for every cohort size, with a hard
    target update every five passes. A 200-pass diagnostic failed the unchanged
    recovery gate because constant-learning-rate training deteriorated after the
    useful solution. The 50-pass diagnostic used five seeds; the remaining 15
@@ -126,20 +137,21 @@ schematic.
 ## Artifact and build gates
 
 - All five scripts compile with `python -m py_compile`.
-- All figures and result tables round-trip byte-identically through
-  `--plots-only`.
-- The standalone chapter is 35 pages. It has no undefined citations, no
+- All 12 generated figures and result tables round-trip byte-identically
+  through `--plots-only`.
+- The standalone chapter is 34 pages. It has no undefined citations, no
   internal undefined references, and no overfull boxes. Its unresolved
   references point only to chapters omitted by the standalone driver.
-- The full book is 307 pages with no undefined citations or references.
-  Existing overfull boxes outside ch10b remain outside this change.
+- The full book is 306 pages with no undefined citations or references, LaTeX
+  errors, or overfull boxes.
 - The chapter PDF was inspected page by page at the diagram, theorem, and four
   simulation blocks, both new inference tables, the policy-inference caveat,
   and the open-issues table. Labels are legible and no result is detached from
   its section.
-- The arXiv package compiles independently to 307 pages. The final tarball is
-  18 MB with 217 files. Its manifest includes every ch10b figure and table and
-  the previously omitted full-book dependencies exposed by this build.
+- The arXiv package compiles independently in a fresh temporary directory to
+  306 pages. The final tarball is 18 MB with 217 archive entries. Its manifest
+  includes every ch10b figure and table and the previously omitted full-book
+  dependencies exposed by this build.
 - Every numerical sentence in the four simulation writeups matches the frozen
   result tables or stdout artifacts.
 - An independent read-only audit found and triggered fixes for inconsistent

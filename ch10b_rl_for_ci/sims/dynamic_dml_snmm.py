@@ -1,5 +1,9 @@
 # Dynamic Double Machine Learning on a 2-stage SNMM.
-# Chapter ch10b_rl_for_ci, RL for Causal Inference, Section 2 (DML for Dynamic Treatment Effects).
+# Chapter ch10b_rl_for_ci, Off-Policy Evaluation and Dynamic Treatment Effects.
+#
+# The numerical design uses a stylized Fast Track-inspired setting. X_1 and
+# X_2 collect child, caregiver, and family measures; T_1 and T_2 are additional
+# home visits. The design is not a reconstruction of the Fast Track trial.
 #
 # Reproduces the central claim of Lewis & Syrgkanis (NeurIPS 2021,
 # "Double/Debiased Machine Learning for Dynamic Treatment Effects via
@@ -39,6 +43,7 @@
 # Outputs:
 #   dynamic_dml_snmm_coverage.png  -- bias and 95%-CI coverage vs. sample size
 #   dynamic_dml_snmm_results.tex   -- consolidated results table at n=4000
+#   dynamic_dml_snmm_joint_inference.tex -- joint sandwich calibration
 #   dynamic_dml_snmm_stdout.txt    -- numerical log
 
 import argparse
@@ -662,14 +667,14 @@ def make_figure(summary):
     axes[0].set_yscale('log')
     axes[0].set_xlabel(r'sample size $n$')
     axes[0].set_ylabel(r'$|\mathrm{bias}(\hat\psi_2)|$')
-    axes[0].set_title(r'Bias of $\hat\psi_2$')
+    axes[0].set_title(r'Second-visit effect bias')
     axes[0].legend(frameon=False)
 
     axes[1].axhline(CI_LEVEL, **BENCH_STYLE, label='nominal 95%')
     axes[1].set_xscale('log')
     axes[1].set_xlabel(r'sample size $n$')
     axes[1].set_ylabel(r'95\% CI coverage of $\psi_2$')
-    axes[1].set_title(r'Coverage of 95\% confidence intervals')
+    axes[1].set_title(r'Second-visit effect coverage')
     axes[1].set_ylim(0.0, 1.05)
     axes[1].legend(frameon=False, loc='lower right')
 
@@ -790,11 +795,12 @@ def print_stdout(summary, data):
     """Tabular stdout: per-method bias / RMSE / coverage at each n."""
     print()
     print('=' * 70)
-    print('  Dynamic DML on 2-stage SNMM -- summary')
+    print('  Dynamic DML in a stylized Fast Track home-visiting SNMM')
     print('=' * 70)
     print(f'  True parameters: psi_1* = {PSI_TRUE[0]:.4f}, psi_2* = {PSI_TRUE[1]:.4f}')
     print(f'  State dim p = {P_STATE}, sparsity s = {S_SPARSE}, '
           f'n_seeds = {N_SEEDS}, K_folds = {K_FOLDS}')
+    print('  T_1 and T_2 denote additional home visits; Y is a terminal outcome.')
     print(f'  DGP: || B ||_op = {B_OPNORM}, || gamma || = {GAMMA_NORM}, '
           f'|| alpha || = {ALPHA_NORM}')
     print(f'  Sample sizes: {N_GRID}')
@@ -842,6 +848,7 @@ def print_stdout(summary, data):
     print('  Output files:')
     print('    ', os.path.join(OUTPUT_DIR, 'dynamic_dml_snmm_coverage.png'))
     print('    ', os.path.join(OUTPUT_DIR, 'dynamic_dml_snmm_results.tex'))
+    print('    ', os.path.join(OUTPUT_DIR, 'dynamic_dml_snmm_joint_inference.tex'))
 
 
 def generate_outputs(data):

@@ -5,10 +5,11 @@
   Cache hit: joint_inference
 
 ======================================================================
-  Dynamic DML on 2-stage SNMM -- summary
+  Dynamic DML in a stylized Fast Track home-visiting SNMM
 ======================================================================
   True parameters: psi_1* = 1.0000, psi_2* = 0.5000
   State dim p = 20, sparsity s = 5, n_seeds = 200, K_folds = 5
+  T_1 and T_2 denote additional home visits; Y is a terminal outcome.
   DGP: || B ||_op = 0.5, || gamma || = 1.5, || alpha || = 1.0
   Sample sizes: [250, 500, 1000, 2000, 4000]
   IPTW-MSM intervals use a naive fixed-weight sandwich; they do not propagate propensity estimation or trimming.
@@ -51,6 +52,7 @@
   Output files:
      /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
      /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
+     /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex
   Figure saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
   Table saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
   Joint-inference table saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex

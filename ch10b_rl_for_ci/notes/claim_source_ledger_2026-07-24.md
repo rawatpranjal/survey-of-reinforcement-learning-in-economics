@@ -79,12 +79,15 @@ empirical description.
 
 ## Exclusions made during this audit
 
-- `robins1986` was removed because a verified full-text artifact was not
-  available in the source library. No theorem or historical priority claim in
-  the chapter now depends on it.
-- `liu2018curse` was removed because the local artifact did not match the cited
-  curse-of-horizon claim. The estimator-specific statement is supported by
-  Xie et al.; the model-class impossibility is supported by Kallus and Uehara.
+- `robins1986` remains excluded because no theorem or historical priority claim
+  in the chapter depends on it. A full-text OCR of the scanned article is now
+  present in the source library. Its prose is usable, but its mathematical
+  notation must be checked against the rendered scan before quotation.
+- `liu2018curse` remains excluded because its stationary-distribution estimator
+  is not needed for the finite-horizon claim retained in the chapter. A
+  matching full-text conversion is now present in the source library. The
+  estimator-specific statement is supported by Xie et al.; the model-class
+  impossibility is supported by Kallus and Uehara.
 - General RL textbooks, the original Watkins paper, a benefit-to-go naming
   aside, and several neighboring method citations were removed because they
   did not carry a chapter-specific claim.

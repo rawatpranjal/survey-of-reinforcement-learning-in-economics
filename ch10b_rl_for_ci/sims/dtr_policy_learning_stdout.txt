@@ -7,7 +7,7 @@ Config:
   Cache hit: misspec
 
 ========================================================================
-  Doubly robust backward-induction offline policy learning
+  Stylized Fast Track home visiting: doubly robust policy learning
 ========================================================================
 
   Oracle: c1* = 0.5156, c2* = 0.4000, V* = 1.922417

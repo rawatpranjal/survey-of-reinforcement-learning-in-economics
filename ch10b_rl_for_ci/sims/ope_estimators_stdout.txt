@@ -4,9 +4,9 @@
   Cache hit: ablation
   Cache hit: inference
 ==============================================================================
-OPE estimators on the tabular retention MDP
+OPE estimators on the stylized Fast Track home-visiting MDP
 ==============================================================================
-States=5 Actions=2 gamma=1 init=uniform{1,2,3}
+States=5 (0 greatest need, 4 strongest functioning) Actions=2 (0 no extra visit, 1 extra visit) gamma=1 init=uniform{1,2,3}
 pi_b(1|s)=0.6-0.1s  pi_e(1|s)=0.9 (s<=1) / 0.1 (s>=2)
 step ratio range: [0.200, 1.800]
 N_REPS=500  n grid=(50, 100, 200, 500, 1000, 2000)  H grid=(4, 8, 16, 32, 64)
