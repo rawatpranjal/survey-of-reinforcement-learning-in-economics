@@ -243,13 +243,13 @@ def compute_oracle(cfg):
         + SIGMA_Y * rng.normal(size=M)
     )
     mc_mean = float(Y.mean())
-    mc_se = float(Y.std() / np.sqrt(M))
+    mc_se = float(Y.std(ddof=1) / np.sqrt(M))
 
     # Behavior-policy value by MC.
     rng_b = np.random.default_rng(np.random.SeedSequence([SEED_ROOT, 901]))
     xb, zb, A1b, s21b, s22b, A2b, Yb = generate_cohort(M, rng_b)
     V_beh = float(Yb.mean())
-    V_beh_se = float(Yb.std() / np.sqrt(M))
+    V_beh_se = float(Yb.std(ddof=1) / np.sqrt(M))
     V_beh_quad = behavior_value_quadrature(cfg["BEHAVIOR_GH_NODES"])
 
     # Independent numerical checks guard the two quantities against which all
@@ -267,13 +267,13 @@ def compute_oracle(cfg):
     print(f"    c1* = {c1_star:.4f}, c2* = {C2_STAR:.4f}")
     print(f"    V* = {V_star:.6f} (adaptive quadrature split at c1*)")
     print(
-        f"    MC check at (c1*, c2*): {mc_mean:.6f} (SE {mc_se:.6f}), "
-        f"|diff|/SE = {abs(mc_mean - V_star) / mc_se:.2f}"
+        f"    MC check at (c1*, c2*): {mc_mean:.6f} (MC SE {mc_se:.6f}), "
+        f"|diff|/MC SE = {abs(mc_mean - V_star) / mc_se:.2f}"
     )
     print(
-        f"    V(behavior) = {V_beh:.6f} (SE {V_beh_se:.6f}); "
+        f"    V(behavior) = {V_beh:.6f} (MC SE {V_beh_se:.6f}); "
         f"quadrature = {V_beh_quad:.6f}, "
-        f"|diff|/SE = {abs(V_beh - V_beh_quad) / V_beh_se:.2f}"
+        f"|diff|/MC SE = {abs(V_beh - V_beh_quad) / V_beh_se:.2f}"
     )
     print(f"    Stage-1 treated share under c1*: {treated1:.3f}")
     return {
@@ -642,11 +642,11 @@ def generate_outputs(data):
         f"V* = {V_star:.6f}"
     )
     print(
-        f"  Quadrature vs MC: |diff|/SE = "
+        f"  Quadrature vs MC: |diff|/MC SE = "
         f"{abs(oracle['mc_mean'] - V_star) / oracle['mc_se']:.2f}"
     )
     print(
-        f"  Behavior quadrature vs MC: |diff|/SE = "
+        f"  Behavior quadrature vs MC: |diff|/MC SE = "
         f"{abs(oracle['V_beh'] - oracle['V_beh_quad']) / oracle['V_beh_se']:.2f}"
     )
     print(
@@ -660,9 +660,16 @@ def generate_outputs(data):
         row = f"  {n:>6d}  "
         for m in METHODS:
             mean = sweep["regret"][m][i].mean()
-            se = sweep["regret"][m][i].std() / np.sqrt(n_seeds)
+            se = sweep["regret"][m][i].std(ddof=1) / np.sqrt(n_seeds)
             row += f"{mean:>13.4f} ({se:.4f})"
         print(row)
+    paired = sweep["regret"]["AIPW"][-1] - sweep["regret"]["DM"][-1]
+    print(
+        "  Paired seed-wise regret contrast at largest n "
+        "(AIPW - plug-in Q): "
+        f"{paired.mean():+.4f} "
+        f"(MC SE {paired.std(ddof=1) / np.sqrt(n_seeds):.4f})"
+    )
     print()
     slopes = {}
     for m in METHODS:
@@ -690,7 +697,7 @@ def generate_outputs(data):
     ax = axes[0]
     for m in METHODS:
         means = sweep["regret"][m].mean(axis=1)
-        ses = sweep["regret"][m].std(axis=1) / np.sqrt(n_seeds)
+        ses = sweep["regret"][m].std(axis=1, ddof=1) / np.sqrt(n_seeds)
         ax.errorbar(
             n_grid,
             means,
@@ -722,7 +729,9 @@ def generate_outputs(data):
     offsets = {"AIPW": -0.18, "DM": 0.0, "IPW": 0.18}
     for m in METHODS:
         means = misspec["regret"][m].mean(axis=1)
-        ses = misspec["regret"][m].std(axis=1) / np.sqrt(MISSPEC_CONFIG["N_SEEDS"])
+        ses = misspec["regret"][m].std(axis=1, ddof=1) / np.sqrt(
+            MISSPEC_CONFIG["N_SEEDS"]
+        )
         xs = np.arange(n_reg) + offsets[m]
         ax.errorbar(
             xs,
@@ -781,7 +790,7 @@ def generate_outputs(data):
             (
                 f"{METHOD_LABELS[m]} ($n={n_grid[i_hi]}$)",
                 vals.mean(),
-                vals.std() / np.sqrt(n_seeds),
+                vals.std(ddof=1) / np.sqrt(n_seeds),
             )
         )
     rows.append(("Behavior policy", oracle["V_beh"] / V_star, None))
@@ -789,7 +798,7 @@ def generate_outputs(data):
     lines = [
         r"\begin{tabular}{lcc}",
         r"\toprule",
-        r"Method & $V(\hat\pi) / V^*$ & SE \\",
+        r"Method & $V(\hat\pi) / V^*$ & MC SE \\",
         r"\midrule",
     ]
     for name, mean, se in rows:

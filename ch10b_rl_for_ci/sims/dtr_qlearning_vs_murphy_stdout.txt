@@ -17,15 +17,16 @@ Config:
 
   (Q1) Tabular V(pi_hat)/V* vs cohort size N [Q-learn 100 replays, alpha=0.1]
   Tabular Oracle V* = 3.5820
-       N     Plug-in g-comp (SE)       Q-learn mean (SE)
-     100         0.9743 (0.0024)         0.9739 (0.0026)
+       N     Plug-in g-comp (MC SE)       Q-learn mean (MC SE)
+     100         0.9743 (0.0025)         0.9739 (0.0026)
      300         0.9907 (0.0012)         0.9914 (0.0012)
     1000         0.9978 (0.0005)         0.9953 (0.0007)
     3000         0.9995 (0.0002)         0.9979 (0.0006)
    10000         1.0000 (0.0000)         0.9968 (0.0007)
+  Paired seed-wise contrast at largest N (Q-learn - plug-in): -0.0032 (MC SE 0.0007)
 
   (Q2) Tabular Q-learn V(pi_hat)/V* vs replay epochs at N=300
-  epochs       Q-learn mean (SE)
+  epochs       Q-learn mean (MC SE)
        1         0.9842 (0.0023)
        3         0.9913 (0.0010)
       10         0.9913 (0.0011)
@@ -35,11 +36,12 @@ Config:
 
   (Q3) High-dim V(pi_hat)/V* vs cohort size N [FQI <= 1000 full-batch epochs with early stop, DQN 50 data passes, target update every 5 passes]
   High-dim Oracle V* = 0.7423 (behavior policy 0.3529)
-       N     NN-FQI plug-in (SE)           DQN mean (SE)
-     500         0.8155 (0.0057)         0.9491 (0.0043)
-    2000         0.8402 (0.0028)         0.9537 (0.0022)
+       N     NN-FQI plug-in (MC SE)           DQN mean (MC SE)
+     500         0.8155 (0.0058)         0.9491 (0.0044)
+    2000         0.8402 (0.0029)         0.9537 (0.0022)
     5000         0.9060 (0.0021)         0.9544 (0.0019)
    20000         0.9842 (0.0013)         0.9740 (0.0012)
+  Paired seed-wise contrast at largest N (DQN - NN-FQI): -0.0101 (MC SE 0.0013)
   NN-FQI realized epochs per stage (mean over seeds/stages): N=500: 1000, N=2000: 1000, N=5000: 1000, N=20000: 1000
 
   Figure: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy.png

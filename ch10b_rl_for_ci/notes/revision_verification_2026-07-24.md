@@ -12,9 +12,18 @@ process. The shipped proof uses fixed-policy evaluation followed by a dominance
 induction, assumes standard Borel state spaces and finite ordered actions, and
 defines both the transition and terminal reward kernels.
 
-The claim-source ledger covers all 29 citation keys retained in the chapter.
+The claim-source ledger and paper coverage index cover all 36 citation keys
+retained in the chapter.
 Every cited paper was checked from full text, and the ledger records the exact
 claim, source location, and disposition.
+
+The follow-up pass adds named potential-outcome assumptions, plain-language
+data-generating processes before every simulation, estimator-level standard
+errors, lead empirical applications, a literature-role index, and a dedicated
+open-issues section. Four missing or stale bibliography records were repaired.
+Seven targeted sources passed both the source-integrity and full-text gates,
+including the sequential HeartSteps OPE application and the repeated-session
+SNMM application.
 
 ## Simulation audit
 
@@ -52,6 +61,10 @@ dependence on the chosen shared architecture and optimizer schedules.
    nonzero bias by construction.
 4. At \(n=2000\) and \(H=16\), DM and IS have RMSE 0.111 and 1.555. At \(H=64\),
    IS and MIS have relative RMSE 2.847 and 0.134, a 21.3-fold contrast.
+5. IS, PDIS, and cross-fitted DR now carry trajectory-score analytic standard
+   errors. At \(H=8,n=1000\) over 1,000 repeated datasets, their mean analytic
+   SE divided by empirical SD is 0.976, 0.992, and 1.014; 95 percent coverage
+   is 0.943, 0.953, and 0.945.
 
 Bullshit score: 10%. The exact oracle, theory-directed invariants, and
 misspecification cells directly test the claims. The tabular model remains
@@ -70,6 +83,11 @@ deliberately favorable to DM.
 4. The dynamic-DML biases are -0.0047 and -0.0013. Naive OLS retains a 0.9326
    second-stage bias and zero coverage; the IPTW-fitted MSM has bias 0.1456 and
    coverage 0.73.
+5. The joint covariance check has relative Frobenius error 0.134. For the
+   contrast \(\psi_1-\psi_2\), mean analytic SE is 0.0537 against Monte Carlo
+   SD 0.0506, with 0.950 coverage and 0.025 misses in each tail.
+6. The IPTW-MSM interval is labeled as a naive fixed-weight sandwich because
+   it does not propagate propensity estimation or trimming.
 
 Bullshit score: 10%. Recovery, standard-error calibration, coverage, and tail
 symmetry are hard gates. The sparse linear DGP is intentionally compatible with
@@ -110,19 +128,25 @@ schematic.
 - All five scripts compile with `python -m py_compile`.
 - All figures and result tables round-trip byte-identically through
   `--plots-only`.
-- The standalone chapter is 24 pages. It has no undefined citations, no
-  internal undefined references, and no overfull boxes. Its six unresolved
-  references point to chapters omitted by the standalone driver.
-- The full book is 299 pages with no undefined citations or references.
+- The standalone chapter is 35 pages. It has no undefined citations, no
+  internal undefined references, and no overfull boxes. Its unresolved
+  references point only to chapters omitted by the standalone driver.
+- The full book is 307 pages with no undefined citations or references.
   Existing overfull boxes outside ch10b remain outside this change.
 - The chapter PDF was inspected page by page at the diagram, theorem, and four
-  simulation blocks. Tables precede figures, labels are legible, and no float
-  separates a result from its section.
-- The arXiv package compiles independently to 299 pages. The final tarball is
-  18 MB with 215 files. Its manifest includes every ch10b figure and table and
+  simulation blocks, both new inference tables, the policy-inference caveat,
+  and the open-issues table. Labels are legible and no result is detached from
+  its section.
+- The arXiv package compiles independently to 307 pages. The final tarball is
+  18 MB with 217 files. Its manifest includes every ch10b figure and table and
   the previously omitted full-book dependencies exposed by this build.
 - Every numerical sentence in the four simulation writeups matches the frozen
   result tables or stdout artifacts.
+- An independent read-only audit found and triggered fixes for inconsistent
+  potential-outcome notation, incomplete NMDP histories, overbroad DR
+  unbiasedness language, high-confidence-bound conditions, horizon arithmetic,
+  and the target of learned-policy inference. The second audit found no
+  remaining theorem, application, bibliography, or inference blocker.
 - Deleted labels `subsec:simstudy`, `subsec:rl_for_ci_discussion`, and
   `subsec:murphy_watkins` have no remaining references.
 - The final prose contains no em dashes, en dashes, `\textbf`, unlocated direct

@@ -2,6 +2,7 @@
   Cache hit: sweep_n
   Cache hit: sweep_h
   Cache hit: ablation
+  Cache hit: inference
 ==============================================================================
 OPE estimators on the tabular retention MDP
 ==============================================================================
@@ -17,11 +18,11 @@ Ground truth J(pi_e) by exact DP:
   H= 32  J=+11.365613  max marginal state ratio=1.460
   H= 64  J=+22.907539  max marginal state ratio=1.460
 J(pi_b) at H=16: +5.985613
-MC oracle check (100k episodes under pi_e, H=16): +5.594832 (SE 0.013891) vs DP +5.611033  |diff|/SE = 1.17
+MC oracle check (100k episodes under pi_e, H=16): +5.594832 (MC SE 0.013891) vs DP +5.611033  |diff|/MC SE = 1.17
 
 Experiment (a): sample-size sweep at H=16 (truth +5.611033)
      n                     DM                    IS                  PDIS                   WIS                    DR                   WDR                   MIS
-             bias (SE) / RMSE      bias (SE) / RMSE      bias (SE) / RMSE      bias (SE) / RMSE      bias (SE) / RMSE      bias (SE) / RMSE      bias (SE) / RMSE
+          bias (MC SE) / RMSE   bias (MC SE) / RMSE   bias (MC SE) / RMSE   bias (MC SE) / RMSE   bias (MC SE) / RMSE   bias (MC SE) / RMSE   bias (MC SE) / RMSE
     50    +0.010(0.031)/0.693  +0.150(0.487)/10.884   +0.122(0.166)/3.707   +0.626(0.076)/1.818   -0.099(0.106)/2.359   -0.021(0.067)/1.489   +0.096(0.062)/1.381
    100    -0.012(0.024)/0.531   -0.376(0.219)/4.912   -0.091(0.108)/2.424   +0.424(0.058)/1.363   -0.085(0.081)/1.816   -0.054(0.053)/1.176   -0.008(0.042)/0.948
    200    -0.037(0.016)/0.363   -0.137(0.184)/4.108   -0.068(0.081)/1.806   +0.286(0.047)/1.077   +0.016(0.048)/1.076   +0.017(0.038)/0.857   -0.069(0.029)/0.647
@@ -47,6 +48,13 @@ Experiment (c): 2x2 double-robustness ablation at H=16, n=500 (truth +5.611033)
        DM_QW    +0.3769     0.0075     0.4128
      PDIS_eR    -0.0627     0.0511     1.1428
      PDIS_eW   +79.1185     1.5846    86.6760
+  Paired seed-wise DR contrast (both wrong - both right): +1.7315 (MC SE 0.3277)
+
+Estimator-level inference calibration (H=8, n=1000, 1000 repeated datasets):
+ estimator       bias    emp. SD  analytic SE   SE ratio   coverage    tails L/R
+        IS    +0.0149     0.3143       0.3068      0.976      0.943 0.020/0.037
+      PDIS    +0.0070     0.1800       0.1786      0.992      0.953 0.027/0.020
+        DR    +0.0028     0.1225       0.1242      1.014      0.945 0.030/0.025
 
 Checks (3 MC-SE criterion for bias):
   IS bias within 3 MC-SE of 0 at every n:    True
@@ -59,3 +67,4 @@ Output files:
   /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/ope_estimators.png
   /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/ope_estimators_results.tex
   /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/ope_estimators_dr_ablation.tex
+  /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/ope_estimators_inference.tex

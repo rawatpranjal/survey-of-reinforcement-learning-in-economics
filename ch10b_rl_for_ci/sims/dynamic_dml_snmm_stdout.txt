@@ -2,6 +2,7 @@
   Cache hit: naive_ols
   Cache hit: msm_iptw
   Cache hit: dynamic_dml
+  Cache hit: joint_inference
 
 ======================================================================
   Dynamic DML on 2-stage SNMM -- summary
@@ -10,6 +11,7 @@
   State dim p = 20, sparsity s = 5, n_seeds = 200, K_folds = 5
   DGP: || B ||_op = 0.5, || gamma || = 1.5, || alpha || = 1.0
   Sample sizes: [250, 500, 1000, 2000, 4000]
+  IPTW-MSM intervals use a naive fixed-weight sandwich; they do not propagate propensity estimation or trimming.
 
   --- Naive OLS ---
        n    bias(psi_1)    rmse(psi_1)   cov(psi_1)    bias(psi_2)    rmse(psi_2)   cov(psi_2)
@@ -19,7 +21,7 @@
     2000        -0.1944         0.2059        0.160         0.9278         0.9297        0.000
     4000        -0.1913         0.1967        0.010         0.9326         0.9335        0.000
 
-  --- IPTW-fitted MSM ---
+  --- IPTW MSM (naive SE) ---
        n    bias(psi_1)    rmse(psi_1)   cov(psi_1)    bias(psi_2)    rmse(psi_2)   cov(psi_2)
      250        -0.0531         0.2690        0.970         0.6847         0.7648        0.375
      500        -0.0331         0.2050        0.970         0.5421         0.6396        0.355
@@ -35,8 +37,20 @@
     2000        -0.0144         0.0720        0.950        -0.0067         0.0275        0.935
     4000        -0.0047         0.0461        0.970        -0.0013         0.0184        0.930
 
+  --- Dynamic DML full joint sandwich at n=4000 ---
+  Mean analytic covariance:
+    [0.002400, -0.000069]
+    [-0.000069, 0.000342]
+  Monte Carlo covariance across repeated datasets (ddof=1):
+    [0.002114, -0.000055]
+    [-0.000055, 0.000339]
+  Relative covariance error: 0.134
+  Contrast psi_1 - psi_2: bias=-0.0034, mean analytic SE=0.0537, Monte Carlo SD=0.0506, SE ratio=1.060
+  Contrast 95% CI: coverage=0.950, tail misses=0.025/0.025
+
   Output files:
      /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
      /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
   Figure saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
   Table saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
+  Joint-inference table saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex

@@ -101,6 +101,18 @@ ABLATION_CONFIG = {
     "N_EPISODES": 500,
     "WRONG_PROPENSITY": 0.5,
 }
+INFERENCE_CONFIG = {
+    **SHARED_CONFIG,
+    # At H=16 the trajectory-IS Wald interval is visibly non-Gaussian at the
+    # sample sizes used in the main sweep.  H=8 gives a representative cell
+    # where ordinary trajectory-score inference is empirically well behaved.
+    "H": 8,
+    "N_EPISODES": 1000,
+    "N_REPS": 1000,
+    "CONFIG_TAG": 408,
+    "ESTIMATORS": ("IS", "PDIS", "DR"),
+    "INFERENCE_SCORE_METHOD": "trajectory_scores_crossfit_oof_v1",
+}
 
 ESTIMATORS = ["DM", "IS", "PDIS", "WIS", "DR", "WDR", "MIS"]
 EST_COLORS = {
@@ -373,6 +385,51 @@ def est_dr_crossfit(
     return float(np.average(vals, weights=weights))
 
 
+def dr_crossfit_scores(
+    S_arr,
+    A_arr,
+    R_arr,
+    rho,
+    pi_e,
+    H,
+    n_states,
+    n_actions,
+    model_fitter=fit_mle_model,
+):
+    """Out-of-fold trajectory scores whose mean is cross-fitted DR.
+
+    Each trajectory is scored with nuisance functions trained on the other
+    fold.  Their sample standard deviation therefore supplies the usual
+    influence-score standard error for the fixed evaluation policy.
+    """
+    n = S_arr.shape[0]
+    half = n // 2
+    idx = [np.arange(0, half), np.arange(half, n)]
+    q_terms = np.zeros((n, H))
+    v_terms = np.zeros((n, H))
+    for k in (0, 1):
+        fit_idx, score_idx = idx[1 - k], idx[k]
+        P_hat, r_hat = model_fitter(
+            S_arr[fit_idx], A_arr[fit_idx], R_arr[fit_idx], n_states, n_actions
+        )
+        Q_hat, V_hat = model_q_functions(P_hat, r_hat, pi_e, H)
+        for t in range(H):
+            q_terms[score_idx, t] = Q_hat[t][
+                S_arr[score_idx, t], A_arr[score_idx, t]
+            ]
+            v_terms[score_idx, t] = V_hat[t][S_arr[score_idx, t]]
+
+    cum = np.cumprod(rho, axis=1)
+    cum_prev = np.concatenate([np.ones((n, 1)), cum[:, :-1]], axis=1)
+    return (cum * (R_arr - q_terms) + cum_prev * v_terms).sum(axis=1)
+
+
+def estimate_and_se(scores):
+    """Mean estimator and trajectory-score standard error."""
+    scores = np.asarray(scores)
+    return float(scores.mean()), float(scores.std(ddof=1) / np.sqrt(len(scores)))
+
+
 def est_mis(S_arr, A_arr, R_arr, rho, n_states):
     """Marginalized IS (Xie, Ma & Wang 2019, Eqns. 3.1-3.2).
 
@@ -533,6 +590,45 @@ def compute_ablation(cfg):
     return {k: np.asarray(v) for k, v in cells.items()}
 
 
+def compute_inference_calibration(cfg):
+    """Repeated-sampling check of estimator-level Wald intervals.
+
+    Unlike the Monte Carlo SE of a mean across simulation seeds, each SE here
+    is computed within one logged dataset from its trajectory-level score.
+    """
+    P, r, init_dist, pi_b, pi_e = build_env(cfg)
+    S, A = r.shape
+    H, n = cfg["H"], cfg["N_EPISODES"]
+    truth, _, _ = dp_value(P, r, init_dist, pi_e, H)
+    estimates = {name: np.zeros(cfg["N_REPS"]) for name in cfg["ESTIMATORS"]}
+    ses = {name: np.zeros(cfg["N_REPS"]) for name in cfg["ESTIMATORS"]}
+
+    for rep in range(cfg["N_REPS"]):
+        rng = np.random.default_rng(
+            np.random.SeedSequence([cfg["SEED_ROOT"], cfg["CONFIG_TAG"], rep])
+        )
+        S_arr, A_arr, R_arr = simulate(P, r, init_dist, pi_b, H, n, rng)
+        rho = step_ratios(S_arr, A_arr, pi_e, pi_b)
+        cum = np.cumprod(rho, axis=1)
+        scores = {
+            "IS": cum[:, -1] * R_arr.sum(axis=1),
+            "PDIS": (cum * R_arr).sum(axis=1),
+            "DR": dr_crossfit_scores(
+                S_arr, A_arr, R_arr, rho, pi_e, H, S, A
+            ),
+        }
+        for name in cfg["ESTIMATORS"]:
+            estimates[name][rep], ses[name][rep] = estimate_and_se(scores[name])
+
+    return {
+        "truth": truth,
+        "H": H,
+        "n": n,
+        "estimates": estimates,
+        "ses": ses,
+    }
+
+
 def compute_data(force=None):
     force = force or set()
     cascade = "shared" in force
@@ -572,11 +668,21 @@ def compute_data(force=None):
         ABLATION_CONFIG,
         force=cascade or "ablation" in force,
     )
+    inference = compute_or_load(
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "inference",
+        INFERENCE_CONFIG,
+        compute_inference_calibration,
+        INFERENCE_CONFIG,
+        force=cascade or "inference" in force,
+    )
     return {
         "shared": shared,
         "sweep_n": sweep_n,
         "sweep_h": sweep_h,
         "ablation": ablation,
+        "inference": inference,
     }
 
 
@@ -591,6 +697,26 @@ def _stats(draws, truth):
     rmse = float(np.sqrt(((draws - truth) ** 2).mean()))
     mc_se = sd / np.sqrt(len(draws))
     return bias, sd, rmse, mc_se
+
+
+def _inference_stats(estimates, ses, truth):
+    """Repeated-sampling diagnostics for within-dataset analytic SEs."""
+    estimates = np.asarray(estimates)
+    ses = np.asarray(ses)
+    empirical_sd = float(estimates.std(ddof=1))
+    mean_se = float(ses.mean())
+    lo = estimates - 1.96 * ses
+    hi = estimates + 1.96 * ses
+    return {
+        "bias": float(estimates.mean() - truth),
+        "empirical_sd": empirical_sd,
+        "mean_se": mean_se,
+        "se_ratio": mean_se / empirical_sd,
+        "coverage": float(np.mean((lo <= truth) & (truth <= hi))),
+        "left_miss": float(np.mean(truth < lo)),
+        "right_miss": float(np.mean(truth > hi)),
+        "bias_mc_se": empirical_sd / np.sqrt(len(estimates)),
+    }
 
 
 def validate_results(data):
@@ -623,6 +749,26 @@ def validate_results(data):
     mis_h64 = _stats(data["sweep_h"][64]["MIS"], truths[64])[2] / abs(truths[64])
     if is_h64 / mis_h64 < 5.0:
         raise RuntimeError("Horizon experiment no longer demonstrates ratio marginalization")
+
+    inference = data["inference"]
+    for name in INFERENCE_CONFIG["ESTIMATORS"]:
+        estimates = inference["estimates"][name]
+        ses = inference["ses"][name]
+        if not np.all(np.isfinite(estimates)) or not np.all(np.isfinite(ses)):
+            raise RuntimeError(f"Non-finite {name} inference diagnostic")
+        if np.any(ses <= 0):
+            raise RuntimeError(f"Non-positive {name} analytic standard error")
+        diag = _inference_stats(estimates, ses, inference["truth"])
+        if abs(diag["bias"]) > 4.0 * diag["bias_mc_se"]:
+            raise RuntimeError(f"{name} inference calibration is biased: {diag}")
+        if not 0.80 <= diag["se_ratio"] <= 1.20:
+            raise RuntimeError(f"{name} analytic/empirical SE ratio failed: {diag}")
+        if not 0.90 <= diag["coverage"] <= 0.99:
+            raise RuntimeError(f"{name} 95% CI coverage failed: {diag}")
+        if max(diag["left_miss"], diag["right_miss"]) > 0.06:
+            raise RuntimeError(f"{name} 95% CI tail miss rate failed: {diag}")
+        if abs(diag["left_miss"] - diag["right_miss"]) > 0.05:
+            raise RuntimeError(f"{name} 95% CI tails are imbalanced: {diag}")
 
 
 def generate_outputs(data):
@@ -669,7 +815,7 @@ def generate_outputs(data):
     ax.set_title(f"(b) Horizon sweep, $n={SWEEP_H_CONFIG['N_EPISODES']}$")
     ax.legend(fontsize=7, ncol=2)
 
-    # (c) ablation bias with 95% CI whiskers
+    # (c) ablation bias with 95% Monte Carlo CI whiskers for mean bias
     ax = axes[2]
     cells = [
         ("DR: both right", "DR_QR_eR", EST_COLORS["DR"]),
@@ -766,7 +912,29 @@ def generate_outputs(data):
             f.write(f"{est} & {qm} & {em} & {bias:+.4f} & {rmse:.4f} \\\\\n")
         f.write("\\bottomrule\n\\end{tabular}\n")
 
-    return fig_path, tab_path, ab_path
+    # Inferential calibration table. "Analytic SE" is within-dataset
+    # uncertainty; "empirical SD" and coverage are across repeated datasets.
+    inf = data["inference"]
+    inf_path = os.path.join(OUTPUT_DIR, "ope_estimators_inference.tex")
+    with open(inf_path, "w") as f:
+        f.write("\\begin{tabular}{lrrrrrr}\n\\toprule\n")
+        f.write(
+            "Estimator & Bias & Emp. SD & Mean analytic SE & SE ratio & "
+            "Coverage & Tail misses (L/R) \\\\\n\\midrule\n"
+        )
+        for name in INFERENCE_CONFIG["ESTIMATORS"]:
+            d = _inference_stats(
+                inf["estimates"][name], inf["ses"][name], inf["truth"]
+            )
+            f.write(
+                f"{name} & {d['bias']:+.4f} & {d['empirical_sd']:.4f} & "
+                f"{d['mean_se']:.4f} & {d['se_ratio']:.3f} & "
+                f"{d['coverage']:.3f} & "
+                f"{d['left_miss']:.3f}/{d['right_miss']:.3f} \\\\\n"
+            )
+        f.write("\\bottomrule\n\\end{tabular}\n")
+
+    return fig_path, tab_path, ab_path, inf_path
 
 
 def print_report(data):
@@ -792,14 +960,14 @@ def print_report(data):
     print(f"J(pi_b) at H=16: {shared['J_behavior_H16']:+.6f}")
     print(
         f"MC oracle check (100k episodes under pi_e, H=16): "
-        f"{shared['mc_mean']:+.6f} (SE {shared['mc_se']:.6f}) vs DP {J16:+.6f}  "
-        f"|diff|/SE = {abs(shared['mc_mean'] - J16) / shared['mc_se']:.2f}"
+        f"{shared['mc_mean']:+.6f} (MC SE {shared['mc_se']:.6f}) vs DP {J16:+.6f}  "
+        f"|diff|/MC SE = {abs(shared['mc_mean'] - J16) / shared['mc_se']:.2f}"
     )
     print()
     print(f"Experiment (a): sample-size sweep at H=16 (truth {J16:+.6f})")
     hdr = f"{'n':>6} " + "".join(f"{name:>22}" for name in ESTIMATORS)
     print(hdr)
-    print(" " * 7 + "".join(f"{'bias (SE) / RMSE':>22}" for _ in ESTIMATORS))
+    print(" " * 7 + "".join(f"{'bias (MC SE) / RMSE':>22}" for _ in ESTIMATORS))
     for n in SWEEP_N_CONFIG["N_GRID"]:
         cells = []
         for name in ESTIMATORS:
@@ -836,6 +1004,36 @@ def print_report(data):
     ]:
         bias, sd, rmse, mc_se = _stats(data["ablation"][key], J16)
         print(f"{key:>12} {bias:>+10.4f} {mc_se:>10.4f} {rmse:>10.4f}")
+    paired = data["ablation"]["DR_QW_eW"] - data["ablation"]["DR_QR_eR"]
+    paired_mean = float(paired.mean())
+    paired_mc_se = float(paired.std(ddof=1) / np.sqrt(len(paired)))
+    print(
+        "  Paired seed-wise DR contrast (both wrong - both right): "
+        f"{paired_mean:+.4f} (MC SE {paired_mc_se:.4f})"
+    )
+    print()
+    inference = data["inference"]
+    print(
+        "Estimator-level inference calibration "
+        f"(H={inference['H']}, n={inference['n']}, "
+        f"{INFERENCE_CONFIG['N_REPS']} repeated datasets):"
+    )
+    print(
+        f"{'estimator':>10} {'bias':>10} {'emp. SD':>10} "
+        f"{'analytic SE':>12} {'SE ratio':>10} {'coverage':>10} {'tails L/R':>12}"
+    )
+    for name in INFERENCE_CONFIG["ESTIMATORS"]:
+        d = _inference_stats(
+            inference["estimates"][name],
+            inference["ses"][name],
+            inference["truth"],
+        )
+        print(
+            f"{name:>10} {d['bias']:>+10.4f} {d['empirical_sd']:>10.4f} "
+            f"{d['mean_se']:>12.4f} {d['se_ratio']:>10.3f} "
+            f"{d['coverage']:>10.3f} "
+            f"{d['left_miss']:.3f}/{d['right_miss']:.3f}"
+        )
     print()
     # theory-consistency checks (facts, computed from the draws above)
     is_bias_ok = all(

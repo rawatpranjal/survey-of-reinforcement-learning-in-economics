@@ -25,6 +25,8 @@ empirical description.
 
 | Citation | Manuscript claim | Full-text location checked | Disposition |
 |---|---|---|---|
+| `laber2014dtrchallenges` | The ADHD SMART has 138 trajectories; adaptive 90% intervals do not support a unique first-stage recommendation but do distinguish stage-2 actions at low adherence; near-zero contrasts create nonregular inference. | `laber-2014-dtr-technical-challenges.md`, application at pp. 23-27 and open problems at pp. 27-29. | Added as the lead DTR application. The prose distinguishes confidence intervals for treatment contrasts from inference on a selected optimal rule. |
+| `wangtom2025dtrtutorial` | Adaptive intervals and resampling methods address nonregularity in Q-learning, and the STAR*D tutorial illustrates how ordinary bootstrap SEs can be misleading near a zero contrast. | `wang-tom-2025-optimal-dtr-tutorial.md`, inference discussion and STAR*D application. | Added as a supporting tutorial. Bibliographic metadata was updated to the 2026 journal publication while preserving the citation key. |
 | `kaushik2022sepsiscql` | A retrospective sepsis study fit conservative Q-learning to vasopressor and intravenous-fluid decisions. | `kaushik2022sepsiscql.md`, abstract, methods, and policy-action discussion. | Retained with “retrospective study” and no deployment-effect claim. |
 | `kondrup2023deepvent` | DeepVent studies offline RL for mechanical-ventilation decisions. | `kondrup2023deepvent.md`, abstract and methods. | Retained with the same offline-only qualification. |
 | `roggeveen2024icmrl` | Cross-policy evaluation across reward weightings exposes sensitivity in ICU RL policy evaluation. | `roggeveen2024icmrl.md`, abstract, reward-weight experiments, and discussion. | Retained. “Reward specifications” was narrowed to “reward weightings.” |
@@ -47,6 +49,8 @@ empirical description.
 | `sakhi2024logsmoothing` | Logarithmic smoothing supplies concentration bounds for OPE and supports policy selection and learning. | `sakhi-2024-logarithmic-smoothing-pessimistic-ope.md`, Sections 3.3 and 4. | Retained without claiming it is universally tighter. |
 | `saito2021robustope` | OPE conclusions can change with estimator hyperparameters and evaluation policies. | `saito-2021-evaluating-robustness-ope.md`, introduction and benchmark protocol. | Retained as a reason to report stability rather than a global estimator ranking. |
 | `udagawa2023pas` | Policy-adaptive estimator selection chooses different estimators for different target policies. | `udagawa-2023-policy-adaptive-estimator-selection-ope.md`, Sections 3-4. | Retained alongside, but not conflated with, hyperparameter robustness. |
+| `hao2021bootstrapfqe` | Linear FQE admits a trajectory-level bootstrap under policy completeness; entire independent episodes, not individual transitions, are resampled. | `hao2021bootstrapfqe.md`, method and distributional-consistency result. | Added to support a direct-method interval with its model restrictions stated. |
+| `liaoMurphy2021longterm` | The HeartSteps application evaluates three long-run mobile-health policies from a 42-day micro-randomized trial and reports policy-level and contrast-level 95% intervals. | `liao-2021-long-term-ope-mobile-health.md`, introduction and Section 7. | Added as the lead genuinely sequential OPE application. The nonsignificant contrasts are reported rather than narratively promoting the highest point estimate. |
 
 ## Dynamic DML and recursive orthogonalization
 
@@ -55,6 +59,8 @@ empirical description.
 | `lewisSyrgkanis2021dynamicDML` | Cross-fitted orthogonal residual moments estimate low-dimensional dynamic effects; Theorem 4 gives product-rate asymptotic normality; Corollary 9 gives fixed-policy value inference. | `lewis2021dml.md`, partially linear model, Algorithm 3, Theorem 4, and Corollary 9. | Retained. The chapter now uses unconditional moments, a joint upper-triangular covariance, and distinguishes fixed-target from target-independent blips. |
 | `chernozhukov2023automatic` | Recursive Riesz representers debias nested mean regressions and yield an exact mixed-bias product remainder. | `chernozhukov2023automatic.md`, recursive representer definition, Riesz loss, debiased score, and mixed-bias theorem. | Retained. The terminal convention and coefficient index in the displayed score were corrected. |
 | `fosterSyrgkanis2023orthogonal` | Orthogonality makes nuisance error enter excess risk at second order in two-stage learning. | `foster2023orthogonal.md`, main oracle inequality and strong-convexity discussion. | Retained in a scope footnote. The chapter no longer attributes a universal MSE rate to the paper. |
+| `jaman2025penalizedg` | Penalized g-estimation selects effect modifiers in a repeated-outcome SNMM for longitudinal hemodiafiltration sessions and reports sandwich standard errors. | `jaman-2025-penalized-g-estimation-repeated-outcomes.md`, Sections 2.4 and 4, especially Table 5 and the post-selection warning. | Added as the closest empirical SNMM bridge, explicitly not as an application of the exact Lewis-Syrgkanis algorithm. |
+| `jaman2025postselectiong` | Naive selected-model intervals can undercover; uniformly valid and decorrelated-score methods provide post-selection confidence intervals for the repeated-session g-estimation setting. | `jaman-2025-valid-post-selection-g-estimation.md`, Sections 2.2-2.4 and 4. | Added to make the difference between nuisance orthogonality, joint sandwich inference, and model-selection uncertainty explicit. |
 
 ## Offline policy learning
 
@@ -64,6 +70,12 @@ empirical description.
 | `athey2021policy` | Cross-fitted doubly robust policy scores support $n^{-1/2}$ best-in-class regret under product-rate nuisances and can accommodate IV identification. | `athey2021policy.md`, score in Equation 14 and main regret theorem. | Retained. The statement is asymptotic and best-in-class. |
 | `zhou2023offline` | Multi-action offline policy learning admits exact optimization for finite-depth decision-tree classes. | `zhou2023offline.md`, multi-action setup and exact tree-search algorithm. | Retained as a one-sentence extension. |
 | `sakaguchi2024dynamicpolicy` | Algorithm 1 performs cross-fitted AIPW backward induction; Theorem 4.3 gives the dynamic regret rate under overlap, entropy, product-rate, and later-stage class-correctness conditions; Theorem 5.1 gives joint optimization; Section 7 reports Project STAR estimates. | `sakaguchi2024dynamicpolicy.md`, Algorithm 1, Equations 4-5, Theorems 4.3 and 5.1, Section 7. | Retained. The simulation now fits each stage-1 continuation using a stage-2 model trained outside the same scoring fold. Project STAR numbers are stated as observational value contrasts, not deployment effects. |
+
+## Perspective and open issues
+
+| Citation | Manuscript claim | Full-text location checked | Disposition |
+|---|---|---|---|
+| `bannon2020causality` | Causal modeling and batch RL are complementary: the former clarifies counterfactual identification and the latter supplies planning and approximation machinery. | `bannon-2020-causality-batch-rl.md`, abstract, introduction, and comparison sections. | Added only to frame the open-issues synthesis; no theorem is attributed to it. |
 
 ## Exclusions made during this audit
 

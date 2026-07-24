@@ -525,7 +525,7 @@ def compute_oracle_hd(cfg):
         + (ALPHA_A_HD + ALPHA_SA_HD * smooth) * A2_star
     )
     V_star_mc = float(Y_mean.mean())
-    V_star_mc_se = float(Y_mean.std() / np.sqrt(M))
+    V_star_mc_se = float(Y_mean.std(ddof=1) / np.sqrt(M))
     if abs(V_star_mc - V_star) > 4.0 * V_star_mc_se:
         raise RuntimeError("High-dimensional oracle failed its independent MC check")
     # Also compute V(behavior) for reference
@@ -546,7 +546,7 @@ def compute_oracle_hd(cfg):
     )
     print(
         f"    Oracle MC cross-check = {V_star_mc:.4f} "
-        f"(SE {V_star_mc_se:.4f}, |diff|/SE "
+        f"(MC SE {V_star_mc_se:.4f}, |diff|/MC SE "
         f"{abs(V_star_mc - V_star) / V_star_mc_se:.2f})"
     )
     print(f"    High-dim V(behavior policy) = {V_behavior:.4f}")
@@ -893,22 +893,31 @@ def generate_outputs(data):
         f"[Q-learn 100 replays, alpha={ALPHA_QLEARN}]"
     )
     print(f"  Tabular Oracle V* = {V_star:.4f}")
-    print(f"  {'N':>6}  {'Plug-in g-comp (SE)':>22}  {'Q-learn mean (SE)':>22}")
+    print(
+        f"  {'N':>6}  {'Plug-in g-comp (MC SE)':>25}  "
+        f"{'Q-learn mean (MC SE)':>25}"
+    )
     n_grid = murphy["N_grid"]
     for i, N in enumerate(n_grid):
         m_mean = murphy["V"][i].mean() / V_star
-        m_se = murphy["V"][i].std() / np.sqrt(N_SEEDS) / V_star
+        m_se = murphy["V"][i].std(ddof=1) / np.sqrt(N_SEEDS) / V_star
         q_mean = qlearn_N["V"][i].mean() / V_star
-        q_se = qlearn_N["V"][i].std() / np.sqrt(N_SEEDS) / V_star
+        q_se = qlearn_N["V"][i].std(ddof=1) / np.sqrt(N_SEEDS) / V_star
         print(f"  {N:>6d}  {m_mean:>13.4f} ({m_se:.4f})  {q_mean:>13.4f} ({q_se:.4f})")
+    paired_tab = (qlearn_N["V"][-1] - murphy["V"][-1]) / V_star
+    print(
+        "  Paired seed-wise contrast at largest N (Q-learn - plug-in): "
+        f"{paired_tab.mean():+.4f} "
+        f"(MC SE {paired_tab.std(ddof=1) / np.sqrt(N_SEEDS):.4f})"
+    )
     print()
     print(
         f"  (Q2) Tabular Q-learn V(pi_hat)/V* vs replay epochs at N={N_AT_EPOCHS_PANEL}"
     )
-    print(f"  {'epochs':>6}  {'Q-learn mean (SE)':>22}")
+    print(f"  {'epochs':>6}  {'Q-learn mean (MC SE)':>25}")
     for i, ep in enumerate(qlearn_epochs["epochs_grid"]):
         m = qlearn_epochs["V"][i].mean() / V_star
-        s = qlearn_epochs["V"][i].std() / np.sqrt(N_SEEDS) / V_star
+        s = qlearn_epochs["V"][i].std(ddof=1) / np.sqrt(N_SEEDS) / V_star
         print(f"  {ep:>6d}  {m:>13.4f} ({s:.4f})")
     idx_panel = n_grid.index(N_AT_EPOCHS_PANEL)
     m_panel = murphy["V"][idx_panel].mean() / V_star
@@ -924,13 +933,22 @@ def generate_outputs(data):
         f"  High-dim Oracle V* = {V_star_hd:.4f} "
         f"(behavior policy {oracle_hd['V_behavior']:.4f})"
     )
-    print(f"  {'N':>6}  {'NN-FQI plug-in (SE)':>22}  {'DQN mean (SE)':>22}")
+    print(
+        f"  {'N':>6}  {'NN-FQI plug-in (MC SE)':>25}  "
+        f"{'DQN mean (MC SE)':>25}"
+    )
     for i, N in enumerate(fqi_hd["N_grid"]):
         f_mean = fqi_hd["V"][i].mean() / V_star_hd
-        f_se = fqi_hd["V"][i].std() / np.sqrt(N_SEEDS_HD) / V_star_hd
+        f_se = fqi_hd["V"][i].std(ddof=1) / np.sqrt(N_SEEDS_HD) / V_star_hd
         d_mean = dqn_hd["V"][i].mean() / V_star_hd
-        d_se = dqn_hd["V"][i].std() / np.sqrt(N_SEEDS_HD) / V_star_hd
+        d_se = dqn_hd["V"][i].std(ddof=1) / np.sqrt(N_SEEDS_HD) / V_star_hd
         print(f"  {N:>6d}  {f_mean:>13.4f} ({f_se:.4f})  {d_mean:>13.4f} ({d_se:.4f})")
+    paired_hd = (dqn_hd["V"][-1] - fqi_hd["V"][-1]) / V_star_hd
+    print(
+        "  Paired seed-wise contrast at largest N (DQN - NN-FQI): "
+        f"{paired_hd.mean():+.4f} "
+        f"(MC SE {paired_hd.std(ddof=1) / np.sqrt(N_SEEDS_HD):.4f})"
+    )
     if "epochs_used" in fqi_hd:
         ep_mean = fqi_hd["epochs_used"].mean(axis=(1, 2))
         ep_str = ", ".join(f"N={N}: {m:.0f}" for N, m in zip(fqi_hd["N_grid"], ep_mean))
@@ -944,9 +962,9 @@ def generate_outputs(data):
     ax = axes[0]
     n_arr = np.array(n_grid)
     m_means = murphy["V"].mean(axis=1) / V_star
-    m_ses = murphy["V"].std(axis=1) / np.sqrt(N_SEEDS) / V_star
+    m_ses = murphy["V"].std(axis=1, ddof=1) / np.sqrt(N_SEEDS) / V_star
     q_means = qlearn_N["V"].mean(axis=1) / V_star
-    q_ses = qlearn_N["V"].std(axis=1) / np.sqrt(N_SEEDS) / V_star
+    q_ses = qlearn_N["V"].std(axis=1, ddof=1) / np.sqrt(N_SEEDS) / V_star
     ax.errorbar(
         n_arr,
         m_means,
@@ -976,7 +994,7 @@ def generate_outputs(data):
     ax = axes[1]
     ep_arr = np.array(qlearn_epochs["epochs_grid"])
     qe_means = qlearn_epochs["V"].mean(axis=1) / V_star
-    qe_ses = qlearn_epochs["V"].std(axis=1) / np.sqrt(N_SEEDS) / V_star
+    qe_ses = qlearn_epochs["V"].std(axis=1, ddof=1) / np.sqrt(N_SEEDS) / V_star
     ax.errorbar(
         ep_arr,
         qe_means,
@@ -1004,9 +1022,9 @@ def generate_outputs(data):
     ax = axes[2]
     n_hd_arr = np.array(fqi_hd["N_grid"])
     f_means = fqi_hd["V"].mean(axis=1) / V_star_hd
-    f_ses = fqi_hd["V"].std(axis=1) / np.sqrt(N_SEEDS_HD) / V_star_hd
+    f_ses = fqi_hd["V"].std(axis=1, ddof=1) / np.sqrt(N_SEEDS_HD) / V_star_hd
     d_means = dqn_hd["V"].mean(axis=1) / V_star_hd
-    d_ses = dqn_hd["V"].std(axis=1) / np.sqrt(N_SEEDS_HD) / V_star_hd
+    d_ses = dqn_hd["V"].std(axis=1, ddof=1) / np.sqrt(N_SEEDS_HD) / V_star_hd
     ax.errorbar(
         n_hd_arr,
         f_means,
@@ -1071,7 +1089,7 @@ def generate_outputs(data):
     lines = [
         r"\begin{tabular}{lcc}",
         r"\toprule",
-        r"Method & $V(\hat\pi) / V^*$ & SE \\",
+        r"Method & $V(\hat\pi) / V^*$ & MC SE \\",
         r"\midrule",
     ]
     for name, mean, se in rows:

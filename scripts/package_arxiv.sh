@@ -171,7 +171,9 @@ TABLES=(
     "ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex"
     "ch10b_rl_for_ci/sims/ope_estimators_results.tex"
     "ch10b_rl_for_ci/sims/ope_estimators_dr_ablation.tex"
+    "ch10b_rl_for_ci/sims/ope_estimators_inference.tex"
     "ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex"
+    "ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex"
     "ch10b_rl_for_ci/sims/dtr_policy_learning_results.tex"
     "ch11_dist_robust_constrained/sims/carbon_constrained_production_table.tex"
     "ch11_dist_robust_constrained/sims/risk_sensitive_inventory_table.tex"
@@ -257,7 +259,9 @@ noop ch10c_adaptive_experiments/sims/causal_bandit_results.tex
 noop ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex
 noop ch10b_rl_for_ci/sims/ope_estimators_results.tex
 noop ch10b_rl_for_ci/sims/ope_estimators_dr_ablation.tex
+noop ch10b_rl_for_ci/sims/ope_estimators_inference.tex
 noop ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
+noop ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex
 noop ch10b_rl_for_ci/sims/dtr_policy_learning_results.tex
 noop ch11_dist_robust_constrained/sims/carbon_constrained_production_table.tex
 noop ch11_dist_robust_constrained/sims/risk_sensitive_inventory_table.tex

@@ -2,39 +2,25 @@ Config:
   DGP: rho=0.6, treat_shift=-0.6, sigma_eta=0.5, sigma_Y=1.0, delta1=0.6, c_dir=-0.6, tau2=0.8, c2*=0.4
   Sweep: N_GRID=[250, 1000, 4000], N_SEEDS=40, K_FOLDS=2, prop_clip=0.01
   Misspec: n=1000, N_SEEDS=40
-  Computing: oracle
-    c1* = 0.5156, c2* = 0.4000
-    V* = 1.922417 (adaptive quadrature split at c1*)
-    MC check at (c1*, c2*): 1.923719 (SE 0.001746), |diff|/SE = 0.75
-    V(behavior) = 1.109291 (SE 0.001593); quadrature = 1.109010, |diff|/SE = 0.18
-    Stage-1 treated share under c1*: 0.697
-  Cache saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/cache/dtr_policy_learning__oracle.pkl
-  Computing: sweep_n
-    n=250: AIPW regret 0.0570, DM regret 0.0104, IPW regret 0.0874
-    n=1000: AIPW regret 0.0184, DM regret 0.0041, IPW regret 0.0448
-    n=4000: AIPW regret 0.0065, DM regret 0.0008, IPW regret 0.0171
-  Cache saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/cache/dtr_policy_learning__sweep_n.pkl
-  Computing: misspec
-    both correct: AIPW regret 0.0183, DM regret 0.0025, IPW regret 0.0479
-    Q wrong: AIPW regret 0.0203, DM regret 0.1924, IPW regret 0.0367
-    e wrong: AIPW regret 0.0127, DM regret 0.0031, IPW regret 0.1331
-    both wrong: AIPW regret 0.0213, DM regret 0.1924, IPW regret 0.1059
-  Cache saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/cache/dtr_policy_learning__misspec.pkl
+  Cache hit: oracle
+  Cache hit: sweep_n
+  Cache hit: misspec
 
 ========================================================================
   Doubly robust backward-induction offline policy learning
 ========================================================================
 
   Oracle: c1* = 0.5156, c2* = 0.4000, V* = 1.922417
-  Quadrature vs MC: |diff|/SE = 0.75
-  Behavior quadrature vs MC: |diff|/SE = 0.18
+  Quadrature vs MC: |diff|/MC SE = 0.75
+  Behavior quadrature vs MC: |diff|/MC SE = 0.18
   V(behavior) = 1.109291; behavior regret = 0.8131
 
   Regret V* - V(pi_hat), correct nuisances, 40 seeds:
        n           Backward AIPW           Plug-in $Q$                   IPW
-     250         0.0570 (0.0083)       0.0104 (0.0014)       0.0874 (0.0158)
-    1000         0.0184 (0.0027)       0.0041 (0.0006)       0.0448 (0.0089)
-    4000         0.0065 (0.0012)       0.0008 (0.0001)       0.0171 (0.0038)
+     250         0.0570 (0.0084)       0.0104 (0.0014)       0.0874 (0.0160)
+    1000         0.0184 (0.0028)       0.0041 (0.0006)       0.0448 (0.0090)
+    4000         0.0065 (0.0012)       0.0008 (0.0001)       0.0171 (0.0039)
+  Paired seed-wise regret contrast at largest n (AIPW - plug-in Q): +0.0057 (MC SE 0.0012)
 
   log-log regret slope, Backward AIPW: -0.78
   log-log regret slope, Plug-in $Q$: -0.92
