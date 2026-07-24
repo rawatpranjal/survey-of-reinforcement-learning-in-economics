@@ -2,14 +2,24 @@ Config:
   DGP: rho=0.6, treat_shift=-0.6, sigma_eta=0.5, sigma_Y=1.0, delta1=0.6, c_dir=-0.6, tau2=0.8, c2*=0.4
   Sweep: N_GRID=[250, 1000, 4000], N_SEEDS=40, K_FOLDS=2, prop_clip=0.01
   Misspec: n=1000, N_SEEDS=40
-  Cache hit: oracle
-  Cache hit: sweep_n
+  Computing: oracle
+    c1* = 0.5156, c2* = 0.4000
+    V* = 1.922417 (adaptive quadrature split at c1*)
+    MC check at (c1*, c2*): 1.923719 (MC SE 0.001746), |diff|/MC SE = 0.75
+    V(behavior) = 1.109291 (MC SE 0.001593); quadrature = 1.109010, |diff|/MC SE = 0.18
+    Stage-1 treated share under c1*: 0.697
+  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/dtr_policy_learning__oracle.pkl
+  Computing: sweep_n
+    n=250: AIPW regret 0.0570, DM regret 0.0104, IPW regret 0.0874
+    n=1000: AIPW regret 0.0184, DM regret 0.0041, IPW regret 0.0448
+    n=4000: AIPW regret 0.0065, DM regret 0.0008, IPW regret 0.0171
+  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/dtr_policy_learning__sweep_n.pkl
   Computing: misspec
     both correct: AIPW regret 0.0183, DM regret 0.0025, IPW regret 0.0479
     Q wrong: AIPW regret 0.0203, DM regret 0.1924, IPW regret 0.0367
     e wrong: AIPW regret 0.0127, DM regret 0.0031, IPW regret 0.1331
     both wrong: AIPW regret 0.0213, DM regret 0.1924, IPW regret 0.1059
-  Cache saved: /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/cache/dtr_policy_learning__misspec.pkl
+  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/dtr_policy_learning__misspec.pkl
 
 ========================================================================
   Stylized Fast Track home visiting: doubly robust policy learning
@@ -51,5 +61,5 @@ Config:
          e wrong       0.433,     0.444     0.501,     0.421     0.369,     0.706
       both wrong       0.617,     0.427     3.957,     3.276     0.694,     0.657
 
-  Figure: /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/dtr_policy_learning.png
-  Table:  /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/dtr_policy_learning_results.tex
+  Figure: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/dtr_policy_learning.png
+  Table:  /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/dtr_policy_learning_results.tex
