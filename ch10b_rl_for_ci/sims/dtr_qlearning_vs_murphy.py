@@ -235,6 +235,167 @@ def compute_oracle_tab(cfg):
     }
 
 
+def _history_mdp():
+    """Build the finite-horizon history-state MDP of Theorem (DTR/RL equivalence).
+
+    States are enumerated explicitly and the kernel is materialised as arrays, so
+    value iteration below is a different computation from the hand-rolled
+    backward recursion in compute_oracle_tab rather than the same code twice.
+
+      index 0                      : absorbing terminal
+      1 .. N_STATES                : stage-1 histories h_1 = (s_1)
+      then N_STATES*2*N_STATES     : stage-2 histories h_2 = (s_1, a_1, s_2)
+
+    Reward is zero on the stage-1 transition and E[Y | s_2, a_2] on the stage-2
+    transition, so the undiscounted return of a trajectory is exactly Y.
+    """
+    h1_index = {s1: s1 for s1 in range(1, N_STATES + 1)}
+    h2_index, nxt = {}, N_STATES + 1
+    for s1 in range(1, N_STATES + 1):
+        for a1 in (0, 1):
+            for s2 in range(1, N_STATES + 1):
+                h2_index[(s1, a1, s2)] = nxt
+                nxt += 1
+    n_states = nxt
+    P = np.zeros((n_states, 2, n_states))
+    R = np.zeros((n_states, 2))
+    P[0, :, 0] = 1.0  # terminal absorbs, zero reward
+    for s1, i in h1_index.items():
+        for a1 in (0, 1):
+            for s2, p in transition_dist(s1, a1).items():
+                P[i, a1, h2_index[(s1, a1, s2)]] += p
+    for (s1, a1, s2), i in h2_index.items():
+        for a2 in (0, 1):
+            P[i, a2, 0] = 1.0
+            R[i, a2] = outcome_mean_tab(s2, a2)
+    return P, R, h1_index, h2_index
+
+
+def verify_equivalence_exact(tol=1e-12, n_random_regimes=200, seed=0):
+    """Check the equivalence theorem as the identity it is, with no sampling.
+
+    Three quantities are computed from the true law by three separate routes and
+    must agree to floating point:
+
+      (a) Murphy's backward recursion, the identified DTR optimum;
+      (b) Bellman optimality on the history-state MDP, solved by value iteration
+          on an explicitly materialised kernel;
+      (c) the g-formula value of the optimal regime, summed directly.
+
+    The theorem also asserts J(pi) = V(pi) = g-formula(pi) for EVERY regime
+    covered by positivity, not only the optimum, so the same identity is checked
+    against randomly drawn regimes: MDP policy evaluation against the g-formula.
+
+    A Monte Carlo recovery ratio cannot test any of this. It measures how fast an
+    estimator approaches the optimum, which is a statement about estimation, and
+    is consistent with the theorem being false.
+    """
+    P, R, h1_index, h2_index = _history_mdp()
+    n_states = P.shape[0]
+
+    # (b) Bellman optimality by value iteration, run to a fixed point.
+    V = np.zeros(n_states)
+    sweeps = 0
+    while True:
+        V_new = np.max(R + P @ V, axis=1)
+        V_new[0] = 0.0
+        sweeps += 1
+        if np.max(np.abs(V_new - V)) < tol or sweeps > 1000:
+            V = V_new
+            break
+        V = V_new
+    init = [h1_index[s1] for s1 in range(1, N_STATES + 1)]
+    v_bellman = float(np.mean(V[init]))
+
+    # (a) Murphy's backward recursion, from the true conditional means.
+    V2_m = {
+        s2: max(outcome_mean_tab(s2, a) for a in (0, 1))
+        for s2 in range(1, N_STATES + 1)
+    }
+    V1_m = {
+        s1: max(
+            sum(p * V2_m[s2] for s2, p in transition_dist(s1, a1).items())
+            for a1 in (0, 1)
+        )
+        for s1 in range(1, N_STATES + 1)
+    }
+    v_murphy = float(np.mean([V1_m[s1] for s1 in range(1, N_STATES + 1)]))
+
+    # (c) g-formula at the optimal regime, summed directly over the intervened law.
+    pi2_star = {
+        s2: int(outcome_mean_tab(s2, 1) > outcome_mean_tab(s2, 0))
+        for s2 in range(1, N_STATES + 1)
+    }
+    pi1_star = {}
+    for s1 in range(1, N_STATES + 1):
+        vals = [
+            sum(
+                p * outcome_mean_tab(s2, pi2_star[s2])
+                for s2, p in transition_dist(s1, a1).items()
+            )
+            for a1 in (0, 1)
+        ]
+        pi1_star[s1] = int(vals[1] > vals[0])
+    v_gformula = float(
+        np.mean(
+            [
+                sum(
+                    p * outcome_mean_tab(s2, pi2_star[s2])
+                    for s2, p in transition_dist(s1, pi1_star[s1]).items()
+                )
+                for s1 in range(1, N_STATES + 1)
+            ]
+        )
+    )
+
+    # The identity for arbitrary regimes: MDP policy evaluation vs the g-formula.
+    rng = np.random.default_rng(seed)
+    worst_regime_gap = 0.0
+    for _ in range(n_random_regimes):
+        d1 = {s1: int(rng.integers(0, 2)) for s1 in range(1, N_STATES + 1)}
+        d2 = {h: int(rng.integers(0, 2)) for h in h2_index}
+        Vp = np.zeros(n_states)
+        for _ in range(3):  # DAG of depth 2; three sweeps reach the fixed point
+            Vn = np.zeros(n_states)
+            for h, i in h2_index.items():
+                Vn[i] = R[i, d2[h]] + P[i, d2[h]] @ Vp
+            for s1, i in h1_index.items():
+                Vn[i] = R[i, d1[s1]] + P[i, d1[s1]] @ Vp
+            Vp = Vn
+        v_mdp_pi = float(np.mean(Vp[init]))
+        v_g_pi = float(
+            np.mean(
+                [
+                    sum(
+                        p * outcome_mean_tab(s2, d2[(s1, d1[s1], s2)])
+                        for s2, p in transition_dist(s1, d1[s1]).items()
+                    )
+                    for s1 in range(1, N_STATES + 1)
+                ]
+            )
+        )
+        worst_regime_gap = max(worst_regime_gap, abs(v_mdp_pi - v_g_pi))
+
+    gaps = {
+        "Bellman vs Murphy": abs(v_bellman - v_murphy),
+        "Bellman vs g-formula": abs(v_bellman - v_gformula),
+        "Murphy vs g-formula": abs(v_murphy - v_gformula),
+        "worst over random regimes": worst_regime_gap,
+    }
+    ok = max(gaps.values()) < 1e-10
+    assert ok, f"equivalence identity violated: {gaps}"
+    return {
+        "v_bellman": v_bellman,
+        "v_murphy": v_murphy,
+        "v_gformula": v_gformula,
+        "gaps": gaps,
+        "vi_sweeps": sweeps,
+        "n_random_regimes": n_random_regimes,
+        "n_history_states": n_states,
+        "passed": ok,
+    }
+
+
 def evaluate_policy_tab(pi_hat_1, pi_hat_2):
     V = 0.0
     for s1 in range(1, N_STATES + 1):
@@ -526,10 +687,7 @@ def compute_oracle_hd(cfg):
         batch_size = 20000
         for start in range(0, len(mean), batch_size):
             stop = min(start + batch_size, len(mean))
-            draws = (
-                mean[start:stop, None]
-                + SIGMA_ETA_HD * gh_nodes.reshape(1, -1)
-            )
+            draws = mean[start:stop, None] + SIGMA_ETA_HD * gh_nodes.reshape(1, -1)
             contrast = ALPHA_A_HD + ALPHA_SA_HD * sigmoid(
                 -(draws - THRESHOLD_HD) / SMOOTH_TAU
             )
@@ -542,11 +700,7 @@ def compute_oracle_hd(cfg):
     mean0 = T_DECAY * S1[:, 0]
     mean1 = mean0 + DELTA_HD
     Q1_a0 = common + expected_optimal_stage2_gain(mean0)
-    Q1_a1 = (
-        common
-        + DELTA_HD * BETA_OUTCOME[0]
-        + expected_optimal_stage2_gain(mean1)
-    )
+    Q1_a1 = common + DELTA_HD * BETA_OUTCOME[0] + expected_optimal_stage2_gain(mean1)
     A1_star = (Q1_a1 > Q1_a0).astype(np.int32)
 
     def oracle_q_pair(x):
@@ -583,10 +737,7 @@ def compute_oracle_hd(cfg):
     S2 = T_DECAY * S1 + DELTA_HD * A1_star.reshape(-1, 1) * e0 + eta
     A2_star = (S2[:, 0] < stage2_threshold).astype(np.int32)
     smooth = sigmoid(-(S2[:, 0] - THRESHOLD_HD) / SMOOTH_TAU)
-    Y_mean = (
-        S2 @ BETA_OUTCOME
-        + (ALPHA_A_HD + ALPHA_SA_HD * smooth) * A2_star
-    )
+    Y_mean = S2 @ BETA_OUTCOME + (ALPHA_A_HD + ALPHA_SA_HD * smooth) * A2_star
     V_star_mc = float(Y_mean.mean())
     V_star_mc_se = float(Y_mean.std(ddof=1) / np.sqrt(M))
     if abs(V_star_mc - V_star) > 4.0 * V_star_mc_se:
@@ -597,10 +748,7 @@ def compute_oracle_hd(cfg):
     S2_b = T_DECAY * S1 + DELTA_HD * A1_b.reshape(-1, 1) * e0 + eta_b
     A2_b = (rng.random(M) < sigmoid(S2_b @ GAMMA_BEH)).astype(np.int32)
     smooth_b = sigmoid(-(S2_b[:, 0] - THRESHOLD_HD) / SMOOTH_TAU)
-    Y_b = (
-        S2_b @ BETA_OUTCOME
-        + (ALPHA_A_HD + ALPHA_SA_HD * smooth_b) * A2_b
-    )
+    Y_b = S2_b @ BETA_OUTCOME + (ALPHA_A_HD + ALPHA_SA_HD * smooth_b) * A2_b
     V_behavior = float(Y_b.mean())
     print(
         f"    High-dim Oracle V* = {V_star:.4f} (nested Gauss-Hermite); "
@@ -776,13 +924,7 @@ def run_dqn_hd_sweep(cfg):
         n_steps = int(np.ceil(cfg["DQN_EPOCHS"] * N / cfg["BATCH_SIZE_HD"]))
         target_update = max(
             1,
-            int(
-                np.ceil(
-                    cfg["TARGET_UPDATE_EPOCHS"]
-                    * N
-                    / cfg["BATCH_SIZE_HD"]
-                )
-            ),
+            int(np.ceil(cfg["TARGET_UPDATE_EPOCHS"] * N / cfg["BATCH_SIZE_HD"])),
         )
         for s in tqdm(
             range(cfg["N_SEEDS_HD"]),
@@ -817,6 +959,10 @@ def run_dqn_hd_sweep(cfg):
 # ============================================================================
 def compute_data(force=None):
     force = force or set()
+    # Exact, sampling-free check of the identity the theorem asserts. Cheap and
+    # deterministic, so it is recomputed every run rather than cached; if it ever
+    # fails it should fail loudly before any estimate is reported against it.
+    equivalence = verify_equivalence_exact()
     oracle = compute_or_load(
         CACHE_DIR,
         SCRIPT_NAME,
@@ -890,6 +1036,7 @@ def compute_data(force=None):
         force=("dqn_hd" in force),
     )
     return {
+        "equivalence": equivalence,
         "oracle": oracle,
         "murphy": murphy,
         "naive_count": naive_count,
@@ -907,9 +1054,10 @@ def compute_data(force=None):
 def validate_results(data):
     """Hard gates for oracle agreement and non-vacuous policy recovery."""
     oracle_hd = data["oracle_hd"]
-    if abs(oracle_hd["V_star_mc"] - oracle_hd["V_star"]) > 4.0 * oracle_hd[
-        "V_star_mc_se"
-    ]:
+    if (
+        abs(oracle_hd["V_star_mc"] - oracle_hd["V_star"])
+        > 4.0 * oracle_hd["V_star_mc_se"]
+    ):
         raise RuntimeError("High-dimensional oracle failed its MC check")
 
     for key in (
@@ -946,7 +1094,9 @@ def validate_results(data):
     for key in ("fqi_hd", "dqn_hd"):
         means = data[key]["V"].mean(axis=1) / v_hd
         if means[-1] < 0.95:
-            raise RuntimeError(f"{key} remains too far below the high-dimensional oracle")
+            raise RuntimeError(
+                f"{key} remains too far below the high-dimensional oracle"
+            )
         if means[-1] <= means[0]:
             raise RuntimeError(f"{key} does not improve with cohort size")
         if means[-1] - behavior < 0.10:
@@ -969,6 +1119,22 @@ def generate_outputs(data):
     print("=" * 72)
     print("  Stylized Fast Track home visiting: g-computation vs Q-learning")
     print("=" * 72)
+    print()
+    eq = data["equivalence"]
+    print("  (Q0) Exact check of the equivalence identity (no sampling)")
+    print(
+        f"    History-MDP states {eq['n_history_states']}, "
+        f"value iteration reached its fixed point in {eq['vi_sweeps']} sweeps."
+    )
+    print(f"    Murphy backward recursion        V = {eq['v_murphy']:.15f}")
+    print(f"    Bellman optimality, value iter   V = {eq['v_bellman']:.15f}")
+    print(f"    g-formula at the optimal regime  V = {eq['v_gformula']:.15f}")
+    for k, v in eq["gaps"].items():
+        print(f"    |gap| {k:<28} {v:.3e}")
+    print(
+        f"    Identity holds to floating point: {eq['passed']} "
+        f"(optimal regime, and {eq['n_random_regimes']} random regimes)"
+    )
     print()
     print(
         "  (Q1) Tabular V(pi_hat)/V* vs cohort size N "
@@ -1032,10 +1198,7 @@ def generate_outputs(data):
         f"  High-dim Oracle V* = {V_star_hd:.4f} "
         f"(behavior policy {oracle_hd['V_behavior']:.4f})"
     )
-    print(
-        f"  {'N':>6}  {'NN-FQI plug-in (MC SE)':>25}  "
-        f"{'DQN mean (MC SE)':>25}"
-    )
+    print(f"  {'N':>6}  {'NN-FQI plug-in (MC SE)':>25}  {'DQN mean (MC SE)':>25}")
     for i, N in enumerate(fqi_hd["N_grid"]):
         f_mean = fqi_hd["V"][i].mean() / V_star_hd
         f_se = fqi_hd["V"][i].std(ddof=1) / np.sqrt(N_SEEDS_HD) / V_star_hd
@@ -1205,6 +1368,11 @@ def generate_outputs(data):
         ("DQN (high-dim, $N={}$)".format(N_hd_max), d_means[-1], d_ses[-1]),
     ]
     rows.sort(key=lambda r: -r[1])
+    # Paired seed-wise contrasts. The two estimators are run on the same cohorts,
+    # so the paired difference is the sharp comparison; reading overlap off the
+    # separate marginal intervals understates the separation.
+    paired_tab = (qlearn_N["V"][-1] - murphy["V"][-1]) / V_star
+    paired_hd = (dqn_hd["V"][-1] - fqi_hd["V"][-1]) / V_star_hd
     lines = [
         r"\begin{tabular}{lcc}",
         r"\toprule",
@@ -1214,6 +1382,19 @@ def generate_outputs(data):
     for name, mean, se in rows:
         se_str = "({:.4f})".format(se) if se is not None else "--"
         lines.append("{} & {:.4f} & {} \\\\".format(name, mean, se_str))
+    lines += [
+        r"\addlinespace",
+        r"Paired contrast, $Q$-learning $-$ plug-in (tabular) & "
+        "{:+.4f} & ({:.4f})".format(
+            paired_tab.mean(), paired_tab.std(ddof=1) / np.sqrt(N_SEEDS)
+        )
+        + r" \\",
+        r"Paired contrast, DQN $-$ Neural-FQI (high-dim) & "
+        "{:+.4f} & ({:.4f})".format(
+            paired_hd.mean(), paired_hd.std(ddof=1) / np.sqrt(N_SEEDS_HD)
+        )
+        + r" \\",
+    ]
     lines += [r"\bottomrule", r"\end{tabular}", ""]
     tab_path = os.path.join(OUTPUT_DIR, "dtr_qlearning_vs_murphy_results.tex")
     with open(tab_path, "w") as f:

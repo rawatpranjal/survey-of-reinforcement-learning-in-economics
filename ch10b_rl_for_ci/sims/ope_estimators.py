@@ -158,9 +158,8 @@ def build_env(p):
     r = np.zeros((S, A))
     for s in range(S):
         r[s, 0] = p["STATUS_REWARD"] * s
-        r[s, 1] = (
-            p["STATUS_REWARD"] * s
-            - p["VISIT_BURDEN"] * (1.0 - p["BURDEN_OFFSET"] * s)
+        r[s, 1] = p["STATUS_REWARD"] * s - p["VISIT_BURDEN"] * (
+            1.0 - p["BURDEN_OFFSET"] * s
         )
     init_dist = np.zeros(S)
     for s in p["INIT_STATES"]:
@@ -363,12 +362,8 @@ def est_dr_crossfit(
                 v_terms[score_idx, t] = V_hat[t][S_arr[score_idx, t]]
         cum = np.cumprod(rho, axis=1)
         W = cum / np.maximum(cum.sum(axis=0), 1e-300)
-        W_prev = np.concatenate(
-            [np.full((n, 1), 1.0 / n), W[:, :-1]], axis=1
-        )
-        return float(
-            (W * R_arr).sum() - ((W * q_terms) - (W_prev * v_terms)).sum()
-        )
+        W_prev = np.concatenate([np.full((n, 1), 1.0 / n), W[:, :-1]], axis=1)
+        return float((W * R_arr).sum() - ((W * q_terms) - (W_prev * v_terms)).sum())
 
     vals, weights = [], []
     for k in (0, 1):
@@ -421,9 +416,7 @@ def dr_crossfit_scores(
         )
         Q_hat, V_hat = model_q_functions(P_hat, r_hat, pi_e, H)
         for t in range(H):
-            q_terms[score_idx, t] = Q_hat[t][
-                S_arr[score_idx, t], A_arr[score_idx, t]
-            ]
+            q_terms[score_idx, t] = Q_hat[t][S_arr[score_idx, t], A_arr[score_idx, t]]
             v_terms[score_idx, t] = V_hat[t][S_arr[score_idx, t]]
 
     cum = np.cumprod(rho, axis=1)
@@ -510,12 +503,62 @@ def compute_shared(cfg):
     returns = R_arr.sum(axis=1)
     mc_mean = float(returns.mean())
     mc_se = float(returns.std(ddof=1) / np.sqrt(len(returns)))
+    # Weight-variance growth. The curse of horizon is a statement about how the
+    # second moment of the cumulative ratio behaves in H, so measure it directly
+    # rather than inferring it from an estimator's RMSE. Under approximate
+    # log-normality of log rho_{1:H}, Var(rho_{1:H}) grows geometrically, so
+    # log Var is linear in H with a positive slope. The marginal state ratio that
+    # MIS uses is bounded in H by construction, so its log variance flattens.
+    # The second moment is computed EXACTLY, not by simulation. Estimating it by
+    # Monte Carlo fails here for precisely the reason under study: the mass of
+    # E[rho^2] sits in rare trajectories, so at H = 64 a hundred thousand episodes
+    # return a sample variance BELOW the H = 32 value, which is impossible for the
+    # true quantity.
+    #
+    # Squaring the ratio leaves one power of pi_b in the denominator, so the
+    # per-step weight is w(s,a) = pi_e(a|s)^2 / pi_b(a|s). The transition kernel
+    # cancels from the RATIO, since both measures share it, but it stays in the
+    # trajectory measure as the propagator, giving
+    #     K(s'|s) = sum_a w(s,a) P(s'|s,a),
+    # and E_b[rho_{1:H}^2] is the total mass of init * K^H.
+    #
+    # K is not sub-stochastic. Its row sums are sum_a pi_e(a|s)^2 / pi_b(a|s),
+    # which equals 1 + chi^2(pi_e(.|s) || pi_b(.|s)) and so is at least one, with
+    # equality only where the two policies agree. That is the growth mechanism:
+    # every step multiplies the mass by one plus the per-state chi-square
+    # divergence, which is why the second moment compounds geometrically in H.
+    # Since E_b[rho] = 1, the variance is that mass minus one.
+    assert np.all(pi_b[pi_e > 0] > 0), (
+        "pi_e is not absolutely continuous with respect to pi_b; the importance "
+        "ratio is undefined and E_b[rho] = 1 fails, so var = E[rho^2] - 1 would "
+        "silently be wrong"
+    )
+    K = np.einsum("sa,sar->sr", (pi_e**2) / pi_b, P)
+    weight_growth, m, h_done = {}, init_dist.astype(float).copy(), 0
+    for H in sorted(cfg["H_GRID"]):
+        while h_done < H:
+            m = m @ K
+            h_done += 1
+        second_moment = float(m.sum())
+        d_e = state_marginals(P, init_dist, pi_e, H)
+        d_b = state_marginals(P, init_dist, pi_b, H)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            mr = np.where(d_b > 1e-12, d_e / np.maximum(d_b, 1e-12), np.nan)
+        # Variance of the marginal ratio under the behaviour state distribution,
+        # the quantity marginalized IS carries in place of the cumulative product.
+        mr_var = float(np.nansum(d_b * (mr - 1.0) ** 2))
+        weight_growth[H] = {
+            "var_cumulative": second_moment - 1.0,
+            "second_moment": second_moment,
+            "var_marginal": mr_var,
+        }
     return {
         "truths": truths,
         "J_behavior_H16": J_b,
         "mc_mean": mc_mean,
         "mc_se": mc_se,
         "marg_ratio_max": marg_ratio_max,
+        "weight_growth": weight_growth,
         "rho_max": float((pi_e / pi_b).max()),
         "rho_min": float((pi_e / pi_b).min()),
     }
@@ -620,9 +663,7 @@ def compute_inference_calibration(cfg):
         scores = {
             "IS": cum[:, -1] * R_arr.sum(axis=1),
             "PDIS": (cum * R_arr).sum(axis=1),
-            "DR": dr_crossfit_scores(
-                S_arr, A_arr, R_arr, rho, pi_e, H, S, A
-            ),
+            "DR": dr_crossfit_scores(S_arr, A_arr, R_arr, rho, pi_e, H, S, A),
         }
         for name in cfg["ESTIMATORS"]:
             estimates[name][rep], ses[name][rep] = estimate_and_se(scores[name])
@@ -750,12 +791,16 @@ def validate_results(data):
             raise RuntimeError(f"Double-robustness check failed in {key}")
     both_wrong_bias = abs(_stats(ab["DR_QW_eW"], J16)[0])
     if both_wrong_bias < 0.20:
-        raise RuntimeError("Both-wrong OPE cell is too weak to demonstrate misspecification")
+        raise RuntimeError(
+            "Both-wrong OPE cell is too weak to demonstrate misspecification"
+        )
 
     is_h64 = _stats(data["sweep_h"][64]["IS"], truths[64])[2] / abs(truths[64])
     mis_h64 = _stats(data["sweep_h"][64]["MIS"], truths[64])[2] / abs(truths[64])
     if is_h64 / mis_h64 < 5.0:
-        raise RuntimeError("Horizon experiment no longer demonstrates ratio marginalization")
+        raise RuntimeError(
+            "Horizon experiment no longer demonstrates ratio marginalization"
+        )
 
     inference = data["inference"]
     for name in INFERENCE_CONFIG["ESTIMATORS"]:
@@ -908,15 +953,22 @@ def generate_outputs(data):
         "PDIS_eR",
         "PDIS_eW",
     ]
+    # The Monte Carlo standard error on the bias is what makes a bias column
+    # readable: without it "+0.0771" cannot be told apart from zero, and the
+    # double-robustness claim is exactly a claim about which cells are zero.
     with open(ab_path, "w") as f:
-        f.write("\\begin{tabular}{lllrr}\n\\toprule\n")
+        f.write("\\begin{tabular}{lllrrr}\n\\toprule\n")
         f.write(
-            "Estimator & $\\hat Q$ model & Propensity & Bias & RMSE \\\\\n\\midrule\n"
+            "Estimator & $\\hat Q$ model & Propensity & Bias & MC SE & RMSE"
+            " \\\\\n\\midrule\n"
         )
         for key in order:
             est, qm, em = label[key]
             bias, sd, rmse, _ = _stats(ab[key], J16)
-            f.write(f"{est} & {qm} & {em} & {bias:+.4f} & {rmse:.4f} \\\\\n")
+            mc_se = sd / np.sqrt(len(np.asarray(ab[key])))
+            f.write(
+                f"{est} & {qm} & {em} & {bias:+.4f} & ({mc_se:.4f}) & {rmse:.4f} \\\\\n"
+            )
         f.write("\\bottomrule\n\\end{tabular}\n")
 
     # Inferential calibration table. "Analytic SE" is within-dataset
@@ -930,9 +982,7 @@ def generate_outputs(data):
             "Coverage & Tail misses (L/R) \\\\\n\\midrule\n"
         )
         for name in INFERENCE_CONFIG["ESTIMATORS"]:
-            d = _inference_stats(
-                inf["estimates"][name], inf["ses"][name], inf["truth"]
-            )
+            d = _inference_stats(inf["estimates"][name], inf["ses"][name], inf["truth"])
             f.write(
                 f"{name} & {d['bias']:+.4f} & {d['empirical_sd']:.4f} & "
                 f"{d['mean_se']:.4f} & {d['se_ratio']:.3f} & "
@@ -984,6 +1034,45 @@ def print_report(data):
             bias, sd, rmse, mc_se = _stats(data["sweep_n"][n][name], J16)
             cells.append(f"{bias:+.3f}({mc_se:.3f})/{rmse:.3f}")
         print(f"{n:>6} " + "".join(f"{c:>22}" for c in cells))
+    print()
+    wg = shared["weight_growth"]
+    Hs = sorted(wg)
+    print("Weight-variance growth in the horizon (curse of horizon, measured directly)")
+    print(
+        "  (exact: total mass of init * K^H, K(s'|s) = sum_a "
+        "[pi_e(a|s)^2/pi_b(a|s)] P(s'|s,a); not a Monte Carlo estimate)"
+    )
+    print(
+        "  row sums of K are 1 + chi^2(pi_e(.|s) || pi_b(.|s)) >= 1, "
+        "so each step multiplies the mass by one plus a divergence"
+    )
+    print(f"{'H':>6} {'Var(rho_1:H)':>18} {'E[rho^2]':>18} {'Var(marginal ratio)':>21}")
+    for H in Hs:
+        g = wg[H]
+        print(
+            f"{H:>6} {g['var_cumulative']:>18.4f} {g['second_moment']:>18.4f} "
+            f"{g['var_marginal']:>21.6f}"
+        )
+    # A geometric growth in H is a straight line on a log scale; a polynomial one
+    # is a straight line against log H. Fit both and report which the data picks.
+    lv = np.log(np.array([wg[H]["var_cumulative"] for H in Hs]))
+    Ha = np.array(Hs, dtype=float)
+    slope_geom = np.polyfit(Ha, lv, 1)[0]
+    resid_geom = lv - np.polyval(np.polyfit(Ha, lv, 1), Ha)
+    slope_poly = np.polyfit(np.log(Ha), lv, 1)[0]
+    resid_poly = lv - np.polyval(np.polyfit(np.log(Ha), lv, 1), np.log(Ha))
+    print(
+        f"  log Var(rho) vs H      : slope {slope_geom:+.4f} per step, "
+        f"residual SD {resid_geom.std():.4f}  (geometric growth)"
+    )
+    print(
+        f"  log Var(rho) vs log H  : slope {slope_poly:+.4f}, "
+        f"residual SD {resid_poly.std():.4f}  (polynomial growth)"
+    )
+    print(
+        f"  implied per-step variance multiplier: {np.exp(slope_geom):.3f}x, "
+        f"so Var(rho_1:H) grows by {np.exp(slope_geom * 8):.1f}x every 8 steps"
+    )
     print()
     print(
         f"Experiment (b): horizon sweep at n={SWEEP_H_CONFIG['N_EPISODES']} "

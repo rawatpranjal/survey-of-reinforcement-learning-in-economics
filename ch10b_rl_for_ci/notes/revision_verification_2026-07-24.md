@@ -71,11 +71,13 @@ analogue rather than a reconstruction of the trial. Each simulation appears at
 the end of its section under a numbered `Simulation Study:` heading, with two
 prose paragraphs, one consolidated table, and one figure.
 
-Each major technical section now closes with one or two plain sentences naming
-the object recovered in that section and the uncertainty or evaluation that
-accompanies it. Open Issues closes with the three chapter-level outputs, a
-fixed-policy value, dynamic effects with standard errors, and a learned regime
-whose value is evaluated separately.
+The final structural pass folds the one-paragraph retrospective-studies and
+static-policy precursors into the surrounding exposition. It also removes the
+repeated section-ending summaries of recovered objects. Results sections now
+end on their strongest substantive result or limitation rather than restating
+the section's output. Numerical values already shown in result tables are not
+relisted in prose unless they support a separate calculation absent from the
+table.
 
 ## Simulation audit
 
@@ -183,27 +185,29 @@ schematic.
 
 ## Artifact and build gates
 
-- All five scripts compile with `python -m py_compile`.
-- All 12 generated figures and result tables round-trip byte-identically
-  through `--plots-only`.
-- The standalone chapter is 39 pages. It has no undefined citations, no
-  internal undefined references, and no overfull boxes. Its unresolved
-  references point only to chapters omitted by the standalone driver.
-- The open-issues table produces a float-size warning. Visual inspection
-  confirms that the full table remains inside the physical page and is not
-  clipped.
-- The full book is 309 pages with no undefined citations or references or
-  LaTeX errors. No overfull boxes originate in ch10b; the full-book log retains
-  preexisting overfull warnings from other chapters.
+- All five ch10b scripts and the ch10c causal-bandit script compile with
+  `python -m py_compile` in the declared environment.
+- Every corrected result table regenerates unchanged after the caches are
+  refreshed. Plotting-library version differences change the rendered PNG
+  bytes, so those environment-only figure deltas were not adopted.
+- The standalone chapter is 38 pages. It has no undefined citations or
+  internal undefined references, and its unresolved references point only to
+  chapters omitted by the standalone driver. It has no overfull boxes or
+  float-size warnings.
+- The open-issues table was reset in a smaller table font after visual
+  inspection found that its first merged rendering reached the footer. The
+  rebuilt table is fully above the page number and remains legible.
+- The full book is 310 pages with no undefined citations or references or
+  LaTeX errors. Ch10b has no overfull horizontal boxes; one 1.6-point overfull
+  vertical box remains. The full-book log retains preexisting overfull
+  warnings from other chapters.
 - The chapter PDF was inspected page by page at the diagram, theorem, four
   empirical applications, four simulation blocks, both new inference tables,
   the policy-inference caveat, and the open-issues table. Labels are legible
   and no result is detached from its section.
-- The arXiv package compiles independently in its regenerated submission
-  directory to 309 pages. The final tarball is 18 MB with 217 archive entries.
-  Its manifest
-  includes every ch10b figure and table and the previously omitted full-book
-  dependencies exposed by this build.
+- The standalone wrapper writes the PDF successfully but its final minted
+  cleanup hook emits a Python 3.14 `argparse` compatibility traceback. This is
+  an environment-level cleanup failure and does not affect the PDF.
 - Every numerical sentence in the four simulation writeups matches the frozen
   result tables or stdout artifacts.
 - An independent read-only audit found and triggered fixes for inconsistent

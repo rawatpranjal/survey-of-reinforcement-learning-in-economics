@@ -51,20 +51,23 @@ import os
 import sys
 import warnings
 import numpy as np
-from sklearn.linear_model import Lasso, LassoCV, LogisticRegressionCV
+from sklearn.linear_model import LassoCV, LogisticRegressionCV
 from sklearn.model_selection import KFold
 from scipy.stats import norm
 from tqdm import tqdm
 
 # Silence sklearn deprecation/future warnings unrelated to the algorithms here.
-warnings.filterwarnings('ignore', category=FutureWarning)
-warnings.filterwarnings('ignore', category=UserWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from sims.plot_style import apply_style, COLORS, BENCH_STYLE, FIG_DOUBLE
 from sims.sim_cache import (
-    compute_or_load, add_component_args, parse_force_set,
+    compute_or_load,
+    add_component_args,
+    parse_force_set,
 )
+
 apply_style()
 import matplotlib.pyplot as plt
 
@@ -72,55 +75,55 @@ import matplotlib.pyplot as plt
 # Configuration
 # ---------------------------------------------------------------------------
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
-CACHE_DIR = os.path.join(OUTPUT_DIR, 'cache')
-SCRIPT_NAME = 'dynamic_dml_snmm'
+CACHE_DIR = os.path.join(OUTPUT_DIR, "cache")
+SCRIPT_NAME = "dynamic_dml_snmm"
 
 # DGP parameters
-P_STATE = 20           # state dimension (high relative to true effective dim)
-S_SPARSE = 5           # number of nonzero coordinates in mu (outcome regression)
+P_STATE = 20  # state dimension (high relative to true effective dim)
+S_SPARSE = 5  # number of nonzero coordinates in mu (outcome regression)
 PSI_TRUE = np.array([1.0, 0.5])  # true (psi_1, psi_2)
-GAMMA_NORM = 1.5       # confounding strength: || gamma ||_2
-ALPHA_NORM = 1.0       # transition strength T_1 -> X_2 (T_1 shifts X_2[0] by 1)
-B_OPNORM = 0.5         # || B ||_op for state dynamics (stability requires <1)
-SIGMA_ETA = 0.6        # state innovation noise std (larger -> stronger feedback channel)
-SIGMA_EPS = 0.5        # outcome noise std
-NU_NORM = 2.0          # magnitude of nu (outcome-coupling on eta_1)
-DGP_SEED = 12345       # fixes the population-level random matrices B, gamma, mu, alpha
+GAMMA_NORM = 1.5  # confounding strength: || gamma ||_2
+ALPHA_NORM = 1.0  # transition strength T_1 -> X_2 (T_1 shifts X_2[0] by 1)
+B_OPNORM = 0.5  # || B ||_op for state dynamics (stability requires <1)
+SIGMA_ETA = 0.6  # state innovation noise std (larger -> stronger feedback channel)
+SIGMA_EPS = 0.5  # outcome noise std
+NU_NORM = 2.0  # magnitude of nu (outcome-coupling on eta_1)
+DGP_SEED = 12345  # fixes the population-level random matrices B, gamma, mu, alpha
 
 # Sample sizes to sweep
 N_GRID = [250, 500, 1000, 2000, 4000]
-N_SEEDS = 200          # Monte Carlo replications per sample size
-CI_LEVEL = 0.95        # nominal coverage
+N_SEEDS = 200  # Monte Carlo replications per sample size
+CI_LEVEL = 0.95  # nominal coverage
 
 # Cross-fitting folds for Dynamic DML
 K_FOLDS = 5
 
 SHARED_CONFIG = {
-    'P_STATE': P_STATE,
-    'S_SPARSE': S_SPARSE,
-    'PSI_TRUE': PSI_TRUE.tolist(),
-    'GAMMA_NORM': GAMMA_NORM,
-    'ALPHA_NORM': ALPHA_NORM,
-    'B_OPNORM': B_OPNORM,
-    'SIGMA_ETA': SIGMA_ETA,
-    'SIGMA_EPS': SIGMA_EPS,
-    'NU_NORM': NU_NORM,
-    'DGP_SEED': DGP_SEED,
-    'N_GRID': N_GRID,
-    'N_SEEDS': N_SEEDS,
-    'K_FOLDS': K_FOLDS,
-    'SE_METHOD': 'joint_upper_triangular_sandwich_v2',
+    "P_STATE": P_STATE,
+    "S_SPARSE": S_SPARSE,
+    "PSI_TRUE": PSI_TRUE.tolist(),
+    "GAMMA_NORM": GAMMA_NORM,
+    "ALPHA_NORM": ALPHA_NORM,
+    "B_OPNORM": B_OPNORM,
+    "SIGMA_ETA": SIGMA_ETA,
+    "SIGMA_EPS": SIGMA_EPS,
+    "NU_NORM": NU_NORM,
+    "DGP_SEED": DGP_SEED,
+    "N_GRID": N_GRID,
+    "N_SEEDS": N_SEEDS,
+    "K_FOLDS": K_FOLDS,
+    "SE_METHOD": "joint_upper_triangular_sandwich_v2",
 }
 
-NAIVE_CONFIG  = {**SHARED_CONFIG, 'method': 'naive_ols'}
-MSM_CONFIG    = {**SHARED_CONFIG, 'method': 'msm_iptw'}
-DML_CONFIG    = {**SHARED_CONFIG, 'method': 'dynamic_dml'}
+NAIVE_CONFIG = {**SHARED_CONFIG, "method": "naive_ols"}
+MSM_CONFIG = {**SHARED_CONFIG, "method": "msm_iptw"}
+DML_CONFIG = {**SHARED_CONFIG, "method": "dynamic_dml"}
 JOINT_INFERENCE_CONFIG = {
     **SHARED_CONFIG,
-    'method': 'dynamic_dml_joint_inference',
-    'N': N_GRID[-1],
-    'N_SEEDS': N_SEEDS,
-    'COVARIANCE_METHOD': 'full_joint_upper_triangular_sandwich_v1',
+    "method": "dynamic_dml_joint_inference",
+    "N": N_GRID[-1],
+    "N_SEEDS": N_SEEDS,
+    "COVARIANCE_METHOD": "full_joint_upper_triangular_sandwich_v1",
 }
 
 
@@ -160,7 +163,7 @@ def make_population_params(rng):
     # is maximally correlated with the eta_1 -> T_2 channel, giving a clean
     # bias signal for naive OLS that omits X_2.
     nu = NU_NORM * gamma / np.linalg.norm(gamma)
-    return {'B': B, 'alpha': alpha, 'gamma': gamma, 'mu': mu, 'nu': nu}
+    return {"B": B, "alpha": alpha, "gamma": gamma, "mu": mu, "nu": nu}
 
 
 def generate_panel(n, pop, rng):
@@ -180,7 +183,7 @@ def generate_panel(n, pop, rng):
     Returns (X1, T1, X2, T2, Y) with shapes (n,p), (n,), (n,p), (n,), (n,).
     """
     p = P_STATE
-    B, alpha, gamma, mu, nu = pop['B'], pop['alpha'], pop['gamma'], pop['mu'], pop['nu']
+    B, alpha, gamma, mu, nu = pop["B"], pop["alpha"], pop["gamma"], pop["mu"], pop["nu"]
 
     X1 = rng.standard_normal((n, p))
     pi_1 = _sigmoid(X1 @ gamma)
@@ -230,7 +233,7 @@ def fit_msm_iptw(X1, T1, X2, T2, Y):
     """Stabilized IPTW MSM regression Y ~ T1 + T2 (Robins-Hernan-Brumback 2000)."""
     n = len(Y)
     # Stage-1 propensity model: logistic in X1
-    e1 = LogisticRegressionCV(Cs=10, cv=3, solver='liblinear', max_iter=500)
+    e1 = LogisticRegressionCV(Cs=10, cv=3, solver="liblinear", max_iter=500)
     e1.fit(X1, T1.astype(int))
     pi1_hat = e1.predict_proba(X1)[:, 1].clip(1e-3, 1 - 1e-3)
 
@@ -239,13 +242,13 @@ def fit_msm_iptw(X1, T1, X2, T2, Y):
 
     # Stage-2 propensity model: logistic in (X1, T1, X2)
     Z2 = np.column_stack([X1, T1, X2])
-    e2 = LogisticRegressionCV(Cs=10, cv=3, solver='liblinear', max_iter=500)
+    e2 = LogisticRegressionCV(Cs=10, cv=3, solver="liblinear", max_iter=500)
     e2.fit(Z2, T2.astype(int))
     pi2_hat = e2.predict_proba(Z2)[:, 1].clip(1e-3, 1 - 1e-3)
 
     # Marginal P(T2 | T1) for the stabilized-weight numerator
     Z2_marg = np.column_stack([T1])
-    e2_marg = LogisticRegressionCV(Cs=10, cv=3, solver='liblinear', max_iter=500)
+    e2_marg = LogisticRegressionCV(Cs=10, cv=3, solver="liblinear", max_iter=500)
     e2_marg.fit(Z2_marg, T2.astype(int))
     pi2_marg = e2_marg.predict_proba(Z2_marg)[:, 1].clip(1e-3, 1 - 1e-3)
 
@@ -285,7 +288,7 @@ def _crossfit_predict(estimator_factory, X, y, n_folds, rng_seed):
     for train_idx, test_idx in kf.split(X):
         est = estimator_factory()
         est.fit(X[train_idx], y[train_idx])
-        if hasattr(est, 'predict_proba'):
+        if hasattr(est, "predict_proba"):
             pred[test_idx] = est.predict_proba(X[test_idx])[:, 1]
         else:
             pred[test_idx] = est.predict(X[test_idx])
@@ -335,8 +338,14 @@ def fit_dynamic_dml(
         return LassoCV(cv=3, max_iter=5000, n_alphas=10, random_state=rng_seed)
 
     def logit_factory():
-        return LogisticRegressionCV(Cs=5, cv=3, solver='liblinear', max_iter=500,
-                                     penalty='l1', random_state=rng_seed)
+        return LogisticRegressionCV(
+            Cs=5,
+            cv=3,
+            solver="liblinear",
+            max_iter=500,
+            penalty="l1",
+            random_state=rng_seed,
+        )
 
     # === Stage 2 ===
     H2 = np.column_stack([X1, T1[:, None], X2])  # history at stage 2 = (X1, T1, X2)
@@ -349,7 +358,7 @@ def fit_dynamic_dml(
     T_til_22 = T2 - p2_hat
 
     # OLS of Y_til_2 on T_til_22 (scalar regression -> closed form)
-    denom2 = (T_til_22 ** 2).sum()
+    denom2 = (T_til_22**2).sum()
     psi_2_hat = (Y_til_2 * T_til_22).sum() / denom2
 
     psi2_resid = Y_til_2 - psi_2_hat * T_til_22
@@ -364,17 +373,21 @@ def fit_dynamic_dml(
     H1 = X1  # history at stage 1 = X_1 only
 
     q1_hat = _crossfit_predict(lasso_factory, H1, Y, n_folds, rng_seed + 2)
-    p11_hat = _crossfit_predict(logit_factory, H1, T1.astype(int), n_folds, rng_seed + 3)
+    p11_hat = _crossfit_predict(
+        logit_factory, H1, T1.astype(int), n_folds, rng_seed + 3
+    )
     p11_hat = np.clip(p11_hat, 1e-3, 1 - 1e-3)
     # T_2 is binary, but as a regressor it lives on [0,1]; logistic is the right link.
-    p21_raw = _crossfit_predict(logit_factory, H1, T2.astype(int), n_folds, rng_seed + 4)
+    p21_raw = _crossfit_predict(
+        logit_factory, H1, T2.astype(int), n_folds, rng_seed + 4
+    )
     p21_hat = np.clip(p21_raw, 1e-3, 1 - 1e-3)
 
     Y_til_1 = Y - q1_hat
     T_til_11 = T1 - p11_hat
     T_til_21 = T2 - p21_hat
 
-    denom1 = (T_til_11 ** 2).sum()
+    denom1 = (T_til_11**2).sum()
     psi_1_hat = ((Y_til_1 - psi_2_hat * T_til_21) * T_til_11).sum() / denom1
 
     psi1_resid = Y_til_1 - psi_2_hat * T_til_21 - psi_1_hat * T_til_11
@@ -388,25 +401,29 @@ def fit_dynamic_dml(
     # Using only the diagonal term for psi_1 would incorrectly treat psi_2 as
     # known and understate uncertainty whenever the two residualized
     # treatments remain correlated.
-    J = np.array([
+    J = np.array(
         [
-            np.mean(T_til_11 ** 2),
-            np.mean(T_til_11 * T_til_21),
-        ],
+            [
+                np.mean(T_til_11**2),
+                np.mean(T_til_11 * T_til_21),
+            ],
+            [
+                0.0,
+                np.mean(T_til_22**2),
+            ],
+        ]
+    )
+    scores = np.column_stack(
         [
-            0.0,
-            np.mean(T_til_22 ** 2),
-        ],
-    ])
-    scores = np.column_stack([
-        T_til_11 * psi1_resid,
-        T_til_22 * psi2_resid,
-    ])
+            T_til_11 * psi1_resid,
+            T_til_22 * psi2_resid,
+        ]
+    )
     influence = np.linalg.solve(J, scores.T).T
     # Full joint sandwich, including the off-diagonal covariance needed for
     # contrasts.  The score equations make the sample mean of the influence
     # values zero up to numerical precision.
-    cov_hat = influence.T @ influence / n ** 2
+    cov_hat = influence.T @ influence / n**2
     cov_hat = (cov_hat + cov_hat.T) / 2.0
     se_hat = np.sqrt(np.diag(cov_hat))
 
@@ -425,25 +442,29 @@ def run_estimator(method, n_grid, n_seeds, pop):
     se_estimates = np.zeros((len(n_grid), n_seeds, 2))
 
     fn = {
-        'naive_ols':    fit_naive_ols,
-        'msm_iptw':     fit_msm_iptw,
-        'dynamic_dml':  fit_dynamic_dml,
+        "naive_ols": fit_naive_ols,
+        "msm_iptw": fit_msm_iptw,
+        "dynamic_dml": fit_dynamic_dml,
     }[method]
 
     for i, n in enumerate(n_grid):
-        for s in tqdm(range(n_seeds), desc=f'  {method} n={n}', leave=False,
-                       disable=not sys.stderr.isatty()):
+        for s in tqdm(
+            range(n_seeds),
+            desc=f"  {method} n={n}",
+            leave=False,
+            disable=not sys.stderr.isatty(),
+        ):
             seed = (n * 10_007 + s) & 0xFFFFFFFF
             rng = np.random.default_rng(seed)
             X1, T1, X2, T2, Y = generate_panel(n, pop, rng)
-            if method == 'dynamic_dml':
+            if method == "dynamic_dml":
                 psi_hat, se_hat = fn(X1, T1, X2, T2, Y, rng_seed=seed)
             else:
                 psi_hat, se_hat = fn(X1, T1, X2, T2, Y)
             psi_estimates[i, s] = psi_hat
             se_estimates[i, s] = se_hat
 
-    return {'psi': psi_estimates, 'se': se_estimates, 'n_grid': list(n_grid)}
+    return {"psi": psi_estimates, "se": se_estimates, "n_grid": list(n_grid)}
 
 
 def run_joint_inference(n, n_seeds, pop):
@@ -453,7 +474,7 @@ def run_joint_inference(n, n_seeds, pop):
     cov_estimates = np.zeros((n_seeds, 2, 2))
     for s in tqdm(
         range(n_seeds),
-        desc=f'  dynamic_dml joint covariance n={n}',
+        desc=f"  dynamic_dml joint covariance n={n}",
         leave=False,
         disable=not sys.stderr.isatty(),
     ):
@@ -467,10 +488,10 @@ def run_joint_inference(n, n_seeds, pop):
         se_estimates[s] = se_hat
         cov_estimates[s] = cov_hat
     return {
-        'psi': psi_estimates,
-        'se': se_estimates,
-        'cov': cov_estimates,
-        'n': n,
+        "psi": psi_estimates,
+        "se": se_estimates,
+        "cov": cov_estimates,
+        "n": n,
     }
 
 
@@ -481,39 +502,57 @@ def compute_shared():
     """Fix the population parameters once."""
     rng = np.random.default_rng(DGP_SEED)
     pop = make_population_params(rng)
-    return {'pop': pop}
+    return {"pop": pop}
 
 
 def compute_data(force=None):
     force = force or set()
 
     shared = compute_or_load(
-        CACHE_DIR, SCRIPT_NAME, 'shared', SHARED_CONFIG,
-        compute_shared, force=('shared' in force),
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "shared",
+        SHARED_CONFIG,
+        compute_shared,
+        force=("shared" in force),
     )
-    pop = shared['pop']
+    pop = shared["pop"]
 
     results = {}
-    for name, config in [('naive_ols', NAIVE_CONFIG),
-                         ('msm_iptw',  MSM_CONFIG),
-                         ('dynamic_dml', DML_CONFIG)]:
+    for name, config in [
+        ("naive_ols", NAIVE_CONFIG),
+        ("msm_iptw", MSM_CONFIG),
+        ("dynamic_dml", DML_CONFIG),
+    ]:
         results[name] = compute_or_load(
-            CACHE_DIR, SCRIPT_NAME, name, config,
-            run_estimator, name, N_GRID, N_SEEDS, pop,
-            force=(name in force or 'shared' in force),
+            CACHE_DIR,
+            SCRIPT_NAME,
+            name,
+            config,
+            run_estimator,
+            name,
+            N_GRID,
+            N_SEEDS,
+            pop,
+            force=(name in force or "shared" in force),
         )
 
     joint_inference = compute_or_load(
-        CACHE_DIR, SCRIPT_NAME, 'joint_inference', JOINT_INFERENCE_CONFIG,
-        run_joint_inference, JOINT_INFERENCE_CONFIG['N'],
-        JOINT_INFERENCE_CONFIG['N_SEEDS'], pop,
-        force=('joint_inference' in force or 'shared' in force),
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "joint_inference",
+        JOINT_INFERENCE_CONFIG,
+        run_joint_inference,
+        JOINT_INFERENCE_CONFIG["N"],
+        JOINT_INFERENCE_CONFIG["N_SEEDS"],
+        pop,
+        force=("joint_inference" in force or "shared" in force),
     )
 
     return {
-        'shared': shared,
-        'results': results,
-        'joint_inference': joint_inference,
+        "shared": shared,
+        "results": results,
+        "joint_inference": joint_inference,
     }
 
 
@@ -524,35 +563,37 @@ def summarize(data):
     """Compute per-method bias / RMSE / coverage tables (shape: n_grid x 2)."""
     z = norm.ppf(0.5 + CI_LEVEL / 2)
     summary = {}
-    for method in data['results']:
-        psi = data['results'][method]['psi']            # (G, S, 2)
-        se = data['results'][method]['se']              # (G, S, 2)
-        bias = psi.mean(axis=1) - PSI_TRUE              # (G, 2)
+    for method in data["results"]:
+        psi = data["results"][method]["psi"]  # (G, S, 2)
+        se = data["results"][method]["se"]  # (G, S, 2)
+        bias = psi.mean(axis=1) - PSI_TRUE  # (G, 2)
         rmse = np.sqrt(((psi - PSI_TRUE) ** 2).mean(axis=1))
         # 95% CI: psi_hat +/- z * se
         lo = psi - z * se
         hi = psi + z * se
         covered = ((lo <= PSI_TRUE) & (PSI_TRUE <= hi)).astype(float)
-        coverage = covered.mean(axis=1)                 # (G, 2)
+        coverage = covered.mean(axis=1)  # (G, 2)
         summary[method] = {
-            'bias': bias, 'rmse': rmse, 'coverage': coverage,
-            'mean_se': se.mean(axis=1),
+            "bias": bias,
+            "rmse": rmse,
+            "coverage": coverage,
+            "mean_se": se.mean(axis=1),
         }
-    summary['n_grid'] = N_GRID
+    summary["n_grid"] = N_GRID
     return summary
 
 
 def validate_results(data):
     """Monte Carlo gates for recovery, standard errors, and coverage."""
-    result = data['results']['dynamic_dml']
-    if not np.all(np.isfinite(result['psi'])) or not np.all(np.isfinite(result['se'])):
-        raise RuntimeError('Dynamic DML produced non-finite estimates')
-    if np.any(result['se'] <= 0):
-        raise RuntimeError('Dynamic DML produced a non-positive standard error')
+    result = data["results"]["dynamic_dml"]
+    if not np.all(np.isfinite(result["psi"])) or not np.all(np.isfinite(result["se"])):
+        raise RuntimeError("Dynamic DML produced non-finite estimates")
+    if np.any(result["se"] <= 0):
+        raise RuntimeError("Dynamic DML produced a non-positive standard error")
 
     i = len(N_GRID) - 1
-    psi = result['psi'][i]
-    se = result['se'][i]
+    psi = result["psi"][i]
+    se = result["se"][i]
     bias = psi.mean(axis=0) - PSI_TRUE
     empirical_sd = psi.std(axis=0, ddof=1)
     se_ratio = se.mean(axis=0) / empirical_sd
@@ -562,32 +603,34 @@ def validate_results(data):
     right_miss = (PSI_TRUE > psi + z * se).mean(axis=0)
 
     if np.any(np.abs(bias) > 0.03):
-        raise RuntimeError(f'Dynamic DML recovery failed at n={N_GRID[i]}: bias={bias}')
+        raise RuntimeError(f"Dynamic DML recovery failed at n={N_GRID[i]}: bias={bias}")
     if np.any((se_ratio < 0.80) | (se_ratio > 1.20)):
         raise RuntimeError(
-            f'Formula and Monte Carlo standard errors disagree: ratio={se_ratio}'
+            f"Formula and Monte Carlo standard errors disagree: ratio={se_ratio}"
         )
     if np.any((coverage < 0.90) | (coverage > 0.99)):
-        raise RuntimeError(f'Dynamic DML coverage check failed: coverage={coverage}')
+        raise RuntimeError(f"Dynamic DML coverage check failed: coverage={coverage}")
     if np.any(left_miss > 0.06) or np.any(right_miss > 0.06):
         raise RuntimeError(
-            f'Dynamic DML tail coverage is asymmetric: left={left_miss}, right={right_miss}'
+            f"Dynamic DML tail coverage is asymmetric: left={left_miss}, right={right_miss}"
         )
 
-    joint = data['joint_inference']
-    joint_psi = joint['psi']
-    joint_cov = joint['cov']
+    joint = data["joint_inference"]
+    joint_psi = joint["psi"]
+    joint_cov = joint["cov"]
     if not np.all(np.isfinite(joint_cov)):
-        raise RuntimeError('Dynamic DML produced a non-finite joint covariance')
+        raise RuntimeError("Dynamic DML produced a non-finite joint covariance")
     if np.any(np.linalg.eigvalsh(joint_cov) < -1e-12):
-        raise RuntimeError('Dynamic DML produced a non-positive-semidefinite covariance')
+        raise RuntimeError(
+            "Dynamic DML produced a non-positive-semidefinite covariance"
+        )
 
     # The dedicated joint run uses the same seed scheme as the largest-n cell.
     # Equality guards against the covariance path changing point estimates.
     if not np.array_equal(joint_psi, psi):
-        raise RuntimeError('Joint-covariance path changed Dynamic DML point estimates')
-    if not np.allclose(joint['se'], se, rtol=0.0, atol=1e-14):
-        raise RuntimeError('Joint covariance diagonal disagrees with reported SEs')
+        raise RuntimeError("Joint-covariance path changed Dynamic DML point estimates")
+    if not np.allclose(joint["se"], se, rtol=0.0, atol=1e-14):
+        raise RuntimeError("Joint covariance diagonal disagrees with reported SEs")
 
     empirical_cov = np.cov(joint_psi, rowvar=False, ddof=1)
     mean_cov = joint_cov.mean(axis=0)
@@ -596,14 +639,14 @@ def validate_results(data):
     )
     if cov_rel_error > 0.30:
         raise RuntimeError(
-            f'Joint sandwich and Monte Carlo covariance disagree: '
-            f'relative error={cov_rel_error:.3f}'
+            f"Joint sandwich and Monte Carlo covariance disagree: "
+            f"relative error={cov_rel_error:.3f}"
         )
 
     contrast = np.array([1.0, -1.0])
     contrast_truth = float(contrast @ PSI_TRUE)
     contrast_hat = joint_psi @ contrast
-    contrast_se = np.sqrt(np.einsum('i,sij,j->s', contrast, joint_cov, contrast))
+    contrast_se = np.sqrt(np.einsum("i,sij,j->s", contrast, joint_cov, contrast))
     contrast_empirical_sd = contrast_hat.std(ddof=1)
     contrast_se_ratio = contrast_se.mean() / contrast_empirical_sd
     contrast_lo = contrast_hat - z * contrast_se
@@ -615,72 +658,78 @@ def validate_results(data):
     contrast_right = np.mean(contrast_truth > contrast_hi)
     if not 0.80 <= contrast_se_ratio <= 1.20:
         raise RuntimeError(
-            f'Dynamic DML contrast SE calibration failed: ratio={contrast_se_ratio:.3f}'
+            f"Dynamic DML contrast SE calibration failed: ratio={contrast_se_ratio:.3f}"
         )
     if not 0.90 <= contrast_coverage <= 0.99:
         raise RuntimeError(
-            f'Dynamic DML contrast coverage failed: coverage={contrast_coverage:.3f}'
+            f"Dynamic DML contrast coverage failed: coverage={contrast_coverage:.3f}"
         )
     if max(contrast_left, contrast_right) > 0.06:
         raise RuntimeError(
-            f'Dynamic DML contrast tail coverage failed: '
-            f'left={contrast_left:.3f}, right={contrast_right:.3f}'
+            f"Dynamic DML contrast tail coverage failed: "
+            f"left={contrast_left:.3f}, right={contrast_right:.3f}"
         )
 
     naive_bias_2 = abs(
-        data['results']['naive_ols']['psi'][i, :, 1].mean() - PSI_TRUE[1]
+        data["results"]["naive_ols"]["psi"][i, :, 1].mean() - PSI_TRUE[1]
     )
     if naive_bias_2 < 0.50:
-        raise RuntimeError('Naive longitudinal-bias demonstration is too weak')
+        raise RuntimeError("Naive longitudinal-bias demonstration is too weak")
 
 
 # ---------------------------------------------------------------------------
 # Outputs
 # ---------------------------------------------------------------------------
 LABELS = {
-    'naive_ols':   'Naive OLS',
-    'msm_iptw':    'IPTW MSM (naive SE)',
-    'dynamic_dml': 'Dynamic DML',
+    "naive_ols": "Naive OLS",
+    "msm_iptw": "IPTW MSM (naive SE)",
+    "dynamic_dml": "Dynamic DML",
 }
 COLOR_MAP = {
-    'naive_ols':   COLORS['red'],
-    'msm_iptw':    COLORS['orange'],
-    'dynamic_dml': COLORS['blue'],
+    "naive_ols": COLORS["red"],
+    "msm_iptw": COLORS["orange"],
+    "dynamic_dml": COLORS["blue"],
 }
 
 
 def make_figure(summary):
     """Two-panel figure: bias and coverage vs n, for psi_2 (psi_1 in supplement)."""
-    n_grid = summary['n_grid']
+    n_grid = summary["n_grid"]
     fig, axes = plt.subplots(1, 2, figsize=FIG_DOUBLE)
 
-    for method in ['naive_ols', 'msm_iptw', 'dynamic_dml']:
-        bias_2 = summary[method]['bias'][:, 1]  # psi_2 bias
-        rmse_2 = summary[method]['rmse'][:, 1]  # psi_2 RMSE
-        cov_2 = summary[method]['coverage'][:, 1]
-        axes[0].plot(n_grid, np.abs(bias_2), marker='o',
-                     label=LABELS[method], color=COLOR_MAP[method])
-        axes[1].plot(n_grid, cov_2, marker='o',
-                     label=LABELS[method], color=COLOR_MAP[method])
+    for method in ["naive_ols", "msm_iptw", "dynamic_dml"]:
+        bias_2 = summary[method]["bias"][:, 1]  # psi_2 bias
+        rmse_2 = summary[method]["rmse"][:, 1]  # psi_2 RMSE
+        cov_2 = summary[method]["coverage"][:, 1]
+        axes[0].plot(
+            n_grid,
+            np.abs(bias_2),
+            marker="o",
+            label=LABELS[method],
+            color=COLOR_MAP[method],
+        )
+        axes[1].plot(
+            n_grid, cov_2, marker="o", label=LABELS[method], color=COLOR_MAP[method]
+        )
 
-    axes[0].set_xscale('log')
-    axes[0].set_yscale('log')
-    axes[0].set_xlabel(r'sample size $n$')
-    axes[0].set_ylabel(r'$|\mathrm{bias}(\hat\psi_2)|$')
-    axes[0].set_title(r'Second-visit effect bias')
+    axes[0].set_xscale("log")
+    axes[0].set_yscale("log")
+    axes[0].set_xlabel(r"sample size $n$")
+    axes[0].set_ylabel(r"$|\mathrm{bias}(\hat\psi_2)|$")
+    axes[0].set_title(r"Second-visit effect bias")
     axes[0].legend(frameon=False)
 
-    axes[1].axhline(CI_LEVEL, **BENCH_STYLE, label='nominal 95%')
-    axes[1].set_xscale('log')
-    axes[1].set_xlabel(r'sample size $n$')
-    axes[1].set_ylabel(r'95\% CI coverage of $\psi_2$')
-    axes[1].set_title(r'Second-visit effect coverage')
+    axes[1].axhline(CI_LEVEL, **BENCH_STYLE, label="nominal 95%")
+    axes[1].set_xscale("log")
+    axes[1].set_xlabel(r"sample size $n$")
+    axes[1].set_ylabel(r"95\% CI coverage of $\psi_2$")
+    axes[1].set_title(r"Second-visit effect coverage")
     axes[1].set_ylim(0.0, 1.05)
-    axes[1].legend(frameon=False, loc='lower right')
+    axes[1].legend(frameon=False, loc="lower right")
 
     fig.tight_layout()
-    out = os.path.join(OUTPUT_DIR, 'dynamic_dml_snmm_coverage.png')
-    fig.savefig(out, dpi=300, bbox_inches='tight')
+    out = os.path.join(OUTPUT_DIR, "dynamic_dml_snmm_coverage.png")
+    fig.savefig(out, dpi=300, bbox_inches="tight")
     plt.close(fig)
     print(f"  Figure saved: {out}")
 
@@ -690,165 +739,218 @@ def make_table(summary):
     n_target = N_GRID[-1]
     idx = N_GRID.index(n_target)
     rows = []
-    for method in ['naive_ols', 'msm_iptw', 'dynamic_dml']:
-        bias = summary[method]['bias'][idx]
-        rmse = summary[method]['rmse'][idx]
-        cov = summary[method]['coverage'][idx]
-        rows.append((
-            LABELS[method],
-            bias[0], rmse[0], cov[0],
-            bias[1], rmse[1], cov[1],
-        ))
+    for method in ["naive_ols", "msm_iptw", "dynamic_dml"]:
+        bias = summary[method]["bias"][idx]
+        rmse = summary[method]["rmse"][idx]
+        cov = summary[method]["coverage"][idx]
+        rows.append(
+            (
+                LABELS[method],
+                bias[0],
+                rmse[0],
+                cov[0],
+                bias[1],
+                rmse[1],
+                cov[1],
+            )
+        )
 
     tex = []
-    tex.append(r'\begin{tabular}{lrrrrrr}')
-    tex.append(r'\toprule')
-    tex.append(r' & \multicolumn{3}{c}{$\psi_1^* = ' + f'{PSI_TRUE[0]:.2f}' + r'$}'
-               r' & \multicolumn{3}{c}{$\psi_2^* = ' + f'{PSI_TRUE[1]:.2f}' + r'$} \\')
-    tex.append(r'\cmidrule(lr){2-4}\cmidrule(lr){5-7}')
-    tex.append(r'Method & Bias & RMSE & Cov & Bias & RMSE & Cov \\')
-    tex.append(r'\midrule')
+    tex.append(r"\begin{tabular}{lrrrrrr}")
+    tex.append(r"\toprule")
+    tex.append(
+        r" & \multicolumn{3}{c}{$\psi_1^* = " + f"{PSI_TRUE[0]:.2f}" + r"$}"
+        r" & \multicolumn{3}{c}{$\psi_2^* = " + f"{PSI_TRUE[1]:.2f}" + r"$} \\"
+    )
+    tex.append(r"\cmidrule(lr){2-4}\cmidrule(lr){5-7}")
+    tex.append(r"Method & Bias & RMSE & Cov & Bias & RMSE & Cov \\")
+    tex.append(r"\midrule")
     for r in rows:
         tex.append(
-            f'{r[0]} & {r[1]:+.3f} & {r[2]:.3f} & {r[3]:.2f}'
-            f' & {r[4]:+.3f} & {r[5]:.3f} & {r[6]:.2f} \\\\'
+            f"{r[0]} & {r[1]:+.3f} & {r[2]:.3f} & {r[3]:.2f}"
+            f" & {r[4]:+.3f} & {r[5]:.3f} & {r[6]:.2f} \\\\"
         )
-    tex.append(r'\bottomrule')
-    tex.append(r'\end{tabular}')
+    tex.append(r"\bottomrule")
+    tex.append(r"\end{tabular}")
 
-    out = os.path.join(OUTPUT_DIR, 'dynamic_dml_snmm_results.tex')
-    with open(out, 'w') as f:
-        f.write('\n'.join(tex) + '\n')
+    out = os.path.join(OUTPUT_DIR, "dynamic_dml_snmm_results.tex")
+    with open(out, "w") as f:
+        f.write("\n".join(tex) + "\n")
     print(f"  Table saved: {out}")
 
 
 def joint_inference_summary(data):
     """Full-covariance and linear-contrast repeated-sampling diagnostics."""
-    joint = data['joint_inference']
-    psi = joint['psi']
-    cov = joint['cov']
+    joint = data["joint_inference"]
+    psi = joint["psi"]
+    cov = joint["cov"]
     empirical_cov = np.cov(psi, rowvar=False, ddof=1)
     mean_cov = cov.mean(axis=0)
     contrast = np.array([1.0, -1.0])
     contrast_truth = float(contrast @ PSI_TRUE)
     contrast_hat = psi @ contrast
-    contrast_se = np.sqrt(np.einsum('i,sij,j->s', contrast, cov, contrast))
+    contrast_se = np.sqrt(np.einsum("i,sij,j->s", contrast, cov, contrast))
+    # The same contrast under a sandwich that drops the cross-stage block, i.e.
+    # that treats the two backward regressions as if they were fit on independent
+    # samples. This is the comparison the chapter's warning is about, and it is
+    # only meaningful stated as a magnitude.
+    contrast_se_diag = np.sqrt(cov[:, 0, 0] + cov[:, 1, 1])
     z = norm.ppf(0.5 + CI_LEVEL / 2)
     lo = contrast_hat - z * contrast_se
     hi = contrast_hat + z * contrast_se
+    lo_d = contrast_hat - z * contrast_se_diag
+    hi_d = contrast_hat + z * contrast_se_diag
+    emp_sd = contrast_hat.std(ddof=1)
+    corr = mean_cov[0, 1] / np.sqrt(mean_cov[0, 0] * mean_cov[1, 1])
     return {
-        'empirical_cov': empirical_cov,
-        'mean_cov': mean_cov,
-        'cov_rel_error': np.linalg.norm(mean_cov - empirical_cov)
+        "empirical_cov": empirical_cov,
+        "mean_cov": mean_cov,
+        "cov_rel_error": np.linalg.norm(mean_cov - empirical_cov)
         / np.linalg.norm(empirical_cov),
-        'contrast_bias': float(contrast_hat.mean() - contrast_truth),
-        'contrast_empirical_sd': float(contrast_hat.std(ddof=1)),
-        'contrast_mean_se': float(contrast_se.mean()),
-        'contrast_se_ratio': float(
-            contrast_se.mean() / contrast_hat.std(ddof=1)
+        "cross_stage_corr": float(corr),
+        "contrast_bias": float(contrast_hat.mean() - contrast_truth),
+        "contrast_empirical_sd": float(emp_sd),
+        "contrast_mean_se": float(contrast_se.mean()),
+        "contrast_se_ratio": float(contrast_se.mean() / emp_sd),
+        "contrast_coverage": float(
+            np.mean((lo <= contrast_truth) & (contrast_truth <= hi))
         ),
-        'contrast_coverage': float(np.mean((lo <= contrast_truth) & (contrast_truth <= hi))),
-        'contrast_left': float(np.mean(contrast_truth < lo)),
-        'contrast_right': float(np.mean(contrast_truth > hi)),
+        "contrast_left": float(np.mean(contrast_truth < lo)),
+        "contrast_right": float(np.mean(contrast_truth > hi)),
+        "contrast_mean_se_diag": float(contrast_se_diag.mean()),
+        "contrast_se_ratio_diag": float(contrast_se_diag.mean() / emp_sd),
+        "contrast_coverage_diag": float(
+            np.mean((lo_d <= contrast_truth) & (contrast_truth <= hi_d))
+        ),
+        "diag_vs_full_se": float(contrast_se_diag.mean() / contrast_se.mean()),
     }
 
 
 def make_joint_inference_table(data):
     """Write the full covariance and psi_1 - psi_2 contrast diagnostics."""
     d = joint_inference_summary(data)
-    out = os.path.join(OUTPUT_DIR, 'dynamic_dml_snmm_joint_inference.tex')
+    out = os.path.join(OUTPUT_DIR, "dynamic_dml_snmm_joint_inference.tex")
     tex = [
-        r'\begin{tabular}{lrr}',
-        r'\toprule',
-        r'Quantity & Sandwich estimate & Monte Carlo target \\',
-        r'\midrule',
+        r"\begin{tabular}{lrr}",
+        r"\toprule",
+        r"Quantity & Sandwich estimate & Monte Carlo target \\",
+        r"\midrule",
         (
-            r'$\operatorname{Var}(\hat\psi_1)$'
+            r"$\operatorname{Var}(\hat\psi_1)$"
             f" & {d['mean_cov'][0, 0]:.6f} & {d['empirical_cov'][0, 0]:.6f} \\\\"
         ),
         (
-            r'$\operatorname{Cov}(\hat\psi_1,\hat\psi_2)$'
+            r"$\operatorname{Cov}(\hat\psi_1,\hat\psi_2)$"
             f" & {d['mean_cov'][0, 1]:+.6f} & {d['empirical_cov'][0, 1]:+.6f} \\\\"
         ),
         (
-            r'$\operatorname{Var}(\hat\psi_2)$'
+            r"$\operatorname{Var}(\hat\psi_2)$"
             f" & {d['mean_cov'][1, 1]:.6f} & {d['empirical_cov'][1, 1]:.6f} \\\\"
         ),
-        r'\addlinespace',
         (
-            r'SE$(\hat\psi_1-\hat\psi_2)$'
+            r"Cross-stage correlation"
+            f" & {d['cross_stage_corr']:+.3f} & "
+            f"{d['empirical_cov'][0, 1] / np.sqrt(d['empirical_cov'][0, 0] * d['empirical_cov'][1, 1]):+.3f} \\\\"
+        ),
+        r"\addlinespace",
+        (
+            r"SE$(\hat\psi_1-\hat\psi_2)$, joint sandwich"
             f" & {d['contrast_mean_se']:.4f} & {d['contrast_empirical_sd']:.4f} \\\\"
         ),
         (
-            r'95\% CI coverage for $\psi_1-\psi_2$'
+            r"SE$(\hat\psi_1-\hat\psi_2)$, cross-stage block dropped"
+            f" & {d['contrast_mean_se_diag']:.4f} & {d['contrast_empirical_sd']:.4f} \\\\"
+        ),
+        (
+            r"95\% CI coverage, joint sandwich"
             f" & {d['contrast_coverage']:.3f} & {CI_LEVEL:.3f} \\\\"
         ),
-        r'\bottomrule',
-        r'\end{tabular}',
+        (
+            r"95\% CI coverage, block dropped"
+            f" & {d['contrast_coverage_diag']:.3f} & {CI_LEVEL:.3f} \\\\"
+        ),
+        r"\bottomrule",
+        r"\end{tabular}",
     ]
-    with open(out, 'w') as f:
-        f.write('\n'.join(tex) + '\n')
+    with open(out, "w") as f:
+        f.write("\n".join(tex) + "\n")
     print(f"  Joint-inference table saved: {out}")
 
 
 def print_stdout(summary, data):
     """Tabular stdout: per-method bias / RMSE / coverage at each n."""
     print()
-    print('=' * 70)
-    print('  Dynamic DML in a stylized Fast Track home-visiting SNMM')
-    print('=' * 70)
-    print(f'  True parameters: psi_1* = {PSI_TRUE[0]:.4f}, psi_2* = {PSI_TRUE[1]:.4f}')
-    print(f'  State dim p = {P_STATE}, sparsity s = {S_SPARSE}, '
-          f'n_seeds = {N_SEEDS}, K_folds = {K_FOLDS}')
-    print('  T_1 and T_2 denote additional home visits; Y is a terminal outcome.')
-    print(f'  DGP: || B ||_op = {B_OPNORM}, || gamma || = {GAMMA_NORM}, '
-          f'|| alpha || = {ALPHA_NORM}')
-    print(f'  Sample sizes: {N_GRID}')
+    print("=" * 70)
+    print("  Dynamic DML in a stylized Fast Track home-visiting SNMM")
+    print("=" * 70)
+    print(f"  True parameters: psi_1* = {PSI_TRUE[0]:.4f}, psi_2* = {PSI_TRUE[1]:.4f}")
     print(
-        '  IPTW-MSM intervals use a naive fixed-weight sandwich; they do not '
-        'propagate propensity estimation or trimming.'
+        f"  State dim p = {P_STATE}, sparsity s = {S_SPARSE}, "
+        f"n_seeds = {N_SEEDS}, K_folds = {K_FOLDS}"
+    )
+    print("  T_1 and T_2 denote additional home visits; Y is a terminal outcome.")
+    print(
+        f"  DGP: || B ||_op = {B_OPNORM}, || gamma || = {GAMMA_NORM}, "
+        f"|| alpha || = {ALPHA_NORM}"
+    )
+    print(f"  Sample sizes: {N_GRID}")
+    print(
+        "  IPTW-MSM intervals use a naive fixed-weight sandwich; they do not "
+        "propagate propensity estimation or trimming."
     )
     print()
 
-    for method in ['naive_ols', 'msm_iptw', 'dynamic_dml']:
-        print(f'  --- {LABELS[method]} ---')
-        print(f"  {'n':>6} {'bias(psi_1)':>14} {'rmse(psi_1)':>14} {'cov(psi_1)':>12}"
-              f" {'bias(psi_2)':>14} {'rmse(psi_2)':>14} {'cov(psi_2)':>12}")
+    for method in ["naive_ols", "msm_iptw", "dynamic_dml"]:
+        print(f"  --- {LABELS[method]} ---")
+        print(
+            f"  {'n':>6} {'bias(psi_1)':>14} {'rmse(psi_1)':>14} {'cov(psi_1)':>12}"
+            f" {'bias(psi_2)':>14} {'rmse(psi_2)':>14} {'cov(psi_2)':>12}"
+        )
         for i, n in enumerate(N_GRID):
-            b = summary[method]['bias'][i]
-            r = summary[method]['rmse'][i]
-            c = summary[method]['coverage'][i]
-            print(f'  {n:>6d} {b[0]:>14.4f} {r[0]:>14.4f} {c[0]:>12.3f}'
-                  f' {b[1]:>14.4f} {r[1]:>14.4f} {c[1]:>12.3f}')
+            b = summary[method]["bias"][i]
+            r = summary[method]["rmse"][i]
+            c = summary[method]["coverage"][i]
+            print(
+                f"  {n:>6d} {b[0]:>14.4f} {r[0]:>14.4f} {c[0]:>12.3f}"
+                f" {b[1]:>14.4f} {r[1]:>14.4f} {c[1]:>12.3f}"
+            )
         print()
 
     d = joint_inference_summary(data)
-    print('  --- Dynamic DML full joint sandwich at n=4000 ---')
-    print('  Mean analytic covariance:')
+    print("  --- Dynamic DML full joint sandwich at n=4000 ---")
+    print("  Mean analytic covariance:")
     print(f"    [{d['mean_cov'][0, 0]:.6f}, {d['mean_cov'][0, 1]:+.6f}]")
     print(f"    [{d['mean_cov'][1, 0]:+.6f}, {d['mean_cov'][1, 1]:.6f}]")
-    print('  Monte Carlo covariance across repeated datasets (ddof=1):')
+    print("  Monte Carlo covariance across repeated datasets (ddof=1):")
     print(f"    [{d['empirical_cov'][0, 0]:.6f}, {d['empirical_cov'][0, 1]:+.6f}]")
     print(f"    [{d['empirical_cov'][1, 0]:+.6f}, {d['empirical_cov'][1, 1]:.6f}]")
     print(f"  Relative covariance error: {d['cov_rel_error']:.3f}")
+    print(f"  Cross-stage correlation (sandwich): {d['cross_stage_corr']:+.3f}")
     print(
-        '  Contrast psi_1 - psi_2: '
+        "  Contrast psi_1 - psi_2: "
         f"bias={d['contrast_bias']:+.4f}, "
         f"mean analytic SE={d['contrast_mean_se']:.4f}, "
         f"Monte Carlo SD={d['contrast_empirical_sd']:.4f}, "
         f"SE ratio={d['contrast_se_ratio']:.3f}"
     )
     print(
-        '  Contrast 95% CI: '
+        "  Same contrast with the cross-stage block dropped: "
+        f"mean SE={d['contrast_mean_se_diag']:.4f}, "
+        f"SE ratio={d['contrast_se_ratio_diag']:.3f}, "
+        f"coverage={d['contrast_coverage_diag']:.3f}, "
+        f"SE relative to joint={d['diag_vs_full_se']:.3f}"
+    )
+    print(
+        "  Contrast 95% CI: "
         f"coverage={d['contrast_coverage']:.3f}, "
         f"tail misses={d['contrast_left']:.3f}/{d['contrast_right']:.3f}"
     )
     print()
 
-    print('  Output files:')
-    print('    ', os.path.join(OUTPUT_DIR, 'dynamic_dml_snmm_coverage.png'))
-    print('    ', os.path.join(OUTPUT_DIR, 'dynamic_dml_snmm_results.tex'))
-    print('    ', os.path.join(OUTPUT_DIR, 'dynamic_dml_snmm_joint_inference.tex'))
+    print("  Output files:")
+    print("    ", os.path.join(OUTPUT_DIR, "dynamic_dml_snmm_coverage.png"))
+    print("    ", os.path.join(OUTPUT_DIR, "dynamic_dml_snmm_results.tex"))
+    print("    ", os.path.join(OUTPUT_DIR, "dynamic_dml_snmm_joint_inference.tex"))
 
 
 def generate_outputs(data):
@@ -880,5 +982,5 @@ def main():
         generate_outputs(data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

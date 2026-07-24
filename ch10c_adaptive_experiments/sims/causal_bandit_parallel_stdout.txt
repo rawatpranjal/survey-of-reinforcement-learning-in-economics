@@ -10,32 +10,63 @@
 
   --- Simple regret vs. graph hardness m(q) at T = 400 ---
     m(q)       Succ-Reject mean (SE)        Lattimore Alg1 mean (SE)
-       2          0.2808 (0.0021)              0.0237 (0.0018)
-       8          0.2812 (0.0030)              0.0732 (0.0029)
-      24          0.2953 (0.0045)              0.1247 (0.0036)
-      48          0.3179 (0.0062)              0.0711 (0.0040)
+       2          0.2822 (0.0019)              0.0000 (0.0000)
+       8          0.2823 (0.0030)              0.0053 (0.0009)
+      24          0.2892 (0.0047)              0.1173 (0.0037)
+      48          0.2981 (0.0065)              0.2344 (0.0063)
 
-  --- Simple regret vs. horizon T at m(q) = 2 ---
-       T       Succ-Reject mean (SE)        Lattimore Alg1 mean (SE)
-     100          0.3099 (0.0013)              0.1320 (0.0034)
-     200          0.3003 (0.0016)              0.0601 (0.0027)
-     400          0.2827 (0.0020)              0.0217 (0.0018)
-     800          0.2262 (0.0030)              0.0024 (0.0006)
-    1600          0.1425 (0.0034)              0.0000 (0.0000)
+  --- Instance and allocation checks ---
+   label m   realized m(q)     regret   sqrt(m/T)    ratio   P(opt arm pulled)
+         2       2..2          0.0000      0.0707    0.000               0.041
+         8       8..8          0.0053      0.1414    0.037               0.165
+        24      24..24         0.1173      0.2449    0.479               0.461
+        48      48..48         0.2344      0.3464    0.677               0.890
+
+  --- Simple regret vs. horizon T at m(q) = 8 ---
+       T   gap eps_T       Succ-Reject mean (SE)        Lattimore Alg1 mean (SE)
+     400      0.1414          0.1538 (0.0017)              0.0591 (0.0023)
+     800      0.1000          0.1095 (0.0013)              0.0453 (0.0017)
+    1600      0.0707          0.0762 (0.0008)              0.0322 (0.0012)
+    3200      0.0500          0.0532 (0.0006)              0.0223 (0.0008)
+    6400      0.0354          0.0394 (0.0005)              0.0162 (0.0006)
+  log-log regret slope, lattimore_alg1: -0.48  (theory predicts -0.50 for the graph-aware algorithm; 5/5 cells used)
+  log-log regret slope, successive_reject: -0.50  (theory predicts -0.50 for the graph-aware algorithm; 5/5 cells used)
 
   --- Greedy-casino MABUC at T = 1000 ---
   Vanilla Thompson sampling          : cumulative regret = 200.49 (SE 0.28)
-  Context-conditional Thompson (CCTS): cumulative regret = 0.66 (SE 0.04)
-  Full TS_C (Bareinboim 2015)        : cumulative regret = 4.49 (SE 0.10)
-  Ratio (vanilla TS) / (CCTS)        = 305.3x
-  Ratio (vanilla TS) / (TS_C)        = 44.6x
-  Ratio (CCTS)      / (TS_C)         = 0.15x
-  CCTS beats TS_C by 3.84 regret units (85.4%).
+  Context-conditional Thompson (CCTS): cumulative regret = 0.69 (SE 0.04)
+  Full TS_C (Bareinboim 2015)        : cumulative regret = 0.00 (SE 0.00)
+  Ratio (vanilla TS) / (CCTS)        = 289.7x
+  Ratio (vanilla TS) / (TS_C)        = 200490.4x
+
+  --- Seeded posterior mean per (intuition x, arm a), before round 1 ---
+  mode                            (0,0)            (0,1)            (1,0)            (1,1)
+  true payoff                    0.100           0.500           0.500           0.100
+  obs_diagonal             0.039 n=100      0.500 n=0        0.500 n=0        0.078 n=100
+  consistency_copy         0.039 n=100      0.048 n=50       0.087 n=50       0.078 n=100
+  ett                      0.039 n=100      0.427 n=105      0.476 n=95       0.078 n=100
+
+  --- TS_C component factorial (common random numbers, paired) ---
+  variant                              regret@100    regret@1000     (SE)   paired diff vs CCTS
+  TS_C (ETT seed + RDC)                      0.00           0.00     0.00         -0.69 (0.04)
+  ETT seed, no RDC                           0.00           0.00     0.00         -0.69 (0.04)
+  obs seed + RDC                             0.30           0.30     0.02         -0.39 (0.04)
+  CCTS (obs seed, no RDC)                    0.69           0.69     0.04         +0.00 (0.00)
+  consistency-copy seed + RDC                0.79           0.79     0.04         +0.09 (0.06)
+  consistency-copy seed, no RDC              4.47           4.52     0.11         +3.82 (0.11)
+
+  --- Final cumulative regret vs log size (n_obs = n_exp) ---
+       n               CCTS               TS_C
+      25       2.87 (0.13)       1.31 (0.23)
+      50       1.34 (0.09)       0.48 (0.10)
+     100       0.87 (0.08)       0.42 (0.35)
+     200       0.57 (0.05)       0.00 (0.00)
+     400       0.54 (0.05)       0.00 (0.00)
 
   Output files:
-     /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_combined.png
-     /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_results.tex
-     /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_mabuc_results.tex
-  Figure saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_combined.png
-  Table saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_results.tex
-  Table saved: /Users/pranjal/Code/rl/ch10b_rl_for_ci/sims/causal_bandit_mabuc_results.tex
+     /Users/pranjal/Code/rl-sim-proofs/ch10c_adaptive_experiments/sims/causal_bandit_combined.png
+     /Users/pranjal/Code/rl-sim-proofs/ch10c_adaptive_experiments/sims/causal_bandit_results.tex
+     /Users/pranjal/Code/rl-sim-proofs/ch10c_adaptive_experiments/sims/causal_bandit_mabuc_results.tex
+  Figure saved: /Users/pranjal/Code/rl-sim-proofs/ch10c_adaptive_experiments/sims/causal_bandit_combined.png
+  Table saved: /Users/pranjal/Code/rl-sim-proofs/ch10c_adaptive_experiments/sims/causal_bandit_results.tex
+  Table saved: /Users/pranjal/Code/rl-sim-proofs/ch10c_adaptive_experiments/sims/causal_bandit_mabuc_results.tex
