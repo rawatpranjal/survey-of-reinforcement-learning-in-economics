@@ -1,9 +1,13 @@
-\begin{tabular}{lr}
+\begin{tabular}{lrr}
 \toprule
-Algorithm & Cumulative regret at $T = 1000$ \\
+Algorithm & Regret at $T = 100$ & Regret at $T = 1000$ \\
 \midrule
-Context-conditional TS (CCTS) & 0.66 (0.04) \\
-Full $\mathrm{TS}_C$ \citep{bareinboim2015mabuc} & 4.49 (0.10) \\
-Vanilla Thompson sampling & 200.49 (0.28) \\
+$\mathrm{TS}_C$: ETT seed $+$ RDC \citep{bareinboim2015mabuc} & 0.00 & 0.00 (0.00) \\
+ETT seed, no RDC & 0.00 & 0.00 (0.00) \\
+Observational seed $+$ RDC & 0.30 & 0.30 (0.02) \\
+CCTS (observational seed, no RDC) & 0.69 & 0.69 (0.04) \\
+Consistency-copy seed $+$ RDC & 0.79 & 0.79 (0.04) \\
+Consistency-copy seed, no RDC & 4.47 & 4.52 (0.11) \\
+Vanilla Thompson sampling & 19.98 & 200.49 (0.28) \\
 \bottomrule
 \end{tabular}
