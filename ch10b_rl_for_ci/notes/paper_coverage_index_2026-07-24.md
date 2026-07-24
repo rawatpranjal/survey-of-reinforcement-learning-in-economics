@@ -13,7 +13,7 @@ Every row has a full-text artifact; claim-level locations are recorded in
 
 | Citation key | Role | Chapter use and fairness note | Full-text artifact | Status |
 |---|---|---|---|---|
-| `murphy2003dtr` | Foundational | Defines DTR backward induction and motivates it with Fast Track. The chapter uses the trial's intervention-versus-control design, semester-level family-functioning assessment, adaptive home-visiting rule, and overtreatment concerns to explain why the policy target differs from a fixed-protocol contrast. The chapter states its own formal regularity conditions. | `murphy2003dtr.md` | Full text checked |
+| `murphy2003dtr` | Foundational | Defines DTR backward induction and motivates it with Fast Track. The chapter uses the trial's intervention-versus-control design, semester-level family-functioning assessment, adaptive home-visiting rule, and overtreatment concerns to explain why the policy target differs from a fixed-protocol contrast. It also maps Murphy's observed sequence and potential variables to the running example without selecting a terminal endpoint that the paper leaves generic. The chapter states its own formal regularity conditions. | `murphy2003dtr.md` | Full text checked |
 | `schulte2014qlearning` | Foundational bridge | Connects causal DTR notation to Q-learning and A-learning. Used for the translation, not a priority claim. | `schulte2014qlearning.md` | Full text checked |
 | `robins2000msm` | Foundational | Supports longitudinal IPTW/MSMs under treatment-confounder feedback. Used as a benchmark, not the chapter’s lead estimator. | `robins2000msm.md` | Full text checked |
 | `robins2004snmm` | Foundational | Supplies counterfactual blip functions and g-estimation for SNMMs. | `robins2004snmm.md` | Full text checked |

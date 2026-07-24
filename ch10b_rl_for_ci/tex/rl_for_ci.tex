@@ -23,13 +23,13 @@ The chapter proves this equivalence and develops off-policy evaluation for a fix
 \label{subsec:gmethods_bridge}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-An A/B test assigns one of two treatment protocols and compares their average outcomes. Fast Track already has this familiar design at the program level. Children with elevated behavioral problems in kindergarten are randomized either to a complex prevention program or to control. That comparison estimates the average effect of offering the program as a package. It does not determine how much support a particular family should receive next semester after its needs have changed. \citet{murphy2003dtr} uses this decision inside the program to motivate dynamic treatment regimes.
+Fast Track is a randomized prevention study for children with elevated behavioral problems identified in kindergarten. Children are assigned either to a complex prevention program or to control. The program seeks to prevent or reduce conduct disorders and drug use. Within the intervention, a home-visiting component seeks to improve family functioning. \citet{murphy2003dtr} uses this component to motivate dynamic treatment regimes.
 
-The adaptive component concerns home visiting. The program seeks to prevent or reduce conduct disorders and drug use, while the home-visiting component focuses on family functioning. Beginning in the spring semester of first grade, a family counselor completes six questions about parenting quality and family functioning at the end of each semester. Their sum forms a family-functioning score whose lower values indicate greater need. The score determines the number of home visits offered in the following semester, so a family's treatment can change over time. For regime analysis, the longitudinal record combines pretreatment information, successive family-functioning scores, the visit levels assigned after those scores, and a terminal outcome.
+Beginning in the spring semester of first grade, a family counselor completes six questions about parenting quality and family functioning at the end of each semester. Their sum is the family's current status, with lower scores indicating greater need. This status determines the number of home visits in the following semester. A family's visit level can therefore change as its recorded needs change. The record begins with pretreatment information, then alternates between the measured family status and assigned visit level, and ends with a terminal child or family outcome.
 
-A single assignment to a high-visit or low-visit schedule at baseline would compare two fixed schedules even when family needs later diverge. The Fast Track team also avoids giving every family the highest visit level because it worries that excessive visiting can foster dependency, pejorative labeling, and attrition. Nor can the analyst simply compare families that receive many visits with those that receive few. The same score that leads to more visits also marks worse family functioning, so the groups already differ before the later outcome is measured. The overall randomized comparison remains useful for the effect of the full program. Learning the home-visiting rule instead requires repeated comparisons among families with the same recorded history.
+An A/B test assigns each participant to one fixed protocol and compares average outcomes across the two groups. Fast Track uses that design to estimate the effect of the full prevention program relative to control. The home-visiting question is different because it asks how many visits to assign after each new family assessment. Assigning a high-visit or low-visit schedule at baseline would compare two fixed schedules even when family needs later diverge. The Fast Track team also avoids giving every family the highest level because it worries that excessive visiting can foster dependency, pejorative labeling, and attrition. A direct comparison of families with many and few visits is not an A/B comparison either, since the lower family-functioning scores that trigger more visits already separate the groups before their later outcomes are measured.
 
-This structure recurs whenever treatment or policy involves a sequence of decisions. At each of $K$ decision points the analyst observes the subject's state $S_k$, including covariates, past treatments, and past responses, chooses treatment $A_k$, and observes the next state. A scalar outcome $Y$ follows the final decision. The target is the rule $\pi^* = (\pi_1^*, \ldots, \pi_K^*)$ that maximises the expected outcome rather than the marginal effect of one fixed protocol.
+Murphy writes this longitudinal record as $S_1,A_1,S_2,\ldots,A_K,Y$. In the Fast Track example, $S_k$ is the family information available at the $k$th semester decision, $A_k$ is the home-visit level assigned for the coming semester, and $Y$ is the terminal child or family outcome chosen for analysis. A dynamic treatment regime $\pi=(\pi_1,\ldots,\pi_K)$ maps the information available at each decision to a visit level. The target is the regime $\pi^*$ that maximises the expected terminal outcome. The potential-outcome notation makes the counterfactual states and outcomes under other visit sequences explicit.
 
 \subsubsection*{Sequential treatments as a graph}
 
@@ -41,6 +41,7 @@ Figure~\ref{fig:dtr_dags} separates three objects that recur in the analysis. Po
 \caption{Three representations of sequential treatment. Panel (a) shows fixed potential outcomes and the noncausal consistency link that selects the realized response. Panel (b) shows a two-stage treatment graph, with the treatment-confounder feedback through $S_2$ highlighted. Panel (c) constructs the finite-horizon decision process whose state is the full observed history.}
 \label{fig:dtr_dags}
 \end{figure}
+\FloatBarrier
 
 \subsubsection*{Potential outcomes and identification}
 
@@ -49,12 +50,16 @@ $\bar A_k=(A_1,\ldots,A_k)$ and $\bar S_k=(S_1,\ldots,S_k)$ denote the treatment
 \bar H_k(\bar a_{k-1})
 =\{S_1,S_2(a_1),\ldots,S_k(\bar a_{k-1}),\bar a_{k-1}\}.
 \]
+In the running example, $\bar H_k$ contains the family measures and visit levels recorded before the $k$th assignment, and $\bar a_k$ is a hypothetical sequence of visit levels through that semester. The potential state $S_{k+1}(\bar a_k)$ is the family status that would be recorded at the next decision time if the family had received $\bar a_k$. The potential outcome $Y(\bar a_K)$ is the terminal child or family outcome under a complete hypothetical visit sequence. Only the potential states and outcome under the visit sequence actually received are observed.
+
 A dynamic treatment regime $\pi=(\pi_1,\ldots,\pi_K)$ is a sequence of maps from histories to actions. It induces counterfactual actions recursively through $A_k^\pi=\pi_k(\bar H_k^\pi)$, counterfactual histories $\bar H_k^\pi=\bar H_k(\bar A_{k-1}^\pi)$, and outcome $Y^\pi=Y(\bar A_K^\pi)$. The value and optimization target are
 \[
 V(\pi)=\mathbb E[Y^\pi],
 \qquad
 \pi^*\in\arg\max_{\pi\in\Pi}V(\pi).
 \]
+For Fast Track, $\pi_k$ takes the family's recorded history and selects the coming semester's visit level. The counterfactual outcome $Y^\pi$ is the terminal outcome if that rule is used at every semester decision.
+
 This notation distinguishes a fixed treatment path from a regime that selects later treatments using counterfactual histories \citep{murphy2003dtr, schulte2014qlearning}.
 For a realized prefix $\bar a_{k-1}$,
 $Y(\bar a_{k-1},\pi_{k:K})$ denotes the same terminal potential
@@ -63,10 +68,10 @@ recursively by $\pi_{k:K}$.
 
 Identification rests on four assumptions.
 \begin{enumerate}
-\item \emph{Stable treatment versions and no interference.} Each action label denotes one well-defined intervention, and one subject's potential states and outcome do not depend on other subjects' assignments. This is the longitudinal stable-unit-treatment-value condition.
-\item \emph{Consistency.} If the realized treatment history equals $\bar a_k$, then $S_{k+1}=S_{k+1}(\bar a_k)$, and if $\bar A_K=\bar a_K$, then $Y=Y(\bar a_K)$. Observed variables therefore reveal the potential variables under the path actually taken.
-\item \emph{Sequential exchangeability}, also called sequential ignorability or no unmeasured confounding. At each $k$, conditional on $\bar H_k$, the assigned action is independent of the full collection of future potential states and outcomes under every continuation path. Treatment may depend on the recorded history, but not on omitted predictors of both treatment and future outcomes.
-\item \emph{Target-policy positivity.} For every history reached with positive probability under $\pi$, $\pi_k(a\mid\bar h_k)>0$ implies $\mathbb P(A_k=a\mid\bar H_k=\bar h_k)>0$. Identification requires nonzero support. Stable estimation requires the stronger practical condition that these probabilities remain bounded away from zero.
+\item \emph{Stable treatment versions and no interference.} Each action label denotes one well-defined intervention, and one subject's potential states and outcome do not depend on other subjects' assignments. In the running example, a given visit level must denote the same intervention across families, and one family's visits cannot change another family's outcome. This is the longitudinal stable-unit-treatment-value condition.
+\item \emph{Consistency.} If the realized treatment history equals $\bar a_k$, then $S_{k+1}=S_{k+1}(\bar a_k)$, and if $\bar A_K=\bar a_K$, then $Y=Y(\bar a_K)$. The observed next family status and terminal outcome therefore equal the potential variables under the visit sequence actually received.
+\item \emph{Sequential exchangeability}, also called sequential ignorability or no unmeasured confounding. At each $k$, conditional on $\bar H_k$, the assigned action is independent of the full collection of future potential states and outcomes under every continuation path. The visit decision may depend on the recorded family history, but not on an omitted family risk that also predicts the later outcome.
+\item \emph{Target-policy positivity.} For every history reached with positive probability under $\pi$, $\pi_k(a\mid\bar h_k)>0$ implies $\mathbb P(A_k=a\mid\bar H_k=\bar h_k)>0$. Every visit level that the target regime might assign must occur among families with the relevant recorded history. Stable estimation requires the stronger practical condition that these probabilities remain bounded away from zero.
 \end{enumerate}
 The first three assumptions give causal meaning to observed conditional laws, while positivity determines which regimes those laws can identify. A Markov restriction is separate. It permits compression of the full history into a state but is not itself a substitute for exchangeability. Estimation further requires independent trajectories or an explicit time-series design, finite moments, and regularity conditions for the fitted nuisance functions. Chapter~\ref{section:causal_rl} treats identification when sequential exchangeability fails.
 

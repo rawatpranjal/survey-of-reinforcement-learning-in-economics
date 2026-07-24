@@ -29,14 +29,15 @@ SNMM application. Full text is also present for the two excluded Robins (1986)
 and Liu et al. (2018) citations, with the OCR limitation on Robins's
 mathematical notation recorded in the source header and claim ledger.
 
-The Dynamic Treatment Regimes section now starts from the familiar A/B test.
-It distinguishes Fast Track's randomized prevention-program comparison from
-the adaptive home-visiting decision inside the intervention. The added context
-states the trial arms, target population, outcomes, semester timing,
-family-functioning questionnaire, visit assignment, recorded longitudinal
-sequence, and the confounding in a naive comparison of families with many and
-few visits. These details were checked against Murphy's full text and added to
-the claim-source ledger.
+The Dynamic Treatment Regimes section now proceeds in linear order from the
+Fast Track population and trial arms to the semester-level home-visiting
+sequence, the limits of a one-time A/B comparison, and the abstract DTR
+notation. The formal potential-outcome section maps the histories, actions,
+potential states, potential terminal outcomes, regimes, and identification
+assumptions back to the home-visiting example. It keeps the terminal outcome
+generic because Murphy's formal setup does not select one Fast Track endpoint.
+These details were checked against Murphy's full text and added to the
+claim-source ledger.
 
 The four substantive empirical applications now contain three evidence-bearing
 paragraphs each. The ADHD SMART, HeartSteps, hemodiafiltration, and Project
