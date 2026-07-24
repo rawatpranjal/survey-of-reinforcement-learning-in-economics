@@ -46,13 +46,15 @@
     [0.002114, -0.000055]
     [-0.000055, 0.000339]
   Relative covariance error: 0.134
+  Cross-stage correlation (sandwich): -0.076
   Contrast psi_1 - psi_2: bias=-0.0034, mean analytic SE=0.0537, Monte Carlo SD=0.0506, SE ratio=1.060
+  Same contrast with the cross-stage block dropped: mean SE=0.0524, SE ratio=1.034, coverage=0.950, SE relative to joint=0.976
   Contrast 95% CI: coverage=0.950, tail misses=0.025/0.025
 
   Output files:
-     /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
-     /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
-     /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex
-  Figure saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
-  Table saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
-  Joint-inference table saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex
+     /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
+     /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
+     /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex
+  Figure saved: /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
+  Table saved: /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
+  Joint-inference table saved: /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex

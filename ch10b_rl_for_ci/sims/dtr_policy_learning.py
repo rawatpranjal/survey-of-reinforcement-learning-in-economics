@@ -162,12 +162,8 @@ def policy_value(c1, c2):
     def branch_integrand(x, a1):
         mean = RHO * x + TREAT_SHIFT * a1
         u = (c2 - mean) / SIGMA_ETA
-        stage2 = TAU2 * (
-            (C2_STAR - mean) * norm.cdf(u) + SIGMA_ETA * norm.pdf(u)
-        )
-        conditional_value = (
-            1.0 - 0.5 * mean + DELTA1 * a1 * (C_DIR - x) + stage2
-        )
+        stage2 = TAU2 * ((C2_STAR - mean) * norm.cdf(u) + SIGMA_ETA * norm.pdf(u))
+        conditional_value = 1.0 - 0.5 * mean + DELTA1 * a1 * (C_DIR - x) + stage2
         return conditional_value * norm.pdf(x)
 
     treated = quad(branch_integrand, -np.inf, c1, args=(1.0,), epsabs=1e-10)[0]
@@ -178,9 +174,7 @@ def policy_value(c1, c2):
 def _stage2_gain(mean, threshold=C2_STAR):
     """Expected stage-2 treatment gain under a threshold rule."""
     u = (threshold - mean) / SIGMA_ETA
-    return TAU2 * (
-        (C2_STAR - mean) * norm.cdf(u) + SIGMA_ETA * norm.pdf(u)
-    )
+    return TAU2 * ((C2_STAR - mean) * norm.cdf(u) + SIGMA_ETA * norm.pdf(u))
 
 
 def stage1_advantage(x):
@@ -208,13 +202,7 @@ def behavior_value_quadrature(n_nodes):
         s21 = RHO * x + TREAT_SHIFT * a1 + SIGMA_ETA * e1
         s22 = RHO * z + SIGMA_ETA * e2
         p2 = sigmoid(BETA_PROP * (s21 + s22))
-        base = (
-            1.0
-            - 0.5 * s21
-            + 0.4 * z
-            + 0.4 * s22
-            + DELTA1 * a1 * (C_DIR - x)
-        )
+        base = 1.0 - 0.5 * s21 + 0.4 * z + 0.4 * s22 + DELTA1 * a1 * (C_DIR - x)
         value += prob1 * (base + p2 * TAU2 * (C2_STAR - s21))
     return float(np.sum(joint_w * value))
 
@@ -533,6 +521,10 @@ def run_misspec(cfg):
     c1_star = float(brentq(stage1_advantage, -6.0, 6.0))
     V_star = policy_value(c1_star, C2_STAR)
     regret = {m: np.zeros((len(regimes), n_seeds)) for m in METHODS}
+    # Learned thresholds per cell. Regret alone cannot say whether a method
+    # survives misspecification because it recovers the right rule or because the
+    # value surface is flat near the optimum; the thresholds distinguish the two.
+    thresholds = {m: np.zeros((len(regimes), n_seeds, 2)) for m in METHODS}
     for r, (label, q_ok, e_ok) in enumerate(regimes):
         for rep in range(n_seeds):
             rng = np.random.default_rng(
@@ -542,12 +534,15 @@ def run_misspec(cfg):
             for m in METHODS:
                 v = policy_value(*res[m])
                 regret[m][r, rep] = V_star - v
+                thresholds[m][r, rep] = res[m]
         print(
             f"    {label}: "
             + ", ".join(f"{m} regret {regret[m][r].mean():.4f}" for m in METHODS)
         )
     return {
         "regret": regret,
+        "thresholds": thresholds,
+        "oracle_thresholds": (c1_star, C2_STAR),
         "regime_labels": [r[0] for r in regimes],
         "V_star": V_star,
     }
@@ -684,6 +679,21 @@ def generate_outputs(data):
         slopes[m] = slope
         print(f"  log-log regret slope, {METHOD_LABELS[m]}: {slope:.2f}")
     print()
+    # The theorem bounds regret by O_p(kappa(Pi) n^{-1/2}). A fitted slope is
+    # consistent with that bound but is not evidence for it, since any steeper
+    # decay also satisfies it. Multiplying by sqrt(n) turns the bound into a
+    # statement that can be read off directly: the product is bounded in n.
+    print("  Regret x sqrt(n), the direct reading of an O_p(n^{-1/2}) bound:")
+    print(f"  {'n':>8}  " + "".join(f"{METHOD_LABELS[m]:>18}" for m in METHODS))
+    for i, nn in enumerate(n_grid):
+        row = f"  {int(nn):>8}  "
+        for m in METHODS:
+            r = sweep["regret"][m][i]
+            row += f"{r.mean() * np.sqrt(nn):>12.4f}" + (
+                f" ({r.std(ddof=1) / np.sqrt(len(r)) * np.sqrt(nn):.4f})"
+            )
+        print(row)
+    print()
     print(
         f"  Misspecification design at n = {MISSPEC_CONFIG['N_MISSPEC']}, "
         f"{MISSPEC_CONFIG['N_SEEDS']} seeds (mean regret):"
@@ -693,6 +703,24 @@ def generate_outputs(data):
         row = f"  {label:>14}  "
         for m in METHODS:
             row += f"{misspec['regret'][m][r].mean():>10.4f}"
+        print(row)
+    print()
+    # Learned thresholds against the oracle pair. Policy learning needs only the
+    # SIGN of the stage-wise contrast, not its level, so a nuisance error that
+    # shifts the contrast without reordering it leaves the argmax where it was.
+    # These columns show whether a method that survives a cell recovers the rule
+    # or merely lands somewhere the value surface is flat.
+    c1_star, c2_star = misspec["oracle_thresholds"]
+    print(
+        f"  Learned thresholds (mean over seeds); oracle "
+        f"c1* = {c1_star:.4f}, c2* = {c2_star:.4f}:"
+    )
+    print(f"  {'regime':>14}  " + "".join(f"{m + ' (c1, c2)':>22}" for m in METHODS))
+    for r, label in enumerate(misspec["regime_labels"]):
+        row = f"  {label:>14}  "
+        for m in METHODS:
+            th = misspec["thresholds"][m][r]
+            row += f"{th[:, 0].mean():>10.3f},{th[:, 1].mean():>10.3f}"
         print(row)
     print()
 

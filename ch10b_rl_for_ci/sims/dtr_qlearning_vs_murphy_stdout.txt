@@ -15,6 +15,17 @@ Config:
   Stylized Fast Track home visiting: g-computation vs Q-learning
 ========================================================================
 
+  (Q0) Exact check of the equivalence identity (no sampling)
+    History-MDP states 56, value iteration reached its fixed point in 3 sweeps.
+    Murphy backward recursion        V = 3.581999999999999
+    Bellman optimality, value iter   V = 3.581999999999999
+    g-formula at the optimal regime  V = 3.581999999999999
+    |gap| Bellman vs Murphy            0.000e+00
+    |gap| Bellman vs g-formula         0.000e+00
+    |gap| Murphy vs g-formula          0.000e+00
+    |gap| worst over random regimes    8.882e-16
+    Identity holds to floating point: True (optimal regime, and 200 random regimes)
+
   (Q1) Tabular V(pi_hat)/V* vs cohort size N [Q-learn 100 replays, alpha=0.1]
   Tabular Oracle V* = 3.5820
        N     Plug-in g-comp (MC SE)       Q-learn mean (MC SE)
@@ -44,5 +55,5 @@ Config:
   Paired seed-wise contrast at largest N (DQN - NN-FQI): -0.0101 (MC SE 0.0013)
   NN-FQI realized epochs per stage (mean over seeds/stages): N=500: 1000, N=2000: 1000, N=5000: 1000, N=20000: 1000
 
-  Figure: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy.png
-  Table:  /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex
+  Figure: /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy.png
+  Table:  /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex
