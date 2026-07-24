@@ -29,6 +29,14 @@ SNMM application. Full text is also present for the two excluded Robins (1986)
 and Liu et al. (2018) citations, with the OCR limitation on Robins's
 mathematical notation recorded in the source header and claim ledger.
 
+The four substantive empirical applications now contain three evidence-bearing
+paragraphs each. The ADHD SMART, HeartSteps, hemodiafiltration, and Project
+STAR blocks state the study design, explain how the estimator maps to the
+preceding theory, and report quantitative results with uncertainty or its
+absence. Every added number has a full-text location in the claim-source
+ledger. Text extracted from the standalone PDF contains no internal script
+name, simulation path, local filesystem path, or source-note reference.
+
 All four numerical simulations use one stylized Fast Track-inspired
 home-visiting context. Each writeup states that the design is a methodological
 analogue rather than a reconstruction of the trial. Each simulation appears at
@@ -139,15 +147,15 @@ schematic.
 - All five scripts compile with `python -m py_compile`.
 - All 12 generated figures and result tables round-trip byte-identically
   through `--plots-only`.
-- The standalone chapter is 34 pages. It has no undefined citations, no
+- The standalone chapter is 35 pages. It has no undefined citations, no
   internal undefined references, and no overfull boxes. Its unresolved
   references point only to chapters omitted by the standalone driver.
 - The full book is 306 pages with no undefined citations or references, LaTeX
   errors, or overfull boxes.
-- The chapter PDF was inspected page by page at the diagram, theorem, and four
-  simulation blocks, both new inference tables, the policy-inference caveat,
-  and the open-issues table. Labels are legible and no result is detached from
-  its section.
+- The chapter PDF was inspected page by page at the diagram, theorem, four
+  empirical applications, four simulation blocks, both new inference tables,
+  the policy-inference caveat, and the open-issues table. Labels are legible
+  and no result is detached from its section.
 - The arXiv package compiles independently in a fresh temporary directory to
   306 pages. The final tarball is 18 MB with 217 archive entries. Its manifest
   includes every ch10b figure and table and the previously omitted full-book

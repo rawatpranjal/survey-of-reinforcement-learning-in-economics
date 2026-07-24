@@ -17,7 +17,7 @@ Every row has a full-text artifact; claim-level locations are recorded in
 | `schulte2014qlearning` | Foundational bridge | Connects causal DTR notation to Q-learning and A-learning. Used for the translation, not a priority claim. | `schulte2014qlearning.md` | Full text checked |
 | `robins2000msm` | Foundational | Supports longitudinal IPTW/MSMs under treatment-confounder feedback. Used as a benchmark, not the chapter’s lead estimator. | `robins2000msm.md` | Full text checked |
 | `robins2004snmm` | Foundational | Supplies counterfactual blip functions and g-estimation for SNMMs. | `robins2004snmm.md` | Full text checked |
-| `laber2014dtrchallenges` | Lead application and inference | ADHD SMART example shows why an estimated rule can be more decisive than its adaptive confidence intervals. | `laber-2014-dtr-technical-challenges.md` | Newly sourced; full text checked |
+| `laber2014dtrchallenges` | Lead application and inference | Three-paragraph ADHD SMART application covers the sample and treatment sequence, fitted rules and adaptive intervals, and the nonregular inference problem. | `laber-2014-dtr-technical-challenges.md` | Newly sourced; full text checked |
 | `wangtom2025dtrtutorial` | Supporting synthesis | Supports nonregular DTR inference options and later-stage practical interpretation. Bibliographic key retained although publication year is now 2026. | `wang-tom-2025-optimal-dtr-tutorial.md` | Newly refreshed; full text checked |
 | `kaushik2022sepsiscql` | Narrative | Retrospective sepsis CQL study. Mentioned as offline analysis, not clinical benefit evidence. | `kaushik2022sepsiscql.md` | Full text checked |
 | `kondrup2023deepvent` | Narrative | Retrospective ventilation policy study. No deployment claim. | `kondrup2023deepvent.md` | Full text checked |
@@ -38,16 +38,16 @@ Every row has a full-text artifact; claim-level locations are recorded in
 | `sakhi2024logsmoothing` | Supporting safety | Log-smoothed pessimistic OPE and selection bounds. | `sakhi-2024-logarithmic-smoothing-pessimistic-ope.md` | Full text checked |
 | `saito2021robustope` | Supporting practice | Estimator and hyperparameter robustness across target policies. | `saito-2021-evaluating-robustness-ope.md` | Full text checked |
 | `udagawa2023pas` | Supporting practice | Policy-adaptive estimator selection. Kept distinct from hyperparameter robustness. | `udagawa-2023-policy-adaptive-estimator-selection-ope.md` | Full text checked |
-| `liaoMurphy2021longterm` | Lead application | Genuinely sequential HeartSteps OPE with policy contrasts and 95 percent confidence intervals. | `liao-2021-long-term-ope-mobile-health.md` | Newly sourced; full text checked |
+| `liaoMurphy2021longterm` | Lead application | Three-paragraph HeartSteps application covers the micro-randomized design, stationary density-ratio estimator, policy values, contrasts, and cautious step-count interpretation. | `liao-2021-long-term-ope-mobile-health.md` | Newly sourced; full text checked |
 | `lewisSyrgkanis2021dynamicDML` | Lead theory | Dynamic DML moments, joint sandwich covariance, product-rate normality, and fixed-policy value bridge. It has simulations but no real-data application. | `lewis2021dml.md` | Full text checked |
 | `chernozhukov2023automatic` | Lead supporting theory | Recursive Riesz representation for nested means, including the operational influence-score standard error. | `chernozhukov2023automatic.md` | Full text checked |
 | `fosterSyrgkanis2023orthogonal` | Supporting theory | General second-order nuisance-error principle. Kept in a scope footnote. | `foster2023orthogonal.md` | Full text checked |
-| `jaman2025penalizedg` | Empirical bridge | Repeated-session SNMM application with sandwich SEs. Explicitly not described as the Lewis-Syrgkanis estimator. | `jaman-2025-penalized-g-estimation-repeated-outcomes.md` | Newly sourced; full text checked |
+| `jaman2025penalizedg` | Empirical bridge | Three-paragraph repeated-session SNMM application reports the cohort, selected blip estimates and sandwich SEs, and the post-selection limitation. It is not described as the Lewis-Syrgkanis estimator. | `jaman-2025-penalized-g-estimation-repeated-outcomes.md` | Newly sourced; full text checked |
 | `jaman2025postselectiong` | Inference bridge | Corrects the selected-model uncertainty left unresolved by ordinary post-selection sandwich intervals. | `jaman-2025-valid-post-selection-g-estimation.md` | Newly sourced; full text checked |
 | `kitagawa2018who` | Foundational precursor | Static empirical welfare maximization and minimax regret. | `kitagawa2018who.md` | Full text checked |
 | `athey2021policy` | Foundational precursor | Cross-fitted doubly robust policy scores and best-in-class regret. | `athey2021policy.md` | Full text checked |
 | `zhou2023offline` | Supporting | Multi-action exact search over finite-depth decision trees. | `zhou2023offline.md` | Full text checked |
-| `sakaguchi2024dynamicpolicy` | Lead theory and application | Dynamic AIPW backward induction, regret theorem, and the two-stage Project STAR application. The empirical contrast lacks reported SEs, which the chapter now flags. | `sakaguchi2024dynamicpolicy.md` | Full text checked |
+| `sakaguchi2024dynamicpolicy` | Lead theory and application | Dynamic AIPW backward induction, regret theorem, and a three-paragraph Project STAR application covering design, fitted trees, value contrasts, and missing empirical SEs. | `sakaguchi2024dynamicpolicy.md` | Full text checked |
 | `bannon2020causality` | Perspective | Explains why causal identification and batch RL planning are complementary. Used to frame open issues, not as a technical theorem source. | `bannon-2020-causality-batch-rl.md` | Newly sourced; full text checked |
 
 ## Coverage decisions
