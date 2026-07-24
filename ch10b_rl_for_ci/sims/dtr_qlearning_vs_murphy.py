@@ -379,8 +379,8 @@ ORACLE_OUTER_GH_NODES_HD = 192
 N_GRID_HD = [500, 2000, 5000, 20000]
 N_SEEDS_HD = 20
 N_FQI_EPOCHS = 1000  # cap; early stop on full-batch MSE plateau (see _fit_full_batch)
-N_DQN_STEPS = 16000
-TARGET_UPDATE = 500  # hard-update interval for the DQN stage-1 target network
+DQN_EPOCHS = 50
+TARGET_UPDATE_EPOCHS = 5
 BATCH_SIZE_HD = 64
 LR_NN = 1e-3
 HIDDEN_DIM = 64
@@ -419,9 +419,10 @@ FQI_HD_CONFIG = {
 # stale cache silently survives.
 DQN_HD_CONFIG = {
     **SHARED_CONFIG_HD,
-    "N_DQN_STEPS": N_DQN_STEPS,
+    "DQN_EPOCHS": DQN_EPOCHS,
     "BATCH_SIZE_HD": BATCH_SIZE_HD,
-    "TARGET_UPDATE": TARGET_UPDATE,
+    "TARGET_UPDATE_EPOCHS": TARGET_UPDATE_EPOCHS,
+    "train_budget": "fixed_data_passes_v4",
     "seed_scheme": "cohort_N100_paired_v2",
 }
 
@@ -525,6 +526,8 @@ def compute_oracle_hd(cfg):
     )
     V_star_mc = float(Y_mean.mean())
     V_star_mc_se = float(Y_mean.std() / np.sqrt(M))
+    if abs(V_star_mc - V_star) > 4.0 * V_star_mc_se:
+        raise RuntimeError("High-dimensional oracle failed its independent MC check")
     # Also compute V(behavior) for reference
     A1_b = (rng.random(M) < sigmoid(S1 @ GAMMA_BEH)).astype(np.int32)
     eta_b = SIGMA_ETA_HD * rng.normal(size=(M, P_FEAT))
@@ -718,6 +721,17 @@ def run_fqi_hd_sweep(cfg):
 def run_dqn_hd_sweep(cfg):
     V = np.zeros((len(cfg["N_GRID_HD"]), cfg["N_SEEDS_HD"]))
     for i, N in enumerate(cfg["N_GRID_HD"]):
+        n_steps = int(np.ceil(cfg["DQN_EPOCHS"] * N / cfg["BATCH_SIZE_HD"]))
+        target_update = max(
+            1,
+            int(
+                np.ceil(
+                    cfg["TARGET_UPDATE_EPOCHS"]
+                    * N
+                    / cfg["BATCH_SIZE_HD"]
+                )
+            ),
+        )
         for s in tqdm(
             range(cfg["N_SEEDS_HD"]),
             desc=f"  DQN N={N}",
@@ -734,13 +748,13 @@ def run_dqn_hd_sweep(cfg):
                 S2,
                 A2,
                 Y,
-                cfg["N_DQN_STEPS"],
+                n_steps,
                 cfg["BATCH_SIZE_HD"],
                 cfg["LR_NN"],
                 cfg["HIDDEN_DIM"],
                 seed=s,
                 rng=train_rng,
-                target_update=cfg["TARGET_UPDATE"],
+                target_update=target_update,
             )
             V[i, s] = evaluate_policy_hd(Q1, Q2, seed=s + 100)
     return {"V": V, "N_grid": list(cfg["N_GRID_HD"])}
@@ -828,6 +842,36 @@ def compute_data(force=None):
 # ============================================================================
 # Outputs
 # ============================================================================
+def validate_results(data):
+    """Hard gates for oracle agreement and non-vacuous policy recovery."""
+    oracle_hd = data["oracle_hd"]
+    if abs(oracle_hd["V_star_mc"] - oracle_hd["V_star"]) > 4.0 * oracle_hd[
+        "V_star_mc_se"
+    ]:
+        raise RuntimeError("High-dimensional oracle failed its MC check")
+
+    for key in ("murphy", "qlearn_N", "qlearn_epochs", "fqi_hd", "dqn_hd"):
+        if not np.all(np.isfinite(data[key]["V"])):
+            raise RuntimeError(f"Non-finite policy values in {key}")
+
+    v_tab = data["oracle"]["V_star"]
+    if data["murphy"]["V"][-1].mean() / v_tab < 0.99:
+        raise RuntimeError("Plug-in g-computation does not recover the tabular oracle")
+    if data["qlearn_N"]["V"][-1].mean() / v_tab < 0.99:
+        raise RuntimeError("Tabular Q-learning does not recover the oracle")
+
+    v_hd = oracle_hd["V_star"]
+    behavior = oracle_hd["V_behavior"] / v_hd
+    for key in ("fqi_hd", "dqn_hd"):
+        means = data[key]["V"].mean(axis=1) / v_hd
+        if means[-1] < 0.95:
+            raise RuntimeError(f"{key} remains too far below the high-dimensional oracle")
+        if means[-1] <= means[0]:
+            raise RuntimeError(f"{key} does not improve with cohort size")
+        if means[-1] - behavior < 0.10:
+            raise RuntimeError(f"{key} does not materially improve on behavior")
+
+
 def generate_outputs(data):
     oracle = data["oracle"]
     murphy = data["murphy"]
@@ -873,7 +917,8 @@ def generate_outputs(data):
     print(
         f"  (Q3) High-dim V(pi_hat)/V* vs cohort size N "
         f"[FQI <= {N_FQI_EPOCHS} full-batch epochs with early stop, "
-        f"DQN {N_DQN_STEPS} minibatch steps, target update every {TARGET_UPDATE}]"
+        f"DQN {DQN_EPOCHS} data passes, target update every "
+        f"{TARGET_UPDATE_EPOCHS} passes]"
     )
     print(
         f"  High-dim Oracle V* = {V_star_hd:.4f} "
@@ -992,7 +1037,7 @@ def generate_outputs(data):
     ax.set_xscale("log")
     ax.set_xlabel(r"Cohort size $N$")
     ax.set_ylabel(r"$V(\hat\pi) / V^*$")
-    ax.set_title(rf"(Q3) High dim ($p={P_FEAT}$): NN analogues agree")
+    ax.set_title(rf"(Q3) Continuous state ($p={P_FEAT}$): policy recovery")
     ax.legend(frameon=False, loc="lower right", fontsize=9)
 
     fig.tight_layout()
@@ -1056,8 +1101,10 @@ def main():
     )
     print(
         f"  HIGH-DIM: p={P_FEAT}, N_seeds={N_SEEDS_HD}, N_GRID_HD={N_GRID_HD}, "
-        f"FQI epoch cap={N_FQI_EPOCHS} (early stop), DQN steps={N_DQN_STEPS}, "
-        f"target_update={TARGET_UPDATE}, hidden={HIDDEN_DIM}, lr={LR_NN}"
+        f"FQI epoch cap={N_FQI_EPOCHS} (early stop), "
+        f"DQN data passes={DQN_EPOCHS}, "
+        f"target update passes={TARGET_UPDATE_EPOCHS}, "
+        f"hidden={HIDDEN_DIM}, lr={LR_NN}"
     )
     print(
         f"  HIGH-DIM DGP: T_decay={T_DECAY}, delta={DELTA_HD}, "
@@ -1072,6 +1119,7 @@ def main():
         data = compute_data()
     else:
         data = compute_data(force=force)
+    validate_results(data)
     if not args.data_only:
         generate_outputs(data)
 

@@ -69,6 +69,7 @@ DGP_PARAMS = {
 BEHAVIOR_GH_NODES = 20
 PROP_CLIP = 0.01
 VALUE_METHOD = "adaptive_quad_split_at_c1_v2"
+NUISANCE_SCHEME = "outer_fold_recursive_fqe_v2"
 
 ORACLE_CONFIG = {
     **DGP_PARAMS,
@@ -83,6 +84,7 @@ SWEEP_CONFIG = {
     "K_FOLDS": 2,
     "PROP_CLIP": PROP_CLIP,
     "VALUE_METHOD": VALUE_METHOD,
+    "NUISANCE_SCHEME": NUISANCE_SCHEME,
 }
 MISSPEC_CONFIG = {
     **DGP_PARAMS,
@@ -91,6 +93,7 @@ MISSPEC_CONFIG = {
     "K_FOLDS": 2,
     "PROP_CLIP": PROP_CLIP,
     "VALUE_METHOD": VALUE_METHOD,
+    "NUISANCE_SCHEME": NUISANCE_SCHEME,
 }
 
 RHO = DGP_PARAMS["RHO"]
@@ -249,6 +252,17 @@ def compute_oracle(cfg):
     V_beh_se = float(Yb.std() / np.sqrt(M))
     V_beh_quad = behavior_value_quadrature(cfg["BEHAVIOR_GH_NODES"])
 
+    # Independent numerical checks guard the two quantities against which all
+    # learned policies are scored. The Monte Carlo checks use their own seeds
+    # and are not reused anywhere in estimation.
+    if abs(mc_mean - V_star) > 4.0 * mc_se:
+        raise RuntimeError("Oracle quadrature failed its independent MC check")
+    if abs(V_beh - V_beh_quad) > 4.0 * V_beh_se:
+        raise RuntimeError("Behavior quadrature failed its independent MC check")
+    for dc1, dc2 in ((-0.10, 0.0), (0.10, 0.0), (0.0, -0.10), (0.0, 0.10)):
+        if policy_value(c1_star + dc1, C2_STAR + dc2) > V_star + 1e-10:
+            raise RuntimeError("Reported oracle is not locally optimal")
+
     treated1 = float(norm.cdf(c1_star))
     print(f"    c1* = {c1_star:.4f}, c2* = {C2_STAR:.4f}")
     print(f"    V* = {V_star:.6f} (adaptive quadrature split at c1*)")
@@ -325,6 +339,20 @@ def best_threshold(xvals, gains):
     return float(0.5 * (xs[j - 1] + xs[j]))
 
 
+def check_threshold_search():
+    """Compare the O(n log n) search with exhaustive prefix enumeration."""
+    rng = np.random.default_rng(20240724)
+    for n in (2, 7, 31):
+        x = rng.normal(size=n)
+        g = rng.normal(size=n)
+        c = best_threshold(x, g)
+        fast = np.sum(g[x < c])
+        order = np.argsort(x)
+        exhaustive = np.max(np.concatenate([[0.0], np.cumsum(g[order])]))
+        if not np.isclose(fast, exhaustive, atol=1e-12, rtol=1e-12):
+            raise RuntimeError("Exact threshold search failed exhaustive check")
+
+
 def run_rep(n, rng, k_folds, q_correct, e_correct):
     """One replication: generate a cohort, cross-fit nuisances, learn
     (c1, c2) with each method. Returns {method: (c1, c2)}."""
@@ -336,6 +364,7 @@ def run_rep(n, rng, k_folds, q_correct, e_correct):
     q2_hat_a = np.zeros((n, 2))  # Q2 at A2 = 0, 1
     e2_hat = np.zeros(n)  # P(A2 = 1 | H2)
     e1_hat = np.zeros(n)  # P(A1 = 1 | H1)
+    beta2_by_fold = {}
     for k in range(k_folds):
         tr = fold != k
         te = fold == k
@@ -343,6 +372,7 @@ def run_rep(n, rng, k_folds, q_correct, e_correct):
             q2_basis(x[tr], z[tr], A1[tr], s21[tr], s22[tr], A2[tr], q_correct),
             Y[tr],
         )
+        beta2_by_fold[k] = beta2
         q2_hat_obs[te] = (
             q2_basis(x[te], z[te], A1[te], s21[te], s22[te], A2[te], q_correct) @ beta2
         )
@@ -401,17 +431,32 @@ def run_rep(n, rng, k_folds, q_correct, e_correct):
                 match1 = (A1 == a).astype(float)
                 g1[a] = match1 / prob1 * w2Y
         else:
-            # Fitted-Q evaluation for the continuation under pi2: regress the
-            # plug-in continuation on the stage-1 basis, cross-fitted.
-            target = q2_hat_a[np.arange(n), pi2]
+            # Fitted-Q evaluation for the continuation under pi2. For each
+            # outer fold, both Q2 and Q1 are fitted without the scoring fold.
+            # Reusing the globally cross-fitted q2_hat_a as the Q1 training
+            # target would leak the scoring fold: with two folds, q2_hat_a on
+            # the Q1 training observations was fitted on the Q1 test fold.
             q1_hat_a = np.zeros((n, 2))
             q1_hat_obs = np.zeros(n)
             for k in range(k_folds):
                 tr = fold != k
                 te = fold == k
+                beta2_outer = beta2_by_fold[k]
+                target_tr = (
+                    q2_basis(
+                        x[tr],
+                        z[tr],
+                        A1[tr],
+                        s21[tr],
+                        s22[tr],
+                        pi2[tr].astype(float),
+                        q_correct,
+                    )
+                    @ beta2_outer
+                )
                 beta1 = ols(
                     q1_basis(x[tr], z[tr], A1[tr], q_correct, c2_hat),
-                    target[tr],
+                    target_tr,
                 )
                 q1_hat_obs[te] = (
                     q1_basis(x[te], z[te], A1[te], q_correct, c2_hat) @ beta1
@@ -537,6 +582,36 @@ def compute_data(force=None):
 # ============================================================================
 # Outputs
 # ============================================================================
+def validate_results(data):
+    """Hard gates for the oracle, robustness ablation, and learning signal."""
+    oracle = data["oracle"]
+    sweep = data["sweep_n"]
+    misspec = data["misspec"]
+    if abs(oracle["mc_mean"] - oracle["V_star"]) > 4.0 * oracle["mc_se"]:
+        raise RuntimeError("Oracle failed its independent MC check")
+    if abs(oracle["V_beh"] - oracle["V_beh_quad"]) > 4.0 * oracle["V_beh_se"]:
+        raise RuntimeError("Behavior value failed its quadrature/MC check")
+    if oracle["V_star"] - oracle["V_beh_quad"] < 0.50:
+        raise RuntimeError("Policy-learning DGP has no material welfare signal")
+
+    for method in METHODS:
+        r = sweep["regret"][method]
+        if not np.all(np.isfinite(r)) or np.min(r) < -1e-8:
+            raise RuntimeError(f"Invalid regret draws for {method}")
+        if r[-1].mean() >= r[0].mean():
+            raise RuntimeError(f"{method} does not improve from smallest to largest n")
+
+    labels = misspec["regime_labels"]
+    idx = {name: labels.index(name) for name in labels}
+    r = misspec["regret"]
+    if max(r["AIPW"][idx["Q wrong"]].mean(), r["AIPW"][idx["e wrong"]].mean()) > 0.05:
+        raise RuntimeError("AIPW failed a one-sided nuisance misspecification check")
+    if r["DM"][idx["Q wrong"]].mean() < 5.0 * r["DM"][idx["both correct"]].mean():
+        raise RuntimeError("Outcome misspecification demonstration is too weak")
+    if r["IPW"][idx["e wrong"]].mean() < 2.0 * r["IPW"][idx["both correct"]].mean():
+        raise RuntimeError("Propensity misspecification demonstration is too weak")
+
+
 METHOD_COLORS = {
     "AIPW": COLORS["blue"],
     "DM": COLORS["orange"],
@@ -750,10 +825,12 @@ def main():
     if force:
         print(f"  forcing recompute of: {sorted(force)}")
 
+    check_threshold_search()
     if args.plots_only:
         data = compute_data()
     else:
         data = compute_data(force=force)
+    validate_results(data)
     if not args.data_only:
         generate_outputs(data)
 

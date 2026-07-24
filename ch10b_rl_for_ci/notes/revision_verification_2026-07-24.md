@@ -4,51 +4,127 @@ Date: 2026-07-24
 
 ## Result
 
-The revised chapter passes the simulation, artifact, reference, and build gates. The independent proof review rejected the first theorem draft because it exchanged maximization and expectation, omitted regularity conditions for continuous histories, and underspecified the induced MDP. The shipped theorem instead uses fixed-policy evaluation followed by a dominance induction, assumes standard Borel state spaces and finite ordered actions, and includes the terminal reward kernel and a measurable tie-breaking rule.
+The revised chapter passes the source, proof, simulation, artifact, visual,
+reference, and build gates. The independent proof review rejected the first
+theorem draft because it exchanged maximization and expectation, omitted
+regularity for continuous histories, and underspecified the induced decision
+process. The shipped proof uses fixed-policy evaluation followed by a dominance
+induction, assumes standard Borel state spaces and finite ordered actions, and
+defines both the transition and terminal reward kernels.
+
+The claim-source ledger covers all 29 citation keys retained in the chapter.
+Every cited paper was checked from full text, and the ledger records the exact
+claim, source location, and disposition.
 
 ## Simulation audit
 
 ### DTR recursion and Q-learning
 
-1. Algorithm identity: the tabular plug-in estimator is sequential g-computation, tabular Q-learning uses replay updates, neural FQI uses separate stage regressions, and DQN uses a frozen target network updated every 500 steps.
-2. Environment fidelity: both estimators use the same two-stage data-generating process and the same policy-value functional. The continuous treatment contrast is smooth with temperature 0.25 and changes sign at 0.3466.
-3. Data integrity: all methods use paired cohorts and unchanged seed schemes. Cache hashes include the smoothness, training-budget, architecture, and target-update settings.
-4. Fairness: FQI and DQN share the same two-layer 64-unit MLP class and cohorts. They are intentionally not equated by gradient count, which the chapter reports.
-5. Theory sanity: the continuous oracle is computed by nested Gauss-Hermite quadrature and agrees with an independent Monte Carlo check within 1.20 standard errors. Tabular methods approach 1.0 of oracle value.
-6. Leakage: training cohorts, evaluation Monte Carlo draws, and the analytical oracle use separate random streams.
-7. Reproducibility: `--plots-only` hits all caches and leaves the generated result table byte-identical.
+1. The tabular plug-in estimator is sequential g-computation, tabular
+   Q-learning uses replay updates, neural FQI uses separate stage regressions,
+   and DQN uses a frozen stage-2 target for the stage-1 update.
+2. The two neural methods use paired cohorts, a common two-layer 64-unit MLP,
+   the same smooth sign-changing contrast, and separate evaluation draws.
+3. The DQN budget is fixed at 50 data passes for every cohort size, with a hard
+   target update every five passes. A 200-pass diagnostic failed the unchanged
+   recovery gate because constant-learning-rate training deteriorated after the
+   useful solution. The 50-pass diagnostic used five seeds; the remaining 15
+   held-out seeds reach 0.9726 of oracle value at \(N=20{,}000\).
+4. The continuous oracle uses nested Gauss-Hermite quadrature and agrees with
+   an independent Monte Carlo calculation within 1.20 standard errors.
+5. At the right edge, plug-in g-computation and tabular Q-learning reach 1.0000
+   and 0.9968 of the tabular oracle. Neural FQI and DQN reach 0.9842 and 0.9740
+   of the continuous-state oracle.
 
-Headline check: at \(N=20{,}000\), neural FQI reaches 0.9842 of oracle value and DQN reaches 0.9687. The remaining gap is reported rather than hidden. A reserve run with a wider network and a smoother temperature of 0.5 performed worse, so it was not adopted.
+Bullshit score: 12%. The algorithms, paired data, independent oracle, held-out
+diagnostic seeds, and recovery gates are explicit. The residual risk is
+dependence on the chosen shared architecture and optimizer schedules.
 
-Bullshit score: 15%. The result is load-bearing and reproducible. The residual risk is that the neural comparison depends on a chosen architecture and optimizer budget.
+### Off-policy evaluation
+
+1. DM, IS, PDIS, WIS, DR, WDR, and MIS score the same logged datasets. DR and
+   WDR use out-of-fold value predictions, and WDR normalizes cumulative weights
+   globally at each time step.
+2. Exact dynamic programming supplies the policy value. An independent
+   on-policy Monte Carlo calculation agrees within 1.17 standard errors.
+3. IS and PDIS pass unbiasedness gates at every sample size. DR passes all
+   three correct-or-one-nuisance-correct cells, while the both-wrong cell has a
+   nonzero bias by construction.
+4. At \(n=2000\) and \(H=16\), DM and IS have RMSE 0.111 and 1.555. At \(H=64\),
+   IS and MIS have relative RMSE 2.847 and 0.134, a 21.3-fold contrast.
+
+Bullshit score: 10%. The exact oracle, theory-directed invariants, and
+misspecification cells directly test the claims. The tabular model remains
+deliberately favorable to DM.
+
+### Dynamic DML
+
+1. The estimator implements the upper-triangular Lewis-Syrgkanis moments with
+   five-fold cross-fitted outcome and treatment nuisances.
+2. Its standard errors use the full joint upper-triangular sandwich, so
+   uncertainty in the second-stage blip propagates into the first-stage
+   standard error.
+3. At \(n=4000\), mean formula standard errors divided by Monte Carlo standard
+   deviations are 1.065 and 1.005. Coverage is 0.97 and 0.93, with balanced
+   left and right tail misses.
+4. The dynamic-DML biases are -0.0047 and -0.0013. Naive OLS retains a 0.9326
+   second-stage bias and zero coverage; the IPTW-fitted MSM has bias 0.1456 and
+   coverage 0.73.
+
+Bullshit score: 10%. Recovery, standard-error calibration, coverage, and tail
+symmetry are hard gates. The sparse linear DGP is intentionally compatible with
+the target structural model.
 
 ### Backward-induction policy learning
 
-1. Algorithm identity: backward AIPW, plug-in Q, and IPW learn the same two-stage threshold class by exact sorted-prefix optimization.
-2. Environment fidelity: the observational DGP has logistic propensities, treatment-confounder feedback, and sign-changing treatment gains.
-3. Data integrity: all three estimators share cohorts, folds, threshold search, and evaluation.
-4. Fairness: nuisance specifications differ only in the planned misspecification cells. The correct stage-1 outcome basis includes truncated-normal continuation features.
-5. Theory sanity: the oracle thresholds are \(c_1^*=0.51558269\) and \(c_2^*=0.4\). The policy-value integral is split at the discontinuous stage-1 threshold. Local perturbations reduce value, and the oracle agrees with one million Monte Carlo draws within 0.75 standard errors.
-6. Leakage: nuisances are two-fold cross-fitted, and the oracle is computed from the known DGP rather than fitted cohorts.
-7. Reproducibility: the exact-threshold optimizer was checked against brute force, Python compilation succeeds, and `--plots-only` leaves the result table byte-identical.
+1. Backward AIPW, plug-in Q, and IPW learn the same two-stage threshold class by
+   exact sorted-prefix optimization.
+2. Stage-1 fitted-Q targets are constructed separately inside each outer fold.
+   No stage-2 model trained on a scoring fold supplies that fold's stage-1
+   training target.
+3. The oracle thresholds are \(c_1^*=0.51558269\) and \(c_2^*=0.4\). Local
+   perturbations reduce value, the exact threshold search matches exhaustive
+   prefix enumeration, and quadrature agrees with one million Monte Carlo draws
+   within 0.75 standard errors.
+4. At \(n=4000\), plug-in Q, backward AIPW, and IPW reach 0.9996, 0.9966, and
+   0.9911 of oracle value. AIPW regret remains between 0.0127 and 0.0203 in the
+   two one-sided misspecification cells. No double-robustness claim is made for
+   the both-wrong cell.
 
-Headline check: at \(n=4000\), plug-in Q, backward AIPW, and IPW reach 0.9996, 0.9963, and 0.9911 of oracle value. Under one-sided misspecification, AIPW regret remains between 0.0126 and 0.0201. Plug-in Q fails when its outcome model is wrong, and IPW fails when its propensity is wrong.
-
-Bullshit score: 15%. The double-robust comparison survives direct perturbation and integration checks. The main limitation is that the threshold class and correct outcome basis are deliberately favorable to plug-in Q.
+Bullshit score: 12%. The recursive cross-fitting, oracle, search, and
+misspecification behavior are directly checked. The threshold class and correct
+outcome basis are deliberately favorable to plug-in Q.
 
 ### Sequential-treatment diagrams
 
-The figure is illustrative rather than empirical. Potential outcomes are dashed, observed variables are solid, treatment-confounder feedback is highlighted, and the MDP panel preserves the full-history state. The potential-outcome links are selection links without causal arrowheads.
+The figure is illustrative rather than empirical. Potential outcomes are
+dashed, realized variables are solid, the consistency links have no causal
+arrowheads, treatment-confounder feedback is highlighted, and the decision
+process uses the full observed history as its state.
 
-Bullshit score: 5%. The only residual risk is interpretive compression in a schematic.
+Bullshit score: 5%. The remaining risk is only the compression inherent in a
+schematic.
 
 ## Artifact and build gates
 
-- All three scripts compile with `python -m py_compile`.
-- Both generated result tables round-trip byte-identically through `--plots-only`.
-- The policy oracle local optimum, exact threshold optimizer, regret direction, and smooth-contrast cutoff pass direct invariant checks.
-- The visualization lint passes for both statistical figures. Its axis-label failure for the DAG is inapplicable because the artifact is a diagram without axes.
-- The standalone chapter builds to 26 pages with no undefined citations, no internal undefined references, and no overfull boxes. Its three unresolved references are intentionally external chapter links.
-- The full book builds to 300 pages with no undefined citations or references. Existing overfull boxes elsewhere in the book remain outside this change.
-- Deleted labels `subsec:simstudy`, `subsec:rl_for_ci_discussion`, and `subsec:murphy_watkins` have no remaining references.
-- The final prose contains no em dashes, en dashes, `\textbf`, unlocated direct quotations, colon splices, `i.e.`, `e.g.`, or `and/or`.
+- All five scripts compile with `python -m py_compile`.
+- All figures and result tables round-trip byte-identically through
+  `--plots-only`.
+- The standalone chapter is 24 pages. It has no undefined citations, no
+  internal undefined references, and no overfull boxes. Its six unresolved
+  references point to chapters omitted by the standalone driver.
+- The full book is 299 pages with no undefined citations or references.
+  Existing overfull boxes outside ch10b remain outside this change.
+- The chapter PDF was inspected page by page at the diagram, theorem, and four
+  simulation blocks. Tables precede figures, labels are legible, and no float
+  separates a result from its section.
+- The arXiv package compiles independently to 299 pages. The final tarball is
+  18 MB with 215 files. Its manifest includes every ch10b figure and table and
+  the previously omitted full-book dependencies exposed by this build.
+- Every numerical sentence in the four simulation writeups matches the frozen
+  result tables or stdout artifacts.
+- Deleted labels `subsec:simstudy`, `subsec:rl_for_ci_discussion`, and
+  `subsec:murphy_watkins` have no remaining references.
+- The final prose contains no em dashes, en dashes, `\textbf`, unlocated direct
+  quotations, first-person phrasing, vague temporal modifiers, prose colons,
+  `i.e.`, `e.g.`, or `and/or`.

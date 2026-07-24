@@ -6,8 +6,9 @@
 # g-Estimation," arXiv:2002.07285): a Neyman-orthogonal sequential
 # residualisation moment delivers sqrt(n)-consistent, asymptotically normal
 # estimates of the SNMM structural parameters even when nuisance functions are
-# fit by machine learning on high-dimensional state, while naive OLS on the
-# full panel and MSM/IPTW with stabilized weights both fail.
+# fit by machine learning on high-dimensional state. Naive OLS on the full
+# panel is deliberately misspecified; correctly specified stabilized IPTW is
+# included as a high-variance benchmark.
 #
 # Setting (Lewis-Syrgkanis Section 2.1, partially linear Markovian model):
 #   X_1 ~ N(0, I_p)
@@ -22,21 +23,23 @@
 # True structural parameters psi_1*, psi_2*.
 #
 # Estimators compared:
-#   1. Naive OLS on the full panel: regress Y on (T_1, T_2, X_1, X_2). Biased
-#      because X_2 is a post-treatment variable that absorbs the dynamic
-#      effect of T_1.
-#   2. MSM / IPTW: marginal structural model E[Y(t_1, t_2)] = beta_0 + psi_1
+#   1. Naive OLS with initial controls: regress Y on (T_1, T_2, X_1). Biased
+#      because it treats the longitudinal problem as static and omits the
+#      period-2 treatment-confounder feedback through X_2.
+#   2. IPTW-fitted MSM: marginal structural model E[Y(t_1, t_2)] = beta_0 + psi_1
 #      t_1 + psi_2 t_2 fit by weighted least squares with stabilized weights
 #      (Robins-Hernan-Brumback 2000). Correct under sequential ignorability.
 #   3. Dynamic DML: the Lewis-Syrgkanis recursive estimator. Cross-fit Lasso
 #      nuisances q_t and p_{j,t}; residualise outcome and treatments at each
-#      period; peel off the period-2 effect to define the calibrated outcome;
-#      regress on residualised period-1 treatment to recover psi_1.
+#      period; peel off the period-2 effect; regress on residualised period-1
+#      treatment to recover psi_1. Inference uses the full upper-triangular
+#      Jacobian, so uncertainty in psi_2 propagates into the standard error
+#      for psi_1.
 #
 # Outputs:
 #   dynamic_dml_snmm_coverage.png  -- bias and 95%-CI coverage vs. sample size
-#   dynamic_dml_snmm_results.tex   -- consolidated results table at n=2000
-#   dynamic_dml_snmm_stdout.txt    -- numerical log (run via shell redirect)
+#   dynamic_dml_snmm_results.tex   -- consolidated results table at n=4000
+#   dynamic_dml_snmm_stdout.txt    -- numerical log
 
 import argparse
 import os
@@ -101,6 +104,7 @@ SHARED_CONFIG = {
     'N_GRID': N_GRID,
     'N_SEEDS': N_SEEDS,
     'K_FOLDS': K_FOLDS,
+    'SE_METHOD': 'joint_upper_triangular_sandwich_v2',
 }
 
 NAIVE_CONFIG  = {**SHARED_CONFIG, 'method': 'naive_ols'}
@@ -289,14 +293,13 @@ def fit_dynamic_dml(X1, T1, X2, T2, Y, n_folds=K_FOLDS, rng_seed=0):
            Y_tilde_2 = Y - q_2_hat
            T_tilde_2 = T_2 - p_2_hat
            psi_2_hat = sum(Y_tilde_2 * T_tilde_2) / sum(T_tilde_2 ** 2)
-      3. Peel off: define calibrated outcome Y_bar_1 = Y - psi_2_hat * T_2.
-      4. Cross-fit nuisance models for stage 1:
-           q_1(X_1) = E[Y_bar_1 | X_1]                # outcome residualisation
+      3. Cross-fit nuisance models for stage 1:
+           q_1(X_1) = E[Y | X_1]                      # outcome residualisation
            p_{2,1}(X_1) = E[T_2 | X_1]               # future treatment residualisation
            p_{1,1}(X_1) = E[T_1 | X_1]               # current treatment residualisation
-      5. Estimate psi_1 from residual-on-residual using the calibrated outcome
-         with the period-2 effect peeled off (Theorem 2 of the paper):
-           Y_tilde_1 = Y_bar_1 - q_1_hat
+      4. Estimate psi_1 from residual-on-residual, with the period-2 effect
+         peeled off through its residualized treatment (Theorem 2):
+           Y_tilde_1 = Y - q_1_hat
            T_tilde_{2,1} = T_2 - p_{2,1}_hat
            T_tilde_{1,1} = T_1 - p_{1,1}_hat
            psi_1_hat from sum((Y_tilde_1 - psi_2_hat * T_tilde_{2,1}) * T_tilde_{1,1})
@@ -328,12 +331,7 @@ def fit_dynamic_dml(X1, T1, X2, T2, Y, n_folds=K_FOLDS, rng_seed=0):
     denom2 = (T_til_22 ** 2).sum()
     psi_2_hat = (Y_til_2 * T_til_22).sum() / denom2
 
-    # Stage-2 variance via the Z-estimator influence function:
-    #   IF_i = T_til_22_i * (Y_til_2_i - psi_2_hat * T_til_22_i) / E[T_til_22^2]
-    J22 = denom2 / n
     psi2_resid = Y_til_2 - psi_2_hat * T_til_22
-    IF2 = T_til_22 * psi2_resid / J22
-    se_psi2 = np.sqrt((IF2 ** 2).sum()) / n
 
     # === Stage 1 (Lewis-Syrgkanis Algorithm 1 + Theorem 2) ===
     # The algorithm regresses RAW Y on X_1 (not the calibrated outcome).
@@ -358,12 +356,35 @@ def fit_dynamic_dml(X1, T1, X2, T2, Y, n_folds=K_FOLDS, rng_seed=0):
     denom1 = (T_til_11 ** 2).sum()
     psi_1_hat = ((Y_til_1 - psi_2_hat * T_til_21) * T_til_11).sum() / denom1
 
-    J11 = denom1 / n
     psi1_resid = Y_til_1 - psi_2_hat * T_til_21 - psi_1_hat * T_til_11
-    IF1 = T_til_11 * psi1_resid / J11
-    se_psi1 = np.sqrt((IF1 ** 2).sum()) / n
 
-    return np.array([psi_1_hat, psi_2_hat]), np.array([se_psi1, se_psi2])
+    # Joint Z-estimator sandwich. With parameters ordered (psi_1, psi_2),
+    # Lewis-Syrgkanis's Jacobian is upper triangular:
+    #
+    #   J = [[E(T~_11^2), E(T~_11 T~_21)],
+    #        [0,            E(T~_22^2)   ]].
+    #
+    # Using only the diagonal term for psi_1 would incorrectly treat psi_2 as
+    # known and understate uncertainty whenever the two residualized
+    # treatments remain correlated.
+    J = np.array([
+        [
+            np.mean(T_til_11 ** 2),
+            np.mean(T_til_11 * T_til_21),
+        ],
+        [
+            0.0,
+            np.mean(T_til_22 ** 2),
+        ],
+    ])
+    scores = np.column_stack([
+        T_til_11 * psi1_resid,
+        T_til_22 * psi2_resid,
+    ])
+    influence = np.linalg.solve(J, scores.T).T
+    se_hat = np.sqrt(np.mean(influence ** 2, axis=0) / n)
+
+    return np.array([psi_1_hat, psi_2_hat]), se_hat
 
 
 # ---------------------------------------------------------------------------
@@ -454,12 +475,51 @@ def summarize(data):
     return summary
 
 
+def validate_results(data):
+    """Monte Carlo gates for recovery, standard errors, and coverage."""
+    result = data['results']['dynamic_dml']
+    if not np.all(np.isfinite(result['psi'])) or not np.all(np.isfinite(result['se'])):
+        raise RuntimeError('Dynamic DML produced non-finite estimates')
+    if np.any(result['se'] <= 0):
+        raise RuntimeError('Dynamic DML produced a non-positive standard error')
+
+    i = len(N_GRID) - 1
+    psi = result['psi'][i]
+    se = result['se'][i]
+    bias = psi.mean(axis=0) - PSI_TRUE
+    empirical_sd = psi.std(axis=0, ddof=1)
+    se_ratio = se.mean(axis=0) / empirical_sd
+    z = norm.ppf(0.5 + CI_LEVEL / 2)
+    coverage = ((psi - z * se <= PSI_TRUE) & (PSI_TRUE <= psi + z * se)).mean(axis=0)
+    left_miss = (PSI_TRUE < psi - z * se).mean(axis=0)
+    right_miss = (PSI_TRUE > psi + z * se).mean(axis=0)
+
+    if np.any(np.abs(bias) > 0.03):
+        raise RuntimeError(f'Dynamic DML recovery failed at n={N_GRID[i]}: bias={bias}')
+    if np.any((se_ratio < 0.80) | (se_ratio > 1.20)):
+        raise RuntimeError(
+            f'Formula and Monte Carlo standard errors disagree: ratio={se_ratio}'
+        )
+    if np.any((coverage < 0.90) | (coverage > 0.99)):
+        raise RuntimeError(f'Dynamic DML coverage check failed: coverage={coverage}')
+    if np.any(left_miss > 0.06) or np.any(right_miss > 0.06):
+        raise RuntimeError(
+            f'Dynamic DML tail coverage is asymmetric: left={left_miss}, right={right_miss}'
+        )
+
+    naive_bias_2 = abs(
+        data['results']['naive_ols']['psi'][i, :, 1].mean() - PSI_TRUE[1]
+    )
+    if naive_bias_2 < 0.50:
+        raise RuntimeError('Naive longitudinal-bias demonstration is too weak')
+
+
 # ---------------------------------------------------------------------------
 # Outputs
 # ---------------------------------------------------------------------------
 LABELS = {
     'naive_ols':   'Naive OLS',
-    'msm_iptw':    'MSM/IPTW',
+    'msm_iptw':    'IPTW-fitted MSM',
     'dynamic_dml': 'Dynamic DML',
 }
 COLOR_MAP = {
@@ -596,6 +656,7 @@ def main():
     else:
         data = compute_data(force=force)
 
+    validate_results(data)
     if not args.data_only:
         generate_outputs(data)
 

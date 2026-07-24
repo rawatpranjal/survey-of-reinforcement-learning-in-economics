@@ -13,9 +13,9 @@
 %% Chapter intro
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The preceding chapter studied causal identification when logged transitions are confounded. This chapter assumes consistency, positivity, and sequential ignorability, then studies the reverse use of sequential-decision methods. Under these assumptions, the g-computation recursion of \citet{robins1986} identifies the same history-indexed backward induction used by finite-horizon reinforcement learning. \citet{murphy2003dtr} formalized this result for optimal dynamic treatment regimes, and \citet{schulte2014qlearning} developed the corresponding translation between causal and reinforcement-learning notation.
+Chapter~\ref{section:causal_rl} studied causal identification when logged transitions are confounded. This chapter assumes consistency, positivity, and sequential ignorability, then studies the reverse use of sequential-decision methods. Under these assumptions, g-computation identifies the same history-indexed backward induction used by finite-horizon reinforcement learning (RL). \citet{murphy2003dtr} formalized the result for optimal dynamic treatment regimes (DTRs), and \citet{schulte2014qlearning} developed the corresponding translation between causal and RL notation.
 
-The chapter first proves this equivalence and then develops off-policy evaluation for a fixed regime. It next considers two orthogonal extensions. Dynamic double machine learning estimates low-dimensional structural effects with $\sqrt n$ inference \citep{lewisSyrgkanis2021dynamicDML}, while doubly robust backward induction learns a regime with a $\sqrt n$ welfare-regret bound \citep{sakaguchi2024dynamicpolicy}. Each major section pairs the formal result with a computational experiment. Chapter~\ref{section:adaptive_experiments} treats the separate design problem in which the experimenter controls data collection.
+The chapter first proves this equivalence and then develops off-policy evaluation for a fixed regime. It next considers two orthogonal extensions. Dynamic double machine learning (DML) estimates low-dimensional structural effects with $\sqrt n$ inference \citep{lewisSyrgkanis2021dynamicDML}, while doubly robust backward induction learns a regime with a $\sqrt n$ welfare-regret bound \citep{sakaguchi2024dynamicpolicy}. Each major section pairs the formal result with a computational experiment. Chapter~\ref{section:adaptive_experiments} treats the separate design problem in which the experimenter controls data collection.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Dynamic Treatment Regimes}
@@ -26,18 +26,18 @@ In many treatment and policy settings the analyst makes a sequence of decisions,
 
 \subsubsection*{Sequential treatments as a graph}
 
-Figure~\ref{fig:dtr_dags} separates three objects that recur in the analysis. Potential outcomes index responses under interventions, the longitudinal graph records treatment-confounder feedback, and the history-augmented MDP relabels the same observed sequence for dynamic programming.
+Figure~\ref{fig:dtr_dags} separates three objects that recur in the analysis. Potential outcomes index responses under interventions, the longitudinal graph records treatment-confounder feedback, and the history-state construction turns the observed law into a finite-horizon Markov decision process (MDP).
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../ch10b_rl_for_ci/sims/dtr_dags.png}
-\caption{Three representations of sequential treatment. Panel (a) shows fixed potential outcomes and the consistency link that selects the realized response. Panel (b) shows a two-stage treatment graph, with the time-varying confounder $S_2$ highlighted. Panel (c) relabels the observed sequence as a finite-horizon MDP whose state is the full history.}
+\caption{Three representations of sequential treatment. Panel (a) shows fixed potential outcomes and the noncausal consistency link that selects the realized response. Panel (b) shows a two-stage treatment graph, with the treatment-confounder feedback through $S_2$ highlighted. Panel (c) constructs the finite-horizon decision process whose state is the full observed history.}
 \label{fig:dtr_dags}
 \end{figure}
 
 \subsubsection*{Notation and identification}
 
-Write $\bar A_k = (A_1, \ldots, A_k)$ for the treatment history through decision $k$, $\bar S_k = (S_1, \ldots, S_k)$ for the state history, and $\bar H_k = (\bar S_k, \bar A_{k-1})$ for the observed information just before decision $A_k$. For each potential treatment path $\bar a_K$, the potential outcome $Y^*(\bar a_K)$ denotes the response that would have been observed under that path \citep{rubin1978, robins1986}. A dynamic treatment regime $\pi = (\pi_1, \ldots, \pi_K)$ is a sequence of maps $\pi_k : \bar H_k \mapsto A_k$, with value $V(\pi) = \mathbb{E}[Y^*(\pi)]$ and optimization target $\pi^* \in \arg\max_\pi V(\pi)$.
+Write $\bar A_k = (A_1, \ldots, A_k)$ for the treatment history through decision $k$, $\bar S_k = (S_1, \ldots, S_k)$ for the state history, and $\bar H_k = (\bar S_k, \bar A_{k-1})$ for the observed information just before decision $A_k$. For each potential treatment path $\bar a_K$, the potential outcome $Y^*(\bar a_K)$ denotes the response that would have been observed under that path \citep{murphy2003dtr}. A dynamic treatment regime $\pi = (\pi_1, \ldots, \pi_K)$ is a sequence of maps $\pi_k : \bar H_k \mapsto A_k$, with value $V(\pi) = \mathbb{E}[Y^*(\pi)]$ and optimization target $\pi^* \in \arg\max_\pi V(\pi)$.
 
 Identification rests on three assumptions; Chapter~\ref{section:causal_rl} treats failure of the third. \emph{Consistency} states that $Y = Y^*(\bar A_K)$ and $S_k = S_k^*(\bar A_{k-1})$, so observed outcomes equal realized potential outcomes. \emph{Positivity} requires every action of interest to receive strictly positive probability conditional on every history that arises in the population. \emph{Sequential ignorability} requires $A_k \perp \{Y^*, S^*_{k+1}, \ldots\} \mid \bar H_k$ for every $k$, meaning the decision $A_k$ may depend on the observed history but not on unobserved factors that also affect future states and outcomes.
 
@@ -50,9 +50,9 @@ Q_k(\bar h_k, a_k) &= \mathbb{E}\!\left[V_{k+1}(\bar H_{k+1}) \mid \bar H_k = \b
 V_k(\bar h_k) &= \max_{a_k \in \mathcal A_k} Q_k(\bar h_k, a_k), \qquad
 \pi_k^*(\bar h_k) = \min\arg\max_{a_k \in \mathcal A_k} Q_k(\bar h_k, a_k). \label{eq:dtr_bellman}
 \end{align}
-Murphy calls $V_k$ the \emph{optimal benefit-to-go}.\footnote{The term reverses the engineering cost-to-go convention of \citet{bertsekas1996} because the outcome is maximized rather than minimized.} The fixed ordering of each finite action set makes the final expression a measurable tie-breaking rule.
+Murphy calls $V_k$ the \emph{optimal benefit-to-go}. The fixed ordering of each finite action set makes the final expression a measurable tie-breaking rule.
 
-The statistical issue is identification. Each subject supplies only one realized treatment path, so the distributions under alternative paths are counterfactual. Sequential ignorability permits the observed conditional laws in \eqref{eq:dtr_terminal} and \eqref{eq:dtr_qfunc} to identify those alternatives. For $K=2$, the estimator regresses $Y$ on $(\bar H_2,A_2)$, maximizes the fitted second-stage response, and uses that fitted maximum as the outcome in a regression on $(\bar H_1,A_1)$. This is the batch procedure called Fitted $Q$-Iteration in reinforcement learning \citep{Ernst2005}.
+The statistical issue is identification. Each subject supplies only one realized treatment path, so the distributions under alternative paths are counterfactual. Sequential ignorability permits the observed conditional laws in \eqref{eq:dtr_terminal} and \eqref{eq:dtr_qfunc} to identify those alternatives. For $K=2$, the estimator regresses $Y$ on $(\bar H_2,A_2)$, maximizes the fitted second-stage response, and uses that fitted maximum as the outcome in a regression on $(\bar H_1,A_1)$. In reinforcement-learning notation this is batch fitted $Q$-iteration \citep{schulte2014qlearning}.
 
 \subsubsection*{The equivalence, formally}
 
@@ -97,7 +97,7 @@ Y^*(\bar a_{k-1},\pi_{k:K})
 \mid \bar H_k=\bar h_k
 \right]
 \]
-almost surely \citep{robins1986}.
+almost surely \citep{murphy2003dtr}.
 
 For every $\pi$, $v_K^\pi\leq V_K$. If $v_{k+1}^\pi\leq V_{k+1}$, then
 \[
@@ -112,9 +112,9 @@ The policy-evaluation and optimality recursions in $\mathcal M$ are \eqref{eq:dt
 
 \subsubsection*{Simulation study: Murphy's recursion and $Q$-learning}
 
-The tractable setting is a synthetic two-stage DTR with a five-level status, a binary action, a logistic behavior policy, and an outcome that rewards treatment at low status. The high-dimensional setting uses a $p=10$ continuous state, an autoregressive transition, and a smooth treatment contrast that changes sign at $S_2^{(1)}=0.347$.\footnote{The source is \texttt{ch10b\_rl\_for\_ci/sims/dtr\_qlearning\_vs\_murphy.py}. The smooth contrast replaces a discontinuous indicator that imposed an approximation floor on the shared ReLU networks. Neural Fitted $Q$-Iteration uses at most 1000 full-batch Adam steps per stage. DQN uses 16,000 minibatch steps and a target network updated every 500 steps. The methods share a two-layer MLP with 64 hidden units but are not gradient-step-equated. The high-dimensional oracle integrates the optimal continuation by Gauss-Hermite quadrature.} Both designs satisfy sequential ignorability by construction.
+The tractable setting is a synthetic two-stage DTR with a five-level status, a binary action, a logistic behavior policy, and an outcome that rewards treatment at low status. The high-dimensional setting uses a $p=10$ continuous state, an autoregressive transition, and a smooth treatment contrast that changes sign at $S_2^{(1)}=0.347$.\footnote{The source is \texttt{ch10b\_rl\_for\_ci/sims/dtr\_qlearning\_vs\_murphy.py}. Neural Fitted $Q$-Iteration (FQI) uses at most 1000 full-batch Adam steps per stage. The deep $Q$-network (DQN) uses 50 data passes and updates its target network every five passes, so cohort size does not change the effective training budget. Both use the same two-layer, 64-unit multilayer perceptron (MLP). The oracle integrates the optimal continuation by Gauss-Hermite quadrature and is checked independently by Monte Carlo.} Both designs satisfy sequential ignorability by construction.
 
-The tabular estimators overlap across cohort sizes and reach $0.9968$ or more of oracle value at $N=10{,}000$. In the continuous design, Neural Fitted $Q$-Iteration reaches $0.9842$ and DQN reaches $0.9687$ at $N=20{,}000$. The remaining gap is shared finite-sample function-approximation error rather than a difference between the identified recursions, and it contracts sharply over the two largest cohort sizes.
+The tabular estimators overlap across cohort sizes and reach $0.9968$ or more of oracle value at $N=10{,}000$. In the continuous design, Neural Fitted $Q$-Iteration reaches $0.9842$ and DQN reaches $0.9740$ at $N=20{,}000$. The remaining gap is shared finite-sample function-approximation error rather than a difference between the identified recursions, and it contracts over the two largest cohort sizes.
 
 \begin{table}[htbp]
 \centering
@@ -136,7 +136,7 @@ Table~\ref{tab:rl_ci_dictionary} translates between the two traditions following
 
 \begin{table}[htbp]
 \centering
-\caption{Translation between dynamic treatment regimes and the g-methods of \citet{robins1986, robins2000msm, murphy2003dtr, schulte2014qlearning} on the left, and reinforcement learning after \citet{watkins1992_paper, sutton2018} on the right.}
+\caption{Translation between dynamic treatment regimes, g-methods, and finite-horizon reinforcement learning \citep{robins2000msm, murphy2003dtr, schulte2014qlearning}.}
 \label{tab:rl_ci_dictionary}
 {\setstretch{1.0}\small
 \renewcommand{\arraystretch}{1.25}
@@ -149,10 +149,10 @@ $V_k(\bar h_k) = \max_{a_k} Q_k(\bar h_k, a_k)$ & $V(s) = \max_a Q(s,a)$, state 
 $d_k^{\text{opt}}(\bar h_k) = \arg\max_{a_k} Q_k(\bar h_k, a_k)$ & Greedy policy $\pi^*(s) = \arg\max_a Q(s,a)$ \\
 Propensity $e_k(\bar h_k, a_k) = \mathbb{P}(A_k = a_k \mid \bar H_k = \bar h_k)$ & Behavior or logging policy $\mu_k(a_k \mid \bar h_k)$ \\
 Value of a fixed regime $\mathbb{E}[Y^*(\pi)]$ & OPE estimand $J(\pi_e)$ (Section~\ref{subsec:ope}) \\
-G-computation (sequential conditional regression) & Fitted-$Q$ evaluation \citep{Ernst2005} \\
-IPTW for marginal structural models \citep{robins2000msm} & Off-policy importance sampling \citep{precup2000} \\
+G-computation (sequential conditional regression) & Fitted-$Q$ evaluation \citep{schulte2014qlearning} \\
+Inverse-probability-of-treatment weighting (IPTW) for marginal structural models \citep{robins2000msm} & Off-policy importance sampling \citep{precup2000} \\
 G-estimation for structural nested mean models \citep{robins2004snmm} & Orthogonal-score off-policy evaluation \citep{lewisSyrgkanis2021dynamicDML} \\
-A-learning and contrast (blip) estimation \citep{schulte2014qlearning, robins2004snmm} & Advantage function \citep{Baird1993advantage} \\
+A-learning and contrast (blip) estimation \citep{schulte2014qlearning, robins2004snmm} & Advantage-function estimation \\
 Sequential ignorability, $A_k \perp \{Y^*, S^*_{k+1}, \ldots\} \mid \bar H_k$ & Known behavior policy $\mu_k(\cdot \mid \bar h_k)$ (offline RL setting) \\
 Positivity, $e_k(\bar h_k, a) > 0$ for every action of interest & Coverage, $\mu_k(a \mid \bar h_k) > 0$ for all $a \in \mathrm{supp}\,\pi^*$ \\
 \bottomrule
@@ -162,7 +162,7 @@ Positivity, $e_k(\bar h_k, a) > 0$ for every action of interest & Coverage, $\mu
 
 \subsubsection*{Empirical applications}
 
-Conservative $Q$-learning has been applied to vasopressor and intravenous-fluid recommendations in sepsis cohorts \citep{kaushik2022sepsiscql} and to mechanical-ventilation settings \citep{kondrup2023deepvent}. Cross-policy evaluation across reward specifications and benchmark studies document sensitivity to overfitting, noise, missingness, and pharmacokinetic variation \citep{roggeveen2024icmrl, luo2024dtrbench}. These applications require the identification assumptions stated in this section; Chapter~\ref{section:causal_rl} treats methods for their failure.
+Retrospective studies have fit conservative $Q$-learning to vasopressor and intravenous-fluid decisions in sepsis cohorts \citep{kaushik2022sepsiscql} and to mechanical-ventilation settings \citep{kondrup2023deepvent}. Cross-policy evaluation across reward weightings and controlled benchmarks show that the resulting policies and value estimates can be sensitive to overfitting, noise, missingness, and pharmacokinetic variation \citep{roggeveen2024icmrl, luo2024dtrbench}. These are offline model evaluations, not evidence that deploying the recommendations improves patient outcomes. Their causal interpretation requires the identification assumptions stated in this section; Chapter~\ref{section:causal_rl} treats methods for their failure.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Off-Policy Evaluation}
@@ -185,7 +185,7 @@ J(\pi_e) = \mathbb{E}_{\pi_b}\!\left[\rho_{1:H} \sum_{t=1}^{H} \gamma^{t-1} R_t\
 \end{equation}
 Every estimator in this section is an empirical version of Equation~\eqref{eq:ope_estimand} computed through a fitted value function, the ratios $\rho_{1:t}$, a fitted model, or a marginal state-density ratio.
 
-The structural assumptions on the environment matter as much as the identification assumptions. \citet{ueharaShiKallus2022ope} organize the problem into a hierarchy of nested model classes. The non-Markov decision process (NMDP) permits the state to be an arbitrary history, the time-varying MDP imposes Markov but stage-dependent transitions, and the time-homogeneous MDP imposes a common transition law. The hierarchy is not cosmetic. It determines which ratios an estimator must carry, and, as shown below, whether the exponential-in-horizon variance of trajectory-level weighting can be escaped at all. The contextual bandit is the $H = 1$ boundary case, where the canon originates \citep{dudik2014doubly}, and the dynamic treatment regime literature of Section~\ref{subsec:gmethods_bridge} is the same problem for longitudinal treatment policies, so DTR value estimation and OPE are one estimation problem in two vocabularies \citep{sonabend2023ssoprl, wangtom2025dtrtutorial}.
+The structural assumptions on the environment matter as much as the identification assumptions. \citet{ueharaShiKallus2022ope} organize the problem into a hierarchy of nested model classes. The non-Markov decision process (NMDP) permits the state to be an arbitrary history, the time-varying MDP imposes Markov but stage-dependent transitions, and the time-homogeneous MDP imposes a common transition law. The hierarchy determines which ratios an estimator must carry and whether the exponential-in-horizon variance of trajectory-level weighting can be escaped. The contextual bandit is the $H=1$ boundary case \citep{dudik2014doubly}.
 
 \subsubsection*{The direct method}
 
@@ -196,18 +196,18 @@ The \emph{direct method} (DM) estimates the conditional-mean structure and plugs
 \hat{J}_{\mathrm{DM}} = \frac{1}{n} \sum_{i=1}^{n} \hat{q}_1(S_1^i, \pi_e),
 \label{eq:ope_dm}
 \end{equation}
-where $\hat{q}(s, \pi) = \sum_a \pi(a \mid s)\, \hat{q}(s, a)$. The model-based variant fits $(\hat{P}, \hat{r})$ and runs the exact recursion in the fitted model; in a tabular environment the two coincide at the maximum-likelihood estimate, and both are the g-formula plug-in of Table~\ref{tab:rl_ci_dictionary}. The direct method has low variance because no importance ratios appear, but its bias is the approximation error of the regression class, which is uncontrolled under misspecification and cannot be diagnosed from the data alone \citep{jiangli2016doubly, farajtabar2018mrdr}.\footnote{The temporal-difference family of policy evaluation algorithms, surveyed by \citet{dann2014tdsurvey} and, for the off-policy eligibility-trace variants, by \citet{geistscherrer2014traces}, supplies the incremental counterparts of the batch regression in Equation~\eqref{eq:ope_dm}.}
+where $\hat{q}(s, \pi) = \sum_a \pi(a \mid s)\, \hat{q}(s, a)$. The model-based variant fits $(\hat{P}, \hat{r})$ and runs the exact recursion in the fitted model; in a tabular environment the two coincide at the maximum-likelihood estimate, and both are g-formula plug-ins. No importance ratios appear, but misspecification of the regression class induces bias \citep{jiangli2016doubly, farajtabar2018mrdr}.
 
 \subsubsection*{The importance sampling family}
 
-\emph{Importance sampling} (IS) estimators use the ratios instead of a model. The trajectory-wise and \emph{per-decision} forms are
+\emph{Importance sampling} (IS) estimators use the ratios instead of a model. The trajectory-wise and \emph{per-decision importance sampling} (PDIS) forms are
 \begin{equation}
 \hat{J}_{\mathrm{IS}} = \frac{1}{n} \sum_{i=1}^{n} \rho^i_{1:H} \sum_{t=1}^{H} \gamma^{t-1} R^i_t,
 \qquad
 \hat{J}_{\mathrm{PDIS}} = \frac{1}{n} \sum_{i=1}^{n} \sum_{t=1}^{H} \gamma^{t-1} \rho^i_{1:t}\, R^i_t,
 \label{eq:ope_is}
 \end{equation}
-both unbiased for $J(\pi_e)$ when $\pi_b$ is known and positivity holds \citep{precup2000, jiangli2016doubly}. Per-decision weighting drops the ratio factors that postdate each reward, which can only reduce variance. The \emph{weighted} (self-normalized) variant divides by the realized weight mass instead of $n$. With $w_t = n^{-1} \sum_{i} \rho^i_{1:t}$, the step-wise form is $\hat{J}_{\mathrm{WIS}} = n^{-1} \sum_i \sum_t \gamma^{t-1} (\rho^i_{1:t} / w_t) R^i_t$. WIS is biased in finite samples but consistent, its variance is much smaller than that of IS, and the step-wise version is the standard point estimator of the family \citep{jiangli2016doubly, thomas2015hcope}.\footnote{Continuous action spaces break the ratio $\rho_t$ because point masses never match; \citet{kalluszhou2018continuous} replace the indicator-style ratio with a kernel-smoothed generalized propensity and characterize the induced bias-variance tradeoff in the bandwidth.}
+both unbiased for $J(\pi_e)$ when $\pi_b$ is known and positivity holds \citep{precup2000, jiangli2016doubly}. Per-decision weighting drops ratio factors that occur after each reward and usually reduces variance. The \emph{weighted importance sampling} (WIS) variant divides by the realized weight mass instead of $n$. With $w_t = n^{-1} \sum_{i} \rho^i_{1:t}$, the step-wise form is $\hat{J}_{\mathrm{WIS}} = n^{-1} \sum_i \sum_t \gamma^{t-1} (\rho^i_{1:t} / w_t) R^i_t$. WIS is biased in finite samples but consistent and typically lower-variance than IS; the step-wise version is the practical point estimator used in this family \citep{jiangli2016doubly, thomas2015hcope}.\footnote{Continuous action spaces break exact action matching. \citet{kalluszhou2018continuous} replace the discrete-action ratio with a kernel-smoothed generalized propensity and characterize the bandwidth's bias-variance tradeoff.}
 
 \subsubsection*{The doubly robust family}
 
@@ -222,22 +222,22 @@ which is unbiased if either the outcome model $\hat{q}$ or the propensity inside
 \qquad t = H, \ldots, 1,
 \label{eq:ope_dr_seq}
 \end{equation}
-and $\hat{J}_{\mathrm{DR}}$ averages $\hat{V}_{\mathrm{DR}}^{H}$ over trajectories. Their Theorem~1 gives an exact variance decomposition showing that the $\hat{Q}$-dependent term enters only through the error $\hat{Q} - Q$, so a good value model shrinks the variance while unbiasedness survives a bad one; per-decision IS is the special case $\hat{Q} \equiv 0$. Their Theorem~3 shows that in a class of tree-structured MDPs the estimator attains the Cramér-Rao lower bound, so double robustness costs nothing asymptotically. \citet{thomasBrunskill2016magic} self-normalize the weights inside the same score to obtain the \emph{weighted doubly robust} (WDR) estimator, and blend partial-horizon WDR estimates with the model estimate by minimizing an estimated mean-squared error, the MAGIC estimator, trading a small bias for large variance reductions. \citet{farajtabar2018mrdr} close the remaining design freedom by training $\hat{Q}$ to minimize the variance of the DR estimator itself rather than a generic regression loss, the same lesson that recurs in Section~\ref{subsec:dml_dte}, that nuisances serve the target functional rather than generic prediction.
+and $\hat{J}_{\mathrm{DR}}$ averages $\hat{V}_{\mathrm{DR}}^{H}$ over trajectories. Their Theorem~1 gives an exact variance decomposition showing that the $\hat{Q}$-dependent term enters through the error $\hat{Q} - Q$, so an accurate value model reduces action-induced variance while unbiasedness survives a bad one; per-decision IS is the special case $\hat{Q} \equiv 0$. For tree-structured MDPs, their Theorem~2 gives a constrained Cramér-Rao lower bound and Observation~1 shows that DR with the true $Q$ attains it. \citet{thomasBrunskill2016magic} self-normalize the weights inside the same score to obtain the \emph{weighted doubly robust} (WDR) estimator, and blend partial-horizon WDR estimates with the model estimate by minimizing an estimated mean-squared error. The resulting model and guided importance sampling combining (MAGIC) estimator accepts finite-sample bias to reduce variance. \citet{farajtabar2018mrdr} close the remaining design freedom by training $\hat{Q}$ to minimize the variance of the DR estimator itself rather than a generic regression loss.
 
 \subsubsection*{The curse of horizon and marginalized ratios}
 
-The cumulative ratio $\rho_{1:H}$ is a product of $H$ terms, and products of ratios are asymptotically log-normal, so the variance of trajectory-level weighting grows exponentially in the horizon. This is the \emph{curse of horizon} \citep{liu2018curse}.\footnote{With a constant per-step ratio spread of $1.5$ versus $0.75$, the cumulative weight at $H = 16$ already spans eight orders of magnitude across trajectories; a handful of trajectories carry nearly all the weight and the effective sample size collapses.} \citet{xie2019marginalized} show that when the environment is a genuine MDP the trajectory ratio is unnecessary. It suffices to reweight by the \emph{marginal} state-density ratio at each stage. The marginalized importance sampling (MIS) estimator is
+The cumulative ratio $\rho_{1:H}$ is a product of $H$ terms. Under mild conditions its logarithm obeys a central limit theorem, so the weight is approximately log-normal and its variance can grow exponentially in the horizon. This is the \emph{curse of horizon} \citep{xie2019marginalized}.\footnote{With a constant per-step ratio spread of $1.5$ versus $0.75$, the cumulative weight at $H = 16$ already spans eight orders of magnitude across trajectories; a handful of trajectories carry nearly all the weight and the effective sample size collapses.} When the environment is a genuine MDP, the trajectory ratio is unnecessary. It suffices to reweight by the \emph{marginal} state-density ratio at each stage. The marginalized importance sampling (MIS) estimator is
 \begin{equation}
 \hat{J}_{\mathrm{MIS}} = \frac{1}{n} \sum_{i=1}^{n} \sum_{t=1}^{H} \gamma^{t-1}\, \frac{\hat{d}^{\pi_e}_t(S^i_t)}{\hat{d}^{\pi_b}_t(S^i_t)}\, \rho^i_t\, R^i_t,
 \label{eq:ope_mis}
 \end{equation}
-where $\hat{d}^{\pi_b}_t$ is the empirical state distribution and $\hat{d}^{\pi_e}_t$ is built by the forward recursion $\hat{d}^{\pi_e}_{t+1} = \hat{P}^{\pi_e}_t \hat{d}^{\pi_e}_t$ through a ratio-weighted empirical transition operator. Their Theorem~4.1 bounds the mean-squared error by a polynomial in $H$, matching the Cramér-Rao lower bound for the MDP class up to a factor of $H$, whereas no estimator can escape the exponential dependence in the NMDP class \citep{jiangli2016doubly}. In the infinite-horizon stationary setting the object becomes a single stationary density ratio $w(s, a)$; \citet{nachum2019dualdice} estimate it through a convex saddle-point program without knowledge of $\pi_b$, and \citet{kallusUehara2022doubleRL} combine the estimated ratio with a fitted value function in a doubly robust score that achieves the semiparametric efficiency bound under $o_p(n^{-1/4})$ nuisance rates.
+where $\hat{d}^{\pi_b}_t$ is the empirical state distribution and $\hat{d}^{\pi_e}_t$ is built by the forward recursion $\hat{d}^{\pi_e}_{t+1} = \hat{P}^{\pi_e}_t \hat{d}^{\pi_e}_t$ through a ratio-weighted empirical transition operator. Theorem~4.1 of \citet{xie2019marginalized} bounds the mean-squared error by a polynomial in $H$, matching the Cramér-Rao lower bound for the MDP class up to a factor of $H$. By contrast, the NMDP efficiency bound is generally exponential in $H$ \citep{kallusUehara2022doubleRL}. In the infinite-horizon stationary setting the object becomes a single stationary density ratio $w(s, a)$; \citet{nachum2019dualdice} estimate it through a convex saddle-point program without knowledge of $\pi_b$. Double reinforcement learning combines an estimated ratio with a fitted value function and attains the semiparametric efficiency bound when the two nuisance errors are consistent and their product is $o_p(n^{-1/2})$ \citep{kallusUehara2022doubleRL}.
 
 \subsubsection*{Efficiency, high-confidence bounds, and estimator selection}
 
-Semiparametric theory closes the design space. For the bandit case the efficient influence function of $J$ is $\eta(s,a)\{r - q(s,a)\} + q(s, \pi_e) - J$ with $\eta = \pi_e/\pi_b$, and the efficiency bound, the smallest asymptotic variance attainable by any regular estimator, is $\mathbb{E}[\eta^2 \operatorname{var}(R \mid S, A)] + \operatorname{var}\{q(S, \pi_e)\}$; the doubly robust estimator built from cross-fitted nuisances attains it whenever both nuisances converge at $o_p(n^{-1/4})$ rates \citep{ueharaShiKallus2022ope}. The sequential extensions replace $\eta$ by the cumulative ratio in the NMDP class and by the marginal density ratio in the MDP class, and the MDP bound is strictly smaller, which is the efficiency-theoretic statement of the marginalized escape from the horizon curse \citep{kallusUehara2022doubleRL}. The cross-fitting logic and the second-order bias structure are the same orthogonal-moment machinery as Section~\ref{subsec:dml_dte}.
+Semiparametric theory closes the design space. For the bandit case the efficient influence function of $J$ is $\eta(s,a)\{r - q(s,a)\} + q(s, \pi_e) - J$ with $\eta = \pi_e/\pi_b$, and the efficiency bound, the smallest asymptotic variance attainable by any regular estimator, is $\mathbb{E}[\eta^2 \operatorname{var}(R \mid S, A)] + \operatorname{var}\{q(S, \pi_e)\}$ \citep{ueharaShiKallus2022ope}. A cross-fitted DR estimator attains the bound when its nuisance errors are consistent and their product is $o_p(n^{-1/2})$; $o_p(n^{-1/4})$ for each is a symmetric sufficient condition. The sequential extensions replace $\eta$ by the cumulative ratio in the NMDP class and by the marginal density ratio in the time-varying MDP class. The latter efficiency bound is generally strictly smaller and polynomial rather than exponential in the horizon \citep{kallusUehara2022doubleRL}.
 
-Point estimation is not the whole task, because a deployment decision needs a guarantee rather than a number. \emph{High-confidence off-policy evaluation} constructs a lower confidence bound on $J(\pi_e)$ from the importance-weighted returns. The difficulty is that the weight distribution is heavy-tailed on the upside, so naive concentration inequalities are extremely loose, and \citet{thomas2015hcope} combine truncated weights with an empirical concentration argument to obtain usable bounds. \citet{sakhi2024logsmoothing} obtain tighter pessimistic estimates by logarithmic smoothing of the ratios, with bounds that remain valid for selection and learning, not only evaluation. A separate empirical literature documents that no estimator in the canon dominates. Rankings flip across environments, horizons, and behavior-evaluation policy pairs \citep{voloshin2019empirical, fu2021dope}, robustness of an estimator across its own hyperparameters is itself a selection criterion \citep{saito2021robustope}, and the best estimator for one target policy is often not the best for another, motivating policy-adaptive selection rules \citep{udagawa2023pas}. The behavior of these estimators on production-scale logs, and the reliability of offline policy selection in deployed systems, are examined in Chapter~\ref{section:field_deployments}.
+Point estimation is not the whole task. \emph{High-confidence off-policy evaluation} constructs a lower confidence bound on $J(\pi_e)$ from heavy-tailed importance-weighted returns. \citet{thomas2015hcope} winsorize the upper tail of importance-weighted returns and apply a modified empirical Bernstein bound; \citet{sakhi2024logsmoothing} instead smooth the ratios logarithmically and obtain bounds valid for policy selection as well as evaluation. Estimator choice remains problem-dependent. Stability across hyperparameters and adaptation to the target policy can be more informative than a global benchmark rank \citep{saito2021robustope, udagawa2023pas}. Chapter~\ref{section:field_deployments} examines these issues on production-scale logs.
 
 \subsubsection*{Simulation study: the OPE estimator canon}
 
@@ -245,7 +245,7 @@ The experiment uses a five-state customer-retention MDP with hold and promote ac
 
 \begin{table}[htbp]
 \centering
-\caption{OPE estimators on the tabular retention MDP. Bias, standard deviation, and RMSE of $\hat J(\pi_e)$ at $n=2000$ and $H=16$, together with relative RMSE at $H=64$ and $n=500$, over 500 Monte Carlo replications.}
+\caption{OPE estimators on the tabular retention MDP. Bias, standard deviation, and root-mean-square error (RMSE) of $\hat J(\pi_e)$ at $n=2000$ and $H=16$, together with relative RMSE at $H=64$ and $n=500$, over 500 Monte Carlo replications.}
 \label{tab:simA_ope}
 \input{../ch10b_rl_for_ci/sims/ope_estimators_results}
 \end{table}
@@ -271,56 +271,64 @@ At $n=2000$ and $H=16$, correctly specified DM has the lowest RMSE at $0.111$, w
 \label{subsec:dml_dte}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Section~\ref{subsec:gmethods_bridge} established that the recursion central to g-methods and the recursion central to $Q$-learning are the same object on history-augmented data. The natural follow-up question is what happens when the nuisance functions inside that recursion (the outcome regression, the propensity score) are estimated by modern machine learning. \citet{lewisSyrgkanis2021dynamicDML} answer this question for the structural nested mean model. A Neyman-orthogonal version of Robins's g-estimation, combined with cross-fitting, delivers $\sqrt n$-consistent asymptotically normal estimates of the dynamic structural parameters, and those parameters in turn deliver off-policy evaluation at parametric rates for any target dynamic policy.
+The DTR and OPE sections estimated conditional values. Structural nested mean models (SNMMs) instead parameterize treatment contrasts. \citet{lewisSyrgkanis2021dynamicDML} combine g-estimation with cross-fitting and Neyman-orthogonal moments, obtaining $\sqrt n$ inference on low-dimensional dynamic effects while high-dimensional regressions remain nuisance functions.
 
 For the Fast Track cohort the structural parameter $\psi_t$ has a direct interpretation as the marginal causal effect of an additional home visit at semester $t$, holding future visits at a fixed reference level. The question of this section is what valid $\sqrt n$ inference on $\psi_1$ and $\psi_2$ requires when the outcome and propensity nuisance functions are estimated by an off-the-shelf machine learner on the longitudinal cohort, and how to convert those structural parameters into the value of any counterfactual home-visiting regime.
 
 \subsubsection*{Structural nested mean models}
 
-Following \citet{robins1986, robins2004snmm, schulte2014qlearning}, the conditional mean of the outcome given history admits a period-by-period decomposition. For each $t = 1, \ldots, T$, the \emph{blip function} is the marginal causal effect of the period-$t$ treatment under a fixed reference future,
-\begin{multline}
-\gamma_t(\bar h_t, a_t) = \mathbb{E}\!\left[Y \,\big|\, \bar H_t = \bar h_t,\, A_t = a_t,\, A_{t+1} = \cdots = A_T = 0\right] \\
-{}- \mathbb{E}\!\left[Y \,\big|\, \bar H_t = \bar h_t,\, A_t = 0,\, A_{t+1} = \cdots = A_T = 0\right].
+Fix a target continuation regime $\pi$ and a reference action $0$. The stage-$t$ \emph{blip} is the counterfactual contrast
+\begin{equation}
+\gamma_t^\pi(\bar h_t,a_t)
+=
+\mathbb E\!\left[
+Y^*(\bar a_t,\pi_{(t+1):T})
+-Y^*(\bar a_{t-1},0,\pi_{(t+1):T})
+\mid \bar H_t=\bar h_t,\ A_t=a_t
+\right].
 \label{eq:blip_definition}
-\end{multline}
-A structural nested mean model parameterizes the blip as $\gamma_t(\bar h_t, a_t) = \psi_t^{\prime} B_t(\bar h_t, a_t)$ for known basis functions $B_t$ and unknown low-dimensional parameter $\psi_t \in \mathbb{R}^d$. The full structural parameter vector $\psi^* = (\psi_1^*, \ldots, \psi_T^*)$ identifies the value of any target dynamic policy via the g-formula applied to the partialled-out outcome \citep{robins2004snmm}.
+\end{equation}
+It removes the current treatment while holding the future regime fixed; replacing the potential outcomes in this display by observed means conditional on future treatments would generally be invalid under treatment-confounder feedback. A linear SNMM writes $\gamma_t^\pi(\bar h_t,a_t)=\psi_t^{\pi\prime}B_t(\bar h_t,a_t)$ for a known basis $B_t$ \citep{robins2004snmm, lewisSyrgkanis2021dynamicDML}. In target-independent models the superscript $\pi$ drops and one structural vector can evaluate many policies; in the general model the blip and its parameter are defined for the specified target continuation.
 
 \subsubsection*{Sequential residualisation}
 
-\citet{lewisSyrgkanis2021dynamicDML} construct cross-fitted residuals via two nuisance regressions per period, one for the outcome and one for the treatment given history. Let $\hat q_t(\bar h_t) = \widehat{\mathbb{E}}[Y \mid \bar H_t]$ and $\hat p_{j,t}(\bar h_t) = \widehat{\mathbb{E}}[A_j \mid \bar H_t]$ for $j = t, t+1, \ldots, T$, fitted by any sufficiently fast machine learner on a held-out fold. Define the residualised outcome $\tilde Y_t = Y - \hat q_t(\bar H_t)$ and the residualised treatments $\tilde A_{j,t} = A_j - \hat p_{j,t}(\bar H_t)$. The main result of \citet{lewisSyrgkanis2021dynamicDML}, their Theorem~2, is that the structural parameter $\psi_t^*$ satisfies the conditional Neyman-orthogonal moment restriction
+\citet{lewisSyrgkanis2021dynamicDML} first derive the construction in a partially linear dynamic model, then extend it to SNMM blip-basis contrasts. In the target-independent linear-treatment specialization used in this section's simulation, let $\hat q_t(\bar h_t)=\widehat{\mathbb E}[Y\mid\bar H_t=\bar h_t]$ and $\hat p_{j,t}(\bar h_t)=\widehat{\mathbb E}[A_j\mid\bar H_t=\bar h_t]$, fitted out of fold. Define $\tilde Y_t=Y-\hat q_t(\bar H_t)$ and $\tilde A_{j,t}=A_j-\hat p_{j,t}(\bar H_t)$. The orthogonal moments are
 \begin{equation}
-\mathbb{E}\!\left[\Big(\tilde Y_t - \sum_{j=t}^{T} \psi_j^{*\prime}\,\tilde A_{j,t}\Big)\,\tilde A_{t,t} \,\Big|\, \bar H_t\right] = 0, \qquad t = T, T-1, \ldots, 1,
+\mathbb{E}\!\left[\Big(\tilde Y_t - \sum_{j=t}^{T} \psi_j^{*\prime}\,\tilde A_{j,t}\Big)\,\tilde A_{t,t}\right] = 0,
+\qquad t=T,T-1,\ldots,1.
 \label{eq:dynamic_dml_moment}
 \end{equation}
-and the resulting system is solved recursively from $t = T$ downward. The algorithm estimates $\hat\psi_T$ from the period-$T$ moment, peels off the estimated period-$T$ effect from the outcome to define the calibrated outcome $\tilde Y_{T-1} - \hat\psi_T^{\prime}\,\tilde A_{T,T-1}$, regresses against $\tilde A_{T-1, T-1}$ to obtain $\hat\psi_{T-1}$, and continues backward to $\psi_1$. Each stage solves an ordinary least squares regression on residualised data.
+The system is upper triangular. Estimate $\psi_T$, subtract $\hat\psi_T^\prime\tilde A_{T,T-1}$ from the stage-$(T-1)$ residualized outcome, and continue backward. Each step is an ordinary least-squares regression on residuals. For a general linear SNMM, Algorithm~3 of the paper replaces $A_j$ by the corresponding observed-versus-target blip-basis contrast.
 
 \subsubsection*{Asymptotic normality at $\sqrt n$ rates}
 
-The Neyman-orthogonal moment in Equation~\eqref{eq:dynamic_dml_moment} has the crucial property that small errors in the nuisance estimates $\hat q_t$ and $\hat p_{j,t}$ enter the estimating equation at second order rather than first. Theorem~4 of \citet{lewisSyrgkanis2021dynamicDML} shows that if each cross-fitted nuisance achieves mean-squared-error rate $o_p(n^{-1/4})$ in the population norm, then the recursive estimator $\hat\psi$ is $\sqrt n$-consistent and asymptotically normal,
+Neyman orthogonality makes the leading nuisance bias a product of first-stage errors. Theorem~4 of \citet{lewisSyrgkanis2021dynamicDML} gives asymptotic normality under a product-rate condition; a convenient symmetric sufficient condition is $o_p(n^{-1/4})$ error in population $L_2$ norm for each cross-fitted nuisance. Then
 \begin{equation}
 \sqrt{n}\,(\hat\psi - \psi^*) \xrightarrow{d} \mathcal{N}(0,\, V),
 \label{eq:dynamic_dml_clt}
 \end{equation}
-with a consistently estimable covariance matrix $V$. The $o_p(n^{-1/4})$ condition is satisfied by Lasso regression under standard sparsity conditions, by random forests under regularity conditions on the population regression function, and by any other learner that achieves the corresponding excess-risk rate. The history $\bar H_t$ may itself be high-dimensional; only the structural parameter $\psi^* \in \mathbb{R}^{Td}$ is required to be low-dimensional. The resulting confidence intervals are asymptotically uniformly valid over the corresponding class of data-generating processes.
+with a consistently estimable covariance matrix $V$. The history may be high-dimensional, but the target vector $\psi^*\in\mathbb R^{Td}$ is fixed-dimensional. The covariance is not stagewise diagonal. The upper-triangular Jacobian propagates uncertainty from later blip estimates into earlier ones.
 
 \subsubsection*{The off-policy evaluation bridge}
 
-The structural parameters $\psi^*$ identify $J(\pi)$ for any target dynamic policy because the SNMM blip representation expresses $V(\pi)=\mathbb E[Y^*(\pi)]$ through $\psi^*$ and the action distribution under $\pi$ \citep[Section~6]{lewisSyrgkanis2021dynamicDML}. This restriction buys parametric-rate policy-value inference where the estimators in Section~\ref{subsec:ope} target the value nonparametrically.
+For a fixed target regime, the blip telescoping identity expresses $V(\pi)=\mathbb E[Y^*(\pi)]$ through the estimated structural parameters; Corollary~9 of \citet{lewisSyrgkanis2021dynamicDML} gives the corresponding asymptotically normal plug-in value estimator. Reusing one $\psi^*$ across arbitrary target regimes additionally requires target-independent blips.
 
 \subsubsection*{Recursive Riesz representers}
 
-The Neyman-orthogonal moment of \citet{lewisSyrgkanis2021dynamicDML} is hand-derived. The residual-on-residual construction in Equation~\eqref{eq:dynamic_dml_moment} achieves orthogonality by inspection, because residualising both sides of a regression makes the moment locally insensitive to small perturbations in the nuisance regressions. \citet{chernozhukov2023automatic} automate this step. Rather than write the orthogonal moment in closed form, they characterize the de-biasing correction as a sequence of \emph{Riesz representers} solving a system of recursive linear functional equations, and they show that these representers can be learned by minimising a sequence of quadratic Riesz losses without ever writing the orthogonal moment in closed form. Formally, define $f_{T+1}(\bar h_{T+1}) = Y$ and the nested mean regressions $f_t(\bar h_t, a_t) = \mathbb{E}\!\left[f_{t+1}\bigl(\bar H_{t+1}, \pi_{t+1}(\bar H_{t+1})\bigr) \mid \bar H_t, A_t = a_t\right]$ for $t = T, \ldots, 1$. The policy value $\theta(\pi) = \mathbb{E}[Y^*(\pi)]$ admits the debiased representation
+The moment in Equation~\eqref{eq:dynamic_dml_moment} is tailored to a structural parameter. \citet{chernozhukov2023automatic} give an automatic construction for a different target, a policy value expressed through nested mean regressions. Define $f_{T+1}=Y$, $f_T(\bar h_T,a_T)=\mathbb E[Y\mid\bar H_T=\bar h_T,A_T=a_T]$, and, for $t<T$, $f_t(\bar h_t,a_t)=\mathbb E[f_{t+1}\{\bar H_{t+1},\pi_{t+1}(\bar H_{t+1})\}\mid\bar H_t=\bar h_t,A_t=a_t]$. Then
 \begin{equation}
-\theta(\pi) = \mathbb{E}\!\left[f_1\bigl(\bar H_1, \pi_1(\bar H_1)\bigr) + \sum_{t=1}^{T} \alpha_{t-1}(\bar H_{t-1}, A_{t-1})\,\bigl(f_{t+1}(\bar H_{t+1}, \pi_{t+1}) - f_t(\bar H_t, A_t)\bigr)\right],
+\theta(\pi) = \mathbb{E}\!\left[f_1\bigl(\bar H_1, \pi_1(\bar H_1)\bigr) + \sum_{t=1}^{T} \alpha_t(\bar H_t,A_t)\,\bigl(f_{t+1}^{\pi}-f_t(\bar H_t,A_t)\bigr)\right],
 \label{eq:cnss_riesz}
 \end{equation}
-where $\alpha_0 \equiv 1$ and each $\alpha_t : \mathcal{H}_t \times \mathcal{A}_t \to \mathbb{R}$ is the Riesz representer of the linear functional $L_t(g) = \mathbb{E}\bigl[\alpha_{t-1}(\bar H_{t-1}, A_{t-1})\,g(\bar H_t, \pi_t)\bigr]$. Each $\alpha_t$ is estimated by minimising the quadratic Riesz loss $\mathbb{E}_n\bigl[\alpha^2(\bar H_t, A_t) - 2\,\hat\alpha_{t-1}(\bar H_{t-1}, A_{t-1})\,\alpha(\bar H_t, \pi_t)\bigr]$, with no closed-form inverse-propensity-weight expression required. The two constructions are complementary. \citet{lewisSyrgkanis2021dynamicDML} target the SNMM blip parameters at parametric rates; \citet{chernozhukov2023automatic} target the policy value $\theta(\pi)$ non-parametrically. Both achieve the mixed-bias product structure under which $o_p(n^{-1/4})$ nuisance error suffices for the target oracle rate.\footnote{The reason this works at the population-risk level is the orthogonal statistical learning theory of \citet{fosterSyrgkanis2023orthogonal}, whose Theorem~1 shows that under prediction-space strong convexity of the target loss and Neyman orthogonality of the loss derivative, the excess risk of a two-stage cross-fitted estimator has nuisance error entering at second order, so $n^{-1/4}$ mean-squared error on each nuisance suffices for the target oracle rate $n^{-1}$.}
-
-The Lewis-Syrgkanis estimator replaces the ordinary fitted-Q regression loss with the orthogonal residual moment in Equation~\eqref{eq:dynamic_dml_moment}. Recursive Riesz representers extend the same debiasing principle to smooth functionals of nested conditional means \citep{chernozhukov2023automatic}.
+where $f_{t+1}^{\pi}=f_{t+1}\{\bar H_{t+1},\pi_{t+1}(\bar H_{t+1})\}$ for $t<T$, $f_{T+1}^{\pi}=Y$, $\alpha_0\equiv1$, and $\alpha_t$ is the Riesz representer of $L_t(g)=\mathbb E[\alpha_{t-1}(\bar H_{t-1},A_{t-1})g\{\bar H_t,\pi_t(\bar H_t)\}]$. It is learned recursively by minimizing
+\[
+\mathbb E_n\!\left[\alpha^2(\bar H_t,A_t)-2\hat\alpha_{t-1}(\bar H_{t-1},A_{t-1})\alpha\{\bar H_t,\pi_t(\bar H_t)\}\right].
+\]
+The resulting moment is Neyman-orthogonal and has an exact mixed-bias remainder. Errors enter as products of representer and adjacent-regression errors. This is the same second-order principle as dynamic DML, but the estimand is the nonparametric policy value rather than a low-dimensional blip parameter \citep{chernozhukov2023automatic}.\footnote{\citet{fosterSyrgkanis2023orthogonal} give the broader learning-theoretic result. Orthogonality makes nuisance error enter excess risk at second order. The precise norm and rate depend on the target loss and function classes; $o_p(n^{-1/4})$ root-mean-square nuisance rates are the familiar sufficient condition for a parametric target.}
 
 \subsubsection*{Simulation study: dynamic DML on a two-stage SNMM}
 
-The data-generating process has $p=20$ state variables, sparse outcome coefficients, confounded logistic propensities, and treatment-confounder feedback. The structural parameters are $(\psi_1^*,\psi_2^*)=(1.0,0.5)$. Dynamic DML uses five-fold cross-fitted Lasso outcome models and logistic propensity models. Naive OLS omits the second-period confounder, while a marginal structural model uses stabilized inverse-probability weights. Each configuration uses 200 Monte Carlo replications over $n\in\{250,500,1000,2000,4000\}$.\footnote{The source is \texttt{ch10b\_rl\_for\_ci/sims/dynamic\_dml\_snmm.py}.}
+The data-generating process has $p=20$ state variables, sparse outcome coefficients, confounded logistic propensities, and treatment-confounder feedback. The structural parameters are $(\psi_1^*,\psi_2^*)=(1.0,0.5)$. Dynamic DML uses five-fold cross-fitted Lasso outcome models and logistic propensity models. Naive ordinary least squares (OLS) omits the second-period confounder, while a marginal structural model (MSM) is fit by stabilized IPTW. Each configuration uses 200 Monte Carlo replications over $n\in\{250,500,1000,2000,4000\}$.\footnote{The source is \texttt{ch10b\_rl\_for\_ci/sims/dynamic\_dml\_snmm.py}.}
 
 \begin{equation}
 Y=\psi_1^*T_1+\psi_2^*T_2+\mu^\top X_1+\nu^\top\eta_1+\varepsilon,
@@ -342,20 +350,20 @@ Y=\psi_1^*T_1+\psi_2^*T_2+\mu^\top X_1+\nu^\top\eta_1+\varepsilon,
 \label{fig:simB1}
 \end{figure}
 
-At $n=4000$, dynamic DML bias is below $0.005$ for $\hat\psi_1$ and approximately $0.001$ for $\hat\psi_2$, with coverage near the nominal level. Naive OLS retains a bias near $0.93$ for $\hat\psi_2$ and has zero coverage. The stabilized-weight estimator improves with sample size but remains below nominal coverage at the right edge.
+At $n=4000$, dynamic DML biases are $-0.005$ and $-0.001$, with 95\% interval coverage of $0.97$ and $0.93$ for $(\psi_1,\psi_2)$. Naive OLS retains a $0.933$ bias for $\hat\psi_2$ and has zero coverage. The IPTW-fitted MSM reduces that bias to $0.146$, but its $\psi_2$ coverage is only $0.73$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Dynamic Offline Policy Learning}
 \label{subsec:dynamic_offline_policy}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Section~\ref{subsec:dml_dte} delivers $\sqrt n$ confidence intervals on dynamic structural parameters under sequential ignorability, which in turn deliver off-policy evaluation at parametric rates for any target dynamic policy. This subsection turns from evaluation to optimization. Given observational data on $n$ trajectories, can we \emph{learn} an optimal dynamic regime $\pi^* \in \arg\max_{\pi \in \Pi} V(\pi)$ at the same $\sqrt n$ regret rate, using modern machine learning for the nuisances? \citet{sakaguchi2024dynamicpolicy} answers yes, by combining the doubly-robust AIPW machinery of \citet{athey2021policy} with fitted-$Q$-evaluation in a backward-induction loop.
+Section~\ref{subsec:dml_dte} delivers $\sqrt n$ confidence intervals on dynamic structural parameters under sequential ignorability. Those parameters yield parametric-rate evaluation of a fixed target policy, or of multiple policies when the blip model is target-independent. This subsection turns from evaluation to optimization. Given observational data on $n$ trajectories, can the analyst \emph{learn} an optimal dynamic regime $\pi^* \in \arg\max_{\pi \in \Pi} V(\pi)$ at the same $\sqrt n$ regret rate, using flexible machine learning for the nuisances? \citet{sakaguchi2024dynamicpolicy} answers yes, by combining augmented inverse-probability-weighted (AIPW) scores from \citet{athey2021policy} with fitted-$Q$ evaluation in a backward-induction loop.
 
 For the Fast Track cohort, a natural restricted policy class is the family of threshold rules in the family-functioning score, $\pi_t(\bar h_t) = \mathbb 1\{S_{t,j} < c_t\}$ for thresholds $(c_1, c_2)$ to be learned from data. The question of this section is the welfare-maximising thresholds with a $\sqrt n$-rate welfare-regret guarantee, when the cohort is observational and the nuisances are estimated by machine learning.
 
 \subsubsection*{The static $T=1$ precursor}
 
-In the single-period treatment-choice problem the offline policy-learning literature is well-developed. \citet{kitagawa2018who} introduced empirical welfare maximization with known propensities and proved a matching minimax bound of $\Theta(\sqrt{\mathrm{VC}(\Pi)/n})$ on welfare regret, applied to the National JTPA Study. \citet{athey2021policy} generalized to unknown propensities via cross-fitted doubly-robust scores (their Equation~14), maintaining the $O_p(\sqrt{\mathrm{VC}(\Pi)/n})$ rate under product-rate nuisance conditions and extending to instrumental-variable identification. \citet{zhou2023offline} extended further to multi-action treatments with an exact decision-tree-search algorithm. All three are the $T = 1$ special case of what follows.
+In the single-period treatment-choice problem the offline policy-learning literature is well-developed. \citet{kitagawa2018who} introduced empirical welfare maximization with known propensities and proved a matching minimax bound of $\Theta(\sqrt{\mathrm{VC}(\Pi)/n})$ on welfare regret, where $\mathrm{VC}(\Pi)$ is the Vapnik and Chervonenkis dimension of the policy class. Their application uses the National Job Training Partnership Act Study. \citet{athey2021policy} generalized to unknown propensities via cross-fitted doubly-robust scores (their Equation~14), maintaining the $O_p(\sqrt{\mathrm{VC}(\Pi)/n})$ rate under product-rate nuisance conditions and extending to instrumental-variable identification. \citet{zhou2023offline} extended further to multi-action treatments with an exact decision-tree-search algorithm. All three are the $T = 1$ special case of the dynamic construction.
 
 \subsubsection*{Backward-induction AIPW under sequential ignorability}
 
@@ -364,7 +372,7 @@ For each stage $t = 1, \ldots, T$, fix a policy class $\Pi_t$ over which to opti
 Q^{\pi_{(t+1):T}}_t(\bar h_t, a_t) = \mathbb{E}\!\left[Y_t + Q^{\pi_{(t+2):T}}_{t+1}\bigl(\bar H_{t+1}, \pi_{t+1}(\bar H_{t+1})\bigr) \,\Big|\, \bar H_t = \bar h_t, A_t = a_t\right],
 \label{eq:sakaguchi_q}
 \end{equation}
-with terminal condition $Q_T(\bar h_T, a_T) = \mathbb{E}[Y_T \mid \bar H_T = \bar h_T, A_T = a_T]$. The recursion estimates Q in the form of \emph{fitted-Q-evaluation} \citep{Ernst2005} applied under sequential ignorability. Let $e_t(\bar h_t, a_t) = \mathbb{P}(A_t = a_t \mid \bar H_t = \bar h_t)$ denote the stage-$t$ propensity.
+with terminal condition $Q_T(\bar h_T, a_T) = \mathbb{E}[Y_T \mid \bar H_T = \bar h_T, A_T = a_T]$. The recursion is fitted-$Q$ evaluation applied under sequential ignorability \citep{sakaguchi2024dynamicpolicy}. Let $e_t(\bar h_t, a_t) = \mathbb{P}(A_t = a_t \mid \bar H_t = \bar h_t)$ denote the stage-$t$ propensity.
 
 \citet{sakaguchi2024dynamicpolicy} estimates the optimal regime $\hat\pi = (\hat\pi_1, \ldots, \hat\pi_T)$ by backward induction with cross-fitted nuisances. Randomly partition the data into $K$ folds, and let $\hat Q^{-k}_t$ and $\hat e^{-k}_t$ denote the nuisance estimators fitted on the complement of the $k$-th fold (any sufficiently fast machine learner). Starting at $t = T$, construct the cross-fitted AIPW score for any candidate stage-$T$ policy $\pi_T$,
 \begin{equation}
@@ -375,16 +383,16 @@ and select $\hat\pi_T = \arg\max_{\pi_T \in \Pi_T} \tfrac{1}{n}\sum_{i=1}^n \hat
 
 \subsubsection*{The $\sqrt n$ welfare regret bound}
 
-\citet[Theorem~4.3]{sakaguchi2024dynamicpolicy} establishes that under sequential ignorability, overlap (Assumption~2.3 of the paper), a correct-specification condition on the policy classes (Assumption~3.1), uniform MSE convergence of $o_p(n^{-1/4})$ on both the $Q$-functions for the estimated future policies and the propensity scores, and an entropy-integral complexity bound on $\Pi$, the welfare regret of the estimated regime satisfies
+\citet[Theorem~4.3]{sakaguchi2024dynamicpolicy} requires sequential ignorability, overlap, an entropy bound on $\Pi$, and correct specification of the later-stage policy classes. Its nuisance condition is a uniform product-rate bound between fitted-$Q$ and inverse-propensity errors; one symmetric sufficient condition is root-mean-square error of order $n^{-1/4}$ for each. Under these conditions,
 \begin{equation}
 V(\pi^*) - V(\hat\pi) = O_p\!\left(\kappa(\Pi)\, n^{-1/2}\right),
 \label{eq:sakaguchi_regret}
 \end{equation}
-where $\kappa(\Pi)$ is the entropy integral of the DTR class. This matches the $\sqrt n$ minimax-optimal rate that \citet{kitagawa2018who} established for the static $T=1$ case, and is the first such result for the multi-stage problem with purely nonparametric ML nuisances. A companion result (their Theorem~5.1) shows that the alternative simultaneous-optimization approach attains the same rate without requiring correct specification of the policy class, at the cost of computational tractability that degrades quickly in $T$.
+where $\kappa(\Pi)$ is the entropy integral of the DTR class. The $n^{-1/2}$ dependence matches the static minimax rate of \citet{kitagawa2018who}. The paper's Theorem~5.1 obtains the same rate without the class-correctness condition by optimizing an AIPW objective over the entire regime jointly, rather than stage by stage.
 
 \subsubsection*{Simulation study: doubly robust backward-induction policy learning}
 
-The experiment learns the two-stage threshold regime $\pi_t=\mathbbm 1\{S_t^{(1)}<c_t\}$ from trajectories with logistic propensities and treatment-confounder feedback. The oracle is $(c_1^*,c_2^*)=(0.5156,0.4000)$ with value $V^*=1.9224$. Backward AIPW, plug-in $Q$, and IPW use the same cohorts, threshold search, and two-fold cross-fitting. The misspecification design removes the treatment interactions from the outcome model or replaces each propensity by its marginal treatment rate.\footnote{The source is \texttt{ch10b\_rl\_for\_ci/sims/dtr\_policy\_learning.py}. The value integral is split at the discontinuous stage-1 threshold and evaluated adaptively on each smooth branch. The oracle and behavior values are independently checked with one million Monte Carlo draws.}
+The experiment learns the two-stage threshold regime $\pi_t=\mathbbm 1\{S_t^{(1)}<c_t\}$ from trajectories with logistic propensities and treatment-confounder feedback. The oracle is $(c_1^*,c_2^*)=(0.5156,0.4000)$ with value $V^*=1.9224$. Backward AIPW, plug-in $Q$, and inverse-propensity weighting (IPW) use the same cohorts, threshold search, and two-fold cross-fitting. The misspecification design removes the treatment interactions from the outcome model or replaces each propensity by its marginal treatment rate.\footnote{The source is \texttt{ch10b\_rl\_for\_ci/sims/dtr\_policy\_learning.py}. The value integral is split at the discontinuous stage-1 threshold and evaluated adaptively on each smooth branch. The oracle and behavior values are independently checked with one million Monte Carlo draws.}
 
 \begin{table}[htbp]
 \centering
@@ -396,12 +404,12 @@ The experiment learns the two-stage threshold regime $\pi_t=\mathbbm 1\{S_t^{(1)
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{../ch10b_rl_for_ci/sims/dtr_policy_learning.png}
-\caption{Offline threshold-policy learning over 40 replications. Panel (a) shows regret against sample size. Panel (b) shows regret under outcome-model and propensity misspecification with 95\% confidence intervals. Panel (c) shows the learned AIPW thresholds at $n=250$ and $n=4000$ relative to the oracle pair.}
+\caption{Offline threshold-policy learning over 40 replications. Panel (a) shows regret against sample size. Panel (b) shows regret under outcome-model and propensity misspecification with 95\% confidence intervals; double robustness covers the two one-sided cells, not the both-wrong cell. Panel (c) shows the learned AIPW thresholds at $n=250$ and $n=4000$ relative to the oracle pair.}
 \label{fig:dtr_policy_learning}
 \end{figure}
 
-At $n=4000$, plug-in $Q$, backward AIPW, and IPW attain $0.9996$, $0.9963$, and $0.9911$ of oracle value. Their fitted log-log regret slopes are $-1.00$, $-0.75$, and $-0.59$. Under one-sided misspecification, AIPW regret remains between $0.0126$ and $0.0201$, while plug-in $Q$ rises to $0.1928$ when its outcome model is wrong and IPW rises to $0.1331$ when its propensity is wrong.
+At $n=4000$, plug-in $Q$, backward AIPW, and IPW attain $0.9996$, $0.9966$, and $0.9911$ of oracle value. Their fitted log-log regret slopes are $-0.92$, $-0.78$, and $-0.59$. Under one-sided misspecification, AIPW regret remains between $0.0127$ and $0.0203$, while plug-in $Q$ rises to $0.1924$ when its outcome model is wrong and IPW rises to $0.1331$ when its propensity is wrong.
 
 \subsubsection*{Empirical application}
 
-\citet[Section~7]{sakaguchi2024dynamicpolicy} applies the method to the Tennessee Project STAR class-size experiment. Two-stage decision trees use cross-fitted random-forest nuisances to choose between regular classes with an aide and small classes without one. The estimated regime improves achievement by approximately 8\% relative to assigning every student to a class with an aide and by approximately 1\% relative to assigning every student to a small class. A related field experiment studies two-period targeting of energy-saving rebates \citep{idaIshiharaItoEtAl2024energyrebate}.\footnote{\citet{nie2021whentotreat} analyze the when-to-treat subclass, \citet{shi2024seal} estimate smoother advantage functions in infinite-horizon offline RL, and \citet{luckett2020vlearning} optimize regimes through Bellman estimating equations without explicit $Q$-estimation.}
+\citet[Section~7]{sakaguchi2024dynamicpolicy} applies the method to the Tennessee Project STAR class-size experiment. Two-stage decision trees use cross-fitted random-forest nuisances to choose between regular classes with an aide and small classes without one. Relative to assigning every student to a class with an aide or every student to a small class, the estimated value contrasts are 8.16 and 1.27 percentile-rank points. These are observational policy-value estimates under the paper's ignorability assumptions, not experimental estimates of deploying the learned regime.

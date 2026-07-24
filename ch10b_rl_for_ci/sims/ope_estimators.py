@@ -21,10 +21,8 @@
 #            the equivalent non-recursive form of Thomas & Brunskill 2016
 #            (Eqn. 2), with 2-fold cross-fitted Q-hat from the MLE model.
 #   WDR      weighted doubly robust: same score with self-normalized weights
-#            (Thomas & Brunskill 2016); under 2-fold cross-fitting the
-#            normalization runs within each scoring fold, a consistent and
-#            asymptotically equivalent variant of the full-dataset weights
-#            w^i_t = rho^i_{1:t} / sum_j rho^j_{1:t} (Thomas & Brunskill 2016).
+#            w^i_t = rho^i_{1:t} / sum_j rho^j_{1:t} (Thomas & Brunskill
+#            2016), using out-of-fold Q predictions for every trajectory.
 #   MIS      marginalized IS (Xie, Ma & Wang 2019, Eqns. 3.1-3.2): empirical
 #            d-hat^{pi_b}_t, recursive d-hat^{pi_e}_t, per-state reward IS.
 # MAGIC and DualDICE are discussed in the chapter prose only; implementing
@@ -81,6 +79,7 @@ SHARED_CONFIG = {
     "MC_CHECK_EPISODES": 100_000,
     "MC_CHECK_H": 16,
     "SEED_ROOT": 42,
+    "WDR_NORMALIZATION": "global_weights_oof_q_v2",
 }
 N_REPS = 500
 SWEEP_N_CONFIG = {
@@ -320,10 +319,38 @@ def est_dr_crossfit(
     weighted=False,
     model_fitter=fit_mle_model,
 ):
-    """2-fold cross-fit DR/WDR: fit the model on one fold, score the other."""
+    """2-fold cross-fit DR/WDR: fit each model off fold and score on fold.
+
+    DR averages the two independent fold scores. WDR first assembles
+    out-of-fold Q and V predictions for every trajectory, then applies the
+    paper's full-sample self-normalization at each time step.
+    """
     n = S_arr.shape[0]
     half = n // 2
     idx = [np.arange(0, half), np.arange(half, n)]
+    if weighted:
+        q_terms = np.zeros((n, H))
+        v_terms = np.zeros((n, H))
+        for k in (0, 1):
+            fit_idx, score_idx = idx[1 - k], idx[k]
+            P_hat, r_hat = model_fitter(
+                S_arr[fit_idx], A_arr[fit_idx], R_arr[fit_idx], n_states, n_actions
+            )
+            Q_hat, V_hat = model_q_functions(P_hat, r_hat, pi_e, H)
+            for t in range(H):
+                q_terms[score_idx, t] = Q_hat[t][
+                    S_arr[score_idx, t], A_arr[score_idx, t]
+                ]
+                v_terms[score_idx, t] = V_hat[t][S_arr[score_idx, t]]
+        cum = np.cumprod(rho, axis=1)
+        W = cum / np.maximum(cum.sum(axis=0), 1e-300)
+        W_prev = np.concatenate(
+            [np.full((n, 1), 1.0 / n), W[:, :-1]], axis=1
+        )
+        return float(
+            (W * R_arr).sum() - ((W * q_terms) - (W_prev * v_terms)).sum()
+        )
+
     vals, weights = [], []
     for k in (0, 1):
         fit_idx, score_idx = idx[1 - k], idx[k]
@@ -339,7 +366,7 @@ def est_dr_crossfit(
                 rho[score_idx],
                 Q_hat,
                 V_hat,
-                weighted,
+                False,
             )
         )
         weights.append(len(score_idx))
@@ -564,6 +591,38 @@ def _stats(draws, truth):
     rmse = float(np.sqrt(((draws - truth) ** 2).mean()))
     mc_se = sd / np.sqrt(len(draws))
     return bias, sd, rmse, mc_se
+
+
+def validate_results(data):
+    """Hard numerical gates for the oracle and the claims shown in the figure."""
+    shared = data["shared"]
+    truths = shared["truths"]
+    J16 = truths[16]
+    if abs(shared["mc_mean"] - J16) > 4.0 * shared["mc_se"]:
+        raise RuntimeError("DP oracle failed its independent on-policy MC check")
+
+    for n in SWEEP_N_CONFIG["N_GRID"]:
+        for name in ESTIMATORS:
+            if not np.all(np.isfinite(data["sweep_n"][n][name])):
+                raise RuntimeError(f"Non-finite {name} draw in n={n} sweep")
+        for name in ("IS", "PDIS"):
+            bias, _, _, mc_se = _stats(data["sweep_n"][n][name], J16)
+            if abs(bias) > 4.0 * mc_se:
+                raise RuntimeError(f"{name} violates its unbiasedness check at n={n}")
+
+    ab = data["ablation"]
+    for key in ("DR_QR_eR", "DR_QW_eR", "DR_QR_eW"):
+        bias, _, _, mc_se = _stats(ab[key], J16)
+        if abs(bias) > 4.0 * mc_se:
+            raise RuntimeError(f"Double-robustness check failed in {key}")
+    both_wrong_bias = abs(_stats(ab["DR_QW_eW"], J16)[0])
+    if both_wrong_bias < 0.20:
+        raise RuntimeError("Both-wrong OPE cell is too weak to demonstrate misspecification")
+
+    is_h64 = _stats(data["sweep_h"][64]["IS"], truths[64])[2] / abs(truths[64])
+    mis_h64 = _stats(data["sweep_h"][64]["MIS"], truths[64])[2] / abs(truths[64])
+    if is_h64 / mis_h64 < 5.0:
+        raise RuntimeError("Horizon experiment no longer demonstrates ratio marginalization")
 
 
 def generate_outputs(data):
@@ -816,6 +875,7 @@ def main():
     args = parser.parse_args()
     force = parse_force_set(args)
     data = compute_data(force=force)
+    validate_results(data)
     print_report(data)
     if not args.data_only:
         paths = generate_outputs(data)

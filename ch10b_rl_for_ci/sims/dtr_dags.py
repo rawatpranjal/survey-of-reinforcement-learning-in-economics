@@ -4,7 +4,7 @@ Generates one publication-quality illustrative figure, dtr_dags.png:
   (a) point treatment with the two potential outcomes drawn explicitly,
   (b) two-stage regime with the time-varying confounder highlighted and the
       counterfactual outcome ghosted,
-  (c) the same two-stage graph relabeled in MDP notation.
+  (c) the history-state decision process induced by the same observed law.
 Diagram-only script: no simulation, no cache.
 """
 
@@ -156,6 +156,20 @@ def make_dtr_dags():
     ax.text(lx + 0.14, ly, "realized", fontsize=9, va="center")
     ax.add_patch(mpatches.Circle((lx, ly + 0.35), 0.08, **POTENTIAL_STYLE))
     ax.text(lx + 0.14, ly + 0.35, "potential (counterfactual)", fontsize=9, va="center")
+    ax.plot(
+        [lx - 0.08, lx + 0.08],
+        [ly + 0.70, ly + 0.70],
+        color="black",
+        linestyle=DASH_STYLE,
+        lw=1.4,
+    )
+    ax.text(
+        lx + 0.14,
+        ly + 0.70,
+        "consistency selector (not causal)",
+        fontsize=9,
+        va="center",
+    )
 
     ax.set_xlim(-0.6, 4.5)
     ax.set_ylim(-0.6, 1.45)
@@ -222,52 +236,85 @@ def make_dtr_dags():
     )
 
     # ------------------------------------------------------------------
-    # (c) The same graph in MDP labels
+    # (c) The induced history-state decision process
     # ------------------------------------------------------------------
     ax = axes[2]
     pos = dict(
-        S1=(0.0, 0.45),
-        A1=(0.95, 0.45),
-        S2=(1.9, 0.45),
-        A2=(2.85, 0.45),
-        Y=(3.8, 0.45),
+        H1=(0.0, 0.45),
+        A1=(1.15, 0.45),
+        H2=(2.55, 0.45),
+        A2=(3.95, 0.45),
+        Y=(5.10, 0.45),
     )
-    draw_node(ax, pos["S1"], r"$s_1$")
-    draw_node(ax, pos["A1"], r"$a_1$")
-    draw_node(ax, pos["S2"], r"$s_2$")
-    draw_node(ax, pos["A2"], r"$a_2$")
-    draw_node(ax, pos["Y"], r"$r$")
+    draw_node(ax, pos["H1"], r"$\bar H_1$", radius=0.21)
+    draw_node(ax, pos["A1"], r"$A_1$")
+    draw_node(ax, pos["H2"], r"$\bar H_2$", radius=0.21)
+    draw_node(ax, pos["A2"], r"$A_2$")
+    draw_node(ax, pos["Y"], r"$Y$")
 
-    draw_edge(ax, pos["S1"], pos["A1"])
-    draw_edge(ax, pos["A1"], pos["S2"])
-    draw_edge(ax, pos["S2"], pos["A2"])
+    draw_edge(ax, pos["H1"], pos["A1"], r1=0.21)
+    draw_edge(ax, pos["H1"], pos["H2"], r1=0.21, r2=0.21, curve=-0.35)
+    draw_edge(ax, pos["A1"], pos["H2"], r2=0.21)
+    draw_edge(ax, pos["H2"], pos["A2"], r1=0.21)
+    draw_edge(ax, pos["H2"], pos["Y"], r1=0.21, curve=-0.35)
     draw_edge(ax, pos["A2"], pos["Y"])
-    draw_edge(ax, pos["S1"], pos["S2"], curve=-0.35)
-    draw_edge(ax, pos["S2"], pos["Y"], curve=-0.35)
-    draw_edge(ax, pos["A1"], pos["Y"], curve=0.40)
 
-    roles = [
-        ("S1", "state"),
-        ("A1", r"action $\sim \pi_b$"),
-        ("S2", "state"),
-        ("A2", r"action $\sim \pi_b$"),
-        ("Y", "terminal reward"),
-    ]
-    for key, role in roles:
-        ax.text(pos[key][0], -0.48, role, fontsize=8.5, ha="center", color="0.35")
     ax.text(
-        1.9,
-        -0.85,
-        r"stage-$k$ state = history $\bar h_k$; rewards zero before the"
-        r" terminal stage; $\gamma = 1$",
-        fontsize=10,
+        pos["H1"][0],
+        -0.20,
+        r"$\bar H_1=S_1$",
+        fontsize=8.5,
+        ha="center",
+        color="0.35",
+    )
+    ax.text(
+        pos["A1"][0],
+        -0.20,
+        r"$\pi_b(A_1\mid\bar H_1)$",
+        fontsize=8.5,
+        ha="center",
+        color="0.35",
+    )
+    ax.text(
+        pos["H2"][0],
+        -0.20,
+        r"$\bar H_2=(S_1,A_1,S_2)$",
+        fontsize=8.5,
+        ha="center",
+        color="0.35",
+    )
+    ax.text(
+        pos["A2"][0],
+        -0.20,
+        r"$\pi_b(A_2\mid\bar H_2)$",
+        fontsize=8.5,
+        ha="center",
+        color="0.35",
+    )
+    ax.text(
+        pos["Y"][0],
+        -0.20,
+        "terminal reward",
+        fontsize=8.5,
+        ha="center",
+        color="0.35",
+    )
+    ax.text(
+        2.55,
+        -0.70,
+        r"state $=\bar H_k$ makes the observed law Markov by construction"
+        "\n"
+        r"intermediate rewards $=0$; terminal reward $=Y$; $\gamma=1$",
+        fontsize=8.7,
         ha="center",
         color="0.25",
     )
 
-    ax.set_xlim(-0.6, 5.6)
-    ax.set_ylim(-1.05, 1.25)
-    ax.set_title("(c) The same graph in MDP labels", fontsize=11, pad=6)
+    ax.set_xlim(-0.6, 5.7)
+    ax.set_ylim(-0.95, 1.25)
+    ax.set_title(
+        "(c) The induced history-state decision process", fontsize=11, pad=6
+    )
 
     fig.tight_layout(pad=1.2)
     outpath = os.path.join(os.path.dirname(__file__), "dtr_dags.png")
