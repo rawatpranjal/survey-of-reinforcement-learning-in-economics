@@ -43,6 +43,7 @@ CHAPTERS=(
     "ch09_rlhf/tex/rlhf.tex"
     "ch10_causal/tex/causal_rl.tex"
     "ch10b_rl_for_ci/tex/rl_for_ci.tex"
+    "ch10c_adaptive_experiments/tex/adaptive_experiments.tex"
     "ch11_dist_robust_constrained/tex/dist_robust_constrained.tex"
     "ch12_world_models/tex/world_models.tex"
     "ch12_world_models/tex/s01_intro.tex"
@@ -99,7 +100,7 @@ FIGURES=(
     "ch10_causal/sims/counterfactual_ope.png"
     "ch06_macro/sims/lq_mfg.png"
     "ch06_macro/sims/rbc_dp_vs_drl_learning_curves.png"
-    "ch10b_rl_for_ci/sims/causal_bandit_combined.png"
+    "ch10c_adaptive_experiments/sims/causal_bandit_combined.png"
     "ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy.png"
     "ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png"
     "ch11_dist_robust_constrained/sims/carbon_constrained_production_convergence.png"
@@ -155,7 +156,7 @@ TABLES=(
     "ch10_causal/sims/counterfactual_ope_table.tex"
     "ch06_macro/sims/lq_mfg_results.tex"
     "ch06_macro/sims/rbc_dp_vs_drl_results.tex"
-    "ch10b_rl_for_ci/sims/causal_bandit_results.tex"
+    "ch10c_adaptive_experiments/sims/causal_bandit_results.tex"
     "ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex"
     "ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex"
     "ch11_dist_robust_constrained/sims/carbon_constrained_production_table.tex"
@@ -168,7 +169,7 @@ TABLES=(
     "ch12_world_models/sims/multi_echelon_paradigms_results.tex"
     "ch06_games/sims/durable_goods_coase_results.tex"
     "ch09_rlhf/sims/axiom_aware_aggregation.tex"
-    "ch10b_rl_for_ci/sims/causal_bandit_mabuc_results.tex"
+    "ch10c_adaptive_experiments/sims/causal_bandit_mabuc_results.tex"
     "appA_preliminaries/sims/banach_contraction.tex"
     "appA_preliminaries/sims/envelope_theorem.tex"
     "appA_preliminaries/sims/gradient_descent.tex"
@@ -232,7 +233,7 @@ noop ch03_theory/sims/lqc_fvi_fqi_weights.tex
 noop ch03a_bm/sims/bm_fvi_fqi_results.tex
 noop ch06_macro/sims/lq_mfg_results.tex
 noop ch06_macro/sims/rbc_dp_vs_drl_results.tex
-noop ch10b_rl_for_ci/sims/causal_bandit_results.tex
+noop ch10c_adaptive_experiments/sims/causal_bandit_results.tex
 noop ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex
 noop ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
 noop ch11_dist_robust_constrained/sims/carbon_constrained_production_table.tex
@@ -245,7 +246,7 @@ noop ch12_world_models/sims/multi_echelon_paradigms_results.tex
 noop ch07_bandits/sims/curve_learning_pricing_summary.tex
 noop ch06_games/sims/durable_goods_coase_results.tex
 noop ch09_rlhf/sims/axiom_aware_aggregation.tex
-noop ch10b_rl_for_ci/sims/causal_bandit_mabuc_results.tex
+noop ch10c_adaptive_experiments/sims/causal_bandit_mabuc_results.tex
 noop ch12_world_models/sims/fishery_paradigms_recovery.tex
 noop appA_preliminaries/sims/banach_contraction.tex
 noop appA_preliminaries/sims/envelope_theorem.tex
