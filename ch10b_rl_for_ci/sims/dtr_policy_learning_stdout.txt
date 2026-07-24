@@ -1,0 +1,51 @@
+Config:
+  DGP: rho=0.6, treat_shift=-0.6, sigma_eta=0.5, sigma_Y=1.0, delta1=0.6, c_dir=-0.6, tau2=0.8, c2*=0.4
+  Sweep: N_GRID=[250, 1000, 4000], N_SEEDS=40, K_FOLDS=2, prop_clip=0.01
+  Misspec: n=1000, N_SEEDS=40
+  Computing: oracle
+    c1* = 0.5156, c2* = 0.4000
+    V* = 1.922417 (adaptive quadrature split at c1*)
+    MC check at (c1*, c2*): 1.923719 (SE 0.001746), |diff|/SE = 0.75
+    V(behavior) = 1.109291 (SE 0.001593); quadrature = 1.109010, |diff|/SE = 0.18
+    Stage-1 treated share under c1*: 0.697
+  Cache saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/cache/dtr_policy_learning__oracle.pkl
+  Computing: sweep_n
+    n=250: AIPW regret 0.0561, DM regret 0.0120, IPW regret 0.0874
+    n=1000: AIPW regret 0.0192, DM regret 0.0039, IPW regret 0.0448
+    n=4000: AIPW regret 0.0071, DM regret 0.0008, IPW regret 0.0171
+  Cache saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/cache/dtr_policy_learning__sweep_n.pkl
+  Computing: misspec
+    both correct: AIPW regret 0.0189, DM regret 0.0026, IPW regret 0.0479
+    Q wrong: AIPW regret 0.0201, DM regret 0.1928, IPW regret 0.0367
+    e wrong: AIPW regret 0.0126, DM regret 0.0026, IPW regret 0.1331
+    both wrong: AIPW regret 0.0228, DM regret 0.2022, IPW regret 0.1059
+  Cache saved: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/cache/dtr_policy_learning__misspec.pkl
+
+========================================================================
+  Doubly robust backward-induction offline policy learning
+========================================================================
+
+  Oracle: c1* = 0.5156, c2* = 0.4000, V* = 1.922417
+  Quadrature vs MC: |diff|/SE = 0.75
+  Behavior quadrature vs MC: |diff|/SE = 0.18
+  V(behavior) = 1.109291; behavior regret = 0.8131
+
+  Regret V* - V(pi_hat), correct nuisances, 40 seeds:
+       n           Backward AIPW           Plug-in $Q$                   IPW
+     250         0.0561 (0.0081)       0.0120 (0.0019)       0.0874 (0.0158)
+    1000         0.0192 (0.0028)       0.0039 (0.0006)       0.0448 (0.0089)
+    4000         0.0071 (0.0012)       0.0008 (0.0001)       0.0171 (0.0038)
+
+  log-log regret slope, Backward AIPW: -0.75
+  log-log regret slope, Plug-in $Q$: -1.00
+  log-log regret slope, IPW: -0.59
+
+  Misspecification design at n = 1000, 40 seeds (mean regret):
+          regime        AIPW        DM       IPW
+    both correct      0.0189    0.0026    0.0479
+         Q wrong      0.0201    0.1928    0.0367
+         e wrong      0.0126    0.0026    0.1331
+      both wrong      0.0228    0.2022    0.1059
+
+  Figure: /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dtr_policy_learning.png
+  Table:  /Users/pranjal/Code/rl-ope-split/ch10b_rl_for_ci/sims/dtr_policy_learning_results.tex

@@ -21,9 +21,16 @@ questions, three panels:
      analogues -- Neural Fitted Q-Iteration and DQN -- recover the same
      optimal regime?
 
+The high-dimensional treatment contrast uses a smooth logistic transition,
+alpha_A + alpha_SA sigmoid(-S2[0] / tau), rather than a discontinuous indicator.
+The optimal stage-2 rule remains a nontrivial threshold, while the smooth
+conditional mean removes an artificial approximation floor for shared ReLU
+networks. The stage-1 oracle integrates the smooth optimal continuation by
+Gauss-Hermite quadrature.
+
 All three plots share the V(pi_hat)/V* axis. The oracle V* is computed
-analytically in the tabular case and by Monte Carlo on the known DGP in
-the high-dimensional case.
+analytically in the tabular case and by nested Gauss-Hermite quadrature
+in the high-dimensional case, with an independent Monte Carlo check.
 """
 
 import argparse
@@ -365,11 +372,15 @@ GAMMA_BEH = np.array(
 ALPHA_A_HD = -0.3
 ALPHA_SA_HD = 1.5
 THRESHOLD_HD = 0.0
+SMOOTH_TAU = 0.25
+GH_NODES_HD = 32
+ORACLE_OUTER_GH_NODES_HD = 192
 
-N_GRID_HD = [500, 2000, 5000]
+N_GRID_HD = [500, 2000, 5000, 20000]
 N_SEEDS_HD = 20
-N_FQI_EPOCHS = 200
-N_DQN_STEPS = 8000
+N_FQI_EPOCHS = 1000  # cap; early stop on full-batch MSE plateau (see _fit_full_batch)
+N_DQN_STEPS = 16000
+TARGET_UPDATE = 500  # hard-update interval for the DQN stage-1 target network
 BATCH_SIZE_HD = 64
 LR_NN = 1e-3
 HIDDEN_DIM = 64
@@ -385,13 +396,23 @@ SHARED_CONFIG_HD = {
     "ALPHA_A_HD": ALPHA_A_HD,
     "ALPHA_SA_HD": ALPHA_SA_HD,
     "THRESHOLD_HD": THRESHOLD_HD,
+    "SMOOTH_TAU": SMOOTH_TAU,
+    "GH_NODES_HD": GH_NODES_HD,
     "N_SEEDS_HD": N_SEEDS_HD,
     "N_GRID_HD": N_GRID_HD,
     "HIDDEN_DIM": HIDDEN_DIM,
     "LR_NN": LR_NN,
 }
-ORACLE_HD_CONFIG = {**SHARED_CONFIG_HD}
-FQI_HD_CONFIG = {**SHARED_CONFIG_HD, "N_FQI_EPOCHS": N_FQI_EPOCHS}
+ORACLE_HD_CONFIG = {
+    **SHARED_CONFIG_HD,
+    "ORACLE_OUTER_GH_NODES_HD": ORACLE_OUTER_GH_NODES_HD,
+    "oracle_method": "nested_gauss_hermite_v3",
+}
+FQI_HD_CONFIG = {
+    **SHARED_CONFIG_HD,
+    "N_FQI_EPOCHS": N_FQI_EPOCHS,
+    "early_stop": "mse_rel_1e-5_window100",
+}
 # 'seed_scheme' makes the per-seed RNG offset part of the cache key. The DQN
 # cohort uses default_rng(N*100+s) (paired with NN-FQI); the literal offset is
 # not otherwise hashed, so a seed-scheme change must bump this string or the
@@ -400,6 +421,7 @@ DQN_HD_CONFIG = {
     **SHARED_CONFIG_HD,
     "N_DQN_STEPS": N_DQN_STEPS,
     "BATCH_SIZE_HD": BATCH_SIZE_HD,
+    "TARGET_UPDATE": TARGET_UPDATE,
     "seed_scheme": "cohort_N100_paired_v2",
 }
 
@@ -415,57 +437,124 @@ def generate_cohort_hd(N, rng):
     S2 = T_DECAY * S1 + DELTA_HD * A1.reshape(-1, 1).astype(np.float32) * e0 + eta
     p2 = sigmoid(S2 @ GAMMA_BEH)
     A2 = (rng.random(N) < p2).astype(np.int32)
-    indicator = (S2[:, 0] < THRESHOLD_HD).astype(np.float32)
-    Y_mean = S2 @ BETA_OUTCOME + ALPHA_A_HD * A2 + ALPHA_SA_HD * indicator * A2
+    smooth = sigmoid(-(S2[:, 0] - THRESHOLD_HD) / SMOOTH_TAU).astype(np.float32)
+    Y_mean = S2 @ BETA_OUTCOME + (ALPHA_A_HD + ALPHA_SA_HD * smooth) * A2
     Y = (Y_mean + SIGMA_Y_HD * rng.normal(size=N)).astype(np.float32)
     return S1, A1, S2, A2, Y
 
 
 def compute_oracle_hd(cfg):
-    """V* by MC under the known DGP applying the analytical optimal policy."""
+    """V* under the known DGP by nested Gauss-Hermite quadrature, with an
+    independent Monte Carlo cross-check."""
     M = 200000
     rng = np.random.default_rng(0)
     S1 = rng.normal(size=(M, P_FEAT))
-    # Optimal stage-1: maximize Q*_1(S_1, A_1).
-    # Q*_1(S_1, A_1) = 0.5 * beta' S_1 + delta * beta[0] * A_1
-    #                  + (alpha_A + alpha_SA) * P(S_2[0] < c | S_1, A_1)
-    # with S_2[0] | S_1, A_1 ~ N(0.5 * S_1[0] + delta * A_1, sigma_eta^2).
-    from scipy.stats import norm
+    # Treat at stage 2 when alpha_A + alpha_SA sigmoid(-(s-c)/tau) > 0.
+    p_cut = -ALPHA_A_HD / ALPHA_SA_HD
+    stage2_threshold = THRESHOLD_HD + SMOOTH_TAU * np.log((1.0 - p_cut) / p_cut)
 
-    common = 0.5 * S1 @ BETA_OUTCOME
-    Q1_a0 = common + (ALPHA_A_HD + ALPHA_SA_HD) * norm.cdf(
-        (THRESHOLD_HD - 0.5 * S1[:, 0]) / SIGMA_ETA_HD
-    )
+    gh_nodes, gh_weights = np.polynomial.hermite.hermgauss(cfg["GH_NODES_HD"])
+    gh_nodes = np.sqrt(2.0) * gh_nodes
+    gh_weights = gh_weights / np.sqrt(np.pi)
+
+    def expected_optimal_stage2_gain(mean):
+        out = np.empty_like(mean)
+        batch_size = 20000
+        for start in range(0, len(mean), batch_size):
+            stop = min(start + batch_size, len(mean))
+            draws = (
+                mean[start:stop, None]
+                + SIGMA_ETA_HD * gh_nodes.reshape(1, -1)
+            )
+            contrast = ALPHA_A_HD + ALPHA_SA_HD * sigmoid(
+                -(draws - THRESHOLD_HD) / SMOOTH_TAU
+            )
+            out[start:stop] = np.maximum(contrast, 0.0) @ gh_weights
+        return out
+
+    # Optimal stage 1 maximizes the expected linear outcome plus the integrated
+    # optimal stage-2 treatment gain.
+    common = T_DECAY * S1 @ BETA_OUTCOME
+    mean0 = T_DECAY * S1[:, 0]
+    mean1 = mean0 + DELTA_HD
+    Q1_a0 = common + expected_optimal_stage2_gain(mean0)
     Q1_a1 = (
         common
         + DELTA_HD * BETA_OUTCOME[0]
-        + (ALPHA_A_HD + ALPHA_SA_HD)
-        * norm.cdf((THRESHOLD_HD - 0.5 * S1[:, 0] - DELTA_HD) / SIGMA_ETA_HD)
+        + expected_optimal_stage2_gain(mean1)
     )
     A1_star = (Q1_a1 > Q1_a0).astype(np.int32)
-    # Sample S_2 under A_1_star, then apply analytical optimal stage-2 (treat iff S_2[0] < threshold).
+
+    def oracle_q_pair(x):
+        mean0_x = T_DECAY * x
+        mean1_x = mean0_x + DELTA_HD
+        common_x = T_DECAY * BETA_OUTCOME[0] * x
+        q0 = common_x + expected_optimal_stage2_gain(np.array([mean0_x]))[0]
+        q1 = (
+            common_x
+            + DELTA_HD * BETA_OUTCOME[0]
+            + expected_optimal_stage2_gain(np.array([mean1_x]))[0]
+        )
+        return q0, q1
+
+    outer_nodes, outer_weights = np.polynomial.hermite.hermgauss(
+        cfg["ORACLE_OUTER_GH_NODES_HD"]
+    )
+    outer_x = np.sqrt(2.0) * outer_nodes
+    outer_weights = outer_weights / np.sqrt(np.pi)
+    outer_q = np.array([oracle_q_pair(x) for x in outer_x])
+    V_star = float(np.sum(outer_weights * np.max(outer_q, axis=1)))
+    stage1_diff = outer_q[:, 1] - outer_q[:, 0]
+    if np.min(stage1_diff) > 0.0:
+        stage1_rule = "always action 1"
+    elif np.max(stage1_diff) < 0.0:
+        stage1_rule = "always action 0"
+    else:
+        stage1_rule = "state-dependent"
+
+    # Sample S_2 under A_1_star, then apply the analytical optimal stage-2 rule.
     e0 = np.zeros(P_FEAT)
     e0[0] = 1.0
     eta = SIGMA_ETA_HD * rng.normal(size=(M, P_FEAT))
     S2 = T_DECAY * S1 + DELTA_HD * A1_star.reshape(-1, 1) * e0 + eta
-    A2_star = (S2[:, 0] < THRESHOLD_HD).astype(np.int32)
-    indicator = (S2[:, 0] < THRESHOLD_HD).astype(float)
+    A2_star = (S2[:, 0] < stage2_threshold).astype(np.int32)
+    smooth = sigmoid(-(S2[:, 0] - THRESHOLD_HD) / SMOOTH_TAU)
     Y_mean = (
-        S2 @ BETA_OUTCOME + ALPHA_A_HD * A2_star + ALPHA_SA_HD * indicator * A2_star
+        S2 @ BETA_OUTCOME
+        + (ALPHA_A_HD + ALPHA_SA_HD * smooth) * A2_star
     )
-    V_star = float(Y_mean.mean())
-    V_star_se = float(Y_mean.std() / np.sqrt(M))
+    V_star_mc = float(Y_mean.mean())
+    V_star_mc_se = float(Y_mean.std() / np.sqrt(M))
     # Also compute V(behavior) for reference
     A1_b = (rng.random(M) < sigmoid(S1 @ GAMMA_BEH)).astype(np.int32)
     eta_b = SIGMA_ETA_HD * rng.normal(size=(M, P_FEAT))
     S2_b = T_DECAY * S1 + DELTA_HD * A1_b.reshape(-1, 1) * e0 + eta_b
     A2_b = (rng.random(M) < sigmoid(S2_b @ GAMMA_BEH)).astype(np.int32)
-    indicator_b = (S2_b[:, 0] < THRESHOLD_HD).astype(float)
-    Y_b = S2_b @ BETA_OUTCOME + ALPHA_A_HD * A2_b + ALPHA_SA_HD * indicator_b * A2_b
+    smooth_b = sigmoid(-(S2_b[:, 0] - THRESHOLD_HD) / SMOOTH_TAU)
+    Y_b = (
+        S2_b @ BETA_OUTCOME
+        + (ALPHA_A_HD + ALPHA_SA_HD * smooth_b) * A2_b
+    )
     V_behavior = float(Y_b.mean())
-    print(f"    High-dim Oracle V* = {V_star:.4f} (MC SE {V_star_se:.4f})")
+    print(
+        f"    High-dim Oracle V* = {V_star:.4f} (nested Gauss-Hermite); "
+        f"stage-1 rule = {stage1_rule}, "
+        f"stage-2 threshold = {stage2_threshold:.4f}"
+    )
+    print(
+        f"    Oracle MC cross-check = {V_star_mc:.4f} "
+        f"(SE {V_star_mc_se:.4f}, |diff|/SE "
+        f"{abs(V_star_mc - V_star) / V_star_mc_se:.2f})"
+    )
     print(f"    High-dim V(behavior policy) = {V_behavior:.4f}")
-    return {"V_star": V_star, "V_star_se": V_star_se, "V_behavior": V_behavior}
+    return {
+        "V_star": V_star,
+        "V_star_mc": V_star_mc,
+        "V_star_mc_se": V_star_mc_se,
+        "V_behavior": V_behavior,
+        "stage1_rule": stage1_rule,
+        "stage2_threshold": stage2_threshold,
+    }
 
 
 class QNet(nn.Module):
@@ -501,46 +590,64 @@ def evaluate_policy_hd(Q1, Q2, M=50000, seed=42):
         q2_a0 = Q2(torch.cat([s2_t, torch.zeros(M, 1)], dim=1)).numpy()
         q2_a1 = Q2(torch.cat([s2_t, torch.ones(M, 1)], dim=1)).numpy()
     A2 = (q2_a1 > q2_a0).astype(np.int32)
-    indicator = (S2[:, 0] < THRESHOLD_HD).astype(np.float32)
-    Y_mean = S2 @ BETA_OUTCOME + ALPHA_A_HD * A2 + ALPHA_SA_HD * indicator * A2
+    smooth = sigmoid(-(S2[:, 0] - THRESHOLD_HD) / SMOOTH_TAU).astype(np.float32)
+    Y_mean = S2 @ BETA_OUTCOME + (ALPHA_A_HD + ALPHA_SA_HD * smooth) * A2
     return float(Y_mean.mean())
+
+
+def _fit_full_batch(net, X, target, lr, max_epochs):
+    """Full-batch Adam regression with early stopping: stop once the MSE has
+    not improved by a relative 1e-5 for 100 consecutive epochs. Returns the
+    number of epochs actually run."""
+    opt = optim.Adam(net.parameters(), lr=lr)
+    best = float("inf")
+    last_improve = 0
+    ep = 0
+    for ep in range(max_epochs):
+        opt.zero_grad()
+        loss = ((net(X) - target) ** 2).mean()
+        loss.backward()
+        opt.step()
+        cur = float(loss.item())
+        if cur < best * (1.0 - 1e-5):
+            best = cur
+            last_improve = ep
+        elif ep - last_improve >= 100:
+            break
+    return ep + 1
 
 
 def neural_fqi_estimate(S1, A1, S2, A2, Y, n_epochs, lr, hidden_dim, seed):
     torch.manual_seed(seed)
     Q2 = QNet(P_FEAT + 1, hidden_dim)
-    opt2 = optim.Adam(Q2.parameters(), lr=lr)
     s2_t = torch.from_numpy(S2)
     a2_t = torch.from_numpy(A2.reshape(-1, 1).astype(np.float32))
     y_t = torch.from_numpy(Y)
     X2 = torch.cat([s2_t, a2_t], dim=1)
-    for _ in range(n_epochs):
-        opt2.zero_grad()
-        loss = ((Q2(X2) - y_t) ** 2).mean()
-        loss.backward()
-        opt2.step()
+    ep2 = _fit_full_batch(Q2, X2, y_t, lr, n_epochs)
     N = len(S2)
     with torch.no_grad():
         q2_a0 = Q2(torch.cat([s2_t, torch.zeros(N, 1)], dim=1))
         q2_a1 = Q2(torch.cat([s2_t, torch.ones(N, 1)], dim=1))
         V2 = torch.maximum(q2_a0, q2_a1)
     Q1 = QNet(P_FEAT + 1, hidden_dim)
-    opt1 = optim.Adam(Q1.parameters(), lr=lr)
     s1_t = torch.from_numpy(S1)
     a1_t = torch.from_numpy(A1.reshape(-1, 1).astype(np.float32))
     X1 = torch.cat([s1_t, a1_t], dim=1)
-    for _ in range(n_epochs):
-        opt1.zero_grad()
-        loss = ((Q1(X1) - V2) ** 2).mean()
-        loss.backward()
-        opt1.step()
-    return Q1, Q2
+    ep1 = _fit_full_batch(Q1, X1, V2, lr, n_epochs)
+    return Q1, Q2, ep1, ep2
 
 
-def dqn_estimate(S1, A1, S2, A2, Y, n_steps, batch_size, lr, hidden_dim, seed, rng):
+def dqn_estimate(
+    S1, A1, S2, A2, Y, n_steps, batch_size, lr, hidden_dim, seed, rng, target_update
+):
     torch.manual_seed(seed)
     Q1 = QNet(P_FEAT + 1, hidden_dim)
     Q2 = QNet(P_FEAT + 1, hidden_dim)
+    # Frozen target copy of Q2 supplies the stage-1 TD target; hard-updated
+    # every target_update steps so the stage-1 regression chases a stable
+    # target instead of the concurrently-trained Q2.
+    Q2_target = QNet(P_FEAT + 1, hidden_dim)
     opt = optim.Adam(list(Q1.parameters()) + list(Q2.parameters()), lr=lr)
     N = len(S1)
     s1_all = torch.from_numpy(S1)
@@ -548,7 +655,9 @@ def dqn_estimate(S1, A1, S2, A2, Y, n_steps, batch_size, lr, hidden_dim, seed, r
     a1_all = torch.from_numpy(A1.reshape(-1, 1).astype(np.float32))
     a2_all = torch.from_numpy(A2.reshape(-1, 1).astype(np.float32))
     y_all = torch.from_numpy(Y)
-    for _ in range(n_steps):
+    for step in range(n_steps):
+        if step % target_update == 0:
+            Q2_target.load_state_dict(Q2.state_dict())
         idx = rng.integers(0, N, size=batch_size)
         idx_t = torch.from_numpy(idx)
         s1_b = s1_all[idx_t]
@@ -559,8 +668,8 @@ def dqn_estimate(S1, A1, S2, A2, Y, n_steps, batch_size, lr, hidden_dim, seed, r
         q2_pred = Q2(torch.cat([s2_b, a2_b], dim=1))
         loss2 = ((q2_pred - y_b) ** 2).mean()
         with torch.no_grad():
-            q2_a0 = Q2(torch.cat([s2_b, torch.zeros(batch_size, 1)], dim=1))
-            q2_a1 = Q2(torch.cat([s2_b, torch.ones(batch_size, 1)], dim=1))
+            q2_a0 = Q2_target(torch.cat([s2_b, torch.zeros(batch_size, 1)], dim=1))
+            q2_a1 = Q2_target(torch.cat([s2_b, torch.ones(batch_size, 1)], dim=1))
             target1 = torch.maximum(q2_a0, q2_a1)
         q1_pred = Q1(torch.cat([s1_b, a1_b], dim=1))
         loss1 = ((q1_pred - target1) ** 2).mean()
@@ -576,6 +685,7 @@ def dqn_estimate(S1, A1, S2, A2, Y, n_steps, batch_size, lr, hidden_dim, seed, r
 
 def run_fqi_hd_sweep(cfg):
     V = np.zeros((len(cfg["N_GRID_HD"]), cfg["N_SEEDS_HD"]))
+    epochs_used = np.zeros((len(cfg["N_GRID_HD"]), cfg["N_SEEDS_HD"], 2))
     for i, N in enumerate(cfg["N_GRID_HD"]):
         for s in tqdm(
             range(cfg["N_SEEDS_HD"]),
@@ -585,7 +695,7 @@ def run_fqi_hd_sweep(cfg):
         ):
             rng = np.random.default_rng(N * 100 + s)
             S1, A1, S2, A2, Y = generate_cohort_hd(N, rng)
-            Q1, Q2 = neural_fqi_estimate(
+            Q1, Q2, ep1, ep2 = neural_fqi_estimate(
                 S1,
                 A1,
                 S2,
@@ -597,7 +707,12 @@ def run_fqi_hd_sweep(cfg):
                 seed=s,
             )
             V[i, s] = evaluate_policy_hd(Q1, Q2, seed=s + 100)
-    return {"V": V, "N_grid": list(cfg["N_GRID_HD"])}
+            epochs_used[i, s] = (ep1, ep2)
+    return {
+        "V": V,
+        "N_grid": list(cfg["N_GRID_HD"]),
+        "epochs_used": epochs_used,
+    }
 
 
 def run_dqn_hd_sweep(cfg):
@@ -625,6 +740,7 @@ def run_dqn_hd_sweep(cfg):
                 cfg["HIDDEN_DIM"],
                 seed=s,
                 rng=train_rng,
+                target_update=cfg["TARGET_UPDATE"],
             )
             V[i, s] = evaluate_policy_hd(Q1, Q2, seed=s + 100)
     return {"V": V, "N_grid": list(cfg["N_GRID_HD"])}
@@ -756,7 +872,8 @@ def generate_outputs(data):
     print()
     print(
         f"  (Q3) High-dim V(pi_hat)/V* vs cohort size N "
-        f"[FQI {N_FQI_EPOCHS} full-batch epochs, DQN {N_DQN_STEPS} minibatch steps]"
+        f"[FQI <= {N_FQI_EPOCHS} full-batch epochs with early stop, "
+        f"DQN {N_DQN_STEPS} minibatch steps, target update every {TARGET_UPDATE}]"
     )
     print(
         f"  High-dim Oracle V* = {V_star_hd:.4f} "
@@ -769,6 +886,10 @@ def generate_outputs(data):
         d_mean = dqn_hd["V"][i].mean() / V_star_hd
         d_se = dqn_hd["V"][i].std() / np.sqrt(N_SEEDS_HD) / V_star_hd
         print(f"  {N:>6d}  {f_mean:>13.4f} ({f_se:.4f})  {d_mean:>13.4f} ({d_se:.4f})")
+    if "epochs_used" in fqi_hd:
+        ep_mean = fqi_hd["epochs_used"].mean(axis=(1, 2))
+        ep_str = ", ".join(f"N={N}: {m:.0f}" for N, m in zip(fqi_hd["N_grid"], ep_mean))
+        print(f"  NN-FQI realized epochs per stage (mean over seeds/stages): {ep_str}")
     print()
 
     # ---- Figure: 1 x 3 panels ----
@@ -935,11 +1056,14 @@ def main():
     )
     print(
         f"  HIGH-DIM: p={P_FEAT}, N_seeds={N_SEEDS_HD}, N_GRID_HD={N_GRID_HD}, "
-        f"FQI epochs={N_FQI_EPOCHS}, DQN steps={N_DQN_STEPS}, hidden={HIDDEN_DIM}, lr={LR_NN}"
+        f"FQI epoch cap={N_FQI_EPOCHS} (early stop), DQN steps={N_DQN_STEPS}, "
+        f"target_update={TARGET_UPDATE}, hidden={HIDDEN_DIM}, lr={LR_NN}"
     )
     print(
         f"  HIGH-DIM DGP: T_decay={T_DECAY}, delta={DELTA_HD}, "
-        f"sigma_eta={SIGMA_ETA_HD}, sigma_Y={SIGMA_Y_HD}, threshold={THRESHOLD_HD}"
+        f"sigma_eta={SIGMA_ETA_HD}, sigma_Y={SIGMA_Y_HD}, "
+        f"smooth_tau={SMOOTH_TAU}, threshold_center={THRESHOLD_HD}, "
+        f"GH_nodes={GH_NODES_HD}"
     )
     if force:
         print(f"  forcing recompute of: {sorted(force)}")
