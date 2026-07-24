@@ -36,16 +36,23 @@ notation. The formal potential-outcome section maps the histories, actions,
 potential states, potential terminal outcomes, regimes, and identification
 assumptions back to the home-visiting example. It keeps the terminal outcome
 generic because Murphy's formal setup does not select one Fast Track endpoint.
-These details were checked against Murphy's full text and added to the
-claim-source ledger.
+It now states that earlier visits can change later family status, later
+assignments, and the terminal outcome. It also explains why an unadjusted
+regression of outcome on total visits inherits the same selection problem as a
+many-versus-few comparison. These details were checked against Murphy's full
+text and added to the claim-source ledger.
 
-The four substantive empirical applications now contain three evidence-bearing
-paragraphs each. The ADHD SMART, HeartSteps, hemodiafiltration, and Project
-STAR blocks state the study design, explain how the estimator maps to the
-preceding theory, and report quantitative results with uncertainty or its
-absence. Every added number has a full-text location in the claim-source
-ledger. Text extracted from the standalone PDF contains no internal script
-name, simulation path, local filesystem path, or source-note reference.
+The theorem is followed by a four-paragraph STAR*D example that maps the
+depression scores, treatment choices, potential states, identification
+assumptions, and backward regressions to the formal objects. It distinguishes
+randomization among specific treatments from the observational
+switch-versus-augmentation choice and records the extra complete-case
+condition. The ADHD SMART remains the application for nonregular inference.
+The other substantive empirical applications retain three evidence-bearing
+paragraphs each. Every added number has a full-text location in the
+claim-source ledger. Text extracted from the standalone PDF contains no
+internal script name, simulation path, local filesystem path, or source-note
+reference.
 
 All four numerical simulations use one stylized Fast Track-inspired
 home-visiting context. Each writeup states that the design is a methodological
@@ -73,6 +80,11 @@ prose paragraphs, one consolidated table, and one figure.
 5. At the right edge, plug-in g-computation and tabular Q-learning reach 1.0000
    and 0.9968 of the tabular oracle. Neural FQI and DQN reach 0.9842 and 0.9740
    of the continuous-state oracle.
+6. The unadjusted regression of outcome on total visit count has a coefficient
+   of -0.2870 with Monte Carlo standard error 0.0023 at \(N=10{,}000\). It
+   selects the never-visit schedule in all 50 replications and reaches 0.8124
+   of oracle value. The always-visit schedule reaches 0.9422. This benchmark
+   uses the same paired cohorts as the other tabular estimators.
 
 Bullshit score: 12%. The algorithms, paired data, independent oracle, held-out
 diagnostic seeds, and recovery gates are explicit. The residual risk is
@@ -157,13 +169,13 @@ schematic.
 - All five scripts compile with `python -m py_compile`.
 - All 12 generated figures and result tables round-trip byte-identically
   through `--plots-only`.
-- The standalone chapter is 36 pages. It has no undefined citations, no
+- The standalone chapter is 39 pages. It has no undefined citations, no
   internal undefined references, and no overfull boxes. Its unresolved
   references point only to chapters omitted by the standalone driver.
 - The open-issues table produces a float-size warning. Visual inspection
   confirms that the full table remains inside the physical page and is not
   clipped.
-- The full book is 307 pages with no undefined citations or references or
+- The full book is 308 pages with no undefined citations or references or
   LaTeX errors. No overfull boxes originate in ch10b; the full-book log retains
   preexisting overfull warnings from other chapters.
 - The chapter PDF was inspected page by page at the diagram, theorem, four
@@ -171,7 +183,7 @@ schematic.
   the policy-inference caveat, and the open-issues table. Labels are legible
   and no result is detached from its section.
 - The arXiv package compiles independently in its regenerated submission
-  directory to 307 pages. The final tarball is 18 MB with 217 archive entries.
+  directory to 308 pages. The final tarball is 18 MB with 217 archive entries.
   Its manifest
   includes every ch10b figure and table and the previously omitted full-book
   dependencies exposed by this build.

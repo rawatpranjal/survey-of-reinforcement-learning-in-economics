@@ -14,7 +14,8 @@ The study examines the Murphy/Q-learning equivalence in three panels:
 (Q1) Tabular sample-size sweep. On a synthetic two-stage DTR with finite
      state under sequential ignorability, do Murphy's batch backward
      regression (= Fitted Q-Iteration) and online Q-learning recover the
-     same optimal regime as the cohort size grows?
+     same optimal regime as the cohort size grows? How does an unadjusted
+     regression of outcome on total treatment count behave?
 
 (Q2) Tabular training-budget sweep. For Q-learning, which solves the
      recursion by stochastic approximation rather than one-shot regression,
@@ -107,6 +108,12 @@ SHARED_CONFIG = {
 }
 ORACLE_CONFIG = {**SHARED_CONFIG}
 MURPHY_CONFIG = {**SHARED_CONFIG, "N_GRID": N_GRID}
+NAIVE_COUNT_CONFIG = {
+    **SHARED_CONFIG,
+    "N_GRID": N_GRID,
+    "regression": "Y ~ 1 + (A1 + A2)",
+    "implied_policy": "always_treat_if_positive_else_never_treat",
+}
 QLEARN_N_CONFIG = {
     **SHARED_CONFIG,
     "N_GRID": N_GRID,
@@ -241,6 +248,17 @@ def evaluate_policy_tab(pi_hat_1, pi_hat_2):
     return V
 
 
+def evaluate_constant_policy_tab(action):
+    pi_hat_1 = {s1: action for s1 in range(1, N_STATES + 1)}
+    pi_hat_2 = {
+        (s1, a1, s2): action
+        for s1 in range(1, N_STATES + 1)
+        for a1 in (0, 1)
+        for s2 in range(1, N_STATES + 1)
+    }
+    return evaluate_policy_tab(pi_hat_1, pi_hat_2)
+
+
 def murphy_estimate_tab(S1, A1, S2, A2, Y):
     sum2 = np.zeros((N_STATES + 1, 2, N_STATES + 1, 2))
     cnt2 = np.zeros((N_STATES + 1, 2, N_STATES + 1, 2), dtype=np.int64)
@@ -268,6 +286,22 @@ def murphy_estimate_tab(S1, A1, S2, A2, Y):
         for s2 in range(1, N_STATES + 1)
     }
     return pi_hat_1, pi_hat_2
+
+
+def naive_count_estimate_tab(A1, A2, Y):
+    """Fit Y on an intercept and total treatment count.
+
+    The sign of the count coefficient is converted into the simplest fixed
+    schedule: treat at both stages if positive and at neither stage otherwise.
+    """
+    count = (A1 + A2).astype(float)
+    count_centered = count - count.mean()
+    denom = float(count_centered @ count_centered)
+    if denom <= 0.0:
+        raise RuntimeError("Treatment count has no variation")
+    beta = float(count_centered @ (Y - Y.mean()) / denom)
+    action = int(beta > 0.0)
+    return beta, action, evaluate_constant_policy_tab(action)
 
 
 def qlearn_estimate_tab(S1, A1, S2, A2, Y, n_epochs, alpha, rng):
@@ -311,6 +345,30 @@ def run_murphy_sweep(cfg):
             pi1, pi2 = murphy_estimate_tab(S1, A1, S2, A2, Y)
             V[i, s] = evaluate_policy_tab(pi1, pi2)
     return {"V": V, "N_grid": list(cfg["N_GRID"])}
+
+
+def run_naive_count_sweep(cfg):
+    beta = np.zeros((len(cfg["N_GRID"]), cfg["N_SEEDS"]))
+    action = np.zeros((len(cfg["N_GRID"]), cfg["N_SEEDS"]), dtype=np.int32)
+    V = np.zeros((len(cfg["N_GRID"]), cfg["N_SEEDS"]))
+    for i, N in enumerate(cfg["N_GRID"]):
+        for s in tqdm(
+            range(cfg["N_SEEDS"]),
+            desc=f"  Naive count OLS N={N}",
+            leave=False,
+            disable=not sys.stderr.isatty(),
+        ):
+            rng = np.random.default_rng(N * 1000 + s)
+            _, A1, _, A2, Y = generate_cohort_tab(N, rng)
+            beta[i, s], action[i, s], V[i, s] = naive_count_estimate_tab(
+                A1, A2, Y
+            )
+    return {
+        "beta": beta,
+        "action": action,
+        "V": V,
+        "N_grid": list(cfg["N_GRID"]),
+    }
 
 
 def run_qlearn_N_sweep(cfg):
@@ -777,6 +835,15 @@ def compute_data(force=None):
         MURPHY_CONFIG,
         force=("murphy" in force),
     )
+    naive_count = compute_or_load(
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "naive_count",
+        NAIVE_COUNT_CONFIG,
+        run_naive_count_sweep,
+        NAIVE_COUNT_CONFIG,
+        force=("naive_count" in force),
+    )
     qlearn_N = compute_or_load(
         CACHE_DIR,
         SCRIPT_NAME,
@@ -825,6 +892,7 @@ def compute_data(force=None):
     return {
         "oracle": oracle,
         "murphy": murphy,
+        "naive_count": naive_count,
         "qlearn_N": qlearn_N,
         "qlearn_epochs": qlearn_epochs,
         "oracle_hd": oracle_hd,
@@ -844,15 +912,34 @@ def validate_results(data):
     ]:
         raise RuntimeError("High-dimensional oracle failed its MC check")
 
-    for key in ("murphy", "qlearn_N", "qlearn_epochs", "fqi_hd", "dqn_hd"):
+    for key in (
+        "murphy",
+        "naive_count",
+        "qlearn_N",
+        "qlearn_epochs",
+        "fqi_hd",
+        "dqn_hd",
+    ):
         if not np.all(np.isfinite(data[key]["V"])):
             raise RuntimeError(f"Non-finite policy values in {key}")
+    if not np.all(np.isfinite(data["naive_count"]["beta"])):
+        raise RuntimeError("Non-finite coefficients in naive count regression")
+    if not np.all(np.isin(data["naive_count"]["action"], (0, 1))):
+        raise RuntimeError("Naive count regression produced an invalid action")
 
     v_tab = data["oracle"]["V_star"]
     if data["murphy"]["V"][-1].mean() / v_tab < 0.99:
         raise RuntimeError("Plug-in g-computation does not recover the tabular oracle")
     if data["qlearn_N"]["V"][-1].mean() / v_tab < 0.99:
         raise RuntimeError("Tabular Q-learning does not recover the oracle")
+    v_never = evaluate_constant_policy_tab(0)
+    v_always = evaluate_constant_policy_tab(1)
+    if not v_always > v_never:
+        raise RuntimeError("Tabular DGP does not separate the fixed schedules")
+    if not np.all(data["naive_count"]["action"][-1] == 0):
+        raise RuntimeError("Naive count regression does not select the expected policy")
+    if not np.allclose(data["naive_count"]["V"][-1], v_never):
+        raise RuntimeError("Naive count policy value is inconsistent with its action")
 
     v_hd = oracle_hd["V_star"]
     behavior = oracle_hd["V_behavior"] / v_hd
@@ -869,6 +956,7 @@ def validate_results(data):
 def generate_outputs(data):
     oracle = data["oracle"]
     murphy = data["murphy"]
+    naive_count = data["naive_count"]
     qlearn_N = data["qlearn_N"]
     qlearn_epochs = data["qlearn_epochs"]
     oracle_hd = data["oracle_hd"]
@@ -889,7 +977,7 @@ def generate_outputs(data):
     print(f"  Tabular Oracle V* = {V_star:.4f}")
     print(
         f"  {'N':>6}  {'Plug-in g-comp (MC SE)':>25}  "
-        f"{'Q-learn mean (MC SE)':>25}"
+        f"{'Q-learn mean (MC SE)':>25}  {'Count OLS beta (MC SE)':>25}"
     )
     n_grid = murphy["N_grid"]
     for i, N in enumerate(n_grid):
@@ -897,12 +985,29 @@ def generate_outputs(data):
         m_se = murphy["V"][i].std(ddof=1) / np.sqrt(N_SEEDS) / V_star
         q_mean = qlearn_N["V"][i].mean() / V_star
         q_se = qlearn_N["V"][i].std(ddof=1) / np.sqrt(N_SEEDS) / V_star
-        print(f"  {N:>6d}  {m_mean:>13.4f} ({m_se:.4f})  {q_mean:>13.4f} ({q_se:.4f})")
+        b_mean = naive_count["beta"][i].mean()
+        b_se = naive_count["beta"][i].std(ddof=1) / np.sqrt(N_SEEDS)
+        print(
+            f"  {N:>6d}  {m_mean:>13.4f} ({m_se:.4f})  "
+            f"{q_mean:>13.4f} ({q_se:.4f})  "
+            f"{b_mean:>13.4f} ({b_se:.4f})"
+        )
     paired_tab = (qlearn_N["V"][-1] - murphy["V"][-1]) / V_star
     print(
         "  Paired seed-wise contrast at largest N (Q-learn - plug-in): "
         f"{paired_tab.mean():+.4f} "
         f"(MC SE {paired_tab.std(ddof=1) / np.sqrt(N_SEEDS):.4f})"
+    )
+    naive_mean = naive_count["V"][-1].mean() / V_star
+    naive_se = (
+        naive_count["V"][-1].std(ddof=1) / np.sqrt(N_SEEDS) / V_star
+    )
+    v_never = evaluate_constant_policy_tab(0) / V_star
+    v_always = evaluate_constant_policy_tab(1) / V_star
+    print(
+        "  Count-OLS implied policy at largest N: "
+        f"{naive_mean:.4f} (MC SE {naive_se:.4f}); "
+        f"never visit {v_never:.4f}; always visit {v_always:.4f}"
     )
     print()
     print(
@@ -959,6 +1064,10 @@ def generate_outputs(data):
     m_ses = murphy["V"].std(axis=1, ddof=1) / np.sqrt(N_SEEDS) / V_star
     q_means = qlearn_N["V"].mean(axis=1) / V_star
     q_ses = qlearn_N["V"].std(axis=1, ddof=1) / np.sqrt(N_SEEDS) / V_star
+    naive_means = naive_count["V"].mean(axis=1) / V_star
+    naive_ses = (
+        naive_count["V"].std(axis=1, ddof=1) / np.sqrt(N_SEEDS) / V_star
+    )
     ax.errorbar(
         n_arr,
         m_means,
@@ -977,12 +1086,21 @@ def generate_outputs(data):
         color=COLORS["orange"],
         capsize=3,
     )
+    ax.errorbar(
+        n_arr,
+        naive_means,
+        yerr=1.96 * naive_ses,
+        marker="^",
+        label="Unadjusted count OLS",
+        color=COLORS["green"],
+        capsize=3,
+    )
     ax.axhline(1.0, **BENCH_STYLE, label=r"Oracle $V^*$")
     ax.set_xscale("log")
     ax.set_xlabel(r"Cohort size $N$")
     ax.set_ylabel(r"$V(\hat\pi) / V^*$")
-    ax.set_title(r"(Q1) Tabular family status: same $V^*$")
-    ax.legend(frameon=False, loc="lower right", fontsize=9)
+    ax.set_title(r"(Q1) Tabular policy recovery")
+    ax.legend(frameon=False, loc="center right", fontsize=9)
 
     # Panel 2: tabular V vs epochs at fixed N
     ax = axes[1]
@@ -1049,7 +1167,7 @@ def generate_outputs(data):
     ax.set_xscale("log")
     ax.set_xlabel(r"Cohort size $N$")
     ax.set_ylabel(r"$V(\hat\pi) / V^*$")
-    ax.set_title(rf"(Q3) Family covariates ($p={P_FEAT}$): recovery")
+    ax.set_title(rf"(Q3) Continuous-state policy recovery ($p={P_FEAT}$)")
     ax.legend(frameon=False, loc="lower right", fontsize=9)
 
     fig.tight_layout()
@@ -1076,6 +1194,13 @@ def generate_outputs(data):
             q_means[-1],
             q_ses[-1],
         ),
+        (
+            "Unadjusted count OLS (tabular, $N={}$)".format(N_tab_max),
+            naive_means[-1],
+            naive_ses[-1],
+        ),
+        ("Always visit (tabular)", v_always, None),
+        ("Never visit (tabular)", v_never, None),
         ("Neural-FQI (high-dim, $N={}$)".format(N_hd_max), f_means[-1], f_ses[-1]),
         ("DQN (high-dim, $N={}$)".format(N_hd_max), d_means[-1], d_ses[-1]),
     ]

@@ -5,6 +5,7 @@ Config:
   HIGH-DIM DGP: T_decay=0.5, delta=0.5, sigma_eta=0.5, sigma_Y=0.5, smooth_tau=0.25, threshold_center=0.0, GH_nodes=32
   Cache hit: oracle
   Cache hit: murphy
+  Cache hit: naive_count
   Cache hit: qlearn_N
   Cache hit: qlearn_epochs
   Cache hit: oracle_hd
@@ -17,13 +18,14 @@ Config:
 
   (Q1) Tabular V(pi_hat)/V* vs cohort size N [Q-learn 100 replays, alpha=0.1]
   Tabular Oracle V* = 3.5820
-       N     Plug-in g-comp (MC SE)       Q-learn mean (MC SE)
-     100         0.9743 (0.0025)         0.9739 (0.0026)
-     300         0.9907 (0.0012)         0.9914 (0.0012)
-    1000         0.9978 (0.0005)         0.9953 (0.0007)
-    3000         0.9995 (0.0002)         0.9979 (0.0006)
-   10000         1.0000 (0.0000)         0.9968 (0.0007)
+       N     Plug-in g-comp (MC SE)       Q-learn mean (MC SE)     Count OLS beta (MC SE)
+     100         0.9743 (0.0025)         0.9739 (0.0026)        -0.2596 (0.0199)
+     300         0.9907 (0.0012)         0.9914 (0.0012)        -0.2904 (0.0143)
+    1000         0.9978 (0.0005)         0.9953 (0.0007)        -0.2841 (0.0067)
+    3000         0.9995 (0.0002)         0.9979 (0.0006)        -0.2866 (0.0042)
+   10000         1.0000 (0.0000)         0.9968 (0.0007)        -0.2870 (0.0023)
   Paired seed-wise contrast at largest N (Q-learn - plug-in): -0.0032 (MC SE 0.0007)
+  Count-OLS implied policy at largest N: 0.8124 (MC SE 0.0000); never visit 0.8124; always visit 0.9422
 
   (Q2) Tabular Q-learn V(pi_hat)/V* vs replay epochs at N=300
   epochs       Q-learn mean (MC SE)
