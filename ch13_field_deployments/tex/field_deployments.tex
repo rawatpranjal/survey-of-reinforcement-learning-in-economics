@@ -2,32 +2,6 @@ The preceding chapters described the theory and algorithms of reinforcement lear
 
 There cases come from recommendation engines, programmatic bidding, marketplace dispatch, inventory management, video encoding, and chip design; reinforcement learning from human feedback (RLHF) is included as a training-time success case, not as evidence that ordinary business control problems have been solved at comparable breadth. The gap between academic application and publicly documented business impact is therefore quite large. Field systems where RL works, usually only give RL a narrow control surface, surround it with an ecosystem of historical and live logs that track older and current policies and counterfactual evaluation of said policies. There is, in short, a lot of infrastracture that is necessarily for business deployment of reinforcement learning. 
 
-\begin{table}[t]
-\centering
-\footnotesize
-\begin{tabular}{p{0.24\linewidth}p{0.66\linewidth}}
-\toprule
-Case & What the source establishes \\
-\midrule
-YouTube recommendations & Production top-$K$ candidate generation with REINFORCE and live YouTube experiments \citep{Chen2019YouTubeTopK}. \\
-Meta notifications & Horizon-trained RL policies replaced supervised notification systems for some Facebook notifications \citep{Gauci2019Horizon}. \\
-Taobao cold-start ranking & Reinforcement-learning lifetime value (RL-LTV) was deployed on Taobao for cold-start recommendation, with live A/B results \citep{Ji2021RLLTV}. \\
-Meta production bidding & Offline RL optimized parameters of an existing production auto-bidding policy and was A/B tested at scale \citep{Korenkevych2023MetaBidding}. \\
-Alibaba sponsored-search real-time bidding (RTB) & Robust Markov decision process (robust MDP) bidding control was deployed and tested in Alibaba's search auction platform \citep{Zhao2018SponsoredSearchRTB}. \\
-DiDi dispatch & RL dispatch was A/B tested in multiple cities and launched as primary dispatch in a major market \citep{SadeghiEshkevari2022DiDiScalable}. \\
-DeepStock inventory & Deep reinforcement learning (DRL) with inventory-policy regularization was rolled out across Tmall stock-keeping-unit (SKU) warehouse replenishment \citep{Xie2026DeepStock}. \\
-MuZero-RC video encoding & MuZero-RC controlled VP9 rate control on part of YouTube live traffic \citep{Mandhane2022MuZeroRC,DeepMind2022MuZeroRCPost}. \\
-AlphaChip floorplanning & RL-generated layouts were used in Google TPU and other shipped chip designs, a design artifact rather than a runtime controller \citep{Mirhoseini2021GraphPlacement,GoldieMirhoseini2024AlphaChipPost}. \\
-InstructGPT RLHF & Proximal policy optimization (PPO) against a learned reward model shaped deployed language-model behavior, training-time RL rather than inference-time control \citep{ouyang2022training}. \\
-BCOOLER heating, ventilation, and air-conditioning (HVAC) & RL produced live supervisory-control recommendations at two commercial buildings, field trials without broad rollout \citep{Luo2022BCOOLER}. \\
-Tmall pricing, hotel revenue management & Real field experiments controlled prices \citep{Liu2019} or revenue-management decisions \citep{Chen2023hotelrl}, without broad rollout evidence. \\
-Financial execution, RTB simulator, inventory benchmark & Real data \citep{Nevmyvaka2006execution} or benchmark evidence \citep{Wu2018rtb,Gijsbrechts2022inventory} without public proof of live deployed control. \\
-\bottomrule
-\end{tabular}
-\caption{Public primary-source evidence for field RL cases.}
-\label{tab:field_case_inventory}
-\end{table}
-
 \subsection{The Anatomy of a Production Reinforcement Learning System}
 \label{subsec:production_rl_anatomy}
 
@@ -247,9 +221,47 @@ Back-test & $+0.16\%$ $(+0.03\%, +0.27\%)$ & $\sim$50 billion \\
 \end{table}
 
 \subsubsection{Alibaba sponsored-search RTB}
-\citet{Zhao2018SponsoredSearchRTB} give a complementary auction case in Alibaba sponsored search. The system controls bidding through an hourly robust-MDP layer that selects a bidding model, rather than emitting every bid directly from an unconstrained neural policy. The source reports deployment in Alibaba's e-commerce search auction platform and online A/B tests with gains in purchase amount per cost, return on investment, and conversion rate.
+\citet{Zhao2018SponsoredSearchRTB} report an earlier and methodologically opposite auction deployment on Alibaba's sponsored-search platform, run across a thousand advertisers and about a hundred million auctions a day. Where the Meta system tunes a single trusted controller offline and treats the competing campaigns as a fixed environment, the Alibaba system learns online, is value-based rather than actor-critic, and models the competition among advertisers explicitly. It is the multi-agent bidding case in this chapter, and it shows both why independent learners erode their own gains in a shared auction and how a cooperative reward term restores them.
 
-Operationally, Alibaba moves the RL decision from individual impressions to a 24-step daily episode, a finite-horizon discounted formulation in which each day is one episode and each step is one hour. The state at each hour contains remaining budget, the time period, and aggregated auction features such as impressions, clicks, cost, click-through rate, conversion rate, and pay per click. The action sets the parameter of a linear real-time bidding model based on predicted conversion rate; the search auction engine then uses that model to return impression-level bid prices online. Training uses a simulator built from complete auction logs and predicted conversion behavior because the platform cannot afford random bidding exploration in the live auction system. For online evaluation, the authors report collecting more than 100 million auction instances for 1000 ads one day in advance, then using the trained models to generate real bidding decisions online.
+The natural formulation places one decision at each auction, with a state of remaining budget, step index, and per-auction features, an action that is a bid, a reward equal to the purchase value won, and one day as an episode. That model does not transfer across days, because the per-auction environment is too noisy to repeat. The move that makes it deployable is to aggregate to the hour. A day becomes a fixed $m=24$ step episode, and the state $s=\langle b,t,g\rangle$ carries the remaining budget $b$, the hour $t$, and a vector $g$ of aggregated statistics for that hour, the numbers of impressions and clicks, cost, click-through rate, conversion rate, and pay per click. At this resolution the transition dynamics repeat across days, each hour's aggregated features are nearly determined by the previous hour's features and action, which is what makes a policy trained on one day valid on the next.\footnote{Holding the feature $g_{i,t}$ and the action $a_t$ fixed, the source observes that the next value $g_{i,t+1}$ concentrates around its conditional mean with deviation below $\eta<0.03$. The model is called robust in that this hour-level invariance lets one policy hold across the day-to-day environment shift, which is a different notion from the worst-case minimax robustness treated elsewhere in this survey.} The hourly action sets the parameter of the real-time bidding model, discretized to one of a hundred levels, and the auction engine applies that model to price every impression in the hour, so reinforcement learning controls a compact hourly knob rather than each bid.
+
+The policy is a value-based deep $Q$-network, the direct contrast to the Meta bidder's conservative actor-critic. The action value $Q(s,a)$ is approximated by a network with weights $\theta$ and trained toward the one-step Bellman target of Section~\ref{section:rl_algorithms},
+\begin{equation}
+y=r(s,a)+\gamma\max_{a'}Q_{\bar\theta}(s',a'),\qquad
+\mathcal{L}(\theta)=\big(y-Q_\theta(s,a)\big)^2,
+\end{equation}
+with the target-network weights $\bar\theta$ held fixed for $C$ steps and $\varepsilon$-greedy exploration annealed from one to zero.\footnote{The target network is refreshed every ten thousand steps, with a one-million transition replay buffer, RMSProp at learning rate $0.0001$, batch size three hundred, and a four-layer network of widths $[15,300,200,100]$.}
+
+A single agent bids well in isolation, but the platform runs thousands at once, and each agent's bidding is part of every other's environment, so independent optimization bids up costs and erodes the collective outcome. The massive-agent model gives each advertiser its own $Q$-network but changes what each one maximizes. After all agents bid, agent $i$ receives its own purchase value as a private competitive reward and the aggregate value across all advertisers as a shared cooperative reward, and it learns against the sum,
+\begin{equation}
+r_i = r_i^{\mathrm{comp}} + r^{\mathrm{coop}},
+\end{equation}
+so an action that wins volume for one campaign at the expense of the whole is penalized through the cooperative term.\footnote{The source specifies the combination only as adding a private competitive objective to a public cooperative one, without a fixed weighting; the schematic sum above reflects that description.}
+
+Because random bidding cannot be tried in the live auction, training runs in a simulator built from complete auction logs and predicted conversion rates, which can replay any counterfactual bid without having to predict the market price, and it processed two hundred billion simulated auctions in about two hours on a thousand CPUs and forty GPUs. In serving, the auction engine queries the current bidding model and the model periodically refreshes its parameter from the trained $Q$-network. Table~\ref{tab:alibaba_rtb} reports the online A/B tests against the platform's keyword-bidding baseline. On ten advertisers with disjoint keywords the single-agent model raised purchase amount per cost by $35.04\%$, but across a thousand competing advertisers that same model captured only $6.29\%$, the difference being the competition it ignores, while the massive-agent model recovered the gain to $13.01\%$ and the largest return-on-investment improvement. The case is the multi-agent counterpart to the Meta bidder, value-based and online where Meta is conservative and offline, and it makes the competitive externality of a marketplace visible in the numbers.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+\multicolumn{5}{l}{Panel A: single-agent online A/B, 10 disjoint-keyword ads, vs.\ keyword bidding} \\
+\midrule
+Policy & Purchase/cost & ROI & CVR & PPC \\
+\midrule
+RMDP & $+35.04\%$ & $+21.38\%$ & $+23.11\%$ & $-5.16\%$ \\
+\midrule
+\multicolumn{5}{l}{Panel B: multi-agent online A/B, 1000 competing ads (5 Feb 2018), vs.\ keyword bidding} \\
+\midrule
+Policy & Purchase/cost & ROI & CVR & PPC \\
+\midrule
+M-RMDP & $+13.01\%$ & $+39.12\%$ & $+12.62\%$ & $-0.74\%$ \\
+RMDP & $+6.29\%$ & $+26.51\%$ & $+3.12\%$ & $-3.36\%$ \\
+\bottomrule
+\end{tabular}
+\caption{Alibaba sponsored-search real-time bidding \citep{Zhao2018SponsoredSearchRTB}. Relative improvement over the keyword-bidding baseline in online A/B tests. Purchase/cost is purchase amount per unit cost, the optimized objective; ROI is return on investment, CVR conversion rate, and PPC pay per click, for which lower is better. Panel A: the single-agent robust MDP on ten advertisers with disjoint keywords. Panel B: the same policy and the cooperative massive-agent policy on a thousand competing advertisers, rank-ordered by purchase/cost, showing the single-agent gain shrinking under competition and the cooperative reward restoring it.}
+\label{tab:alibaba_rtb}
+\end{table}
 
 \subsection{Marketplaces, Pricing, and Revenue Management}
 
@@ -307,16 +319,102 @@ City V & $-0.739\%$\ \ ($0.47$M) \\
 
 \subsubsection{Tmall dynamic pricing}
 \label{sec:ecommerce_pricing}
-\citet{Liu2019} report online field experiments for dynamic pricing on Tmall, beginning in July 2018 and lasting months across thousands of items. The action is a price or discount, the state is a collection of product and market features, and the reward is based on a difference in revenue conversion rates rather than raw revenue. The pricing step is one day. Markdown pricing of fixed stock is episodic, the episode ends when the product is out of stock, while daily pricing of continuously supplied items is a continuing task with no terminal state, and both use a discount factor of $0.99$. The project is not a standard A/B test: the source states that showing different prices to different customers at the same time was not legally available, so the evaluation relies on field comparisons such as difference-in-differences and similar products.
+\citet{Liu2019} run what they describe as the first deep reinforcement learning system for e-commerce dynamic pricing at scale, setting the real prices of thousands of Tmall products in field experiments that began in July 2018 and ran for months. Two features of the setting shape everything else. The agent spends real money on real inventory, so a cold start that prices badly is a capital loss rather than a bad simulation, and showing different customers different prices at the same time is not legally available, so the usual A/B test is off the table. The system answers the first with demonstration pretraining and the second with a difference-in-differences evaluation on matched products. It is the pricing case in this chapter, and the one whose evaluation design is dictated by law rather than by convenience.
+
+Each product is priced by its own MDP at a daily step. The state $s_{i,t}\in\mathbb{R}^{m}$ collects four groups of features for product $i$ on day $t$, its price, its recent sales, its customer traffic, and its competitiveness against similar products. Markdown pricing of a fixed stock is episodic, the episode ending when the product sells out, whereas daily pricing of a continuously replenished good is a continuing task with no terminal state, and both discount the future at $\gamma=0.99$. The action is the price, and the paper studies two parameterizations, a discrete one that partitions the historical price range into $K$ bins and a continuous one that emits an exact price. The reward is not raw revenue, which is dominated by traffic swings, but the revenue per unique visitor,
+\begin{equation}
+r_{i,t}=\mathrm{revenue}_{i,t}\,/\,\mathrm{uv}_{i,t},
+\end{equation}
+the \emph{revenue conversion rate}, or the analogous profit conversion rate when unit cost is known.\footnote{For fast-moving consumer goods the revenue conversion rate is too unstable for a level reward to converge, the price-to-conversion correlation is $0.15$ against $-0.57$ for luxuries, so the reward there is the difference of revenue conversion rates over a window $\tau$ rather than its level, which rewards a relative improvement and restores convergence.}
+
+The discrete-action problem is solved with a deep $Q$-network and the continuous one with deep deterministic policy gradient, both standard from Section~\ref{section:rl_algorithms} and both using experience replay and target networks. The distinctive step is the cold start. No simulator of the market exists, and learning online from scratch would lose money, so each agent is pretrained on demonstrations, the logged price-state-reward transitions of the specialists and rules that priced the products before, through deep $Q$-learning from demonstrations for the discrete agent and its deterministic-policy-gradient analogue for the continuous one. Offline evaluation then scores a candidate policy on held-out logged transitions, counting a logged reward only when the logged price falls within a tolerance of the policy's own price, before any live pricing begins.
+
+Online, because prices cannot be randomized across customers, the effect is estimated by difference-in-differences against \emph{similar products}, matched on brand, category, and selling behavior. The comparison statistic is the difference of revenue conversion rates at a one-year window, which nets out seasonality and annual promotions and reads as year-on-year conversion growth.\footnote{Two groups of matched similar products priced by the same policy track each other closely on this statistic, an average of $1.00$ against $0.99$ after rescaling, which is what licenses reading a gap between the treated and control groups as a policy effect rather than a market movement. The statistic is used only for evaluation, not as the training reward.} Table~\ref{tab:tmall_results} reports the two field experiments. In a markdown season for five hundred luxury items the learned policy held profit conversion positive while the manual benchmark, cutting prices below cost to move stock, turned negative. In daily pricing of fast-moving goods against a manually priced control, the continuous policy scored highest on the difference-in-differences index, the discrete policy next, and both well above the control. The case shows a marketplace's legal and financial constraints, not just its dynamics, dictating how reinforcement learning must be trained and measured.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+\multicolumn{3}{l}{Panel A: markdown pricing, 500 luxury SKUs (DQN) vs.\ 2000 manual, days 16--30} \\
+\midrule
+Conversion measure & Learned (DQN) & Manual \\
+\midrule
+Revenue conversion rate & $0.22$ & $0.16$ \\
+Profit conversion rate & $0.16$ & $-0.04$ \\
+\midrule
+\multicolumn{3}{l}{Panel B: daily FMCG pricing, difference-in-differences index (DRCR)} \\
+\midrule
+Policy & DRCR index & Control \\
+\midrule
+DDPG (continuous) & $6.07$ & $1.00$ \\
+DQN (discrete) & $5.03$ & $1.00$ \\
+\bottomrule
+\end{tabular}
+\caption{Tmall dynamic pricing \citep{Liu2019}. Panel A: rescaled revenue and profit conversion rate (revenue or profit per unique visitor) over the markdown fortnight, learned DQN policy on 500 luxury SKUs against 2000 manually priced similar products; the manual group's profit conversion turned negative. Panel B: the difference-in-differences index (difference of revenue conversion rates at a one-year window) for daily pricing of fast-moving goods, continuous and discrete policies against a manually priced control rescaled to $1.00$, rank-ordered by the index. An earlier run of the discrete policy alone against the control scored $5.10$ on the same index.}
+\label{tab:tmall_results}
+\end{table}
 
 \subsubsection{Hotel revenue management}
 \label{sec:hotel}
-\citet{Chen2023hotelrl} study a budget hotel chain's revenue-management problem. The RL layer recommends an average discount; a linear program translates the recommendation into capacity allocations across customer segments. This design made the action interpretable to hotel managers while still letting the policy learn from realized booking outcomes. The source reports implementation in a pilot study and synthetic-control evaluation, with revenue per available room improving by 11.80\%. An episode is the finite 90-day booking horizon for one day of stay, divided into ten periods, and the objective is undiscounted total revenue over that horizon. The system updates Q-values after completed episodes, so the training and execution boundary is blurrier than in a frozen-policy deployment, which is part of why the action was kept deliberately simple.
+\citet{Chen2023hotelrl} place reinforcement learning inside the revenue management of a budget hotel chain, China Lodging Group, which operated some two thousand hotels, most under its Hanting brand. A hotel sells a fixed stock of rooms for a given night through several rate segments, direct booking, membership, and online travel agencies among them, each carrying its own discount, and it must decide how much capacity to release to each segment as the booking horizon runs down. The classical approach estimates a demand and cancellation model and optimizes against it, which the firm found impractical, both because that process is hard to estimate under censoring and non-stationarity and because a hotel manager will not act on an allocation they cannot explain. The deployed system keeps a conventional optimizer in charge of the allocation and uses reinforcement learning to set one quantity the manager already reasons about, the \emph{average discount}. It is the operations and revenue-management case in this chapter, and the one held to the standard of a controlled field experiment.
+
+The problem is a finite-horizon episodic MDP over the booking horizon of a single day of stay. An episode has $T$ periods, chosen so that each period carries about a tenth of the reservations, and the state is a pair $(t,s)$ where $t$ indexes the period and $s$ is the revenue per room sold so far, the average daily room rate up to period $t$.\footnote{The booking horizon is ninety days, divided into $T=10$ periods that shorten toward the stay date because roughly seventy percent of reservations arrive within three days of the stay and about thirty percent are same-day. The revenue-per-room state is scaled to the base rate and discretized to $\{0,10\%,\dots,100\%\}$, and the action to $\{10\%,20\%,30\%\}$, which lets the recommended policy be drawn as a table managers can read rather than held in a function approximator.} Given an allocation $x=(x_1,\dots,x_K)$ across the $K$ rate segments with per-segment discounts $\delta_k$, the action is the reservation-weighted mean discount $a=\sum_{k=1}^{K}\delta_k x_k/\sum_{l=1}^{K}x_l$. The reward $R(t,s,a)$ is the reservation payment received in period $t$, net of cancellations, and because $s$ tracks realized room rate the firm never has to model cancellations separately. The agent maximizes the undiscounted total reward $\mathbb{E}_\pi\big[\sum_{t=1}^{T} R_t\big]$ over the horizon, in the temporally extended sense of Section~\ref{section:rl_algorithms}.
+
+Because the firm cannot build a trustworthy simulator of its own demand, the policy is learned model-free and on-policy from realized episodes by Monte Carlo. The action value is the expected total reward from taking $a$ in $(t,s)$ and then following $\pi$,
+\begin{equation}
+Q^\pi(t,s,a)=\mathbb{E}_\pi\Big[\textstyle\sum_{i=t}^{T} R_i \,\Big|\, (t,s),\,a\Big],
+\end{equation}
+estimated with no bootstrapping, as the running average of the realized returns $\sum_{i=t}^{T} R_i$ over past episodes that visited $(t,s,a)$. At the start of each day the just-completed episode for the previous day of stay updates $Q$, and the policy is improved to be $\varepsilon$-greedy in the updated value,
+\begin{equation}
+\pi(a\mid t,s)=
+\begin{cases}
+1-\varepsilon+\varepsilon/|\mathcal{A}| & a=\arg\max_{a'} Q(t,s,a'),\\[2pt]
+\varepsilon/|\mathcal{A}| & \text{otherwise,}
+\end{cases}
+\end{equation}
+with a small $\varepsilon$ and the random action capped one discount step from the current best.\footnote{$\varepsilon=0.1$. On the first day the value is initialized from policy evaluations over the previous three months of reservations. The policy applied to a given day of stay is reassembled from the daily updates, so it tracks non-stationary demand rather than being fixed ninety days ahead, at the cost of the convergence guarantees a stationary environment would provide.}
+
+The learned discount is only a target. A linear program turns the recommended $\pi(t,s)$ into an integer allocation $x_t=(x_{1,t},\dots,x_{K,t})$ across the rate segments, maximizing the hotel's segment preference subject to selling its remaining capacity at no more than the recommended average discount,
+\begin{equation}
+\max_{x_t\ge 0}\ \sum_{k=1}^{K} w_k\,x_{k,t}
+\qquad\text{s.t.}\qquad
+\sum_{k=1}^{K} x_{k,t}=C_t,\quad
+\sum_{k=1}^{K}\delta_k x_{k,t}\le \pi(t,s)\,C_t,
+\end{equation}
+where $C_t$ is the capacity left at period $t$ and the weights $w_k\ge 0$ encode whether the hotel favors, say, loyalty-building direct bookings or the wider reach of travel agencies.\footnote{There are $K=5$ segments and the allocation is served through nested protection levels. With five decision variables and two constraints the discount constraint is typically slack, the realized weighted discount stays within one percent of the recommendation. The weights are chosen from whether a hotel's demand is primarily business, leisure, or mixed.} This split is what makes the policy interpretable, the reinforcement learner reasons over a single scalar the manager understands, and the multivariate allocation is recovered by an optimizer the firm already trusts.
+
+The system ran as a module on the firm's enterprise software in a pilot of five Hanting hotels in Shanghai from March to June 2015, the treatment hotels drawn at random from ten candidates. A conventional A/B test was not available, both because charging different guests different prices at the same time was not permissible and because five heterogeneous hotels are too few for a plain difference-in-differences, so the effect was estimated by the \emph{synthetic control} method, each treatment hotel matched to a weighted composite drawn from 271 other Shanghai hotels. Table~\ref{tab:hotel_results} reports the result. Averaged over the five hotels, revenue per available room rose by $11.80\%$, significant at the one percent level, arising through occupancy for some hotels and room rate for others, and the gains grew over the course of the pilot. The chain adopted the system after the trial. The case shows reinforcement learning entering an operations setting not by replacing the decision but by supplying one interpretable input to a classical optimizer, and being measured against the evidentiary standard of a field experiment rather than an offline benchmark.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+\multicolumn{4}{l}{Panel A: mean treatment effect across the five pilot hotels (synthetic control)} \\
+\midrule
+Measure & Change & $p$-value & \\
+\midrule
+Revenue per available room & $+11.80\%$ & $.0090$ & \\
+Average daily room rate & $+5.93\%$ & $.1160$ & \\
+Occupancy rate & $+5.15\%$ & $.1361$ & \\
+\midrule
+\multicolumn{4}{l}{Panel B: per-hotel decomposition, rank-ordered by RevPAR (after-pilot period)} \\
+\midrule
+Hotel & RevPAR & ADR & Occupancy \\
+\midrule
+Hotel 5 (mixed demand) & $+20.81\%$ & $+7.47\%$ & $+10.37\%$ \\
+Hotel 4 (business demand) & $+13.66\%$ & $+9.65\%$ & $+3.44\%$ \\
+\bottomrule
+\end{tabular}
+\caption{Hotel revenue management at China Lodging Group \citep{Chen2023hotelrl}. Panel A: mean percentage change in each measure against the synthetic control across the five pilot hotels, with permutation $p$-values; only the RevPAR effect is significant at the one percent level. Panel B: the two hotels with a fully reported decomposition, rank-ordered by RevPAR, showing the same order of headline gain reached through occupancy for one hotel and through room rate for the other. Pilot: five Hanting hotels in Shanghai, March to June 2015.}
+\label{tab:hotel_results}
+\end{table}
 
 \subsection{Inventory and Operational Control}
 \label{sec:inventory}
 
-\subsubsection{Inventory benchmark: contrast}
+\subsubsection{Inventory benchmark}
 The pre-DeepStock inventory evidence is a benchmark result, not a deployment. \citet{Gijsbrechts2022inventory} show that deep RL can match strong heuristics on some classic inventory problems, but only after expensive tuning, and it is often dominated by specialized policies. The paper is valuable precisely because it does not claim deployment. It shows that stylized inventory benchmarks are not enough to justify field adoption. The benchmark problems themselves are infinite-horizon periodic-review formulations, lost sales, dual sourcing, and multi-echelon, with a discounted objective evaluated by long-run average cost per period.
 
 \subsubsection{DeepStock}
@@ -364,9 +462,45 @@ Annual cost-of-capital saving & \multicolumn{2}{c}{$\approx 13.3$ million RMB} \
 \subsection{Physical and Design Systems}
 
 \subsubsection{MuZero-RC video encoding}
-\citet{Mandhane2022MuZeroRC} apply MuZero to VP9 video-compression rate control. The action is a frame-level quantization parameter, the state summarizes the encoding context and target bitrate, and the reward trades off video quality against bitrate-constraint satisfaction. Each video is one finite episode with one step per frame, undiscounted with $\gamma=1$, and the quality reward arrives only at the final step of the episode under the bitrate constraint. In offline evaluation, MuZero-RC reduces compressed size at fixed quality relative to libvpx's default two-pass variable-bitrate controller.
+\citet{Mandhane2022MuZeroRC} bring MuZero to the rate control of the VP9 video codec, the component that decides how many bits to spend on each frame. It is the model-based case in this chapter, the one system that learns a model of its environment and plans with it rather than reacting from a learned value or policy alone, and it handles a hard bitrate constraint in a way that contrasts with the pessimistic value ensemble of the building-cooling controller later in this section. The learned controller replaces a narrow codec decision inside an existing encoder, and the accompanying DeepMind and YouTube post reports it running on a portion of YouTube live traffic.
 
-The deployment evidence comes from the official joint DeepMind and YouTube post \citep{DeepMind2022MuZeroRCPost}, which reports production launch on a portion of YouTube live traffic and an average bitrate reduction. This chapter treats MuZero-RC as the canonical physical or design runtime-control case: it replaced a narrow codec control component, not the whole video platform.
+Rate control is posed as a constrained MDP $\langle\mathcal{S},\mathcal{A},P,R_{\mathrm{PSNR}},\gamma=1,c_{\mathrm{Bitrate}},\beta_{\mathrm{Target}}\rangle$. The state is the encoder's first-pass statistics together with information about the frames encoded so far and the frame to come, the action is an integer quantization parameter $\mathrm{QP}\in[0,255]$ applied to the current frame, and the transition advances to the next frame. The reward is the quality of the finished encode, measured as peak signal-to-noise ratio, paid only at the final frame and zero before it, and the constraint is that the encode's bitrate stay under a user-specified target $\beta_{\mathrm{Target}}$. The agent maximizes terminal quality subject to that budget, over the finite undiscounted episode of one video.
+
+The obvious way to enforce the budget is a Lagrangian relaxation, but a single multiplier is not optimal across videos and target bitrates, and the authors found that combining MuZero with a Lagrangian was both hard to tune and poor at evaluation. Their alternative, \emph{self-competition}, converts the constrained objective into a win-or-lose signal by having the agent race its own history. For each video and target-bitrate pair the agent keeps an exponential moving average of its past quality and its past overshoot, the amount by which it exceeded the budget, and after an episode it sets the entire return to
+\begin{equation}
+G=\begin{cases}
++1 & \text{the episode beats its baseline, comparing overshoot first and then quality,}\\
+-1 & \text{otherwise,}
+\end{cases}
+\end{equation}
+then updates the baseline with the new episode.\footnote{The exact rule composes sign and indicator functions over the two comparisons. Because overshoot is compared before quality, the agent learns to satisfy the constraint first and to improve quality second, and because the baseline is a moving average of the agent's own results it rises as the agent improves, so the target keeps receding. Self-competition is equivalent to a Lagrangian relaxation with multiplier one on a CMDP whose state is augmented with the moving averages, which is what removes the per-video tuning.}
+
+The agent is MuZero, with a representation network that embeds the encoder features, a dynamics network that predicts the next embedding from a candidate QP, and a prediction network that outputs a policy and value. During training it plans, running two hundred simulations of Monte Carlo tree search over the learned dynamics to choose each QP, which is the model-based step no other deployed system in this chapter takes. At evaluation the search is dropped for speed and the highest-probability QP from the policy network is used directly.\footnote{An augmented variant subtracts $0.005\times\text{overshoot}$ from the quality term of the self-competition comparison, roughly the average slope of the codec's rate-distortion curve, so the agent gives up a little quality to save bits. Training used twenty thousand 480p videos, and evaluation used 3062 five-second clips from the YouTube user-generated-content dataset at nine target bitrates.} Table~\ref{tab:muzero_results} reports the evaluation against libvpx's default two-pass controller. The augmented agent encodes at the same quality using $6.28\%$ fewer bits, and both agents overshoot the target far less often than the baseline while landing within five percent of it more often. In production the post reports an average $4\%$ bitrate reduction on a portion of YouTube live traffic, a separate and smaller figure than the offline $6.28\%$ that should not be conflated with it. The case shows model-based planning improving a real codec, with a hard constraint met by self-competition rather than a hand-tuned penalty.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+\multicolumn{4}{l}{Panel A: coding efficiency, BD-rate vs.\ libvpx (more negative is better)} \\
+\midrule
+Agent & PSNR & SSIM & VMAF \\
+\midrule
+Augmented MuZero-RC & $-6.28\%$ & $-5.11\%$ & $-1.88\%$ \\
+MuZero-RC & $-4.72\%$ & $-3.68\%$ & $-0.53\%$ \\
+\midrule
+\multicolumn{4}{l}{Panel B: bitrate constraint satisfaction, fraction of evaluation videos} \\
+\midrule
+Agent & overshoot ${>}0$ & overshoot ${>}5\%$ & within $5\%$ of target \\
+\midrule
+libvpx (baseline) & $64.00\%$ & $6.13\%$ & $71.34\%$ \\
+MuZero-RC & $20.34\%$ & $2.04\%$ & $84.14\%$ \\
+Augmented MuZero-RC & $16.10\%$ & $2.25\%$ & $70.12\%$ \\
+\bottomrule
+\end{tabular}
+\caption{MuZero-RC on VP9 rate control \citep{Mandhane2022MuZeroRC}. Panel A: Bjontegaard-delta rate against the libvpx baseline for three quality measures, the average bitrate change at matched quality, so a negative value is a saving, rank-ordered by the PSNR column. Panel B: the fraction of the 3062 evaluation videos on which each policy overshoots the target at all, overshoots by more than five percent, and lands within five percent of the target. Figures are means over five seeds; the standard error is at most $0.33$ points in Panel A and $2.2$ points in Panel B.}
+\label{tab:muzero_results}
+\end{table}
 
 \subsubsection{AlphaChip floorplanning}
 \citet{Mirhoseini2021GraphPlacement} and \citet{GoldieMirhoseini2024AlphaChipPost} establish a different kind of field evidence. AlphaChip treats chip floorplanning as a sequential placement problem: starting from an empty layout, the agent places components and receives reward based on final layout quality, a finite-horizon episode with one step per placed component and a single terminal reward. The Nature paper states that the method was used for Google's next-generation AI accelerators, and the later DeepMind post reports use across TPU generations and other chips. The RL policy produces a shipped design artifact that enters a conventional chip-design and manufacturing pipeline, not a live runtime controller, so it is not directly comparable with the YouTube, DiDi, or bidding systems.
@@ -482,7 +616,7 @@ Finally, the bar is set by a strong incumbent, not a weak heuristic. A tuned bas
 
 Before the deployment lessons of Section~\ref{sec:field_lessons} apply, a researcher deciding whether to try reinforcement learning in a firm faces a prior question, and it is worth answering first. The question is whether the firm's own actions move the state. When the context for each decision arrives on its own and the decision is scored in isolation, the problem is a contextual bandit or a supervised prediction, and the added machinery of full reinforcement learning buys nothing (Section~\ref{subsec:overlapping_terminology}). Reinforcement learning earns its cost only when today's action shapes tomorrow's world and the reward is delayed, when a discount today trains customers to wait for the next one, when a dispatch now leaves a region short later, or when a pricing rule changes how buyers behave (Section~\ref{sec:liu}). In the language of Section~\ref{section:language}, this is the control-culture move, taken when the dynamics are real and a myopic rule leaves long-run value unclaimed.
 
-When the problem does have that structure, the deployed record marks out where reinforcement learning has actually paid off, and the profile is consistent. Decisions repeat at high volume and leave dense logs. The learner is given a narrow, well-defined lever inside a system the firm already runs, not the whole system. A strong incumbent is already in place, so the goal is a reliable small gain rather than a policy built from nothing. The logs record the probability of each action, so a policy can be both learned and checked from them. Mistakes are bounded and reversible, ideally behind guardrails with a fallback. And the outcome can be measured through some experiment the domain permits. The case catalog of Table~\ref{tab:field_case_inventory} is, in effect, the set of problems that met enough of these conditions.
+When the problem does have that structure, the deployed record marks out where reinforcement learning has actually paid off, and the profile is consistent. Decisions repeat at high volume and leave dense logs. The learner is given a narrow, well-defined lever inside a system the firm already runs, not the whole system. A strong incumbent is already in place, so the goal is a reliable small gain rather than a policy built from nothing. The logs record the probability of each action, so a policy can be both learned and checked from them. Mistakes are bounded and reversible, ideally behind guardrails with a fallback. And the outcome can be measured through some experiment the domain permits. The cases in this chapter are, in effect, the set of problems that met enough of these conditions.
 
 Read in reverse, the same profile is a list of warning signs. Rare, one-shot, or low-volume decisions leave nothing to learn from. Logs without recorded action probabilities break both offline learning and its evaluation (Section~\ref{section:offline_rl}). A single catastrophic and irreversible mistake, with no guardrail to catch it, rules out live exploration. Where a myopic rule or a classical optimizer already captures the available value, reinforcement learning adds risk without adding return. The hardest warning to see is the last one, because an offline comparison can favor a policy that would fail in production, since a strong offline score can rank the wrong policy when the logs do not cover the states that policy would visit (Section~\ref{sec:field_ope_sim}).
 
