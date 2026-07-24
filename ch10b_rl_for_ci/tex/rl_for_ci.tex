@@ -174,29 +174,29 @@ For patients who continue, $Q_2(\bar h_2,a_2)$ is the conditional mean of $Y$ un
 
 \subsubsection*{The dictionary}
 
-Table~\ref{tab:rl_ci_dictionary} translates between the two traditions following \citet{schulte2014qlearning}.\footnote{The RL state is the full history $\bar h_k$, the horizon is finite, rewards are zero before the terminal outcome, and $\gamma=1$. The A-learning contrast is anchored at a reference action, while the RL advantage is anchored at the policy mean, so they are not identical objects. Sequential ignorability and a known behavior policy can support the same observed-data recursion, but the former is an identification condition and the latter is a property of data collection.}
+Table~\ref{tab:rl_ci_dictionary} records the exact correspondences implied by Theorem~\ref{thm:dtr_rl_equivalence}. They hold for the induced finite-horizon MDP whose state is the full observed history, whose intermediate rewards are zero, whose terminal reward is $Y$, and whose discount factor is one. The value identity also requires consistency, sequential exchangeability, and positivity for the target regime.
+
+The remaining methods do not form exact pairs. G-computation and fitted-$Q$ evaluation can estimate the same conditional recursion, but their fitted models need not coincide. Inverse-probability-of-treatment weighting (IPTW) for a marginal structural model and off-policy importance sampling both use likelihood ratios, but IPTW fits a causal model and may use stabilized weights, whereas importance sampling reweights target-policy returns \citep{robins2000msm, precup2000}. G-estimation for a structural nested mean model (SNMM) is a distinct moment method; Dynamic DML is an orthogonal, cross-fitted form of g-estimation rather than a generic synonym for orthogonal off-policy evaluation \citep{robins2004snmm, lewisSyrgkanis2021dynamicDML}. A blip is a contrast against a reference action, not the policy-centered RL advantage \citep{schulte2014qlearning}. Sequential exchangeability is a causal identification assumption, while a known logging policy describes data collection. Positivity and coverage express the same support condition only after the causal target regime and the induced MDP have been fixed.
 
 \begin{table}[htbp]
 \centering
-\caption{Translation between dynamic treatment regimes, g-methods, and finite-horizon reinforcement learning \citep{robins2000msm, murphy2003dtr, schulte2014qlearning}.}
+\caption{Exact correspondences between the identified DTR recursion and the induced full-history MDP in Theorem~\ref{thm:dtr_rl_equivalence} \citep{murphy2003dtr, schulte2014qlearning}.}
 \label{tab:rl_ci_dictionary}
 {\setstretch{1.0}\small
 \renewcommand{\arraystretch}{1.25}
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
 \toprule
-Dynamic treatment regimes and g-methods & Reinforcement learning \\
+Dynamic treatment regime & Induced finite-horizon MDP \\
 \midrule
-$Q_k(\bar h_k, a_k)$, conditional mean of $V_{k+1}$ & $Q(s, a)$, state-action value function \\
-$V_k(\bar h_k) = \max_{a_k} Q_k(\bar h_k, a_k)$ & $V(s) = \max_a Q(s,a)$, state value function \\
-$d_k^{\text{opt}}(\bar h_k) = \arg\max_{a_k} Q_k(\bar h_k, a_k)$ & Greedy policy $\pi^*(s) = \arg\max_a Q(s,a)$ \\
-Propensity $e_k(\bar h_k, a_k) = \mathbb{P}(A_k = a_k \mid \bar H_k = \bar h_k)$ & Behavior or logging policy $\mu_k(a_k \mid \bar h_k)$ \\
-Value of a fixed regime $\mathbb{E}[Y^\pi]$ & OPE estimand $J(\pi_e)$ (Section~\ref{subsec:ope}) \\
-G-computation (sequential conditional regression) & Fitted-$Q$ evaluation \citep{schulte2014qlearning} \\
-Inverse-probability-of-treatment weighting (IPTW) for marginal structural models \citep{robins2000msm} & Off-policy importance sampling \citep{precup2000} \\
-G-estimation for structural nested mean models \citep{robins2004snmm} & Orthogonal-score off-policy evaluation \citep{lewisSyrgkanis2021dynamicDML} \\
-A-learning and contrast (blip) estimation \citep{schulte2014qlearning, robins2004snmm} & Advantage-function estimation \\
-Sequential ignorability, stated for all future potential states and outcomes given $\bar H_k$ & Known behavior policy $\mu_k(\cdot \mid \bar h_k)$ (offline RL setting) \\
-Positivity, $e_k(\bar h_k, a) > 0$ for every action of interest & Coverage, $\mu_k(a \mid \bar h_k) > 0$ for all $a \in \mathrm{supp}\,\pi^*$ \\
+Observed history $\bar H_k$ & Stage-$k$ state $S_k^{\mathcal M}=\bar H_k$ \\
+Treatment $A_k\in\mathcal A_k$ & Action $A_k\in\mathcal A_k$ \\
+Rule $\pi_k(\bar h_k)$ & Deterministic history-state policy $\pi_k(S_k^{\mathcal M})$ \\
+Terminal objective $Y$ & Rewards $R_k^{\mathcal M}=0$ for $k<K$ and terminal return $G^{\mathcal M}=Y$ \\
+Assignment law $e_k(a\mid\bar h_k)=\mathbb P(A_k=a\mid\bar H_k=\bar h_k)$ & Behavior policy $\mu_k(a\mid S_k^{\mathcal M})=e_k(a\mid\bar h_k)$ \\
+Fixed-regime recursion $v_k^\pi(\bar h_k)$ & Bellman policy-evaluation recursion for $\pi$ \\
+Optimal-benefit recursion $(Q_k,V_k)$ & Bellman optimality recursion $(Q_k^{\mathcal M},V_k^{\mathcal M})$ \\
+Optimal rule $\pi_k^*(\bar h_k)$ with fixed tie-breaking & Greedy optimal policy $\pi_k^{\mathcal M,*}(S_k^{\mathcal M})$ with the same tie-breaking \\
+$V(\pi)=\mathbb E[Y^\pi]=\textnormal{g-formula}(\pi)$ & Policy value $J_{\mathcal M}(\pi)$ \\
 \bottomrule
 \end{tabularx}
 }
@@ -250,6 +250,8 @@ An additional visit is beneficial only at low terminal status. The continuous de
 \FloatBarrier
 
 The tabular g-computation and $Q$-learning estimators overlap across cohort sizes and reach $0.9968$ or more of oracle value at $N=10{,}000$. The unadjusted count coefficient instead converges to $-0.2870$ with Monte Carlo standard error $0.0023$ and selects no visits in every large-cohort replication. That policy reaches $0.8124$ of oracle value even though always visiting reaches $0.9422$. The regression reads the greater needs of frequently visited families as a harmful treatment association and cannot represent a rule that changes with family status. In the continuous design, Neural FQI reaches $0.9842$ and DQN reaches $0.9740$ at $N=20{,}000$. The remaining neural gap contracts over the two largest cohort sizes.
+
+The recovered objects are a supported dynamic regime and its value. Backward recursion estimates the rule, while the g-formula gives its causal interpretation.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Off-Policy Evaluation}
@@ -459,6 +461,8 @@ The stylized Fast Track MDP has $\gamma=1$ and five family-functioning states $S
 
 At $n=2000$ and $H=16$, correctly specified DM has the lowest RMSE at $0.111$, while IS has the highest at $1.555$. At $n=500$, IS relative RMSE rises from $0.09$ at $H=4$ to $2.85$ at $H=64$, whereas MIS rises from $0.06$ to $0.13$. DR remains approximately unbiased when either nuisance is correct and fails when both are misspecified. Panel C of Table~\ref{tab:simA_ope} checks the uncertainty formulas. Mean analytic SE divided by empirical SD is $0.976$, $0.992$, and $1.014$ for IS, PDIS, and cross-fitted DR; 95\% coverage is $0.943$, $0.953$, and $0.945$.
 
+The recovered object is the value of one fixed target policy, together with a standard error. Overlap and the estimator's model conditions determine whether that result is reliable.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Dynamic Double Machine Learning for Structural Nested Mean Models}
 \label{subsec:dml_dte}
@@ -606,6 +610,8 @@ The design sets $\|B\|_{\mathrm{op}}=0.5$, $\alpha=(1,0,\ldots,0)^\prime$, $\|\g
 
 At $n=4000$, dynamic-DML biases are $-0.005$ and $-0.001$, with 95\% interval coverage of $0.97$ and $0.93$ for $(\psi_1,\psi_2)$. Naive OLS retains a $0.933$ bias for $\hat\psi_2$ and has zero coverage. The IPTW-fitted MSM reduces that bias to $0.146$, but its $\psi_2$ coverage is $0.73$. For $\psi_1-\psi_2$, the full sandwich gives mean analytic SE $0.0537$ against Monte Carlo SD $0.0506$ and 95\% coverage of $0.950$, with $0.025$ misses in each tail.
 
+The recovered objects are stage-specific causal effects and their joint covariance. These supply standard errors and contrasts while machine learning estimates the nuisance functions.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Dynamic Offline Policy Learning}
 \label{subsec:dynamic_offline_policy}
@@ -709,6 +715,8 @@ At $n=4000$, plug-in $Q$, backward AIPW, and IPW attain $0.9996$, $0.9966$, and 
 \]
 This interval is conditional on the training sample. Nested cross-fitting instead targets the average value of fold-specific trained policies unless an additional stability argument connects it to the final full-sample fit. The regret theorem does not justify a Wald interval around $(\hat c_1,\hat c_2)$.
 
+The recovered object is a policy in the chosen class, together with a regret bound. Its value still requires observations not used to choose it.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Open Issues: Identification, Inference, and Deployment}
 \label{subsec:rlci_open_issues}
@@ -741,3 +749,5 @@ Operational objectives & A scalar reward can omit burden, cost, preferences, and
 \citet{ueharaShiKallus2022ope} show why no estimator is universally best. The efficiency bound depends on whether the data are a bandit, a non-Markov process, a time-varying MDP, or a stationary MDP. Stronger structure can improve rates, but an unjustified state restriction changes the statistical model. \citet{bannon2020causality} likewise distinguish causal identification from batch RL. Causal assumptions determine which counterfactual policy values are identified; RL algorithms handle planning and approximation after identification.
 
 For day-to-day practice, the minimum defensible workflow is therefore to name the potential-outcome estimand, state consistency, sequential exchangeability, and target-policy positivity, justify any Markov compression, evaluate overlap before fitting, cross-fit flexible nuisance functions or justify an empirical-process alternative, carry the influence score or sandwich calculation through to a standard error, and reserve data for honest evaluation of a learned policy. Special cases with hidden confounding, interference, partial identification, or instrumental variables are important, but they alter the identification problem and are treated in Chapter~\ref{section:causal_rl}.
+
+The chapter therefore recovers a fixed-policy value, dynamic effects with standard errors, or a learned regime whose value is evaluated separately.

@@ -17,6 +17,17 @@ retained in the chapter.
 Every cited paper was checked from full text, and the ledger records the exact
 claim, source location, and disposition.
 
+The DTR dictionary now contains only identities implied by the formal
+full-history MDP construction. It maps histories, actions, regimes, rewards,
+assignment laws, evaluation and optimality recursions, optimal rules, and
+regime values. A separate paragraph states why g-computation and fitted-Q
+evaluation, IPTW and importance sampling, g-estimation and orthogonal OPE,
+blips and RL advantages, sequential exchangeability and a known logger, and
+positivity and coverage are related but not generally equivalent. The
+distinctions were checked directly against Schulte et al. (2014), Robins et
+al. (2000), Precup et al. (2000), Robins (2004), and Lewis and Syrgkanis
+(2021).
+
 The follow-up pass adds four potential-outcome assumptions, plain-language
 data-generating processes before every simulation, estimator-level standard
 errors, lead empirical applications, a literature-role index, and a dedicated
@@ -59,6 +70,12 @@ home-visiting context. Each writeup states that the design is a methodological
 analogue rather than a reconstruction of the trial. Each simulation appears at
 the end of its section under a numbered `Simulation Study:` heading, with two
 prose paragraphs, one consolidated table, and one figure.
+
+Each major technical section now closes with one or two plain sentences naming
+the object recovered in that section and the uncertainty or evaluation that
+accompanies it. Open Issues closes with the three chapter-level outputs, a
+fixed-policy value, dynamic effects with standard errors, and a learned regime
+whose value is evaluated separately.
 
 ## Simulation audit
 
@@ -175,7 +192,7 @@ schematic.
 - The open-issues table produces a float-size warning. Visual inspection
   confirms that the full table remains inside the physical page and is not
   clipped.
-- The full book is 308 pages with no undefined citations or references or
+- The full book is 309 pages with no undefined citations or references or
   LaTeX errors. No overfull boxes originate in ch10b; the full-book log retains
   preexisting overfull warnings from other chapters.
 - The chapter PDF was inspected page by page at the diagram, theorem, four
@@ -183,7 +200,7 @@ schematic.
   the policy-inference caveat, and the open-issues table. Labels are legible
   and no result is detached from its section.
 - The arXiv package compiles independently in its regenerated submission
-  directory to 308 pages. The final tarball is 18 MB with 217 archive entries.
+  directory to 309 pages. The final tarball is 18 MB with 217 archive entries.
   Its manifest
   includes every ch10b figure and table and the previously omitted full-book
   dependencies exposed by this build.
