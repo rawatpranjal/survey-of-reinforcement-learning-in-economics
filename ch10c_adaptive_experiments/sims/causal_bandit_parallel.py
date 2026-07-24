@@ -1,5 +1,5 @@
 # Causal Bandits on the parallel-bandit family.
-# Chapter 11, RL for Causal Inference, Section 4a (Causal Bandits).
+# ch10c_adaptive_experiments, Causal Bandits and Adaptive Experimentation.
 #
 # Reproduces the central result of Lattimore, Lattimore & Reid (NeurIPS 2016,
 # "Causal Bandits: Learning Good Interventions via Causal Inference"): when
@@ -61,11 +61,14 @@ import sys
 import numpy as np
 from tqdm import tqdm
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-from sims.plot_style import apply_style, COLORS, BENCH_STYLE, FIG_DOUBLE, FIG_SINGLE
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from sims.plot_style import apply_style, COLORS, BENCH_STYLE
 from sims.sim_cache import (
-    compute_or_load, add_component_args, parse_force_set,
+    compute_or_load,
+    add_component_args,
+    parse_force_set,
 )
+
 apply_style()
 import matplotlib.pyplot as plt
 
@@ -74,52 +77,54 @@ import matplotlib.pyplot as plt
 # Configuration
 # ---------------------------------------------------------------------------
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
-CACHE_DIR = os.path.join(OUTPUT_DIR, 'cache')
-SCRIPT_NAME = 'causal_bandit_parallel'
+CACHE_DIR = os.path.join(OUTPUT_DIR, "cache")
+SCRIPT_NAME = "causal_bandit_parallel"
 
 # Parallel-bandit DGP
-N_PARENTS = 50              # number of binary parents X_i (so |A| = 2N+1 arms)
-T_HORIZON = 400             # default horizon
-M_GRID = [2, 8, 24, 48]     # graph-derived hardness values (m(q) levels)
-N_SEEDS_REGRET = 2000       # Monte Carlo replications for simple-regret panels
+N_PARENTS = 50  # number of binary parents X_i (so |A| = 2N+1 arms)
+T_HORIZON = 400  # default horizon
+M_GRID = [2, 8, 24, 48]  # graph-derived hardness values (m(q) levels)
+N_SEEDS_REGRET = 2000  # Monte Carlo replications for simple-regret panels
 T_GRID = [100, 200, 400, 800, 1600]  # horizon grid for vs-T panel
-M_AT_T_PANEL = 2            # fix m(q) for the vs-T panel
-EPS_REWARD = 0.30           # reward gap epsilon: best arm pays mu* = 0.5+eps,
-                            # all others pay 0.5
+M_AT_T_PANEL = 2  # fix m(q) for the vs-T panel
+EPS_REWARD = 0.30  # reward gap epsilon: best arm pays mu* = 0.5+eps,
+# all others pay 0.5
 
 # Bareinboim "greedy casino" parameters
-MABUC_T = 1000              # horizon for cumulative-regret panel
-MABUC_SEEDS = 500           # Monte Carlo replications
+MABUC_T = 1000  # horizon for cumulative-regret panel
+MABUC_SEEDS = 500  # Monte Carlo replications
 # Greedy-casino payoffs (Bareinboim et al. 2015, Table 1, "asterisked" values):
 #   Player intuition X corresponds to a confounder configuration.
 #   P(Y=1 | X=x, do(X=x)) = high  -- following intuition wins more
 #   P(Y=1 | X=x, do(X=1-x)) = low -- going against intuition loses
-GREEDY_CASINO_PAYOFFS = np.array([
-    # rows: agent's natural intuition x in {0, 1}
-    # cols: arm pulled a in {0, 1}
-    # entry: P(Y=1 | X=x, do(X=a))
-    [0.10, 0.50],   # x=0 (drunk + non-blinking): a=0 loses, a=1 wins
-    [0.50, 0.10],   # x=1 (drunk + blinking):     a=0 wins, a=1 loses
-])
+GREEDY_CASINO_PAYOFFS = np.array(
+    [
+        # rows: agent's natural intuition x in {0, 1}
+        # cols: arm pulled a in {0, 1}
+        # entry: P(Y=1 | X=x, do(X=a))
+        [0.10, 0.50],  # x=0 (drunk + non-blinking): a=0 loses, a=1 wins
+        [0.50, 0.10],  # x=1 (drunk + blinking):     a=0 wins, a=1 loses
+    ]
+)
 
 SHARED_CONFIG = {
-    'N_PARENTS': N_PARENTS,
-    'T_HORIZON': T_HORIZON,
-    'M_GRID': M_GRID,
-    'N_SEEDS_REGRET': N_SEEDS_REGRET,
-    'T_GRID': T_GRID,
-    'M_AT_T_PANEL': M_AT_T_PANEL,
-    'EPS_REWARD': EPS_REWARD,
-    'MABUC_T': MABUC_T,
-    'MABUC_SEEDS': MABUC_SEEDS,
-    'GREEDY_CASINO_PAYOFFS': GREEDY_CASINO_PAYOFFS.tolist(),
+    "N_PARENTS": N_PARENTS,
+    "T_HORIZON": T_HORIZON,
+    "M_GRID": M_GRID,
+    "N_SEEDS_REGRET": N_SEEDS_REGRET,
+    "T_GRID": T_GRID,
+    "M_AT_T_PANEL": M_AT_T_PANEL,
+    "EPS_REWARD": EPS_REWARD,
+    "MABUC_T": MABUC_T,
+    "MABUC_SEEDS": MABUC_SEEDS,
+    "GREEDY_CASINO_PAYOFFS": GREEDY_CASINO_PAYOFFS.tolist(),
 }
 
-REGRET_VS_M_CONFIG = {**SHARED_CONFIG, 'experiment': 'regret_vs_m'}
-REGRET_VS_T_CONFIG = {**SHARED_CONFIG, 'experiment': 'regret_vs_T'}
+REGRET_VS_M_CONFIG = {**SHARED_CONFIG, "experiment": "regret_vs_m"}
+REGRET_VS_T_CONFIG = {**SHARED_CONFIG, "experiment": "regret_vs_T"}
 # v2 marker forces a refresh of MABUC cache since results now include
 # the full Bareinboim TS_C (consistency seeding + RDC weighting) alongside CCTS.
-MABUC_CONFIG       = {**SHARED_CONFIG, 'experiment': 'mabuc', 'algos_version': 'v2_full_tsc'}
+MABUC_CONFIG = {**SHARED_CONFIG, "experiment": "mabuc", "algos_version": "v2_full_tsc"}
 
 
 # ---------------------------------------------------------------------------
@@ -384,7 +389,9 @@ def lattimore_alg1(q_true, w, T, rng):
     for i in range(N):
         if min(q_hat[i], 1 - q_hat[i]) < 1.0 / best_tau:
             j_rare = 0 if q_hat[i] < 0.5 else 1
-            unbalanced_arms.append(2 * i + 1 + j_rare)  # the arm index for do(X_i = j_rare)
+            unbalanced_arms.append(
+                2 * i + 1 + j_rare
+            )  # the arm index for do(X_i = j_rare)
     if not unbalanced_arms:
         unbalanced_arms = list(range(1, K))  # fallback: all do() arms
 
@@ -456,7 +463,7 @@ def context_conditional_thompson_sampling(T, rng, observational_data=None):
       3. Observe reward; update the Beta posterior conditioned on (x, a).
     """
     alpha = np.ones((2, 2))  # alpha[x, a] = pseudo-success count
-    beta = np.ones((2, 2))   # beta[x, a]  = pseudo-failure count
+    beta = np.ones((2, 2))  # beta[x, a]  = pseudo-failure count
 
     # Seed from observational data (sample-on-intuition consistency only)
     if observational_data is not None:
@@ -535,7 +542,7 @@ def causal_thompson_sampling_tsc(T, rng, observational_data=None):
     generalization to running estimates that update as data accumulates.
     """
     alpha = np.ones((2, 2))  # alpha[x, a]
-    beta = np.ones((2, 2))   # beta[x, a]
+    beta = np.ones((2, 2))  # beta[x, a]
 
     # Q_hat[x, a]: running empirical mean reward at (x, a).
     Q_sum = np.zeros((2, 2))
@@ -631,12 +638,18 @@ def run_regret_vs_m():
     T = T_HORIZON
     n_seeds = N_SEEDS_REGRET
 
-    results = {alg: np.zeros((len(M_GRID), n_seeds)) for alg in
-               ('successive_reject', 'lattimore_alg1')}
+    results = {
+        alg: np.zeros((len(M_GRID), n_seeds))
+        for alg in ("successive_reject", "lattimore_alg1")
+    }
 
     for mi, m in enumerate(M_GRID):
-        for s in tqdm(range(n_seeds), desc=f'  m={m}', leave=False,
-                       disable=not sys.stderr.isatty()):
+        for s in tqdm(
+            range(n_seeds),
+            desc=f"  m={m}",
+            leave=False,
+            disable=not sys.stderr.isatty(),
+        ):
             seed = (m * 10_007 + s) & 0xFFFFFFFF
             rng = np.random.default_rng(seed)
             q = make_q_with_hardness(m, N, rng)
@@ -648,15 +661,20 @@ def run_regret_vs_m():
             # Successive reject
             rec, rec_value = successive_reject(q, w, T, rng)
             rec_value = arm_expected_reward_exact(rec, q, w)
-            results['successive_reject'][mi, s] = opt_value - rec_value
+            results["successive_reject"][mi, s] = opt_value - rec_value
 
             # Lattimore Alg 1
             rec, rec_value = lattimore_alg1(q, w, T, rng)
             rec_value = arm_expected_reward_exact(rec, q, w)
-            results['lattimore_alg1'][mi, s] = opt_value - rec_value
+            results["lattimore_alg1"][mi, s] = opt_value - rec_value
 
-    return {'simple_regret': results, 'm_grid': list(M_GRID),
-            'N': N, 'T': T, 'n_seeds': n_seeds}
+    return {
+        "simple_regret": results,
+        "m_grid": list(M_GRID),
+        "N": N,
+        "T": T,
+        "n_seeds": n_seeds,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -668,12 +686,18 @@ def run_regret_vs_T():
     m = M_AT_T_PANEL
     n_seeds = N_SEEDS_REGRET
 
-    results = {alg: np.zeros((len(T_GRID), n_seeds)) for alg in
-               ('successive_reject', 'lattimore_alg1')}
+    results = {
+        alg: np.zeros((len(T_GRID), n_seeds))
+        for alg in ("successive_reject", "lattimore_alg1")
+    }
 
     for ti, T in enumerate(T_GRID):
-        for s in tqdm(range(n_seeds), desc=f'  T={T}', leave=False,
-                       disable=not sys.stderr.isatty()):
+        for s in tqdm(
+            range(n_seeds),
+            desc=f"  T={T}",
+            leave=False,
+            disable=not sys.stderr.isatty(),
+        ):
             seed = (T * 10_007 + s + 12345) & 0xFFFFFFFF
             rng = np.random.default_rng(seed)
             q = make_q_with_hardness(m, N, rng)
@@ -684,14 +708,19 @@ def run_regret_vs_T():
 
             rec, _ = successive_reject(q, w, T, rng)
             rec_value = arm_expected_reward_exact(rec, q, w)
-            results['successive_reject'][ti, s] = opt_value - rec_value
+            results["successive_reject"][ti, s] = opt_value - rec_value
 
             rec, _ = lattimore_alg1(q, w, T, rng)
             rec_value = arm_expected_reward_exact(rec, q, w)
-            results['lattimore_alg1'][ti, s] = opt_value - rec_value
+            results["lattimore_alg1"][ti, s] = opt_value - rec_value
 
-    return {'simple_regret': results, 'T_grid': list(T_GRID),
-            'N': N, 'm': m, 'n_seeds': n_seeds}
+    return {
+        "simple_regret": results,
+        "T_grid": list(T_GRID),
+        "N": N,
+        "m": m,
+        "n_seeds": n_seeds,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -713,8 +742,9 @@ def run_mabuc():
     cctp_regret = np.zeros((n_seeds, T))
     tsc_regret = np.zeros((n_seeds, T))
 
-    for s in tqdm(range(n_seeds), desc='  mabuc', leave=False,
-                   disable=not sys.stderr.isatty()):
+    for s in tqdm(
+        range(n_seeds), desc="  mabuc", leave=False, disable=not sys.stderr.isatty()
+    ):
         rng = np.random.default_rng(s + 99)
         # Generate observational data: for each iteration, sample intuition x,
         # the agent follows intuition (a = x), observe reward.
@@ -730,12 +760,17 @@ def run_mabuc():
         rng_tsc = np.random.default_rng(s + 300_000)
         ts_regret[s] = vanilla_thompson_sampling(T, rng_ts)
         cctp_regret[s] = context_conditional_thompson_sampling(
-            T, rng_cctp, observational_data=obs)
-        tsc_regret[s] = causal_thompson_sampling_tsc(
-            T, rng_tsc, observational_data=obs)
+            T, rng_cctp, observational_data=obs
+        )
+        tsc_regret[s] = causal_thompson_sampling_tsc(T, rng_tsc, observational_data=obs)
 
-    return {'ts': ts_regret, 'cctp': cctp_regret, 'tsc': tsc_regret,
-            'T': T, 'n_seeds': n_seeds}
+    return {
+        "ts": ts_regret,
+        "cctp": cctp_regret,
+        "tsc": tsc_regret,
+        "T": T,
+        "n_seeds": n_seeds,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -745,223 +780,304 @@ def compute_data(force=None):
     force = force or set()
 
     res_m = compute_or_load(
-        CACHE_DIR, SCRIPT_NAME, 'regret_vs_m', REGRET_VS_M_CONFIG,
-        run_regret_vs_m, force=('regret_vs_m' in force),
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "regret_vs_m",
+        REGRET_VS_M_CONFIG,
+        run_regret_vs_m,
+        force=("regret_vs_m" in force),
     )
     res_T = compute_or_load(
-        CACHE_DIR, SCRIPT_NAME, 'regret_vs_T', REGRET_VS_T_CONFIG,
-        run_regret_vs_T, force=('regret_vs_T' in force),
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "regret_vs_T",
+        REGRET_VS_T_CONFIG,
+        run_regret_vs_T,
+        force=("regret_vs_T" in force),
     )
     res_mabuc = compute_or_load(
-        CACHE_DIR, SCRIPT_NAME, 'mabuc', MABUC_CONFIG,
-        run_mabuc, force=('mabuc' in force),
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "mabuc",
+        MABUC_CONFIG,
+        run_mabuc,
+        force=("mabuc" in force),
     )
 
-    return {'regret_vs_m': res_m, 'regret_vs_T': res_T, 'mabuc': res_mabuc}
+    return {"regret_vs_m": res_m, "regret_vs_T": res_T, "mabuc": res_mabuc}
 
 
 # ---------------------------------------------------------------------------
 # Outputs
 # ---------------------------------------------------------------------------
 ALG_LABELS = {
-    'successive_reject': 'Successive Reject',
-    'lattimore_alg1':    'Lattimore Alg 1',
+    "successive_reject": "Successive Reject",
+    "lattimore_alg1": "Lattimore Alg 1",
 }
 ALG_COLORS = {
-    'successive_reject': COLORS['red'],
-    'lattimore_alg1':    COLORS['blue'],
+    "successive_reject": COLORS["red"],
+    "lattimore_alg1": COLORS["blue"],
 }
 
 
 def make_figure_combined(data):
     """Combined 1x3 figure: regret-vs-m, regret-vs-T, and MABUC cumulative regret."""
-    res_m = data['regret_vs_m']
-    res_T = data['regret_vs_T']
-    res_mabuc = data['mabuc']
+    res_m = data["regret_vs_m"]
+    res_T = data["regret_vs_T"]
+    res_mabuc = data["mabuc"]
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.2))
 
     # Panel (a): simple regret vs hardness m(q)
     ax = axes[0]
-    m_grid = res_m['m_grid']
-    N = res_m['N']
-    T = res_m['T']
-    for alg in ('successive_reject', 'lattimore_alg1'):
-        mean_r = res_m['simple_regret'][alg].mean(axis=1)
-        se_r = res_m['simple_regret'][alg].std(axis=1) / np.sqrt(res_m['n_seeds'])
-        ax.errorbar(m_grid, mean_r, yerr=1.96 * se_r, marker='o',
-                    label=ALG_LABELS[alg], color=ALG_COLORS[alg], capsize=3)
-    ax.axhline(np.sqrt(N / T) * EPS_REWARD, **BENCH_STYLE,
-               label=r'$\sqrt{N/T} \cdot \epsilon$ asymptotic rate (lower bound)')
-    ax.set_xlabel(r'graph hardness $m(q)$')
-    ax.set_ylabel('simple regret')
-    ax.set_title(fr'(a) Regret vs $m(q)$ at $N={N}$, $T={T}$')
-    ax.legend(frameon=False, loc='upper left', fontsize=9)
+    m_grid = res_m["m_grid"]
+    N = res_m["N"]
+    T = res_m["T"]
+    for alg in ("successive_reject", "lattimore_alg1"):
+        mean_r = res_m["simple_regret"][alg].mean(axis=1)
+        se_r = res_m["simple_regret"][alg].std(axis=1) / np.sqrt(res_m["n_seeds"])
+        ax.errorbar(
+            m_grid,
+            mean_r,
+            yerr=1.96 * se_r,
+            marker="o",
+            label=ALG_LABELS[alg],
+            color=ALG_COLORS[alg],
+            capsize=3,
+        )
+    ax.axhline(
+        np.sqrt(N / T) * EPS_REWARD,
+        **BENCH_STYLE,
+        label=r"$\sqrt{N/T} \cdot \epsilon$ asymptotic rate (lower bound)",
+    )
+    ax.set_xlabel(r"graph hardness $m(q)$")
+    ax.set_ylabel("simple regret")
+    ax.set_title(rf"(a) Regret vs $m(q)$ at $N={N}$, $T={T}$")
+    ax.legend(frameon=False, loc="upper left", fontsize=9)
 
     # Panel (b): simple regret vs horizon T
     ax = axes[1]
-    T_grid = res_T['T_grid']
-    m = res_T['m']
-    for alg in ('successive_reject', 'lattimore_alg1'):
-        mean_r = res_T['simple_regret'][alg].mean(axis=1)
-        se_r = res_T['simple_regret'][alg].std(axis=1) / np.sqrt(res_T['n_seeds'])
-        ax.errorbar(T_grid, mean_r, yerr=1.96 * se_r, marker='o',
-                    label=ALG_LABELS[alg], color=ALG_COLORS[alg], capsize=3)
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-    ax.set_xlabel(r'horizon $T$')
-    ax.set_ylabel('simple regret')
-    ax.set_title(fr'(b) Regret vs $T$ at $m(q)={m}$')
-    ax.legend(frameon=False, loc='upper right', fontsize=9)
+    T_grid = res_T["T_grid"]
+    m = res_T["m"]
+    for alg in ("successive_reject", "lattimore_alg1"):
+        mean_r = res_T["simple_regret"][alg].mean(axis=1)
+        se_r = res_T["simple_regret"][alg].std(axis=1) / np.sqrt(res_T["n_seeds"])
+        ax.errorbar(
+            T_grid,
+            mean_r,
+            yerr=1.96 * se_r,
+            marker="o",
+            label=ALG_LABELS[alg],
+            color=ALG_COLORS[alg],
+            capsize=3,
+        )
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel(r"horizon $T$")
+    ax.set_ylabel("simple regret")
+    ax.set_title(rf"(b) Regret vs $T$ at $m(q)={m}$")
+    ax.legend(frameon=False, loc="upper right", fontsize=9)
 
     # Panel (c): MABUC greedy-casino cumulative regret
     ax = axes[2]
-    T_m = res_mabuc['T']
-    ts_mean = res_mabuc['ts'].mean(axis=0)
-    ts_se = res_mabuc['ts'].std(axis=0) / np.sqrt(res_mabuc['n_seeds'])
-    cctp_mean = res_mabuc['cctp'].mean(axis=0)
-    cctp_se = res_mabuc['cctp'].std(axis=0) / np.sqrt(res_mabuc['n_seeds'])
-    tsc_mean = res_mabuc['tsc'].mean(axis=0)
-    tsc_se = res_mabuc['tsc'].std(axis=0) / np.sqrt(res_mabuc['n_seeds'])
+    T_m = res_mabuc["T"]
+    ts_mean = res_mabuc["ts"].mean(axis=0)
+    ts_se = res_mabuc["ts"].std(axis=0) / np.sqrt(res_mabuc["n_seeds"])
+    cctp_mean = res_mabuc["cctp"].mean(axis=0)
+    cctp_se = res_mabuc["cctp"].std(axis=0) / np.sqrt(res_mabuc["n_seeds"])
+    tsc_mean = res_mabuc["tsc"].mean(axis=0)
+    tsc_se = res_mabuc["tsc"].std(axis=0) / np.sqrt(res_mabuc["n_seeds"])
     tt = np.arange(1, T_m + 1)
-    ax.plot(tt, ts_mean, color=COLORS['red'], label='Thompson sampling')
-    ax.fill_between(tt, ts_mean - 1.96 * ts_se, ts_mean + 1.96 * ts_se,
-                    color=COLORS['red'], alpha=0.2)
-    ax.plot(tt, cctp_mean, color=COLORS['blue'],
-            label='Context-conditional TS')
-    ax.fill_between(tt, cctp_mean - 1.96 * cctp_se, cctp_mean + 1.96 * cctp_se,
-                    color=COLORS['blue'], alpha=0.2)
-    ax.plot(tt, tsc_mean, color=COLORS['green'],
-            label=r'Full $\mathrm{TS}_C$ (Bareinboim 2015)')
-    ax.fill_between(tt, tsc_mean - 1.96 * tsc_se, tsc_mean + 1.96 * tsc_se,
-                    color=COLORS['green'], alpha=0.2)
-    ax.set_xlabel(r'round $t$')
-    ax.set_ylabel('cumulative regret')
-    ax.set_title('(c) Greedy-casino MABUC')
-    ax.legend(frameon=False, loc='upper left', fontsize=9)
+    ax.plot(tt, ts_mean, color=COLORS["red"], label="Thompson sampling")
+    ax.fill_between(
+        tt,
+        ts_mean - 1.96 * ts_se,
+        ts_mean + 1.96 * ts_se,
+        color=COLORS["red"],
+        alpha=0.2,
+    )
+    ax.plot(tt, cctp_mean, color=COLORS["blue"], label="Context-conditional TS")
+    ax.fill_between(
+        tt,
+        cctp_mean - 1.96 * cctp_se,
+        cctp_mean + 1.96 * cctp_se,
+        color=COLORS["blue"],
+        alpha=0.2,
+    )
+    ax.plot(
+        tt,
+        tsc_mean,
+        color=COLORS["green"],
+        label=r"Full $\mathrm{TS}_C$ (Bareinboim 2015)",
+    )
+    ax.fill_between(
+        tt,
+        tsc_mean - 1.96 * tsc_se,
+        tsc_mean + 1.96 * tsc_se,
+        color=COLORS["green"],
+        alpha=0.2,
+    )
+    ax.set_xlabel(r"round $t$")
+    ax.set_ylabel("cumulative regret")
+    ax.set_title("(c) Greedy-casino MABUC")
+    ax.legend(frameon=False, loc="upper left", fontsize=9)
 
     fig.tight_layout()
-    out = os.path.join(OUTPUT_DIR, 'causal_bandit_combined.png')
-    fig.savefig(out, dpi=300, bbox_inches='tight')
+    out = os.path.join(OUTPUT_DIR, "causal_bandit_combined.png")
+    fig.savefig(out, dpi=300, bbox_inches="tight")
     plt.close(fig)
     print(f"  Figure saved: {out}")
 
 
 def make_table(data):
     """Consolidated simple-regret table across m grid at fixed T."""
-    res = data['regret_vs_m']
-    m_grid = res['m_grid']
+    res = data["regret_vs_m"]
+    m_grid = res["m_grid"]
     rows = []
-    for alg in ('successive_reject', 'lattimore_alg1'):
-        means = res['simple_regret'][alg].mean(axis=1)
-        ses = res['simple_regret'][alg].std(axis=1) / np.sqrt(res['n_seeds'])
-        rows.append([ALG_LABELS[alg]] + [f'{m:.3f} ({s:.3f})' for m, s in zip(means, ses)])
+    for alg in ("successive_reject", "lattimore_alg1"):
+        means = res["simple_regret"][alg].mean(axis=1)
+        ses = res["simple_regret"][alg].std(axis=1) / np.sqrt(res["n_seeds"])
+        rows.append(
+            [ALG_LABELS[alg]] + [f"{m:.3f} ({s:.3f})" for m, s in zip(means, ses)]
+        )
 
-    tex = [r'\begin{tabular}{l' + 'r' * len(m_grid) + r'}']
-    tex.append(r'\toprule')
-    header = 'Method ' + ' & ' + ' & '.join(f'$m = {m}$' for m in m_grid) + r' \\'
+    tex = [r"\begin{tabular}{l" + "r" * len(m_grid) + r"}"]
+    tex.append(r"\toprule")
+    header = "Method " + " & " + " & ".join(f"$m = {m}$" for m in m_grid) + r" \\"
     tex.append(header)
-    tex.append(r'\midrule')
+    tex.append(r"\midrule")
     for r in rows:
-        tex.append(' & '.join(r) + r' \\')
-    tex.append(r'\bottomrule')
-    tex.append(r'\end{tabular}')
+        tex.append(" & ".join(r) + r" \\")
+    tex.append(r"\bottomrule")
+    tex.append(r"\end{tabular}")
 
-    out = os.path.join(OUTPUT_DIR, 'causal_bandit_results.tex')
-    with open(out, 'w') as f:
-        f.write('\n'.join(tex) + '\n')
+    out = os.path.join(OUTPUT_DIR, "causal_bandit_results.tex")
+    with open(out, "w") as f:
+        f.write("\n".join(tex) + "\n")
     print(f"  Table saved: {out}")
 
     # MABUC three-variant cumulative-regret table at fixed horizon T.
-    res_mabuc = data['mabuc']
-    T_mabuc = res_mabuc['T']
-    n_mabuc = res_mabuc['n_seeds']
-    final_ts = res_mabuc['ts'][:, -1]
-    final_cctp = res_mabuc['cctp'][:, -1]
-    final_tsc = res_mabuc['tsc'][:, -1]
+    res_mabuc = data["mabuc"]
+    T_mabuc = res_mabuc["T"]
+    n_mabuc = res_mabuc["n_seeds"]
+    final_ts = res_mabuc["ts"][:, -1]
+    final_cctp = res_mabuc["cctp"][:, -1]
+    final_tsc = res_mabuc["tsc"][:, -1]
     mabuc_rows = [
-        ('Vanilla Thompson sampling',
-         final_ts.mean(), final_ts.std() / np.sqrt(n_mabuc)),
-        (r'Full $\mathrm{TS}_C$ \citep{bareinboim2015mabuc}',
-         final_tsc.mean(), final_tsc.std() / np.sqrt(n_mabuc)),
-        ('Context-conditional TS (CCTS)',
-         final_cctp.mean(), final_cctp.std() / np.sqrt(n_mabuc)),
+        (
+            "Vanilla Thompson sampling",
+            final_ts.mean(),
+            final_ts.std() / np.sqrt(n_mabuc),
+        ),
+        (
+            r"Full $\mathrm{TS}_C$ \citep{bareinboim2015mabuc}",
+            final_tsc.mean(),
+            final_tsc.std() / np.sqrt(n_mabuc),
+        ),
+        (
+            "Context-conditional TS (CCTS)",
+            final_cctp.mean(),
+            final_cctp.std() / np.sqrt(n_mabuc),
+        ),
     ]
     # Sort ascending by mean cumulative regret (best last? rank-order: best first)
     mabuc_rows_sorted = sorted(mabuc_rows, key=lambda r: r[1])
-    tex2 = [r'\begin{tabular}{lr}']
-    tex2.append(r'\toprule')
-    tex2.append(r'Algorithm & Cumulative regret at $T = ' + str(T_mabuc) + r'$ \\')
-    tex2.append(r'\midrule')
+    tex2 = [r"\begin{tabular}{lr}"]
+    tex2.append(r"\toprule")
+    tex2.append(r"Algorithm & Cumulative regret at $T = " + str(T_mabuc) + r"$ \\")
+    tex2.append(r"\midrule")
     for label, mean, se in mabuc_rows_sorted:
-        tex2.append(f'{label} & {mean:.2f} ({se:.2f}) ' + r'\\')
-    tex2.append(r'\bottomrule')
-    tex2.append(r'\end{tabular}')
-    out2 = os.path.join(OUTPUT_DIR, 'causal_bandit_mabuc_results.tex')
-    with open(out2, 'w') as f:
-        f.write('\n'.join(tex2) + '\n')
+        tex2.append(f"{label} & {mean:.2f} ({se:.2f}) " + r"\\")
+    tex2.append(r"\bottomrule")
+    tex2.append(r"\end{tabular}")
+    out2 = os.path.join(OUTPUT_DIR, "causal_bandit_mabuc_results.tex")
+    with open(out2, "w") as f:
+        f.write("\n".join(tex2) + "\n")
     print(f"  Table saved: {out2}")
 
 
 def print_stdout(data):
-    res_m = data['regret_vs_m']
-    res_T = data['regret_vs_T']
-    res_mabuc = data['mabuc']
+    res_m = data["regret_vs_m"]
+    res_T = data["regret_vs_T"]
+    res_mabuc = data["mabuc"]
     print()
-    print('=' * 70)
-    print('  Causal Bandits on Parallel Bandits + Greedy Casino -- summary')
-    print('=' * 70)
-    print(f'  N parents = {N_PARENTS}, action set |A| = {2*N_PARENTS+1}')
-    print(f'  Reward gap epsilon = {EPS_REWARD}')
+    print("=" * 70)
+    print("  Causal Bandits on Parallel Bandits + Greedy Casino -- summary")
+    print("=" * 70)
+    print(f"  N parents = {N_PARENTS}, action set |A| = {2 * N_PARENTS + 1}")
+    print(f"  Reward gap epsilon = {EPS_REWARD}")
     print()
-    print('  --- Simple regret vs. graph hardness m(q) at T = {} ---'.format(res_m['T']))
-    print(f"  {'m(q)':>6}  {'Succ-Reject mean (SE)':>26}  {'Lattimore Alg1 mean (SE)':>30}")
-    for i, m in enumerate(res_m['m_grid']):
-        sr = res_m['simple_regret']['successive_reject'][i]
-        la = res_m['simple_regret']['lattimore_alg1'][i]
-        print(f'  {m:>6d}  {sr.mean():>14.4f}'
-              f' ({sr.std()/np.sqrt(res_m["n_seeds"]):.4f})'
-              f'  {la.mean():>18.4f}'
-              f' ({la.std()/np.sqrt(res_m["n_seeds"]):.4f})')
+    print(
+        "  --- Simple regret vs. graph hardness m(q) at T = {} ---".format(res_m["T"])
+    )
+    print(
+        f"  {'m(q)':>6}  {'Succ-Reject mean (SE)':>26}  {'Lattimore Alg1 mean (SE)':>30}"
+    )
+    for i, m in enumerate(res_m["m_grid"]):
+        sr = res_m["simple_regret"]["successive_reject"][i]
+        la = res_m["simple_regret"]["lattimore_alg1"][i]
+        print(
+            f"  {m:>6d}  {sr.mean():>14.4f}"
+            f" ({sr.std() / np.sqrt(res_m['n_seeds']):.4f})"
+            f"  {la.mean():>18.4f}"
+            f" ({la.std() / np.sqrt(res_m['n_seeds']):.4f})"
+        )
     print()
-    print('  --- Simple regret vs. horizon T at m(q) = {} ---'.format(res_T['m']))
-    print(f"  {'T':>6}  {'Succ-Reject mean (SE)':>26}  {'Lattimore Alg1 mean (SE)':>30}")
-    for i, T in enumerate(res_T['T_grid']):
-        sr = res_T['simple_regret']['successive_reject'][i]
-        la = res_T['simple_regret']['lattimore_alg1'][i]
-        print(f'  {T:>6d}  {sr.mean():>14.4f}'
-              f' ({sr.std()/np.sqrt(res_T["n_seeds"]):.4f})'
-              f'  {la.mean():>18.4f}'
-              f' ({la.std()/np.sqrt(res_T["n_seeds"]):.4f})')
+    print("  --- Simple regret vs. horizon T at m(q) = {} ---".format(res_T["m"]))
+    print(
+        f"  {'T':>6}  {'Succ-Reject mean (SE)':>26}  {'Lattimore Alg1 mean (SE)':>30}"
+    )
+    for i, T in enumerate(res_T["T_grid"]):
+        sr = res_T["simple_regret"]["successive_reject"][i]
+        la = res_T["simple_regret"]["lattimore_alg1"][i]
+        print(
+            f"  {T:>6d}  {sr.mean():>14.4f}"
+            f" ({sr.std() / np.sqrt(res_T['n_seeds']):.4f})"
+            f"  {la.mean():>18.4f}"
+            f" ({la.std() / np.sqrt(res_T['n_seeds']):.4f})"
+        )
     print()
-    print('  --- Greedy-casino MABUC at T = {} ---'.format(res_mabuc['T']))
-    final_ts = res_mabuc['ts'][:, -1]
-    final_cctp = res_mabuc['cctp'][:, -1]
-    final_tsc = res_mabuc['tsc'][:, -1]
-    n = res_mabuc['n_seeds']
-    print(f'  Vanilla Thompson sampling          : cumulative regret = {final_ts.mean():.2f}'
-          f' (SE {final_ts.std()/np.sqrt(n):.2f})')
-    print(f'  Context-conditional Thompson (CCTS): cumulative regret = {final_cctp.mean():.2f}'
-          f' (SE {final_cctp.std()/np.sqrt(n):.2f})')
-    print(f'  Full TS_C (Bareinboim 2015)        : cumulative regret = {final_tsc.mean():.2f}'
-          f' (SE {final_tsc.std()/np.sqrt(n):.2f})')
+    print("  --- Greedy-casino MABUC at T = {} ---".format(res_mabuc["T"]))
+    final_ts = res_mabuc["ts"][:, -1]
+    final_cctp = res_mabuc["cctp"][:, -1]
+    final_tsc = res_mabuc["tsc"][:, -1]
+    n = res_mabuc["n_seeds"]
+    print(
+        f"  Vanilla Thompson sampling          : cumulative regret = {final_ts.mean():.2f}"
+        f" (SE {final_ts.std() / np.sqrt(n):.2f})"
+    )
+    print(
+        f"  Context-conditional Thompson (CCTS): cumulative regret = {final_cctp.mean():.2f}"
+        f" (SE {final_cctp.std() / np.sqrt(n):.2f})"
+    )
+    print(
+        f"  Full TS_C (Bareinboim 2015)        : cumulative regret = {final_tsc.mean():.2f}"
+        f" (SE {final_tsc.std() / np.sqrt(n):.2f})"
+    )
     ratio_ts_cctp = final_ts.mean() / max(final_cctp.mean(), 1e-3)
     ratio_ts_tsc = final_ts.mean() / max(final_tsc.mean(), 1e-3)
     ratio_cctp_tsc = final_cctp.mean() / max(final_tsc.mean(), 1e-3)
-    print(f'  Ratio (vanilla TS) / (CCTS)        = {ratio_ts_cctp:.1f}x')
-    print(f'  Ratio (vanilla TS) / (TS_C)        = {ratio_ts_tsc:.1f}x')
-    print(f'  Ratio (CCTS)      / (TS_C)         = {ratio_cctp_tsc:.2f}x')
+    print(f"  Ratio (vanilla TS) / (CCTS)        = {ratio_ts_cctp:.1f}x")
+    print(f"  Ratio (vanilla TS) / (TS_C)        = {ratio_ts_tsc:.1f}x")
+    print(f"  Ratio (CCTS)      / (TS_C)         = {ratio_cctp_tsc:.2f}x")
     if final_tsc.mean() <= final_cctp.mean():
-        print(f'  TS_C beats CCTS by {final_cctp.mean() - final_tsc.mean():.2f}'
-              f' regret units ({(1 - final_tsc.mean()/max(final_cctp.mean(), 1e-9))*100:.1f}%).')
+        print(
+            f"  TS_C beats CCTS by {final_cctp.mean() - final_tsc.mean():.2f}"
+            f" regret units ({(1 - final_tsc.mean() / max(final_cctp.mean(), 1e-9)) * 100:.1f}%)."
+        )
     else:
-        print(f'  CCTS beats TS_C by {final_tsc.mean() - final_cctp.mean():.2f}'
-              f' regret units ({(1 - final_cctp.mean()/max(final_tsc.mean(), 1e-9))*100:.1f}%).')
+        print(
+            f"  CCTS beats TS_C by {final_tsc.mean() - final_cctp.mean():.2f}"
+            f" regret units ({(1 - final_cctp.mean() / max(final_tsc.mean(), 1e-9)) * 100:.1f}%)."
+        )
     print()
-    print('  Output files:')
-    for f in ('causal_bandit_combined.png', 'causal_bandit_results.tex',
-              'causal_bandit_mabuc_results.tex'):
-        print('    ', os.path.join(OUTPUT_DIR, f))
+    print("  Output files:")
+    for f in (
+        "causal_bandit_combined.png",
+        "causal_bandit_results.tex",
+        "causal_bandit_mabuc_results.tex",
+    ):
+        print("    ", os.path.join(OUTPUT_DIR, f))
 
 
 def generate_outputs(data):
@@ -988,5 +1104,5 @@ def main():
         generate_outputs(data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
