@@ -77,6 +77,7 @@ REGISTRY = [
     ("ch10", "ch10_causal/sims/identification_dags.py", "B"),
     # ch10b (OPE and dynamic treatment effects)
     ("ch10b", "ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy.py", "A"),
+    ("ch10b", "ch10b_rl_for_ci/sims/ope_estimators.py", "A"),
     ("ch10b", "ch10b_rl_for_ci/sims/dynamic_dml_snmm.py", "A"),
     # ch10c (causal bandits and adaptive experimentation)
     ("ch10c", "ch10c_adaptive_experiments/sims/causal_bandit_parallel.py", "A"),
