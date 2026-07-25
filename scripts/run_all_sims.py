@@ -94,7 +94,17 @@ REGISTRY = [
     ("ch12", "ch12_world_models/sims/fishery_paradigms.py", "A"),
     ("ch12", "ch12_world_models/sims/multi_echelon_paradigms.py", "A"),
     ("ch12", "ch12_world_models/sims/draw_maze_layout.py", "B"),
-    # appA (Mathematical Preliminaries) -- operator geometry, probability, convex analysis, fixed points
+    # appA (Mathematical Preliminaries).
+    # The running example is data-only and every other appA figure that quotes a number
+    # from it reads that number here, so it runs first.
+    ("appA", "appA_preliminaries/sims/running_example.py", "A"),
+    ("appA", "appA_preliminaries/sims/elementary_concepts.py", "B"),
+    ("appA", "appA_preliminaries/sims/appendix_geometry.py", "B"),
+    ("appA", "appA_preliminaries/sims/discount_cost.py", "A"),
+    ("appA", "appA_preliminaries/sims/projection_geometry.py", "A"),
+    # Retired from the appendix text but kept runnable: each still verifies a result the
+    # appendix now states without proof, and the scripts are the evidence trail for those
+    # statements even though their figures no longer appear.
     ("appA", "appA_preliminaries/sims/rl_theory_geometry.py", "B"),
     ("appA", "appA_preliminaries/sims/spectral_radius.py", "A"),
     ("appA", "appA_preliminaries/sims/neumann_series.py", "A"),

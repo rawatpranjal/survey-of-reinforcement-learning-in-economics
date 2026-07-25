@@ -1,0 +1,14 @@
+\begin{table}[h]
+\centering
+\caption{The projected Bellman operator on the running example under three weightings, from the target policy's own stationary law ($\alpha = 0$) to the logging law ($\alpha = 1$). The operator, the features and the target policy are identical across rows; only the distribution defining the projection changes. Errors are supremum-norm distances from $V^{\pi^\star}$ after the stated number of projected Bellman iterations from $V_0 = 0$.}
+\label{tab:prelim_projection_geometry}
+\begin{tabular}{lrrrr}
+\hline
+$\alpha$ & $d(\mathrm{good})$ & modulus & error at $k = 10$ & error at $k = 60$ \\
+\hline
+0 & 0.6667 & 0.7301 & 4.8193 & 4.796 \\
+0.7048 & 0.8645 & 1.0000 & 6.0646 & 57.97 \\
+1 & 0.9474 & 1.2048 & 37.9147 & 5.558e+05 \\
+\hline
+\end{tabular}
+\end{table}

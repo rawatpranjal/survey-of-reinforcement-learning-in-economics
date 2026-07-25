@@ -1,0 +1,18 @@
+\begin{table}[h]
+\centering
+\caption{What the discount factor costs, on random 50-state Markov reward processes over 30 seeds with rewards in $[0,1]$. Steps are backups of $T^\pi$ from $V_0 = 0$ to a supremum-norm error below 0.001. Amplification is $\|(I - \gamma P)^{-1}\|_\infty$, the factor by which an error in the reward is magnified in the value, which for a row-stochastic $P$ equals the effective horizon exactly.}
+\label{tab:prelim_discount_cost}
+\begin{tabular}{rrrrr}
+\hline
+$\gamma$ & $1/(1-\gamma)$ & steps & amplification & $\|V^\pi\|_\infty$ \\
+\hline
+0.500 & 2.0 & 10 & 2.0 & 1.5 \\
+0.800 & 5.0 & 35 & 5.0 & 3.0 \\
+0.900 & 10.0 & 81 & 10.0 & 5.4 \\
+0.950 & 20.0 & 180 & 20.0 & 10.3 \\
+0.990 & 100.0 & 1075 & 100.0 & 49.7 \\
+0.995 & 200.0 & 2293 & 200.0 & 98.9 \\
+0.999 & 1000.0 & 13097 & 1000.0 & 492.6 \\
+\hline
+\end{tabular}
+\end{table}
