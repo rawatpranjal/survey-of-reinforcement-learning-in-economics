@@ -797,6 +797,10 @@ Classical dynamic programming complexity scales with the state space size $|\mat
 
 The minimax-optimal sample complexity for planning with a generative model, when queries to arbitrary state-action pairs are permitted, is $\Theta(|\mathcal{S}||\mathcal{A}|/((1-\gamma)^3\epsilon^2))$ \citep{azar2013}. This bound scales linearly in $|\mathcal{S}|$ but polynomially in $1/(1-\gamma)$, the opposite regime from sparse sampling. \citet{agarwalKakadeYang2020} show that the plug-in model-based approach (learn $\hat{P}$ from samples, then plan with $\hat{P}$) achieves this minimax rate, establishing that model-based RL is statistically optimal. \citet{li2024breaking} further tighten this result by breaking the $|\mathcal{S}||\mathcal{A}|/(1-\gamma)^2$ sample-size barrier, showing that the minimax rate is achievable with total sample size as low as $|\mathcal{S}||\mathcal{A}|/(1-\gamma)$.\footnote{Recent extensions push these results beyond standard MDPs. \citet{clavier2024robust} study the robust MDP setting where the agent must plan under model uncertainty with sa-rectangular or s-rectangular uncertainty sets, establishing minimax rates for robust policy optimization. \citet{wang2025cvar} extend the analysis to risk-sensitive objectives under the iterated CVaR criterion.}
 
+% The curse-of-dimensionality material continues the planning-complexity
+% discussion above and lives in its own section file.
+\input{../ch03_theory/tex/curse_of_dimensionality}
+
 \subsection{Fundamental Tradeoffs}
 \label{sec:tradeoffs}
 

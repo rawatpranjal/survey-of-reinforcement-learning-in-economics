@@ -1,0 +1,20 @@
+\begin{table}[htbp]
+\centering
+\caption{Oracle queries required by Theorem~\ref{thm:chow_tsitsiklis} at $\epsilon = 0.01$. The mixing column is \eqref{eq:ct_mixing} and the general column is \eqref{eq:ct_general}; both are tight, so the gap between them is a real difference in problem difficulty and not slack in the analysis. The last column is their ratio, $(1-\gamma)^{-(2d_s+d_a)}$, the price of losing the mixing condition.}
+\label{tab:curse_chow_tsitsiklis}
+\begin{tabular}{rrrrrrr}
+\toprule
+$d_s$ & $d_a$ & $\gamma$ & $2d_s + d_a$ & Mixing & General & Ratio \\
+\midrule
+1 & 1 & 0.9 & 3 & $10^{9}$ & $10^{12}$ & 1,000 \\
+1 & 1 & 0.95 & 3 & $8.0 \times 10^{9}$ & $6.4 \times 10^{13}$ & 8,000 \\
+1 & 1 & 0.99 & 3 & $10^{12}$ & $10^{18}$ & $10^{6}$ \\
+2 & 1 & 0.9 & 5 & $10^{15}$ & $10^{20}$ & $10^{5}$ \\
+2 & 1 & 0.95 & 5 & $3.2 \times 10^{16}$ & $10^{23}$ & $3.2 \times 10^{6}$ \\
+2 & 1 & 0.99 & 5 & $10^{20}$ & $10^{30}$ & $10^{10}$ \\
+3 & 2 & 0.9 & 8 & $10^{24}$ & $10^{32}$ & $10^{8}$ \\
+3 & 2 & 0.95 & 8 & $2.6 \times 10^{26}$ & $6.6 \times 10^{36}$ & $2.6 \times 10^{10}$ \\
+3 & 2 & 0.99 & 8 & $10^{32}$ & $10^{48}$ & $10^{16}$ \\
+\bottomrule
+\end{tabular}
+\end{table}

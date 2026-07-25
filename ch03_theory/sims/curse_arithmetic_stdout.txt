@@ -1,0 +1,73 @@
+======================================================================
+CURSE OF DIMENSIONALITY: NUMERICAL ILLUSTRATIONS
+======================================================================
+
+GRID DYNAMIC PROGRAMMING
+Model                                        d          |S|        table    sweep ops     wall clock
+Bus engine, one bus (Rust 1987)              1    1.750e+02    1.400e+03    6.125e+04      6.125e-05
+Wind farm, base state                        3    3.430e+02    2.744e+03    1.294e+06      1.294e-03
+Brock--Mirman growth                         1    1.000e+03    8.000e+03    5.000e+08      5.000e-01
+Wind farm, six state variables               6    1.176e+05    9.412e+05    1.523e+11      1.523e+02
+Inventory, five products                     5    3.200e+06    2.560e+07    7.963e+16      7.963e+07
+Bus engine, fleet of 3                       3    5.359e+06    4.288e+07    2.298e+14      2.298e+05
+Macro model, ten state variables            10    1.000e+10    8.000e+10    1.000e+21      1.000e+12
+Bus engine, fleet of 5                       5    1.641e+11    1.313e+12    8.620e+23      8.620e+14
+
+CHOW-TSITSIKLIS (1989), eps = 0.01
+ d_s  d_a  gamma  exp       mixing      general        ratio
+   1    1   0.90    3    1.000e+09    1.000e+12    1.000e+03
+   1    1   0.95    3    8.000e+09    6.400e+13    8.000e+03
+   1    1   0.99    3    1.000e+12    1.000e+18    1.000e+06
+   2    1   0.90    5    1.000e+15    1.000e+20    1.000e+05
+   2    1   0.95    5    3.200e+16    1.024e+23    3.200e+06
+   2    1   0.99    5    1.000e+20    1.000e+30    1.000e+10
+   3    2   0.90    8    1.000e+24    1.000e+32    1.000e+08
+   3    2   0.95    8    2.560e+26    6.554e+36    2.560e+10
+   3    2   0.99    8    1.000e+32    1.000e+48    1.000e+16
+
+DU ET AL. (2021) COROLLARY 5.1
+   d    H    eps          H^7   trajectories      env steps
+   5   10  0.100    1.000e+07      6.350e+14      6.350e+15
+  10   24  0.100    4.586e+09      2.176e+18      5.222e+19
+  10   24  0.050    4.586e+09      9.784e+18      2.348e+20
+  20   50  0.100    7.812e+11      2.341e+21      1.170e+23
+
+LIU ET AL. (2022) THEOREM 1, p = 2, K = 1, T = 1e+06
+   d  alpha_min    a=2 exp    a=2 width    a=8 exp    a=8 width
+   1      0.250     0.7333    4.379e+01     0.6863    1.832e+00
+   2      0.500     0.7778    4.605e+02     0.7037    7.125e+00
+   3      0.750     0.8095    2.207e+03     0.7193    1.932e+01
+   5      1.250     0.8519    1.654e+04     0.7460    8.824e+01
+  10      2.500  inadmiss.            -     0.7949    1.079e+03
+  20      5.000  inadmiss.            -     0.8519    1.654e+04
+  50     12.500  inadmiss.            -  inadmiss.            -
+  exponent as alpha -> infinity: 0.6667
+
+LU ET AL. (2025) THEOREM 5.1, SCOPE SIZES
+   k    one scope    scope sum       |S||A|
+   1    2.000e+01    2.000e+03   2.000e+100
+   2    2.000e+02    2.000e+04   2.000e+100
+   3    2.000e+03    2.000e+05   2.000e+100
+   4    2.000e+04    2.000e+06   2.000e+100
+   6    2.000e+06    2.000e+08   2.000e+100
+
+LU ET AL. (2025) THEOREM 5.1, BIAS FLOOR (Delta_R = 0)
+ gamma        1e-04        1e-03        1e-02        1e-01    breakeven
+  0.90        0.009         0.09          0.9            9    1.111e-04
+  0.95        0.038         0.38          3.8           38    2.632e-05
+  0.99         0.99          9.9           99          990    1.010e-06
+  target accuracy eps = 0.01
+
+CROSS-CHECK AGAINST THE WIND-FARM SIMULATION
+  grid DP predicts a factor n^2 = 49.0 per added dimension at n = 7 bins
+  wind_farm_curse_study measured a factor 8.65 (317.5 s at d=4 over 36.7 s at d=3, parsed from wind_farm_curse_study_stdout.txt)
+  ratio measured/predicted = 0.177; the sim integrates with a fixed 20-sample Monte Carlo draw rather than a full n^d sweep, so it does not pay the second factor of n^d
+
+  Table saved: /Users/pranjal/Code/rl-curse-numbers/ch03_theory/sims/curse_grid_dp.tex
+  Table saved: /Users/pranjal/Code/rl-curse-numbers/ch03_theory/sims/curse_chow_tsitsiklis.tex
+  Table saved: /Users/pranjal/Code/rl-curse-numbers/ch03_theory/sims/curse_sample_complexity.tex
+  Table saved: /Users/pranjal/Code/rl-curse-numbers/ch03_theory/sims/curse_factored.tex
+  Table saved: /Users/pranjal/Code/rl-curse-numbers/ch03_theory/sims/curse_smoothness.tex
+  Figure saved: /Users/pranjal/Code/rl-curse-numbers/ch03_theory/sims/curse_arithmetic.png
+
+Done.

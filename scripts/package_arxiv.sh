@@ -33,6 +33,7 @@ CHAPTERS=(
     "ch01_history/tex/history.tex"
     "ch02_rl_algorithms/tex/rl_algorithms.tex"
     "ch03_theory/tex/planning_learning_v3.tex"
+    "ch03_theory/tex/curse_of_dimensionality.tex"
     "ch03b_deeprl_practice/tex/deeprl_practice.tex"
     "ch04_control_problems/tex/applications.tex"
     "ch05_econ_models/tex/rl_in_se.tex"
