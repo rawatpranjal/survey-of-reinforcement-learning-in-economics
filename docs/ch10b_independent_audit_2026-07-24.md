@@ -1,13 +1,15 @@
 # ch10b independent audit, 2026-07-24
 
-**Commit audited:** `df4c74f` on branch `ch10b-reconciled` (17 ahead of `origin/main`, unpushed).
-**This verdict does not apply to PR #38.** Its head `f1fac64` is four commits behind `df4c74f` and
-does not contain the simulation corrections. Anyone reading #38 today is reading pre-correction
-simulations.
+**Original commit audited:** `df4c74f` on branch `ch10b-reconciled`, which was
+17 commits ahead of `origin/main` and unpushed at the time.
+**Original PR note:** This verdict did not apply to PR #38. Its head `f1fac64`
+was four commits behind `df4c74f` and did not contain the simulation
+corrections.
 
 **Reconciliation update:** The proof gap and the policy-learning classification below were resolved
-on `ch10-causal-reconciliation`. The original findings remain in the record, followed by the
-adjudication that changed the final verdict.
+on `ch10-causal-reconciliation`, with verified content commit `904afae` pushed
+to the remote branch. The original findings remain in the record, followed by
+the adjudication that changed the final verdict.
 
 **Evidence admitted:** cold re-runs of all five simulations on this machine, verbatim spans from the
 authors' own arXiv LaTeX sources, a mechanical number-provenance check, and rulings from fresh agents
@@ -207,9 +209,9 @@ Attribution of the Athey and Wager rate, the Thomas and Brunskill MAGIC construc
 and Uehara claim that the non-Markov efficiency bound is exponential in the horizon. The causal-bandit
 papers and ch10c were checked in the separate ch10c claim-source ledger and cold-run verification.
 
-`fit_evaluation.md` is stale: it still describes causal bandits and adaptive experimentation as
-sections 4 and 5 of ch10b, and its line references point at lines that no longer exist. It should be
-refreshed or retired.
+`fit_evaluation.md` is retained as an archived planning memo. Its status banner
+now routes readers to the split ch10b and ch10c sources and their current
+claim-source ledgers.
 
 ---
 

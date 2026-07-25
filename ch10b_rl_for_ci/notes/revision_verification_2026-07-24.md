@@ -2,6 +2,10 @@
 
 Date: 2026-07-24
 
+Status: Updated after the ch10b and ch10c reconciliation. The final numerical,
+proof, and build gate is
+`docs/ch10bc_reconciliation_verification_2026-07-24.md`.
+
 ## Result
 
 The revised chapter passes the source, proof, simulation, artifact, visual,
@@ -185,36 +189,35 @@ schematic.
 
 ## Artifact and build gates
 
-- All five ch10b scripts and the ch10c causal-bandit script compile with
-  `python -m py_compile` in the declared environment.
-- Every corrected result table regenerates unchanged after the caches are
-  refreshed. Plotting-library version differences change the rendered PNG
-  bytes, so those environment-only figure deltas were not adopted.
-- The standalone chapter is 38 pages. It has no undefined citations or
-  internal undefined references, and its unresolved references point only to
-  chapters omitted by the standalone driver. It has no overfull boxes or
-  float-size warnings.
+- All five ch10b scripts and the ch10c causal-bandit script ran from empty
+  caches. Ruff passes all six sources.
+- All 15 generated tables and figures are tracked and regenerate
+  byte-identically. The refreshed stdout files record cold computation.
+- The standalone chapter is 41 pages. It has no undefined citations or
+  internal undefined references. Its seven unresolved references point only
+  to chapters omitted by the standalone driver. It has no overfull boxes.
 - The open-issues table was reset in a smaller table font after visual
   inspection found that its first merged rendering reached the footer. The
   rebuilt table is fully above the page number and remains legible.
-- The full book is 310 pages with no undefined citations or references or
-  LaTeX errors. Ch10b has no overfull horizontal boxes; one 1.6-point overfull
-  vertical box remains. The full-book log retains preexisting overfull
-  warnings from other chapters.
+- The standalone ch10c chapter is 6 pages. The full manuscript is 305 pages
+  with no undefined citations, undefined references, LaTeX errors, or minted
+  failures. The full-book log retains preexisting overfull warnings from other
+  chapters.
 - The chapter PDF was inspected page by page at the diagram, theorem, four
   empirical applications, four simulation blocks, both new inference tables,
   the policy-inference caveat, and the open-issues table. Labels are legible
   and no result is detached from its section.
-- The standalone wrapper writes the PDF successfully but its final minted
-  cleanup hook emits a Python 3.14 `argparse` compatibility traceback. This is
-  an environment-level cleanup failure and does not affect the PDF.
+- The standalone and full builds complete without the earlier Python 3.14
+  minted traceback when the Python 3.11 shim is placed first on `PATH`.
 - Every numerical sentence in the four simulation writeups matches the frozen
   result tables or stdout artifacts.
 - An independent read-only audit found and triggered fixes for inconsistent
   potential-outcome notation, incomplete NMDP histories, overbroad DR
   unbiasedness language, high-confidence-bound conditions, horizon arithmetic,
-  and the target of learned-policy inference. The second audit found no
-  remaining theorem, application, bibliography, or inference blocker.
+  and the target of learned-policy inference. The final proof gate also
+  separated the unrestricted Bellman optimizer from the restricted
+  policy-learning target and required all-action positivity for unrestricted
+  optimization. Its final verdict was PASS.
 - Deleted labels `subsec:simstudy`, `subsec:rl_for_ci_discussion`, and
   `subsec:murphy_watkins` have no remaining references.
 - The final prose contains no em dashes, en dashes, `\textbf`, unlocated direct

@@ -2,6 +2,9 @@
 
 Date: 2026-07-24
 
+Verified content commit: `904afae7106a42ef2774a368c80efc416bec949c`,
+pushed to `origin/ch10-causal-reconciliation`.
+
 ## Topology
 
 The final branch merges both descendants of `df4c74f`.
@@ -54,5 +57,6 @@ by lint-only source cleanup left their hashes unchanged.
   invokes all-action positivity. The verifier's final verdict was PASS with no
   remaining correctness blocker.
 - A separate shipping verifier confirmed the merge topology, cold-run evidence,
-  generated artifacts, lint checks, and builds. Its only blocker was that the
-  verified changes had not yet been committed.
+  generated artifacts, lint checks, and builds. An intermediate pass stopped
+  because the verified changes were not yet committed. The exact committed
+  state then passed the final gate with no remaining shipping blocker.
