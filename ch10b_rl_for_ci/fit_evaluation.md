@@ -1,10 +1,35 @@
-# Fit Evaluation: 43 New RL-for-CI Papers vs the Current Chapter
+# Archived Fit Evaluation: 43 RL-for-CI Papers
 
-This document evaluates 43 newly-acquired papers (downloaded + docling-extracted in the prior phase, sitting in `papers/`) against the current state of `tex/rl_for_ci.tex` (5 subsections + sim study + discussion, 359 lines). One paper of the original 44 (`wang2024adt2r` / Jeon et al, IEEE TNNLS) is paywalled and out of scope.
+**Status:** Historical planning input, not a map of the current manuscript. This
+memo predates the split of causal bandits and adaptive experimentation into
+Chapter 10c. Its section numbers and source-line locators describe that older
+five-section draft and are retained only to preserve the reasoning behind the
+paper triage.
+
+Current routing:
+
+- DTRs, off-policy evaluation, dynamic DML, and dynamic policy learning are in
+  `ch10b_rl_for_ci/tex/rl_for_ci.tex`.
+- Causal bandits and adaptive experimentation are in
+  `ch10c_adaptive_experiments/tex/adaptive_experiments.tex`.
+- Current source coverage and dispositions are recorded in the dated
+  `notes/claim_source_ledger_2026-07-24.md` and
+  `notes/paper_coverage_index_2026-07-24.md` files under each chapter.
+- The final reconciliation and verification status is recorded in
+  `docs/ch10bc_reconciliation_verification_2026-07-24.md`.
+
+This document originally evaluated 43 newly acquired papers, downloaded and
+extracted into `papers/`, against the then-current 359-line chapter. One paper
+of the original 44 (`wang2024adt2r` / Jeon et al., IEEE TNNLS) was paywalled
+and out of scope.
 
 **Verdict legend.** `KEEP` = strong fit, recommend citing primary; `MARGINAL` = useful but borderline (footnote / one-line aside); `CUT` = doesn't add to the chapter's argument, or duplicates an existing citation.
 
-The chapter's gap diagnosis (from earlier in the session): §2 (Dynamic DML) and §3 (Dynamic offline policy learning) lean on g-estimation / AIPW papers that re-use Bellman vocabulary without running RL. §4 (causal bandits) and §5 (adaptive experiments) are stronger on real RL. §1 (DTRs) is the historical-bridge section.
+The historical gap diagnosis was that §2 (Dynamic DML) and §3 (Dynamic offline
+policy learning) leaned on g-estimation and AIPW papers that reused Bellman
+vocabulary without running RL, while §4 (causal bandits) and §5 (adaptive
+experiments) were stronger on real RL. Those section labels do not describe the
+current split chapters.
 
 This file has three parts:
 - **Part A** — per-paper verdicts (43 entries, organised by intended target wave).

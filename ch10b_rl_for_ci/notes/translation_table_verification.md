@@ -1,7 +1,11 @@
 # Translation Table Verification — §1 of `rl_for_ci.tex`
 
-Source table: `/Users/pranjal/Code/rl/ch10b_rl_for_ci/tex/rl_for_ci.tex` lines 51-66
-(Table `tab:rl_ci_dictionary`). The surrounding prose claims:
+Current source table: `ch10b_rl_for_ci/tex/rl_for_ci.tex` lines 205-225
+(Table `tab:rl_ci_dictionary`). The quoted line locators elsewhere in this
+verification memo refer to the source snapshots read during the original
+row-by-row audit, not to the current manuscript line numbers. The current
+theorem and table retain only the correspondences that survived that audit.
+The surrounding prose originally claimed:
 
 > "The translation is exact in the column-by-column sense. Each entry on the left,
 > treated as a procedure on the observed-data distribution, returns the same

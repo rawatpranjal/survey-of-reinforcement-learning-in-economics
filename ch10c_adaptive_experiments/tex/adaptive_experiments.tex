@@ -1,0 +1,215 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Chapter: Causal Bandits and Adaptive Experimentation
+%% Section label: section:adaptive_experiments
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Sequential experiments join two problems. The assignment rule must learn which
+intervention works, and the final analysis must remain valid after assignment has
+adapted to earlier outcomes. Causal bandits address the first problem by using a
+causal graph or counterfactual structure to share information across actions.
+Adaptive-experiment estimators address the second by accounting for time-varying
+assignment probabilities.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Causal Bandits}
+\label{subsec:causal_bandits}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\citet{bareinboim2015mabuc} study a two-machine casino in which two unobserved
+binary variables determine both the player's natural choice $X$ and the reward
+$Y$. Their Table~1 implies
+\[
+\mathbb P(Y=1\mid X=M_j)=0.15,
+\qquad
+\mathbb P(Y=1\mid \mathrm{do}(X=M_j))=0.30
+\]
+for either machine. The marginal interventional means are therefore tied, even
+though the best action conditional on the player's natural choice is not.
+Marginal Thompson sampling cannot use that conditional signal and accumulates
+linear regret.
+
+The Regret Decision Criterion instead chooses the action with the largest
+intention-specific counterfactual mean,
+\begin{equation}
+a^*(x)=\arg\max_a \mathbb E[Y_a\mid X=x].
+\label{eq:rdc}
+\end{equation}
+Causal Thompson sampling, denoted $\mathrm{TS}_C$, maintains a Beta posterior
+for each intention-action pair. Algorithm~1 of \citet{bareinboim2015mabuc}
+initializes only the on-intuition cells from observational data, using
+consistency to equate $\mathbb E[Y_x\mid X=x]$ with
+$\mathbb E[Y\mid X=x]$. The off-intuition cells begin at
+$\operatorname{Beta}(1,1)$ and are learned online. The algorithm also applies
+the Regret Decision Criterion weighting from the current off-intuition estimate
+and the fixed observational mean. It does not initialize the off-intuition
+cells from an effect-of-treatment-on-the-untreated identity.
+
+In a binary problem with an additional randomized marginal log, that
+counterfactual can be identified separately,
+\begin{equation}
+\mathbb E[Y_a\mid X\ne a]
+=
+\frac{\mathbb P(Y=1\mid\mathrm{do}(a))
+-\mathbb P(X=a)\mathbb P(Y=1\mid X=a)}
+{1-\mathbb P(X=a)}.
+\label{eq:simB2_ett}
+\end{equation}
+The simulation treats this as a data-fusion warm start, not as the paper's
+$\mathrm{TS}_C$.
+
+\citet{lattimore2016causal} obtain a different gain from causal structure.
+Their parallel bandit has $N$ independent binary parents of $Y$ and action set
+\[
+\mathcal A=\{\mathrm{do}()\}\cup
+\{\mathrm{do}(X_i=j):i\in[N],\,j\in\{0,1\}\}.
+\]
+Every round reveals $Y$ and all non-intervened parents. Algorithm~1 spends half
+the budget on $\mathrm{do}()$, estimates the parent propensities and conditional
+reward means, and spends the remainder on the values rarely observed in the
+first phase. Its hardness parameter is
+\begin{equation}
+m(q)=\min_{\tau\in\{2,\ldots,N\}}
+\max\!\left\{\tau,\left|\left\{i:
+\min(q_i,1-q_i)<1/\tau\right\}\right|\right\}.
+\label{eq:lattimore_m}
+\end{equation}
+Theorem~1 gives simple regret of order
+\begin{equation}
+R_T=O\!\left(
+\sqrt{\frac{m(q)}{T}\log\frac{NT}{m(q)}}\right),
+\label{eq:lattimore_regret}
+\end{equation}
+and Theorem~2 supplies a matching lower bound up to logarithmic factors.
+Balanced parents give $m(q)=2$ and the largest advantage over a graph-blind
+$\sqrt{N/T}$ guarantee. Concentrating more parents near zero or one increases
+$m(q)$ and erodes that advantage. For general directed acyclic graphs, the
+paper proves an upper bound using a mixing distribution over interventions. In
+the parallel case the optimized general-graph complexity is bounded by
+$2m(q)$, not equal to $m(q)$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Adaptive Experimentation and Post-Experiment Inference}
+\label{subsec:adaptive_experiments}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\citet{kasy2021adaptive} target the welfare of the policy selected after a
+multi-wave experiment rather than participants' rewards during data
+collection. Exploration sampling transforms each treatment's posterior
+probability of being best,
+\begin{equation}
+q_t^d=S_t p_t^d(1-p_t^d),
+\label{eq:exploration_sampling}
+\end{equation}
+so the leading treatment receives at most half of each wave and suboptimal
+treatments retain enough observations for discrimination. The design was used
+in a 17-wave experiment with about $10{,}000$ participants and six recruitment
+strategies for an agricultural extension service in India.
+
+The published Theorem~1 also claimed the best exponential rate for frequentist
+expected policy regret. That item is false. The authors' correction retains the
+limiting allocation and equal posterior concentration results, and states the
+optimality result for the posterior probability that the selected treatment is
+not best. It also gives a separate posterior expected-regret bound
+\citep{kasysautmann2021correction}. The chapter therefore does not use the
+withdrawn frequentist policy-regret claim.
+
+Adaptive assignment also changes inference. For treatment $w$ with known
+history-dependent propensity $e_t(w)$, \citet{hadad2021adaptive} start from the
+AIPW score
+\begin{equation}
+\widehat\Gamma_t(w)=\widehat m_t(w)+
+\frac{\mathbb 1\{W_t=w\}}{e_t(w)}
+\{Y_t-\widehat m_t(w)\}
+\label{eq:hadad_aipw_score}
+\end{equation}
+and average it with predictable evaluation weights,
+\begin{equation}
+\widehat Q^{\mathrm{AW}}(w)=
+\frac{\sum_{t=1}^T h_t(w)\widehat\Gamma_t(w)}
+{\sum_{t=1}^T h_t(w)}.
+\label{eq:adaptive_aipw}
+\end{equation}
+Their constant-allocation construction uses weights proportional to
+$\sqrt{e_t(w)/T}$ through a stick-breaking normalization. These weights are
+chosen to stabilize variance and establish asymptotic normality. The paper
+explicitly does not claim that they minimize variance, and it proposes a
+two-point adaptive construction to improve efficiency. Theorem~2 additionally
+requires positive propensities, moment and infinite-sampling conditions,
+variance convergence, and either a consistent outcome model or convergent
+propensities.
+
+\citet{bibaut2021post} extend this inference problem to contextual adaptive
+experiments. Their logging probabilities $g_t(a\mid x)$ remain known, while
+conditional-variance estimates rescale the canonical-gradient terms.
+Asymptotic normality is robust to outcome-model misspecification when those
+variance estimates are consistent. The result does not cover data from an
+unknown black-box assignment mechanism.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Simulation Study}
+\label{subsec:causal_bandit_sim}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The first experiment follows the hard family in
+\citet[\S 5]{lattimore2016causal}. Exactly $m$ parent propensities are zero and
+the rest equal one half. The reward depends on one zero-propensity parent $X_w$,
+with mean $0.5+\epsilon$ when $X_w=1$ and $0.5$ otherwise. Changing $m$ therefore
+changes which actions are passively observed without changing any arm value.
+Successive Reject uses its cumulative phase schedule, while Lattimore
+Algorithm~1 uses the estimated $m(\hat q)$ cutoff. The horizon panel uses the
+paper's local alternative $\epsilon_T=\sqrt{N/(8T)}$. Its error probability is
+a minimax stress test, not evidence of a fixed-instance $T^{-1/2}$ decay rate.
+
+The second experiment uses the Table~1 greedy-casino conditional payoff matrix
+$((0.15,0.45),(0.45,0.15))$. The factorial separates observational seeding from
+RDC weighting and reports the additional ETT warm start separately.
+$\mathrm{TS}_Z$ denotes the unseeded intention-conditioned baseline. The paper's
+$\mathrm{TS}_C$ uses only the observational log. The ETT extension also receives
+a randomized marginal log. Self-checks verify the labelled hardness, equality
+of all suboptimal arm values, phase budgets, the $0.15$ observational and $0.30$
+interventional marginals, and recovery of the published regret scale for
+Thompson sampling, $\mathrm{TS}_Z$, and $\mathrm{TS}_C$.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{../ch10c_adaptive_experiments/sims/causal_bandit_combined.png}
+\caption{Causal-bandit diagnostics. Panel (a) varies graph hardness without
+changing rewards. Panel (b) reports recommendation error under a shrinking-gap
+local alternative. Panel (c) compares marginal Thompson sampling, unseeded
+context-conditional $\mathrm{TS}_Z$, the paper's $\mathrm{TS}_C$, and the
+separately labelled ETT warm start. Error bars and bands are 95\% Monte Carlo
+intervals.}
+\label{fig:simB2}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Simple regret on the parallel-bandit hard family. Entries are means
+with Monte Carlo standard errors in parentheses over two thousand replications.
+$N=50$, $T=400$, and $\epsilon=0.3$.}
+\label{tab:simB2}
+\input{../ch10c_adaptive_experiments/sims/causal_bandit_results}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Greedy-casino cumulative pseudo-regret over five hundred paired
+replications. The binary ETT row is a data-fusion extension and is not
+Algorithm~1 of \citet{bareinboim2015mabuc}.}
+\label{tab:simB2_mabuc}
+\input{../ch10c_adaptive_experiments/sims/causal_bandit_mabuc_results}
+\end{table}
+
+\FloatBarrier
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Discussion}
+\label{subsec:adaptive_experiments_discussion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Causal structure can reduce exploration cost when one action reveals outcomes
+relevant to others. Valid post-experiment inference requires a second layer of
+design because adaptive propensities change the variance of standard scores.
+Both benefits depend on observing the relevant mechanism. The causal-bandit
+guarantees use a known graph or recorded intention, and post-contextual-bandit
+inference uses known logging probabilities.

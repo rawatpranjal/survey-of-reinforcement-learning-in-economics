@@ -1,0 +1,99 @@
+  Computing: shared
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/ope_estimators__shared.pkl
+  Computing: sweep_n
+  sweep_n: n=50 done
+  sweep_n: n=100 done
+  sweep_n: n=200 done
+  sweep_n: n=500 done
+  sweep_n: n=1000 done
+  sweep_n: n=2000 done
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/ope_estimators__sweep_n.pkl
+  Computing: sweep_h
+  sweep_h: H=4 done
+  sweep_h: H=8 done
+  sweep_h: H=16 done
+  sweep_h: H=32 done
+  sweep_h: H=64 done
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/ope_estimators__sweep_h.pkl
+  Computing: ablation
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/ope_estimators__ablation.pkl
+  Computing: inference
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/ope_estimators__inference.pkl
+==============================================================================
+OPE estimators on the stylized Fast Track home-visiting MDP
+==============================================================================
+States=5 (0 greatest need, 4 strongest functioning) Actions=2 (0 no extra visit, 1 extra visit) gamma=1 init=uniform{1,2,3}
+pi_b(1|s)=0.6-0.1s  pi_e(1|s)=0.9 (s<=1) / 0.1 (s>=2)
+step ratio range: [0.200, 1.800]
+N_REPS=500  n grid=(50, 100, 200, 500, 1000, 2000)  H grid=(4, 8, 16, 32, 64)
+
+Ground truth J(pi_e) by exact DP:
+  H=  4  J=+1.392878  max marginal state ratio=1.318
+  H=  8  J=+2.778315  max marginal state ratio=1.432
+  H= 16  J=+5.611033  max marginal state ratio=1.457
+  H= 32  J=+11.365613  max marginal state ratio=1.460
+  H= 64  J=+22.907539  max marginal state ratio=1.460
+J(pi_b) at H=16: +5.985613
+MC oracle check (100k episodes under pi_e, H=16): +5.594832 (MC SE 0.013891) vs DP +5.611033  |diff|/MC SE = 1.17
+
+Experiment (a): sample-size sweep at H=16 (truth +5.611033)
+     n                     DM                    IS                  PDIS                   WIS                    DR                   WDR                   MIS
+          bias (MC SE) / RMSE   bias (MC SE) / RMSE   bias (MC SE) / RMSE   bias (MC SE) / RMSE   bias (MC SE) / RMSE   bias (MC SE) / RMSE   bias (MC SE) / RMSE
+    50    +0.010(0.031)/0.693  +0.150(0.487)/10.884   +0.122(0.166)/3.707   +0.626(0.076)/1.818   -0.099(0.106)/2.359   -0.021(0.067)/1.489   +0.096(0.062)/1.381
+   100    -0.012(0.024)/0.531   -0.376(0.219)/4.912   -0.091(0.108)/2.424   +0.424(0.058)/1.363   -0.085(0.081)/1.816   -0.054(0.053)/1.176   -0.008(0.042)/0.948
+   200    -0.037(0.016)/0.363   -0.137(0.184)/4.108   -0.068(0.081)/1.806   +0.286(0.047)/1.077   +0.016(0.048)/1.076   +0.017(0.038)/0.857   -0.069(0.029)/0.647
+   500    -0.001(0.010)/0.221   +0.010(0.123)/2.741   +0.079(0.056)/1.250   +0.193(0.036)/0.827   +0.001(0.036)/0.809   +0.000(0.029)/0.646   +0.001(0.019)/0.431
+  1000    -0.002(0.008)/0.170   +0.071(0.085)/1.891   +0.001(0.033)/0.746   +0.096(0.027)/0.611   -0.043(0.025)/0.556   -0.034(0.022)/0.487   -0.004(0.013)/0.288
+  2000    +0.002(0.005)/0.111   +0.132(0.069)/1.555   +0.003(0.027)/0.601   +0.049(0.020)/0.460   -0.018(0.016)/0.366   -0.018(0.015)/0.344   +0.006(0.010)/0.214
+
+Weight-variance growth in the horizon (curse of horizon, measured directly)
+  (exact: total mass of init * K^H, K(s'|s) = sum_a [pi_e(a|s)^2/pi_b(a|s)] P(s'|s,a); not a Monte Carlo estimate)
+  row sums of K are 1 + chi^2(pi_e(.|s) || pi_b(.|s)) >= 1, so each step multiplies the mass by one plus a divergence
+     H       Var(rho_1:H)           E[rho^2]   Var(marginal ratio)
+     4             2.8357             3.8357              0.131531
+     8            14.3883            15.3883              0.471142
+    16           256.2637           257.2637              1.267448
+    32         72840.4825         72841.4825              2.923554
+    64    5843809947.0908    5843809948.0908              6.280310
+  log Var(rho) vs H      : slope +0.3557 per step, residual SD 0.0854  (geometric growth)
+  log Var(rho) vs log H  : slope +7.4187, residual SD 2.7151  (polynomial growth)
+  implied per-step variance multiplier: 1.427x, so Var(rho_1:H) grows by 17.2x every 8 steps
+
+Experiment (b): horizon sweep at n=500 (relative RMSE)
+     H         DM        IS      PDIS       WIS        DR       WDR       MIS
+     4     0.0478    0.0895    0.0694    0.0673    0.0516    0.0516    0.0622
+     8     0.0441    0.1652    0.0936    0.0859    0.0659    0.0657    0.0639
+    16     0.0405    0.4663    0.2000    0.1464    0.1383    0.1137    0.0714
+    32     0.0325    1.7580    0.5177    0.2276    0.5854    0.1924    0.0883
+    64     0.0262    2.8474    2.0546    0.2863    1.2417    0.2089    0.1340
+
+Experiment (c): 2x2 double-robustness ablation at H=16, n=500 (truth +5.611033)
+        cell       bias    (MC SE)       RMSE
+    DR_QR_eR    -0.0254     0.0342     0.7643
+    DR_QW_eR    -0.0214     0.0349     0.7805
+    DR_QR_eW    +0.0771     0.2876     6.4246
+    DR_QW_eW    +1.7061     0.3434     7.8574
+       DM_QR    +0.0011     0.0093     0.2077
+       DM_QW    +0.3769     0.0075     0.4128
+     PDIS_eR    -0.0627     0.0511     1.1428
+     PDIS_eW   +79.1185     1.5846    86.6760
+  Paired seed-wise DR contrast (both wrong - both right): +1.7315 (MC SE 0.3277)
+
+Estimator-level inference calibration (H=8, n=1000, 1000 repeated datasets):
+ estimator       bias    emp. SD  analytic SE   SE ratio   coverage    tails L/R
+        IS    +0.0149     0.3143       0.3068      0.976      0.943 0.020/0.037
+      PDIS    +0.0070     0.1800       0.1786      0.992      0.953 0.027/0.020
+        DR    +0.0028     0.1225       0.1242      1.014      0.945 0.030/0.025
+
+Checks (3 MC-SE criterion for bias):
+  IS bias within 3 MC-SE of 0 at every n:    True
+  PDIS bias within 3 MC-SE of 0 at every n:  True
+  SD(PDIS) <= SD(IS) at every n:             True
+  RMSE(DR) <= RMSE(PDIS) at n=2000:          True
+  rel. RMSE at H=64, IS vs MIS:              2.847 vs 0.134 (ratio 21.3x)
+
+Output files:
+  /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/ope_estimators.png
+  /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/ope_estimators_results.tex
+  /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/ope_estimators_dr_ablation.tex
+  /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/ope_estimators_inference.tex
