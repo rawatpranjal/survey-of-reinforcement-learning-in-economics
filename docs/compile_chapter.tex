@@ -28,7 +28,12 @@
 \definecolor{block-gray}{gray}{0.85}
 \newtcolorbox{blockquote}{colback=block-gray,grow to right by=-1mm,grow to left by=-1mm,boxrule=0pt,boxsep=0pt,breakable}
 
+% xr-hyper pulls the label table from main.aux so cross-chapter \ref commands
+% resolve to the monograph numbering instead of printing "??" in standalone builds.
+% Harmless when main.aux is absent: xr just warns.
+\usepackage{xr-hyper}
 \usepackage{hyperref}
+\externaldocument{main}
 \usepackage{listings}
 
 \usepackage{colortbl}
