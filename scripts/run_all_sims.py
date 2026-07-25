@@ -89,7 +89,8 @@ REGISTRY = [
     ("ch12", "ch12_world_models/sims/fishery_paradigms.py", "A"),
     ("ch12", "ch12_world_models/sims/multi_echelon_paradigms.py", "A"),
     ("ch12", "ch12_world_models/sims/draw_maze_layout.py", "B"),
-    # appA (Mathematical Preliminaries) -- linear algebra, probability, convex analysis, fixed points
+    # appA (Mathematical Preliminaries) -- operator geometry, probability, convex analysis, fixed points
+    ("appA", "appA_preliminaries/sims/rl_theory_geometry.py", "B"),
     ("appA", "appA_preliminaries/sims/spectral_radius.py", "A"),
     ("appA", "appA_preliminaries/sims/neumann_series.py", "A"),
     ("appA", "appA_preliminaries/sims/markov_stationary.py", "A"),

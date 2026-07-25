@@ -108,7 +108,7 @@ The TD error $\delta_t$ estimates $A^\pi(s_t, a_t) = Q^\pi(s_t, a_t) - V^\pi(s_t
 
 \subsubsection{Natural Policy Gradient (2001)}
 
-Standard gradient descent treats all parameter directions equally, but policy parameters define probability distributions whose natural geometry is not Euclidean. \citet{Kakade2001} introduced the natural policy gradient, which measures progress in distribution space rather than parameter space. The update uses the Fisher information matrix $F(\theta)$:
+Standard gradient descent treats all parameter directions equally, but policy parameters define probability distributions whose natural geometry is not Euclidean. \citet{Kakade2001} introduced the natural policy gradient, which measures progress in distribution space rather than parameter space. The update uses the Fisher information matrix $F(\theta)$.\footnote{Appendix~\ref{prelim:quadratic_forms} records its score outer-product form, local KL geometry, and conditioning.}
 \begin{equation}
 F(\theta) = \mathbb{E}_{s \sim d^\pi, a \sim \pi_\theta} \left[ \nabla_\theta \log \pi_\theta(a|s) \nabla_\theta \log \pi_\theta(a|s)^\top \right]
 \end{equation}
@@ -129,7 +129,7 @@ Let $\mathcal{F}$ be a function class mapping $\mathcal{S} \times \mathcal{A} \t
 
 The regression step replaces the exact Bellman application with a projection onto $\mathcal{F}$: $Q_{k+1} = \Pi_{\mathcal{F}} \mathcal{T} Q_k$, where $\mathcal{T}$ is the Bellman optimality operator and $\Pi_{\mathcal{F}}$ is the $L^2$-projection under the sample distribution. Fitted Value Iteration (FVI) \citep{MunosSzepesvari2008} applies the same idea to the value function directly: $V_{k+1} = \Pi_{\mathcal{F}} \mathcal{T}^* V_k$, where $(\mathcal{T}^* V)(s) = \max_a \{ r(s,a) + \gamma \sum_{s'} P(s'|s,a) V(s') \}$.
 
-With feature matrix $\Phi \in \mathbb{R}^{|\mathcal{S}| \times d}$ (rows $\phi(s)^\top$) and per-action weight vectors $\theta_a \in \mathbb{R}^d$, each FQI regression step for action $a$ reduces to the normal equations:
+With feature matrix $\Phi \in \mathbb{R}^{|\mathcal{S}| \times d}$ (rows $\phi(s)^\top$) and per-action weight vectors $\theta_a \in \mathbb{R}^d$, each FQI regression step for action $a$ reduces to the normal equations.\footnote{Appendix~\ref{prelim:span_rank} interprets the columns of $\Phi$ as representable directions. Appendix~\ref{prelim:least_squares} derives the normal equations from orthogonality of the regression residual.}
 \begin{equation}
 \theta_a^{(k+1)} = \bigl(\Phi^\top \Phi\bigr)^{-1} \Phi^\top y_a^{(k)},
 \label{eq:fqi_normal}

@@ -118,6 +118,7 @@ FIGURES=(
     "appA_preliminaries/sims/envelope_theorem.png"
     "appA_preliminaries/sims/gradient_descent.png"
     "appA_preliminaries/sims/hilbert_projection.png"
+    "appA_preliminaries/sims/rl_theory_geometry.png"
     "appA_preliminaries/sims/jensen_gap.png"
     "appA_preliminaries/sims/lagrangian_duality.png"
     "appA_preliminaries/sims/lipschitz_continuity.png"
