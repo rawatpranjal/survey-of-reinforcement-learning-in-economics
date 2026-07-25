@@ -2,12 +2,11 @@
 \toprule
 Algorithm & Regret at $T = 100$ & Regret at $T = 1000$ \\
 \midrule
-$\mathrm{TS}_C$: ETT seed $+$ RDC \citep{bareinboim2015mabuc} & 0.00 & 0.00 (0.00) \\
-ETT seed, no RDC & 0.00 & 0.00 (0.00) \\
-Observational seed $+$ RDC & 0.30 & 0.30 (0.02) \\
-CCTS (observational seed, no RDC) & 0.69 & 0.69 (0.04) \\
-Consistency-copy seed $+$ RDC & 0.79 & 0.79 (0.04) \\
-Consistency-copy seed, no RDC & 4.47 & 4.52 (0.11) \\
-Vanilla Thompson sampling & 19.98 & 200.49 (0.28) \\
+Binary ETT warm start $+$ RDC & 0.10 & 0.19 (0.11) \\
+$\mathrm{TS}_C$ \citep{bareinboim2015mabuc} & 1.17 & 1.21 (0.08) \\
+Observational seed only & 1.60 & 1.68 (0.09) \\
+RDC only & 4.13 & 6.23 (0.14) \\
+$\mathrm{TS}_Z$ (context-conditional TS) & 5.92 & 11.04 (0.19) \\
+Vanilla Thompson sampling & 14.99 & 150.00 (0.21) \\
 \bottomrule
 \end{tabular}

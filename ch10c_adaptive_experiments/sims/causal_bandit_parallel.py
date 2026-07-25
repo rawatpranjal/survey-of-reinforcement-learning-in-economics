@@ -9,8 +9,8 @@
 # O(sqrt(m(q)/T)) versus the Omega(sqrt(N/T)) floor of best-arm-identification
 # algorithms that ignore the graph. Also exercises the Bareinboim-Forney-Pearl
 # (NeurIPS 2015) "greedy casino" instance with three Thompson-family
-# baselines (vanilla TS, context-conditional TS, and the full TS_C of
-# Bareinboim et al. with consistency-axiom seeding and RDC bias weighting),
+# baselines (vanilla TS, context-conditional TS, and TS_C of Bareinboim et al.
+# with observational seeding and RDC bias weighting),
 # demonstrating that causal posteriors achieve bounded cumulative regret
 # while standard Thompson sampling fails (linear cumulative regret).
 #
@@ -37,16 +37,13 @@
 #      posterior indexed by (intuition x, arm a) and uses straight argmax
 #      over posterior samples. Achieves bounded regret on this instance
 #      because (x, a) cells are independently learnable.
-#   4. Full Causal Thompson Sampling (TS_C) of Bareinboim, Forney & Pearl
-#      (NeurIPS 2015) Algorithm 1. Augments the (x, a) Beta posterior with
-#      (i) counterfactual seeding of the cell no observational sample visits,
-#      taking the effect of treatment on the untreated from the identity
-#      P(y|do(a)) = P(X=a) P(y|X=a) + P(X!=a) E[Y_a|X!=a] applied to a
-#      separate log of randomized play that records the arm but not the
-#      intuition, and (ii) RDC bias weighting: the arm disfavoured by the
-#      within-context contrast between Q1 = E[Y_{X=x'}|X=x] and
-#      Q2 = P(y|X=x) is multiplied by 1 - |Q1 - Q2|, clamped to [0.01, 1].
-#      Both components are switchable so the run prices each separately.
+#   4. Causal Thompson Sampling (TS_C) of Bareinboim, Forney & Pearl
+#      (NeurIPS 2015) Algorithm 1. It seeds only the on-intuition cells from
+#      observational data. The off-intuition cells start at Beta(1,1) and are
+#      learned online. RDC weighting compares their current posterior means
+#      with the fixed observational means. A separate ETT warm-start variant
+#      uses randomized marginal data, but is labelled as an extension rather
+#      than as the paper's algorithm.
 #
 # Outputs:
 #   causal_bandit_combined.png     -- three panels: regret vs hardness m(q),
@@ -70,7 +67,7 @@ from sims.sim_cache import (
 )
 
 apply_style()
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -85,22 +82,19 @@ N_PARENTS = 50  # number of binary parents X_i (so |A| = 2N+1 arms)
 T_HORIZON = 400  # default horizon
 M_GRID = [2, 8, 24, 48]  # graph-derived hardness values (m(q) levels)
 N_SEEDS_REGRET = 2000  # Monte Carlo replications for simple-regret panels
-# Horizon panel. Two things had to change for it to measure a rate. The gap now
-# shrinks with the budget (see eps_at_T), because at a fixed gap the best arm is
-# identified outright and regret collapses to exactly zero rather than decaying
-# at any polynomial rate. And m(q) sits at 8 rather than 48: with N = 50 parents
-# the graph buys nothing at m(q) = 48, since m(q)/N is then close to one.
+# The horizon panel follows the local-alternative construction used in the
+# paper. It is a minimax stress test, not an estimate of a fixed-instance rate.
 T_GRID = [400, 800, 1600, 3200, 6400]  # horizon grid for vs-T panel
 M_AT_T_PANEL = 8  # fix m(q) for the vs-T panel: small enough against
 # N = 50 that the graph advantage is real, large enough that the estimate
 # of the rare side is not trivially exact.
 T_SWEEP_SEEDS = 1000  # replications for the horizon panel
-GAP_SCALE = 1.0  # eps_T = GAP_SCALE * sqrt(m / T) on the horizon panel
+GAP_SCALE = 1.0 / np.sqrt(8.0)  # paper experiment: eps_T = sqrt(N/(8T))
 
 
 def eps_at_T(m, T):
-    """Minimax-frontier gap for the horizon panel; capped to keep payoffs in [0,1]."""
-    return float(min(0.45, GAP_SCALE * np.sqrt(m / T)))
+    """Local-alternative gap used in the horizon stress test."""
+    return float(min(0.45, GAP_SCALE * np.sqrt(N_PARENTS / T)))
 
 
 EPS_REWARD = 0.30  # reward gap epsilon: best arm pays mu* = 0.5+eps,
@@ -114,27 +108,22 @@ MABUC_N_EXP = 200  # interventional log size, records (arm, reward) only
 MABUC_NOBS_SWEEP = [25, 50, 100, 200, 400]  # log-size sweep for the ETT panel
 MABUC_SWEEP_SEEDS = 300
 
-# Full factorial over the two TS_C components, so each one is priced separately.
-# (obs_diagonal, no RDC) is CCTS exactly; it runs through the same code path.
+# Factorial over the two components in the paper's Algorithm 1, plus a separately
+# labelled binary ETT warm start that uses an additional randomized log.
 MABUC_VARIANTS = {
-    "CCTS (obs seed, no RDC)": ("obs_diagonal", False),
-    "obs seed + RDC": ("obs_diagonal", True),
-    "consistency-copy seed, no RDC": ("consistency_copy", False),
-    "consistency-copy seed + RDC": ("consistency_copy", True),
-    "ETT seed, no RDC": ("ett", False),
-    "TS_C (ETT seed + RDC)": ("ett", True),
+    "CCTS (no seed, no RDC)": ("none", False),
+    "observational seed only": ("obs_diagonal", False),
+    "RDC only": ("none", True),
+    "TS_C (observational seed + RDC)": ("obs_diagonal", True),
+    "ETT warm start + RDC": ("ett", True),
 }
-# Greedy-casino payoffs (Bareinboim et al. 2015, Table 1, "asterisked" values):
-#   Player intuition X corresponds to a confounder configuration.
-#   P(Y=1 | X=x, do(X=x)) = high  -- following intuition wins more
-#   P(Y=1 | X=x, do(X=1-x)) = low -- going against intuition loses
+# Greedy-casino payoffs implied by Bareinboim et al. (2015), Table 1, after
+# averaging the four (D,B) configurations within the natural intention X=D xor B.
+# Observational means are 0.15 and interventional means are 0.30 for both arms.
 GREEDY_CASINO_PAYOFFS = np.array(
     [
-        # rows: agent's natural intuition x in {0, 1}
-        # cols: arm pulled a in {0, 1}
-        # entry: P(Y=1 | X=x, do(X=a))
-        [0.10, 0.50],  # x=0 (drunk + non-blinking): a=0 loses, a=1 wins
-        [0.50, 0.10],  # x=1 (drunk + blinking):     a=0 wins, a=1 loses
+        [0.15, 0.45],
+        [0.45, 0.15],
     ]
 )
 
@@ -157,24 +146,18 @@ SHARED_CONFIG = {
     "GREEDY_CASINO_PAYOFFS": GREEDY_CASINO_PAYOFFS.tolist(),
 }
 
-# v3 marker: the hardness construction now scales the extreme propensity with
-# m_target so that m(q) equals its label (a fixed 0.05 saturated at 20), and
-# phase 2 of Lattimore Algorithm 1 now pulls the rare side of each unbalanced
-# coordinate rather than the common side.
 _ALG_VERSION = {
-    "hardness_construction": "extreme_q_scaled_inv_2m_v3",
-    "phase2_rare_side": "j_rare_fixed_v3",
+    "hardness_construction": "paper_zero_propensities_v4",
+    "reward_dgp": "paper_equal_suboptimal_means_v4",
+    "successive_reject": "cumulative_schedule_v4",
+    "phase2_threshold": "armwise_one_over_mhat_v5",
 }
 REGRET_VS_M_CONFIG = {**SHARED_CONFIG, "experiment": "regret_vs_m", **_ALG_VERSION}
 REGRET_VS_T_CONFIG = {**SHARED_CONFIG, "experiment": "regret_vs_T", **_ALG_VERSION}
-# v3 marker: TS_C now recovers the counter-intuitive cell from the ETT identity
-# using a separate interventional log, and the RDC contrast is within-context as
-# in the paper rather than a cross-context variance. The run is a full factorial
-# over both components plus a log-size sweep.
 MABUC_CONFIG = {
     **SHARED_CONFIG,
     "experiment": "mabuc",
-    "algos_version": "v3_ett_identified_tsc",
+    "algos_version": "v4_paper_tsc_and_separate_ett",
     "variants": sorted(MABUC_VARIANTS),
 }
 
@@ -183,38 +166,10 @@ MABUC_CONFIG = {
 # Parallel-bandit DGP and helpers
 # ---------------------------------------------------------------------------
 def make_q_with_hardness(m_target, N, rng):
-    """Construct propensities q = (q_1, ..., q_N) in (0,1) so that m(q) = m_target.
-
-    Recall (Lattimore et al. 2016, eq. for m(q)):
-        I_tau := {i : min(q_i, 1 - q_i) < 1/tau}
-        m(q)  = min_tau in [2, N] max(tau, |I_tau|)
-
-    Set exactly K = m_target coordinates to an extreme value e and leave the
-    rest balanced at 0.5. A balanced coordinate has min(q_i, 1-q_i) = 0.5 and so
-    never enters I_tau for tau >= 2. An extreme coordinate enters I_tau exactly
-    when e < 1/tau, that is when tau < 1/e. Hence
-
-        |I_tau| = K   for tau < 1/e,        |I_tau| = 0   for tau >= 1/e,
-
-    and m(q) = min( max(tau, K) over tau < 1/e,  tau over tau >= 1/e )
-             = min( K,  ceil(1/e) )   whenever K < 1/e.
-
-    So e must satisfy e < 1/K, otherwise the hardness saturates at ceil(1/e)
-    and the constructed instance is easier than its label. A fixed e = 0.05
-    saturates at 20, which silently collapsed the m = 24 and m = 48 cells of
-    M_GRID onto the same true hardness m(q) = 20. Scaling the extreme value
-    with the target, e = 1/(2 m_target), keeps 1/e = 2 m_target > m_target for
-    every m_target, so m(q) = m_target holds exactly across the grid.
-    """
+    """Construct the paper's hard family with exactly m_target zero propensities."""
     q = np.full(N, 0.5)
-    extreme = 1.0 / (2.0 * m_target)  # strictly below 1/m_target; see docstring
-    if m_target < N:
-        # Place extreme values on a random subset of arms (independent of best arm)
-        extreme_idx = rng.permutation(N)[:m_target]
-        q[extreme_idx] = extreme
-    else:
-        # m_target == N: all arms extreme
-        q[:] = extreme
+    extreme_idx = rng.permutation(N)[:m_target]
+    q[extreme_idx] = 0.0
     return q
 
 
@@ -235,11 +190,9 @@ def reward_under_do(
 ):
     """Sample the reward Y given an action.
 
-    The reward model: E[Y | X] = sigmoid(w' X + b) but we use a simpler
-    Bernoulli model with explicit best-arm gap: when the intervened parent
-    is the *one* high-leverage coordinate (index 0), the arm value is
-    0.5 + EPS_REWARD; otherwise 0.5. This is a clean best-arm-identification
-    setting with gap EPS_REWARD.
+    This matches the experiment in Lattimore et al. The reward depends only on
+    X_w. Its mean is 0.5 + eps when X_w=1 and 0.5 - eps_prime otherwise, where
+    eps_prime=q_w*eps/(1-q_w). Hence every arm except do(X_w=1) has value 0.5.
 
     Arguments:
       parents : (N,) sampled non-intervened parents (the intervened entry
@@ -260,10 +213,11 @@ def reward_under_do(
         x[intervened_idx] = intervened_val
 
     # Reward depends only on the high-leverage coordinate (index `w`).
+    eps_prime = q_to_eps_prime(baseline_q[w], eps)
     if x[w] == 1:
         p = 0.5 + eps
     else:
-        p = 0.5 - eps
+        p = 0.5 - eps_prime
     y = int(rng.uniform() < p)
     return y, x
 
@@ -275,6 +229,12 @@ def best_arm(q, w):
     yielding expected reward 0.5 + EPS_REWARD.
     """
     return (w, 1)
+
+
+def q_to_eps_prime(q_w, eps):
+    if q_w >= 1.0:
+        raise ValueError("q_w must be below one")
+    return q_w * eps / (1.0 - q_w)
 
 
 # ---------------------------------------------------------------------------
@@ -295,29 +255,27 @@ def successive_reject(q, w, T, rng, eps=None):
     N = len(q)
     K = 2 * N + 1
 
-    # Standard successive reject schedule
-    # n_k = floor((T - K) / (logbar(K) * (K - k + 1))) for k = 1, ..., K-1
+    if T < K:
+        raise ValueError("Successive Reject requires T >= number of arms")
+
+    # Standard cumulative schedule n_k. Each active arm receives only
+    # n_k - n_{k-1} additional pulls at phase k.
     log_bar = 0.5 + sum(1.0 / i for i in range(2, K + 1))
     arms = list(range(K))
     sums = np.zeros(K)
     counts = np.zeros(K, dtype=int)
     used = 0
+    n_prev = 0
     for k in range(1, K):
-        nk = max(1, int(np.floor((T - K) / (log_bar * (K - k + 1)))))
-        if used + nk * len(arms) > T:
-            nk = max(1, (T - used) // max(1, len(arms)))
+        nk = max(1, int(np.ceil((T - K) / (log_bar * (K + 1 - k)))))
+        additional = max(0, nk - n_prev)
         for a in arms:
-            for _ in range(nk):
+            for _ in range(additional):
                 y = pull_arm(a, q, w, rng, eps)
                 sums[a] += y
                 counts[a] += 1
                 used += 1
-                if used >= T:
-                    break
-            if used >= T:
-                break
-        if used >= T:
-            break
+        n_prev = nk
         # Drop the worst-performing arm
         means = np.where(counts > 0, sums / np.maximum(counts, 1), -np.inf)
         active_means = [(means[a], a) for a in arms]
@@ -326,19 +284,9 @@ def successive_reject(q, w, T, rng, eps=None):
         if len(arms) == 1:
             break
 
-    # Pull remaining budget uniformly over remaining arms
-    while used < T and arms:
-        for a in arms:
-            if used >= T:
-                break
-            y = pull_arm(a, q, w, rng, eps)
-            sums[a] += y
-            counts[a] += 1
-            used += 1
-
-    means = np.where(counts > 0, sums / np.maximum(counts, 1), -np.inf)
-    rec = int(np.argmax(means))
-    return rec, arm_expected_reward(rec, w)
+    assert used <= T, (used, T)
+    rec = int(arms[0])
+    return rec, arm_expected_reward_exact(rec, q, w, eps)
 
 
 def pull_arm(arm_id, q, w, rng, eps=None):
@@ -356,41 +304,15 @@ def pull_arm(arm_id, q, w, rng, eps=None):
     return y
 
 
-def arm_expected_reward(arm_id, w):
-    """Expected reward for a given arm (the true mu of that arm).
-
-    arm 0 = do(): expected reward = 0.5 + EPS_REWARD * (2*q[w] - 1), but we
-    approximate as 0.5 (since q[w] in {0.5, 0.05} both give expected ~0.5).
-    For the "extreme" propensity case q[w]=0.05, do() yields mostly X_w=0 so
-    expected reward < 0.5. For q[w]=0.5, do() yields exactly 0.5.
-
-    Optimal arm = do(X_w = 1): expected reward = 0.5 + EPS_REWARD.
-    Other arms = some mix; suboptimal-arm gap is at least 2*EPS_REWARD when
-    the optimal arm flips X_w and the alternative does not.
-    """
-    # Optimal arm index in the (2N+1) layout
-    opt_arm = 2 * w + 2  # do(X_w = 1)
-    if arm_id == opt_arm:
-        return 0.5 + EPS_REWARD
-    # do(X_w = 0): worst
-    if arm_id == 2 * w + 1:
-        return 0.5 - EPS_REWARD
-    # Other arms: don't touch X_w, so X_w is sampled from q; expected reward
-    # is q[w] * (0.5 + EPS_REWARD) + (1 - q[w]) * (0.5 - EPS_REWARD)
-    #              = 0.5 + EPS_REWARD * (2 * q[w] - 1)
-    # We treat this as 0.5 minus a small amount under typical q (extreme = 0.05).
-    return 0.5  # close enough; computed below per-q
-
-
 def arm_expected_reward_exact(arm_id, q, w, eps=None):
     """Exact expected reward of arm_id under propensities q and optimal coord w."""
     eps = EPS_REWARD if eps is None else eps
     if arm_id == 2 * w + 2:
         return 0.5 + eps
+    eps_prime = q_to_eps_prime(q[w], eps)
     if arm_id == 2 * w + 1:
-        return 0.5 - eps
-    # Any other arm: X_w not intervened, so X_w ~ Bernoulli(q[w])
-    return q[w] * (0.5 + eps) + (1 - q[w]) * (0.5 - eps)
+        return 0.5 - eps_prime
+    return q[w] * (0.5 + eps) + (1 - q[w]) * (0.5 - eps_prime)
 
 
 # ---------------------------------------------------------------------------
@@ -425,7 +347,7 @@ def lattimore_alg1(q_true, w, T, rng, eps=None):
         Y_obs[t] = y
 
     # Estimate q_i from observational phase
-    q_hat = X_obs.mean(axis=0).clip(0.01, 0.99)
+    q_hat = X_obs.mean(axis=0)
 
     # Estimate P(Y | X_i = j) from observational phase (= P(Y | do(X_i = j))
     # in the parallel-bandit graph, where no other parents confound X_i -> Y).
@@ -446,33 +368,27 @@ def lattimore_alg1(q_true, w, T, rng, eps=None):
     # Phase 2: identify unbalanced arms and allocate the remaining T/2 to them.
     # tau* minimizes max(tau, |I_tau|) where I_tau = {i : min(q_i,1-q_i) < 1/tau}.
     tau_range = range(2, N + 1)
-    best_tau = N
     best_m = N
     for tau in tau_range:
         I_tau = [i for i in range(N) if min(q_hat[i], 1 - q_hat[i]) < 1.0 / tau]
         m = max(tau, len(I_tau))
         if m < best_m:
             best_m = m
-            best_tau = tau
 
-    # Unbalanced *arms*: for each unbalanced parent, the arm do(X_i = j) where
-    # j is the "low-probability" side.
-    # j_rare is the value of X_i that is SELDOM observed, so q_hat[i] = P(X_i = 1)
-    # below 0.5 means X_i = 1 is the rare side. That arm is the one whose
-    # observational estimate is starved and therefore the one phase 2 must pull.
+    # Paper definition: A = {do(X_i=j): p_hat_{i,j} <= 1/m_hat}. At m_hat=2,
+    # both sides of a balanced coordinate meet the weak inequality, so this
+    # must be evaluated arm by arm rather than selecting only one "rare" side.
     unbalanced_arms = []
     for i in range(N):
-        if min(q_hat[i], 1 - q_hat[i]) < 1.0 / best_tau:
-            j_rare = 1 if q_hat[i] < 0.5 else 0
-            unbalanced_arms.append(
-                2 * i + 1 + j_rare
-            )  # the arm index for do(X_i = j_rare)
+        for j, p_hat in ((0, 1.0 - q_hat[i]), (1, q_hat[i])):
+            if p_hat <= 1.0 / best_m:
+                unbalanced_arms.append(2 * i + 1 + j)
     if not unbalanced_arms:
-        unbalanced_arms = list(range(1, K))  # fallback: all do() arms
+        raise AssertionError("Algorithm 1 found no rare arms")
 
     # Spend the remaining T - T_obs rounds uniformly on the unbalanced arms.
     T_remain = T - T_obs
-    pulls_per_arm = max(1, T_remain // len(unbalanced_arms))
+    pulls_per_arm = T_remain // len(unbalanced_arms)
     arm_sums = {a: 0.0 for a in unbalanced_arms}
     arm_counts = {a: 0 for a in unbalanced_arms}
     for a in unbalanced_arms:
@@ -480,6 +396,7 @@ def lattimore_alg1(q_true, w, T, rng, eps=None):
             y = pull_arm(a, q_true, w, rng, eps)
             arm_sums[a] += y
             arm_counts[a] += 1
+    assert T_obs + sum(arm_counts.values()) <= T
 
     # Compose final estimates for all K arms.
     arm_estimate = np.full(K, -np.inf)
@@ -532,22 +449,15 @@ def context_conditional_thompson_sampling(T, rng, observational_data=None):
     pulling it. Its regret is therefore bounded but pays a burn-in, and that
     burn-in is the only quantity the extra TS_C machinery can win back.
 
-    It also cannot use the interventional marginal: those samples record the arm
-    and the reward but not the intuition, so a context-conditional learner has
-    no cell to put them in. Recovering that information needs the ETT identity,
-    which is exactly what TS_C adds.
-
     Algorithm:
-      1. Seed Beta posteriors from observational data along the on-intuition
-         diagonal (a = x), which consistency identifies, leaving the
-         counter-intuitive cell at Beta(1,1).
+      1. Initialize every intention-action cell at Beta(1,1).
       2. At each time, observe the agent's natural intuition x; sample a
          reward estimate for each arm from its (x, a)-conditional Beta
          posterior; choose the arm with the higher sample via straight
          argmax (no RDC bias multiplier).
       3. Observe reward; update the Beta posterior conditioned on (x, a).
     """
-    alpha, beta = seed_posteriors("obs_diagonal", observational_data, None)
+    alpha, beta = seed_posteriors("none", observational_data, None)
 
     cum_regret = np.zeros(T)
     cum_reg = 0.0
@@ -570,10 +480,6 @@ def context_conditional_thompson_sampling(T, rng, observational_data=None):
 
     return cum_regret
 
-
-# Pseudo-count fraction for the superseded consistency-copy seeding, retained
-# only so the ablation can price what it cost. See seed_posteriors.
-CONSISTENCY_OFF_INTUITION_WEIGHT = 0.5
 
 # Floor/ceiling for the RDC bias multiplier w = 1 - |Q1 - Q2|.
 # w in [0.01, 1] avoids numerical degeneracy when Q1 and Q2 collide.
@@ -606,15 +512,12 @@ def seed_posteriors(mode, observational_data, experimental_data):
     Every Thompson variant on the greedy casino differs only here, so the
     ablation is exactly a choice of `mode`:
 
-      'obs_diagonal'  seed only the on-intuition cell (a = x) that the log
-                      actually observed, leaving the counter-intuitive cell at
-                      Beta(1,1). This is CCTS.
+      'none'          leave every cell at Beta(1,1).
+      'obs_diagonal'  seed only the on-intuition cell (a = x), as Algorithm 1
+                      of Bareinboim et al. does.
       'ett'           additionally seed the counter-intuitive cell from the
-                      identified ETT, weighted by the experimental sample size
-                      backing it. This is the paper's TS_C.
-      'consistency_copy'  the superseded heuristic: copy the on-intuition
-                      observational outcome into the counter-intuitive cell at
-                      fractional weight. Kept only for the ablation.
+                      identified ETT. This is a separate data-fusion extension,
+                      not the paper's TS_C.
 
     The observational log records (x, y) with the agent following intuition.
     The experimental log records (a, y) only, with the arm drawn at random and
@@ -623,6 +526,8 @@ def seed_posteriors(mode, observational_data, experimental_data):
     """
     alpha = np.ones((2, 2))  # alpha[x, a]
     beta = np.ones((2, 2))
+    if mode == "none":
+        return alpha, beta
     if not observational_data:
         return alpha, beta
 
@@ -631,14 +536,6 @@ def seed_posteriors(mode, observational_data, experimental_data):
         beta[x_obs, x_obs] += 1 - y_obs
 
     if mode == "obs_diagonal":
-        return alpha, beta
-
-    if mode == "consistency_copy":
-        c = CONSISTENCY_OFF_INTUITION_WEIGHT
-        for x_obs, y_obs in observational_data:
-            a_off = 1 - x_obs
-            alpha[x_obs, a_off] += c * y_obs
-            beta[x_obs, a_off] += c * (1 - y_obs)
         return alpha, beta
 
     if mode == "ett":
@@ -687,20 +584,18 @@ def causal_thompson_sampling_tsc(
     rng,
     observational_data=None,
     experimental_data=None,
-    seed_mode="ett",
+    seed_mode="obs_diagonal",
     use_rdc=True,
 ):
-    """Causal Thompson Sampling TS_C (Bareinboim, Forney & Pearl 2015, Alg. 1).
+    """Causal Thompson Sampling and explicitly labelled ablations/extensions.
 
     Two components separate TS_C from a plain context-conditional posterior, and
     `seed_mode` / `use_rdc` switch each off so the ablation can price them.
 
-    (i) Counterfactual seeding, Algorithm 1 line 2. The counter-intuitive cell
-        is unreachable observationally, so its prior comes from the ETT
-        identified by combining the observational and interventional marginals
-        (see ett_from_marginals). Setting seed_mode='obs_diagonal' removes it
-        and recovers CCTS; 'consistency_copy' substitutes the superseded
-        heuristic that copied the on-intuition outcome across.
+    (i) Algorithm 1 line 2 seeds only the on-intuition cells from observational
+        data by consistency. Off-intuition cells remain Beta(1,1). The optional
+        ETT mode is our binary data-fusion extension and uses an extra randomized
+        marginal log. It must not be reported as the paper's algorithm.
 
     (ii) RDC bias weighting, Algorithm 1 lines 5-9. The paper contrasts
          Q1 = E[Y_{X=x'} | X=x], the payoff of defying intuition, against
@@ -713,18 +608,14 @@ def causal_thompson_sampling_tsc(
     """
     alpha, beta = seed_posteriors(seed_mode, observational_data, experimental_data)
 
-    # Q2[x]: payoff of following intuition at x, identified observationally.
-    # Q1[x]: payoff of defying it, the ETT. Both are held per context, which is
-    # what makes the RDC contrast a within-context comparison.
-    Q_sum = np.zeros((2, 2))
-    Q_n = np.zeros((2, 2))
+    # Q2 is fixed at its observational estimate in the paper's implementation.
+    q2_follow = np.full(2, 0.5)
     if observational_data:
-        for x_obs, y_obs in observational_data:
-            Q_sum[x_obs, x_obs] += y_obs
-            Q_n[x_obs, x_obs] += 1
-    for a, ett, n_eff in identified_ett_per_arm(observational_data, experimental_data):
-        Q_sum[1 - a, a] += ett * n_eff
-        Q_n[1 - a, a] += n_eff
+        obs = np.asarray(observational_data)
+        for x in (0, 1):
+            mask = obs[:, 0] == x
+            if mask.any():
+                q2_follow[x] = obs[mask, 1].mean()
 
     cum_regret = np.zeros(T)
     cum_reg = 0.0
@@ -735,10 +626,10 @@ def causal_thompson_sampling_tsc(
         theta0 = rng.beta(alpha[x, 0], beta[x, 0])
         theta1 = rng.beta(alpha[x, 1], beta[x, 1])
         if use_rdc:
-            # Within-context contrast at the realized intuition x.
-            Q_hat = np.where(Q_n > 0, Q_sum / np.maximum(Q_n, 1e-9), 0.5)
-            q_follow = Q_hat[x, x]  # Q2: play the intuitive arm a = x
-            q_defy = Q_hat[x, 1 - x]  # Q1: play the counter-intuitive arm
+            # Q1 is the current posterior mean of the off-intuition cell.
+            q_follow = q2_follow[x]
+            a_defy = 1 - x
+            q_defy = alpha[x, a_defy] / (alpha[x, a_defy] + beta[x, a_defy])
             bias = np.clip(
                 1.0 - abs(q_defy - q_follow), RDC_WEIGHT_FLOOR, RDC_WEIGHT_CEILING
             )
@@ -751,8 +642,6 @@ def causal_thompson_sampling_tsc(
         y = int(rng.uniform() < p)
         alpha[x, a] += y
         beta[x, a] += 1 - y
-        Q_sum[x, a] += y
-        Q_n[x, a] += 1
         cum_reg += optimal_payoff[x] - p
         cum_regret[t] = cum_reg
 
@@ -813,7 +702,8 @@ def run_regret_vs_m():
             seed = (m * 10_007 + s) & 0xFFFFFFFF
             rng = np.random.default_rng(seed)
             q = make_q_with_hardness(m, N, rng)
-            w = rng.integers(0, N)  # the high-leverage coordinate (best-arm location)
+            rare = np.flatnonzero(q == 0.0)
+            w = int(rng.choice(rare))
             realized_m[mi, s] = hardness_m(q)
 
             opt_arm = 2 * w + 2
@@ -874,7 +764,8 @@ def run_regret_vs_T():
             seed = (T * 10_007 + s + 12345) & 0xFFFFFFFF
             rng = np.random.default_rng(seed)
             q = make_q_with_hardness(m, N, rng)
-            w = rng.integers(0, N)
+            rare = np.flatnonzero(q == 0.0)
+            w = int(rng.choice(rare))
             eps = eps_at_T(m, T)
 
             opt_arm = 2 * w + 2
@@ -926,7 +817,7 @@ def make_mabuc_logs(rng, n_obs, n_exp):
 
 
 def run_mabuc():
-    """Greedy casino: vanilla TS, plus the full TS_C component factorial.
+    """Greedy casino: vanilla TS, paper TS_C factorial, and ETT extension.
 
     All variants share one seed per replication (common random numbers), so the
     contrasts are paired rather than three unrelated draws.
@@ -955,31 +846,31 @@ def run_mabuc():
     # Seed diagnostic: what each mode believes about each cell before round 1.
     obs0, exp0 = make_mabuc_logs(np.random.default_rng(99), n_obs, n_exp)
     seed_diag = {}
-    for mode in ("obs_diagonal", "consistency_copy", "ett"):
+    for mode in ("none", "obs_diagonal", "ett"):
         a_, b_ = seed_posteriors(mode, obs0, exp0)
         seed_diag[mode] = {"mean": a_ / (a_ + b_), "n_eff": a_ + b_ - 2.0}
 
-    # Where the ETT seed can actually pay: more logged data should help it
-    # monotonically and do nothing for a learner that cannot read that log.
+    # Keep the paper algorithm and the ETT extension distinct in the log-size
+    # sensitivity analysis.
     sweep = {}
     for n in MABUC_NOBS_SWEEP:
-        cc = np.zeros(MABUC_SWEEP_SEEDS)
         tc = np.zeros(MABUC_SWEEP_SEEDS)
+        ett = np.zeros(MABUC_SWEEP_SEEDS)
         for s in range(MABUC_SWEEP_SEEDS):
             o, e = make_mabuc_logs(np.random.default_rng(s + 77), n, n)
-            cc[s] = causal_thompson_sampling_tsc(
-                T, np.random.default_rng(s + 500_000), o, e, "obs_diagonal", False
-            )[-1]
             tc[s] = causal_thompson_sampling_tsc(
+                T, np.random.default_rng(s + 500_000), o, e, "obs_diagonal", True
+            )[-1]
+            ett[s] = causal_thompson_sampling_tsc(
                 T, np.random.default_rng(s + 500_000), o, e, "ett", True
             )[-1]
-        sweep[n] = {"CCTS": cc, "TS_C": tc}
+        sweep[n] = {"TS_C": tc, "ETT": ett}
 
     return {
         "ts": ts_regret,
         "variants": variants,
-        "cctp": variants["CCTS (obs seed, no RDC)"],
-        "tsc": variants["TS_C (ETT seed + RDC)"],
+        "cctp": variants["CCTS (no seed, no RDC)"],
+        "tsc": variants["TS_C (observational seed + RDC)"],
         "seed_diag": seed_diag,
         "nobs_sweep": sweep,
         "T": T,
@@ -1020,7 +911,47 @@ def compute_data(force=None):
         force=("mabuc" in force),
     )
 
-    return {"regret_vs_m": res_m, "regret_vs_T": res_T, "mabuc": res_mabuc}
+    data = {"regret_vs_m": res_m, "regret_vs_T": res_T, "mabuc": res_mabuc}
+    validate_results(data)
+    return data
+
+
+def validate_results(data):
+    """External checks that fail before tables or figures can be emitted."""
+    res_m = data["regret_vs_m"]
+    for i, target in enumerate(res_m["m_grid"]):
+        assert np.all(res_m["realized_m"][i] == target)
+    assert np.all(res_m["opt_arm_pulled"])
+
+    # The hard-family construction must change observability, not arm values.
+    for target in M_GRID:
+        rng = np.random.default_rng(target)
+        q = make_q_with_hardness(target, N_PARENTS, rng)
+        w = int(rng.choice(np.flatnonzero(q == 0.0)))
+        values = np.array(
+            [arm_expected_reward_exact(a, q, w) for a in range(2 * N_PARENTS + 1)]
+        )
+        assert np.isclose(values.max(), 0.5 + EPS_REWARD)
+        assert np.allclose(values[np.arange(len(values)) != 2 * w + 2], 0.5)
+
+    # Table 1 marginals in the reduced greedy-casino representation.
+    assert np.allclose(np.diag(GREEDY_CASINO_PAYOFFS), 0.15)
+    assert np.allclose(GREEDY_CASINO_PAYOFFS.mean(axis=0), 0.30)
+    mabuc = data["mabuc"]
+    ts = mabuc["ts"][:, -1].mean()
+    ccts = mabuc["variants"]["CCTS (no seed, no RDC)"][:, -1].mean()
+    tsc = mabuc["variants"]["TS_C (observational seed + RDC)"][:, -1].mean()
+    assert 100.0 < ts < 200.0
+    assert tsc < ccts < ts
+    # Independent reproduction targets reported by Bareinboim et al. for
+    # T=1000 are 150.47 (TS), 11.03 (TS_Z), and 0.94 (TS_C).
+    assert abs(ts - 150.47) < 5.0
+    assert abs(ccts - 11.03) < 3.0
+    assert abs(tsc - 0.94) < 1.0
+    print(
+        "  Self-checks: PASS (hardness, arm values, budgets, Table 1 marginals, "
+        "published MABUC targets)"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1071,13 +1002,15 @@ def make_figure_combined(data):
     ax.set_title(rf"(a) Regret vs $m(q)$ at $N={N}$, $T={T}$")
     ax.legend(frameon=False, loc="upper left", fontsize=9)
 
-    # Panel (b): simple regret vs horizon T
+    # Panel (b): error probability under a shrinking-gap local alternative.
     ax = axes[1]
     T_grid = res_T["T_grid"]
     m = res_T["m"]
     for alg in ("successive_reject", "lattimore_alg1"):
-        mean_r = res_T["simple_regret"][alg].mean(axis=1)
-        se_r = res_T["simple_regret"][alg].std(axis=1) / np.sqrt(res_T["n_seeds"])
+        gaps = np.asarray(res_T["eps_grid"])[:, None]
+        errors = res_T["simple_regret"][alg] / gaps
+        mean_r = errors.mean(axis=1)
+        se_r = errors.std(axis=1) / np.sqrt(res_T["n_seeds"])
         ax.errorbar(
             T_grid,
             mean_r,
@@ -1087,34 +1020,17 @@ def make_figure_combined(data):
             color=ALG_COLORS[alg],
             capsize=3,
         )
-    # Theoretical slope, anchored at the first cell so only the SLOPE is being
-    # compared. Theorem 1 predicts -1/2 on log-log axes.
-    T_arr = np.array(T_grid, dtype=float)
-    anchor = res_T["simple_regret"]["lattimore_alg1"][0].mean()
-    ax.plot(
-        T_arr,
-        anchor * np.sqrt(T_arr[0] / T_arr),
-        **BENCH_STYLE,
-        label=r"$\sqrt{m(q)/T}$ reference slope",
-    )
     ax.set_xscale("log")
-    ax.set_yscale("log")
     ax.set_xlabel(r"horizon $T$")
-    ax.set_ylabel("simple regret")
+    ax.set_ylabel("probability of wrong recommendation")
     ax.set_title(
-        rf"(b) Regret vs $T$ at $m(q)={m}$, gap $\epsilon_T\propto\sqrt{{m/T}}$"
+        rf"(b) Local-alternative stress test at $m(q)={m}$"
     )
     ax.legend(frameon=False, loc="upper right", fontsize=9)
 
     # Panel (c): MABUC greedy-casino cumulative regret
     ax = axes[2]
     T_m = res_mabuc["T"]
-    ts_mean = res_mabuc["ts"].mean(axis=0)
-    ts_se = res_mabuc["ts"].std(axis=0) / np.sqrt(res_mabuc["n_seeds"])
-    cctp_mean = res_mabuc["cctp"].mean(axis=0)
-    cctp_se = res_mabuc["cctp"].std(axis=0) / np.sqrt(res_mabuc["n_seeds"])
-    tsc_mean = res_mabuc["tsc"].mean(axis=0)
-    tsc_se = res_mabuc["tsc"].std(axis=0) / np.sqrt(res_mabuc["n_seeds"])
     tt = np.arange(1, T_m + 1)
     # Symlog, because the interesting contrast now spans four orders of
     # magnitude: vanilla TS ends near 200 while the context-conditional variants
@@ -1124,18 +1040,18 @@ def make_figure_combined(data):
     curves = [
         ("Thompson sampling", res_mabuc["ts"], COLORS["red"]),
         (
-            "Consistency-copy seed",
-            res_mabuc["variants"]["consistency-copy seed, no RDC"],
+            r"$\mathrm{TS}_Z$ (context-conditional)",
+            res_mabuc["variants"]["CCTS (no seed, no RDC)"],
             COLORS["orange"],
         ),
         (
-            "Context-conditional TS (CCTS)",
-            res_mabuc["variants"]["CCTS (obs seed, no RDC)"],
+            r"$\mathrm{TS}_C$",
+            res_mabuc["variants"]["TS_C (observational seed + RDC)"],
             COLORS["blue"],
         ),
         (
-            r"$\mathrm{TS}_C$ (ETT seed $+$ RDC)",
-            res_mabuc["variants"]["TS_C (ETT seed + RDC)"],
+            "ETT warm start",
+            res_mabuc["variants"]["ETT warm start + RDC"],
             COLORS["green"],
         ),
     ]
@@ -1193,14 +1109,13 @@ def make_table(data):
     # variant is flat well before T, so the early column carries the comparison.
     t_early = min(100, T_mabuc) - 1
     tex_labels = {
-        "CCTS (obs seed, no RDC)": r"CCTS (observational seed, no RDC)",
-        "obs seed + RDC": r"Observational seed $+$ RDC",
-        "consistency-copy seed, no RDC": r"Consistency-copy seed, no RDC",
-        "consistency-copy seed + RDC": r"Consistency-copy seed $+$ RDC",
-        "ETT seed, no RDC": r"ETT seed, no RDC",
-        "TS_C (ETT seed + RDC)": (
-            r"$\mathrm{TS}_C$: ETT seed $+$ RDC \citep{bareinboim2015mabuc}"
+        "CCTS (no seed, no RDC)": r"$\mathrm{TS}_Z$ (context-conditional TS)",
+        "observational seed only": r"Observational seed only",
+        "RDC only": r"RDC only",
+        "TS_C (observational seed + RDC)": (
+            r"$\mathrm{TS}_C$ \citep{bareinboim2015mabuc}"
         ),
+        "ETT warm start + RDC": r"Binary ETT warm start $+$ RDC",
     }
 
     def _row(label, arr):
@@ -1298,23 +1213,15 @@ def print_stdout(data):
             f"  {la.mean():>18.4f}"
             f" ({la.std() / np.sqrt(res_T['n_seeds']):.4f})"
         )
-    # Theorem 1 predicts regret ~ T^{-1/2}; a fitted log-log slope near -0.5 is
-    # the direct reading. Cells with zero mean regret carry no log and drop out.
-    Ts = np.array(res_T["T_grid"], dtype=float)
+    print("  Error probability = simple regret / eps_T (all wrong arms have gap eps_T)")
     for alg in ("lattimore_alg1", "successive_reject"):
-        means = np.array(
-            [res_T["simple_regret"][alg][i].mean() for i in range(len(Ts))]
+        errors = np.array(
+            [
+                res_T["simple_regret"][alg][i].mean() / res_T["eps_grid"][i]
+                for i in range(len(res_T["T_grid"]))
+            ]
         )
-        ok = means > 0
-        if ok.sum() >= 2:
-            slope = np.polyfit(np.log(Ts[ok]), np.log(means[ok]), 1)[0]
-            print(
-                f"  log-log regret slope, {alg}: {slope:+.2f}"
-                f"  (theory predicts -0.50 for the graph-aware algorithm;"
-                f" {int(ok.sum())}/{len(Ts)} cells used)"
-            )
-        else:
-            print(f"  log-log regret slope, {alg}: undefined (mean regret is 0)")
+        print(f"  {alg}: " + ", ".join(f"{x:.3f}" for x in errors))
     print()
     print("  --- Greedy-casino MABUC at T = {} ---".format(res_mabuc["T"]))
     final_ts = res_mabuc["ts"][:, -1]
@@ -1330,7 +1237,7 @@ def print_stdout(data):
         f" (SE {final_cctp.std() / np.sqrt(n):.2f})"
     )
     print(
-        f"  Full TS_C (Bareinboim 2015)        : cumulative regret = {final_tsc.mean():.2f}"
+        f"  Paper TS_C (Bareinboim 2015)       : cumulative regret = {final_tsc.mean():.2f}"
         f" (SE {final_tsc.std() / np.sqrt(n):.2f})"
     )
     ratio_ts_cctp = final_ts.mean() / max(final_cctp.mean(), 1e-3)
@@ -1367,7 +1274,7 @@ def print_stdout(data):
         f"  {'variant':<34} {'regret@' + str(t_e + 1):>12} {'regret@' + str(res_mabuc['T']):>14} "
         f"{'(SE)':>8}  {'paired diff vs CCTS':>20}"
     )
-    base = res_mabuc["variants"]["CCTS (obs seed, no RDC)"][:, -1]
+    base = res_mabuc["variants"]["CCTS (no seed, no RDC)"][:, -1]
     for name, arr in sorted(
         res_mabuc["variants"].items(), key=lambda kv: kv[1][:, -1].mean()
     ):
@@ -1382,13 +1289,13 @@ def print_stdout(data):
     # More logged data should help the learner that can read the interventional
     # log and do nothing for the one that cannot.
     print("  --- Final cumulative regret vs log size (n_obs = n_exp) ---")
-    print(f"  {'n':>6} {'CCTS':>18} {'TS_C':>18}")
+    print(f"  {'n':>6} {'paper TS_C':>18} {'ETT extension':>18}")
     for nn, d in res_mabuc["nobs_sweep"].items():
-        cc, tc = d["CCTS"], d["TS_C"]
-        k = len(cc)
+        tc, ett = d["TS_C"], d["ETT"]
+        k = len(tc)
         print(
-            f"  {nn:>6} {cc.mean():>10.2f} ({cc.std() / np.sqrt(k):.2f})"
-            f" {tc.mean():>10.2f} ({tc.std() / np.sqrt(k):.2f})"
+            f"  {nn:>6} {tc.mean():>10.2f} ({tc.std() / np.sqrt(k):.2f})"
+            f" {ett.mean():>10.2f} ({ett.std() / np.sqrt(k):.2f})"
         )
     print()
     print("  Output files:")
