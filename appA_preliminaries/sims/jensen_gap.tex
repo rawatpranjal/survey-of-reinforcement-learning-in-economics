@@ -1,20 +1,17 @@
 \begin{table}[h]
 \centering
-\caption{Monte Carlo Jensen gap $E[\varphi(X)]-\varphi(E[X])$ for $X\sim N(0,\sigma^2)$, at the largest sample size $N=100{,}000$, against the closed-form value. The plug-in estimator converges to the exact gap; for $\varphi(x)=x^2$ it agrees with the closed-form value to within about one standard error at every $\sigma$, while for $\varphi(x)=e^x$ agreement is close at $\sigma=0.5$ and the $\sigma\geq 1.0$ rows sit an increasing number of standard errors below the closed-form gap as $\sigma$ grows, reflecting slower convergence for heavier tails. Every estimate is nonnegative, as convexity requires. Mean $\pm$ SE over 40 seeds.}
+\caption{Maximization bias for independent Gaussian action-value estimates, over 400000 Monte Carlo replicates per cell. With equal true action values the whole expected maximum is bias, and it equals $\sigma\,\mathbb{E}[\max_a Z_a]$ in closed form. The last column gives the bias once the best action is separated from the rest by one unit, at which point the maximum is nearly deterministic and the bias collapses.}
 \label{tab:prelim_jensen}
-\begin{tabular}{llcc}
+\begin{tabular}{rrrrr}
 \hline
-$\varphi$ & $\sigma$ & Analytical gap & MC gap \\
+actions & $\sigma$ & measured gap & $\sigma\,\mathbb{E}[\max_a Z_a]$ & bias at separation $1$ \\
 \hline
-$x^2$ & 0.5 & 0.2500 & 0.2500 $\pm$ 0.0002 \\
-$x^2$ & 1.0 & 1.0000 & 1.0000 $\pm$ 0.0007 \\
-$x^2$ & 1.5 & 2.2500 & 2.2501 $\pm$ 0.0015 \\
-$x^2$ & 2.0 & 4.0000 & 4.0002 $\pm$ 0.0026 \\
-\hline
-$e^x$ & 0.5 & 0.1331 & 0.1331 $\pm$ 0.0001 \\
-$e^x$ & 1.0 & 0.6487 & 0.6478 $\pm$ 0.0007 \\
-$e^x$ & 1.5 & 2.0802 & 2.0714 $\pm$ 0.0038 \\
-$e^x$ & 2.0 & 6.3891 & 6.3147 $\pm$ 0.0220 \\
+2 & 0.25 & 0.1413 & 0.1409 & 0.0009 \\
+2 & 1.00 & 0.5663 & 0.5637 & 0.2024 \\
+8 & 0.25 & 0.3559 & 0.3558 & 0.0016 \\
+8 & 1.00 & 1.4232 & 1.4233 & 0.6658 \\
+32 & 0.25 & 0.5174 & 0.5171 & 0.0045 \\
+32 & 1.00 & 2.0697 & 2.0684 & 1.1568 \\
 \hline
 \end{tabular}
 \end{table}

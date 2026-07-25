@@ -8,7 +8,7 @@
 
 \subsubsection{Monte Carlo Estimation}
 
-When $P(s'|s,a)$ and $r(s,a)$ are unknown, the obvious approach is to use Monte Carlo (MC) to approximate them. These methods estimate value functions from sampled \textit{episodes} $(s_0, a_0, r_1, s_1, a_1, r_2, \ldots, s_T)$. The realized \textit{return} from state $s_t$ is
+When $P(s'|s,a)$ and $r(s,a)$ are unknown, the obvious approach is to use Monte Carlo (MC) to approximate them.\footnote{The Markov decision process itself, the tuple $(\mathcal{S}, \mathcal{A}, P, r, \gamma)$ together with policies, returns, and the value and action-value functions, is defined in Appendix~\ref{prelim:mdp}, which also fixes the notation used from here on.} These methods estimate value functions from sampled \textit{episodes} $(s_0, a_0, r_1, s_1, a_1, r_2, \ldots, s_T)$. The realized \textit{return} from state $s_t$ is
 \begin{equation}
 G_t = \sum_{k=0}^{T-t-1} \gamma^k r_{t+k+1}
 \end{equation}

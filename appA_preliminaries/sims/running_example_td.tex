@@ -1,0 +1,15 @@
+\begin{table}[h]
+\centering
+\caption{Tabular TD($0$) on the running example, evaluating $\pi^\star$ from sampled transitions over 20 seeds and 20000 steps each, against the exact $V^{\pi^\star}$. Here $n$ counts visits to the state being updated. The two sums are the quantities the Robbins-Monro conditions constrain, evaluated along one run. Error is the supremum-norm distance at the end of the budget, with its standard error across seeds in brackets.}
+\label{tab:prelim_td_schedules}
+\begin{tabular}{lrrrl}
+\hline
+step size & $\sum \alpha_n$ & $\sum \alpha_n^2$ & final error & conditions \\
+\hline
+constant, $\alpha = 0.05$ & 1000.0 & 50.00 & 0.1711 (0.0220) & $\sum \alpha_n^2$ diverges \\
+$1/n$ & 19.5 & 3.29 & 1.7125 (0.0235) & both hold \\
+$1/n^{0.7}$ & 98.8 & 6.08 & 0.0450 (0.0057) & both hold \\
+$1/n^2$ & 3.3 & 2.16 & 4.0291 (0.0229) & $\sum \alpha_n$ converges \\
+\hline
+\end{tabular}
+\end{table}

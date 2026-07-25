@@ -1,0 +1,58 @@
+======================================================================
+PROJECTION GEOMETRY AND THE DEADLY TRIAD
+======================================================================
+
+  Cache hit: search
+  Cache hit: shared
+  Cache hit: vi
+  Cache hit: neumann
+  Cache hit: occupancy
+  Cache hit: projection
+  Cache hit: td
+  Computing: setup
+  Cache hit: search
+  Cache hit: shared
+  Cache hit: vi
+  Cache hit: neumann
+  Cache hit: occupancy
+  Cache hit: projection
+  Cache hit: td
+  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/projection_geometry__setup.pkl
+  Computing: sweep
+Weighting sweep from the target law d^pi to the logging law d^mu
+    alpha   d(good)   modulus
+   0.0000    0.6667    0.7301
+   0.2500    0.7368    0.8039
+   0.5000    0.8070    0.8990
+   0.7048    0.8645    1.0000
+   0.7500    0.8772    1.0261
+   1.0000    0.9474    1.2048
+  modulus crosses one at alpha = 0.704760
+  residual at the crossing     = -1.11e-16
+
+  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/projection_geometry__sweep.pkl
+  Computing: traces
+Projected Bellman iteration from V_0 = 0, sup-norm distance to V^pi
+    alpha   modulus   error at k=10   error at k=60
+   0.0000    0.7301          4.8193      4.7957e+00
+   0.7048    1.0000          6.0646      5.7974e+01
+   1.0000    1.2048         37.9147      5.5575e+05
+
+  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/projection_geometry__traces.pkl
+  Computing: geometry
+Projections of V^pi onto span(phi)
+  on-policy  : Pi V^pi = [ 3.0798,  6.4675], angle of the residual to the feature line in the d^pi geometry =  90.00 deg
+  off-policy : Pi V^pi = [ 4.6969,  9.8636], angle of the residual to the feature line in the d^pi geometry = 136.67 deg
+  on-policy  : ||Pi||_(d^pi) = 1.0000, best representable approximation error = 2.2650
+  off-policy : ||Pi||_(d^pi) = 1.4574, best representable approximation error = 5.5532
+  a projection is nonexpansive in its own geometry, so the on-policy value is 1;
+  the off-policy projection exceeds 1/gamma = 1.1111 in the d^pi geometry,
+  which is what lets the composition with the gamma-contraction expand
+  (the 90 degrees above is an algebraic identity of the on-policy projection, not
+  a measurement; the informative number is the off-policy angle)
+
+  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/projection_geometry__geometry.pkl
+  Figure saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/projection_geometry.png
+  Table saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/projection_geometry.tex
+
+Done.

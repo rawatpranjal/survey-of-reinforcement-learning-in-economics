@@ -1,0 +1,30 @@
+======================================================================
+GEOMETRIC PICTURES FOR THE APPENDIX (diagram-only)
+======================================================================
+
+A.5 coverage
+  Cache hit: search
+  Cache hit: shared
+  Cache hit: vi
+  Cache hit: neumann
+  Cache hit: occupancy
+  Cache hit: projection
+  Cache hit: td
+  Figure saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/coverage_geometry.png
+  target occupancy   : [0.6897, 0.0, 0.0, 0.3103]
+  log occupancy      : [0.0953, 0.8576, 0.0047, 0.0424]
+  every pair the target uses is present in the log: True
+
+A.6 norm balls
+  Figure saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/norm_balls.png
+  x = (1, 3): sup-norm 3.0000, d-weighted norm at d = (0.5, 0.5) is 2.2361
+  x = (1, 3): sup-norm 3.0000, d-weighted norm at d = (0.9474, 0.0526) is 1.1920
+  the same vector is large under one weighting and small under the other
+
+A.8 curvature and envelope
+  Fisher eigenvalues [4.0, 0.25], condition number 16.0
+  semi-axes of the trust region [0.5, 2.0]
+  Figure saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/curvature_geometry.png
+  every member lies weakly below the envelope and the envelope is convex
+
+Done.

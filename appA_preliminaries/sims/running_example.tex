@@ -1,0 +1,22 @@
+\begin{table}[h]
+\centering
+\caption{The two-state machine-replacement example used throughout this appendix. Rewards and transitions are the primitives; the optimal value, the stationary and discounted state distributions, and the projected-operator moduli are computed from them. The logging policy $\mu$ keeps the machine with probability 0.1 in either state.}
+\label{tab:prelim_running_example}
+\begin{tabular}{lrr}
+\hline
+ & good & worn \\
+\hline
+$r(s, \text{keep})$ & 1.00 & 0.20 \\
+$r(s, \text{replace})$ & -0.50 & -0.50 \\
+$P(\text{worn} \mid s, \text{keep})$ & 0.50 & 1.00 \\
+\hline
+$V^\star(s)$ & 5.3448 & 4.3103 \\
+optimal action & keep & replace \\
+$d^{\pi^\star}(s)$ & 0.6667 & 0.3333 \\
+$d^{\mu}(s)$ & 0.9474 & 0.0526 \\
+feature $\phi(s)$ & 1.0 & 2.1 \\
+\hline
+\multicolumn{3}{l}{modulus of $\Pi_{d^{\pi^\star}} T^{\pi^\star}$: 0.7301; of $\Pi_{d^\mu} T^{\pi^\star}$: 1.2048} \\
+\hline
+\end{tabular}
+\end{table}

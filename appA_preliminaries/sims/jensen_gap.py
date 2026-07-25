@@ -1,8 +1,10 @@
-# Jensen's Inequality: the convexity gap E[phi(X)] - phi(E[X]) >= 0
+# Maximization Bias: the Jensen gap E[max_a Qhat_a] - max_a E[Qhat_a] >= 0
 # Appendix A - Mathematical Preliminaries
-# Monte Carlo estimates the Jensen gap for convex phi and checks it against the
-# closed-form value, and against zero, showing (i) the gap is nonnegative and
-# (ii) the plug-in estimator converges to the analytical gap as the sample grows.
+# How big is the overestimation a bootstrapped max introduces? The maximum is convex, so
+# Jensen's inequality forces the expected max of noisy action values above the max of their
+# means. This measures that gap against the number of actions and the noise level, and
+# checks it against the closed form for the equal-means case, where the gap is exactly
+# sigma * E[max of n standard normals].
 
 import argparse
 import os
@@ -20,256 +22,247 @@ import matplotlib.pyplot as plt
 
 apply_style()
 
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
-
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "cache")
 SCRIPT_NAME = "jensen_gap"
-CONFIG = {
-    "mu": 0.0,
-    "sigmas": [0.5, 1.0, 1.5, 2.0],
-    # sample sizes on a log grid; the plug-in gap converges to the analytical value
-    "sample_sizes": [10, 30, 100, 300, 1000, 3000, 10000, 30000, 100000],
-    "n_seeds": 40,
-    "version": 1,
-}
-
 OUTPUT_DIR = os.path.dirname(__file__)
 
+CONFIG = {
+    "n_actions": [2, 3, 4, 6, 8, 12, 16, 24, 32],
+    "sigmas": [0.1, 0.25, 0.5, 1.0],
+    "n_draws": 400000,  # Monte Carlo replicates per (n_actions, sigma) cell
+    "seed": 20260725,
+    # a spread of true action values, to show the gap shrinks once one action is clearly best
+    "gap_between_means": [0.0, 0.25, 1.0],
+    "version": 2,
+}
+
 SIGMA_COLORS = {
-    0.5: COLORS["blue"],
-    1.0: COLORS["orange"],
-    1.5: COLORS["green"],
-    2.0: COLORS["red"],
+    0.1: COLORS["blue"],
+    0.25: COLORS["orange"],
+    0.5: COLORS["green"],
+    1.0: COLORS["red"],
 }
-
-# ---------------------------------------------------------------------------
-# Convex test functions phi and their closed-form Jensen gap for X ~ N(mu, sigma^2).
-#   square: E[X^2] - (E X)^2 = sigma^2
-#   exp:    E[e^X] - e^{E X} = e^{mu + sigma^2/2} - e^{mu}
-# Both phi are convex, so the gap is >= 0 (Jensen). A concave contrast (sqrt of a
-# positive variable) is reported in stdout to show the inequality reverses.
-# ---------------------------------------------------------------------------
-
-
-def phi_square(x):
-    return x**2
-
-
-def phi_exp(x):
-    return np.exp(x)
-
-
-CONVEX_FUNCS = {
-    "square": (phi_square, r"$\varphi(x)=x^2$"),
-    "exp": (phi_exp, r"$\varphi(x)=e^x$"),
+NACT_COLORS = {
+    2: COLORS["blue"],
+    4: COLORS["orange"],
+    8: COLORS["green"],
+    32: COLORS["red"],
 }
 
 
-def analytical_gap(name, mu, sigma):
-    if name == "square":
-        return sigma**2
-    if name == "exp":
-        return np.exp(mu + 0.5 * sigma**2) - np.exp(mu)
-    raise ValueError(name)
+def expected_max_standard_normal(n, n_draws, rng):
+    """Monte Carlo E[max of n independent standard normals]."""
+    return float(np.max(rng.standard_normal((n_draws, n)), axis=1).mean())
 
 
-# ---------------------------------------------------------------------------
-# Computation
-# ---------------------------------------------------------------------------
+def _bias_grid():
+    """The gap for equal true values, where the whole of E[max] is bias.
 
-
-def _run_experiment():
-    mu = CONFIG["mu"]
-    sigmas = CONFIG["sigmas"]
-    sample_sizes = CONFIG["sample_sizes"]
-    n_seeds = CONFIG["n_seeds"]
-    max_n = max(sample_sizes)
-
+    With Q(a) equal across actions and estimates Qhat_a = Q(a) + sigma * Z_a, the max of
+    the means is Q, so the gap is exactly sigma * E[max_a Z_a]. That closed form is the
+    reference the Monte Carlo estimate is checked against.
+    """
+    rng = np.random.default_rng(CONFIG["seed"])
+    rows = []
+    print("Equal true action values: the entire expected maximum is overestimation.")
+    print(f"  Monte Carlo over {CONFIG['n_draws']} replicates per cell.")
     print(
-        "Jensen gap: plug-in estimator of E[phi(X)] - phi(E[X]) for X ~ N(mu, sigma^2)"
+        f"  {'actions':>8s}  {'sigma':>6s}  {'measured gap':>13s}  "
+        f"{'sigma*E[max Z]':>15s}  {'rel. error':>11s}"
     )
-    print(f"  mu: {mu}, sigmas: {sigmas}, seeds: {n_seeds}")
-    print(f"  sample sizes: {sample_sizes}")
-    print()
-
-    results = {}  # results[func][str(sigma)] = {sizes, gap_mean, gap_se, analytical}
-    for fname, (phi, _) in CONVEX_FUNCS.items():
-        results[fname] = {}
-        for sigma in sigmas:
-            gaps = np.zeros((n_seeds, len(sample_sizes)))
-            for si in range(n_seeds):
-                rng = np.random.RandomState(1000 + si)
-                # draw the largest sample once, then read nested prefixes so the
-                # curve is a genuine within-seed refinement as N grows
-                x_full = rng.normal(mu, sigma, size=max_n)
-                for j, n in enumerate(sample_sizes):
-                    x = x_full[:n]
-                    # plug-in gap: mean of phi minus phi of the sample mean.
-                    # The estimator never sees the true mu, only the sample.
-                    gaps[si, j] = phi(x).mean() - phi(x.mean())
-            gap_mean = gaps.mean(axis=0)
-            gap_se = gaps.std(axis=0) / np.sqrt(n_seeds)
-            g_star = analytical_gap(fname, mu, sigma)
-            # fraction of individual (seed, N) gap estimates that are nonnegative
-            frac_nonneg = float(np.mean(gaps >= 0))
-            results[fname][str(sigma)] = {
-                "sizes": sample_sizes,
-                "gap_mean": gap_mean,
-                "gap_se": gap_se,
-                "analytical": float(g_star),
-                "gap_at_max": float(gap_mean[-1]),
-                "se_at_max": float(gap_se[-1]),
-                "frac_nonneg": frac_nonneg,
-            }
-            print(
-                f"  {fname:6s} sigma={sigma:.1f}: analytical gap = {g_star:.4f}, "
-                f"MC gap (N={max_n}) = {gap_mean[-1]:.4f} +/- {gap_se[-1]:.4f}, "
-                f"P(gap>=0) = {frac_nonneg:.3f}"
+    emax_cache = {}
+    for n in CONFIG["n_actions"]:
+        emax_cache[n] = expected_max_standard_normal(n, CONFIG["n_draws"], rng)
+        for sigma in CONFIG["sigmas"]:
+            draws = sigma * rng.standard_normal((CONFIG["n_draws"], n))
+            measured = float(np.max(draws, axis=1).mean())  # max_a E[Qhat_a] = 0 here
+            reference = sigma * emax_cache[n]
+            rel = abs(measured - reference) / max(reference, 1e-12)
+            rows.append(
+                {
+                    "n_actions": n,
+                    "sigma": sigma,
+                    "measured": measured,
+                    "reference": reference,
+                    "rel_error": rel,
+                }
             )
-
-    # Concave contrast: phi(x) = sqrt(x), X ~ Uniform(0.5, 1.5); Jensen reverses,
-    # so E[sqrt(X)] <= sqrt(E[X]) and the gap E[phi]-phi(E) is <= 0.
-    rng = np.random.RandomState(7)
-    xc = rng.uniform(0.5, 1.5, size=max_n)
-    concave_gap = float(np.sqrt(xc).mean() - np.sqrt(xc.mean()))
+            if n in (2, 8, 32):
+                print(
+                    f"  {n:8d}  {sigma:6.2f}  {measured:13.4f}  {reference:15.4f}  {rel:11.2e}"
+                )
     print()
-    print(
-        f"  concave contrast phi(x)=sqrt(x), X~U(0.5,1.5): gap = {concave_gap:.4f} (<= 0)"
+    print("  E[max of n standard normals], the shape factor:")
+    for n in CONFIG["n_actions"]:
+        print(f"    n = {n:3d}: {emax_cache[n]:.4f}")
+    print("  It grows like sqrt(2 log n), so doubling the actions adds less each time.")
+    print()
+    # The gap must be nonnegative, which is the inequality itself.
+    assert all(r["measured"] > 0 for r in rows), (
+        "a measured Jensen gap came out negative"
     )
+    return {"rows": rows, "emax": emax_cache}
 
-    return {"results": results, "config": CONFIG, "concave_gap": concave_gap}
+
+def _separation():
+    """The gap once one action is genuinely better, which is the case that matters.
+
+    Jensen still forces a nonnegative gap, but a clear winner makes the max nearly
+    deterministic and the bias collapses. This is why maximization bias hurts most early
+    in learning, when the action values are not yet separated.
+    """
+    rng = np.random.default_rng(CONFIG["seed"] + 1)
+    rows = []
+    print("Separated true action values: one action better than the rest by 'gap'.")
+    print(f"  {'actions':>8s}  {'sigma':>6s}  {'true gap':>9s}  {'bias':>9s}")
+    for n in [2, 8, 32]:
+        for sigma in [0.25, 1.0]:
+            for sep in CONFIG["gap_between_means"]:
+                means = np.zeros(n)
+                means[0] = sep
+                draws = means + sigma * rng.standard_normal((CONFIG["n_draws"], n))
+                measured = float(np.max(draws, axis=1).mean())
+                bias = measured - float(means.max())
+                rows.append(
+                    {"n_actions": n, "sigma": sigma, "separation": sep, "bias": bias}
+                )
+                print(f"  {n:8d}  {sigma:6.2f}  {sep:9.2f}  {bias:9.4f}")
+    print()
+    print("  The bias never turns negative, as Jensen requires, and it falls as the")
+    print("  best action pulls clear of the field relative to the noise.")
+    assert all(r["bias"] > -1e-9 for r in rows), "a measured bias came out negative"
+    print()
+    return {"rows": rows}
 
 
 def compute_data(force=None):
     force = force or set()
-    return compute_or_load(
+    grid = compute_or_load(
         CACHE_DIR,
         SCRIPT_NAME,
-        "jensen",
+        "bias_grid",
         CONFIG,
-        _run_experiment,
-        force=("jensen" in force),
+        _bias_grid,
+        force=("bias_grid" in force),
     )
-
-
-# ---------------------------------------------------------------------------
-# Output generation
-# ---------------------------------------------------------------------------
+    sep = compute_or_load(
+        CACHE_DIR,
+        SCRIPT_NAME,
+        "separation",
+        CONFIG,
+        _separation,
+        force=("separation" in force),
+    )
+    return {"grid": grid, "separation": sep}
 
 
 def generate_outputs(data):
-    results = data["results"]
-    config = data["config"]
-    sigmas = config["sigmas"]
-
-    # --- Figure: two panels (square, exp), plug-in gap vs N converging to the
-    #     dashed analytical gap for each sigma ---
+    rows = data["grid"]["rows"]
     fig, axes = plt.subplots(1, 2, figsize=FIG_DOUBLE)
-    panels = [("square", CONVEX_FUNCS["square"][1]), ("exp", CONVEX_FUNCS["exp"][1])]
-    for ax, (fname, flabel) in zip(axes, panels):
-        for sigma in sigmas:
-            r = results[fname][str(sigma)]
-            sizes = np.array(r["sizes"])
-            color = SIGMA_COLORS[sigma]
-            ax.semilogx(
-                sizes,
-                r["gap_mean"],
-                color=color,
-                linewidth=1.8,
-                marker="o",
-                markersize=3,
-                label=f"$\\sigma = {sigma}$",
-            )
-            ax.fill_between(
-                sizes,
-                r["gap_mean"] - r["gap_se"],
-                r["gap_mean"] + r["gap_se"],
-                color=color,
-                alpha=0.2,
-            )
-            # analytical gap (dashed horizontal)
-            ax.axhline(
-                r["analytical"], color=color, linestyle="--", linewidth=1.0, alpha=0.7
-            )
-        ax.axhline(0.0, color=COLORS["black"], linewidth=0.8, alpha=0.5)
-        ax.set_xlabel("Sample size $N$")
-        ax.set_title(f"Jensen gap, {flabel}")
-        ax.legend(loc="best", title="solid: MC, dashed: exact")
-    axes[0].set_ylabel(r"$\widehat{E[\varphi(X)]} - \varphi(\bar X)$")
+
+    ax = axes[0]
+    for sigma in CONFIG["sigmas"]:
+        sel = [r for r in rows if r["sigma"] == sigma]
+        ns = [r["n_actions"] for r in sel]
+        gaps = [r["measured"] for r in sel]
+        ax.plot(
+            ns,
+            gaps,
+            "o-",
+            ms=3.5,
+            color=SIGMA_COLORS[sigma],
+            lw=1.5,
+            label=rf"$\sigma = {sigma}$",
+        )
+        ax.plot(
+            ns,
+            [r["reference"] for r in sel],
+            "--",
+            lw=1.0,
+            color=SIGMA_COLORS[sigma],
+            alpha=0.7,
+        )
+    ax.set_xscale("log", base=2)
+    ax.set_xlabel("number of actions")
+    ax.set_ylabel(
+        r"$\mathbb{E}[\max_a \widehat{Q}_a] - \max_a \mathbb{E}[\widehat{Q}_a]$"
+    )
+    ax.set_title("gap grows with the number of actions")
+    ax.legend(loc="upper left", fontsize=7)
+
+    ax = axes[1]
+    sigmas_fine = CONFIG["sigmas"]
+    for n in [2, 4, 8, 32]:
+        sel = [r for r in rows if r["n_actions"] == n]
+        ax.plot(
+            [r["sigma"] for r in sel],
+            [r["measured"] for r in sel],
+            "o-",
+            ms=3.5,
+            color=NACT_COLORS[n],
+            lw=1.5,
+            label=f"{n} actions",
+        )
+    ax.set_xlabel(r"noise level $\sigma$")
+    ax.set_ylabel("gap")
+    ax.set_title("gap is linear in the noise level")
+    ax.legend(loc="upper left", fontsize=7)
+    del sigmas_fine
 
     fig_path = os.path.join(OUTPUT_DIR, "jensen_gap.png")
     fig.savefig(fig_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     print(f"  Figure saved: {fig_path}")
 
-    # --- LaTeX table: analytical vs MC gap at the largest N, both convex phi ---
     tex_path = os.path.join(OUTPUT_DIR, "jensen_gap.tex")
-    max_n = max(config["sample_sizes"])
     with open(tex_path, "w") as f:
         f.write("\\begin{table}[h]\n\\centering\n")
         f.write(
-            "\\caption{Monte Carlo Jensen gap $E[\\varphi(X)]-\\varphi(E[X])$ for $X\\sim "
-            "N(0,\\sigma^2)$, at the largest sample size $N="
-            + f"{max_n:,}".replace(",", "{,}")
-            + "$, against the closed-form value. The plug-in estimator converges to the exact gap; "
-            "for $\\varphi(x)=x^2$ it agrees with the closed-form value to within about one "
-            "standard error at every $\\sigma$, while for $\\varphi(x)=e^x$ agreement is close at "
-            "$\\sigma=0.5$ and the $\\sigma\\geq 1.0$ rows sit an increasing number of standard "
-            "errors below the closed-form gap as $\\sigma$ grows, reflecting slower convergence "
-            "for heavier tails. Every estimate is nonnegative, as convexity requires. Mean $\\pm$ "
-            "SE over " + str(config["n_seeds"]) + " seeds.}\n"
+            "\\caption{Maximization bias for independent Gaussian action-value estimates, "
+            f"over {CONFIG['n_draws']} Monte Carlo replicates per cell. With equal true "
+            "action values the whole expected maximum is bias, and it equals "
+            "$\\sigma\\,\\mathbb{E}[\\max_a Z_a]$ in closed form. The last column gives the "
+            "bias once the best action is separated from the rest by one unit, at which "
+            "point the maximum is nearly deterministic and the bias collapses.}\n"
         )
         f.write("\\label{tab:prelim_jensen}\n")
-        f.write("\\begin{tabular}{llcc}\n\\hline\n")
-        f.write("$\\varphi$ & $\\sigma$ & Analytical gap & MC gap \\\\\n")
+        f.write("\\begin{tabular}{rrrrr}\n\\hline\n")
+        f.write(
+            "actions & $\\sigma$ & measured gap & $\\sigma\\,\\mathbb{E}[\\max_a Z_a]$ "
+            "& bias at separation $1$ \\\\\n"
+        )
         f.write("\\hline\n")
-        tex_name = {"square": "$x^2$", "exp": "$e^x$"}
-        for fname in ["square", "exp"]:
-            for sigma in sigmas:
-                r = results[fname][str(sigma)]
+        sep_rows = {
+            (r["n_actions"], r["sigma"], r["separation"]): r["bias"]
+            for r in data["separation"]["rows"]
+        }
+        for n in [2, 8, 32]:
+            for sigma in [0.25, 1.0]:
+                r = next(x for x in rows if x["n_actions"] == n and x["sigma"] == sigma)
+                sepbias = sep_rows[(n, sigma, 1.0)]
                 f.write(
-                    f"{tex_name[fname]} & {sigma} & {r['analytical']:.4f} & "
-                    f"{r['gap_at_max']:.4f} $\\pm$ {r['se_at_max']:.4f} \\\\\n"
+                    f"{n} & {sigma:.2f} & {r['measured']:.4f} & {r['reference']:.4f} "
+                    f"& {sepbias:.4f} \\\\\n"
                 )
-            f.write("\\hline\n")
-        f.write("\\end{tabular}\n\\end{table}\n")
+        f.write("\\hline\n\\end{tabular}\n\\end{table}\n")
     print(f"  Table saved: {tex_path}")
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-
-
 def main():
-    parser = argparse.ArgumentParser(description="Jensen inequality convexity gap")
+    parser = argparse.ArgumentParser(description="Maximization bias as a Jensen gap")
     add_component_args(parser)
     args = parser.parse_args()
     force = parse_force_set(args)
-
     print("=" * 70)
-    print("JENSEN'S INEQUALITY: THE CONVEXITY GAP E[phi(X)] - phi(E[X]) >= 0")
+    print("MAXIMIZATION BIAS AS A JENSEN GAP")
     print("=" * 70)
     print()
-    print("Estimator: plug-in gap (1/N) sum phi(X_i) - phi((1/N) sum X_i),")
-    print("  which never uses the true mean. For convex phi the gap is >= 0 and")
-    print("  converges to the closed-form value as N grows.")
-    print()
-
-    if force:
-        print(f"Force recompute: {sorted(force)}")
-
     if args.plots_only:
-        data = compute_data()
-        generate_outputs(data)
+        generate_outputs(compute_data())
     elif args.data_only:
         compute_data(force=force)
     else:
-        data = compute_data(force=force)
-        generate_outputs(data)
-
+        generate_outputs(compute_data(force=force))
     print("\nDone.")
 
 
