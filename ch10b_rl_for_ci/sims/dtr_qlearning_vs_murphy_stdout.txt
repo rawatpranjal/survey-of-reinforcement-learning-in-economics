@@ -3,14 +3,28 @@ Config:
   TABULAR DGP: S in 1..5, beta=(1.0,-0.3,1.5), sigma_Y=0.5, S_TREAT=2
   HIGH-DIM: p=10, N_seeds=20, N_GRID_HD=[500, 2000, 5000, 20000], FQI epochs=1000 (fixed), DQN data passes=50, target update passes=5, hidden=64, lr=0.001
   HIGH-DIM DGP: T_decay=0.5, delta=0.5, sigma_eta=0.5, sigma_Y=0.5, smooth_tau=0.25, threshold_center=0.0, GH_nodes=32
-  Cache hit: oracle
-  Cache hit: murphy
-  Cache hit: naive_count
-  Cache hit: qlearn_N
-  Cache hit: qlearn_epochs
-  Cache hit: oracle_hd
-  Cache hit: fqi_hd
-  Cache hit: dqn_hd
+  Computing: oracle
+    Tabular Oracle V* = 3.5820
+    Optimal stage-1 policy: s=1: a=1, s=2: a=1, s=3: a=0, s=4: a=0, s=5: a=0
+    Optimal stage-2 policy: s2=1: a=1, s2=2: a=1, s2=3: a=0, s2=4: a=0, s2=5: a=0
+  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__oracle.pkl
+  Computing: murphy
+  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__murphy.pkl
+  Computing: naive_count
+  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__naive_count.pkl
+  Computing: qlearn_N
+  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__qlearn_N.pkl
+  Computing: qlearn_epochs
+  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__qlearn_epochs.pkl
+  Computing: oracle_hd
+    High-dim Oracle V* = 0.7423 (nested Gauss-Hermite); stage-1 rule = always action 1, stage-2 threshold = 0.3466
+    Oracle MC cross-check = 0.7404 (MC SE 0.0016, |diff|/MC SE 1.20)
+    High-dim V(behavior policy) = 0.3529
+  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__oracle_hd.pkl
+  Computing: fqi_hd
+  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__fqi_hd.pkl
+  Computing: dqn_hd
+  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__dqn_hd.pkl
 
 ========================================================================
   Stylized Fast Track home visiting: g-computation vs Q-learning
@@ -57,5 +71,5 @@ Config:
   Paired seed-wise contrast at largest N (DQN - NN-FQI): -0.0101 (MC SE 0.0013)
   NN-FQI realized epochs per stage (mean over seeds/stages): N=500: 1000, N=2000: 1000, N=5000: 1000, N=20000: 1000
 
-  Figure: /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy.png
-  Table:  /Users/pranjal/Code/rl-sim-proofs/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex
+  Figure: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy.png
+  Table:  /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex

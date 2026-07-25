@@ -110,7 +110,7 @@ The $K$-stage recursion repeats these three operations at each decision point.
 
 \begin{theorem}[Equivalence of the identified DTR recursion and Bellman optimality]
 \label{thm:dtr_rl_equivalence}
-Suppose each state space is standard Borel, each action set $\mathcal A_k$ is finite and ordered, and $Y$ is bounded. Assume that longitudinal potential states and outcomes are defined under every treatment path, and that consistency, positivity, and sequential ignorability hold for their joint future collection. In particular,
+Suppose each state space is standard Borel, each action set $\mathcal A_k$ is finite and ordered, and $Y$ is bounded. Assume that longitudinal potential states and outcomes are defined under every treatment path, and that consistency, positivity, and sequential ignorability hold for their joint future collection. Positivity is needed here in a form strictly stronger than the target-policy version of assumption 4, covering every action rather than only those a given regime assigns, because the optimality claim ranges over all continuation regimes. That form is
 \[
 \mathbb P(A_k=a\mid \bar H_k=\bar h_k)>0
 \]
@@ -249,7 +249,7 @@ An additional visit is beneficial only at low terminal status. The continuous de
 
 Theorem~\ref{thm:dtr_rl_equivalence} is an identity, so it is checked as one, with no sampling. On a fully known instance the backward recursion, value iteration on the materialised $56$-state history process, and the g-formula at the optimal regime all return $3.581999999999999$, agreeing to floating point. The identity for an arbitrary regime, which the theorem also asserts, holds to $8.9\times10^{-16}$ over $200$ randomly drawn regimes. No recovery ratio can establish this. A ratio measures how fast an estimator approaches the optimum, which is a statement about estimation and is consistent with the identity being false.
 
-Table~\ref{tab:dtr_qlearning_vs_murphy} reports the paired estimator contrasts. Both gaps are small in value terms and many Monte Carlo standard errors from zero, which is the expected signature of stochastic approximation against a one-shot regression on identical data rather than evidence against the equivalence. The unadjusted count coefficient converges to $-0.2870$ with Monte Carlo standard error $0.0023$ and selects no visits in every large-cohort replication. The regression reads the greater needs of frequently visited families as a harmful treatment association and cannot represent a rule that changes with family status.
+Table~\ref{tab:dtr_qlearning_vs_murphy} reports the paired estimator contrasts and Figure~\ref{fig:dtr_qlearning_vs_murphy} shows the three sweeps behind them. Both gaps are small in value terms and many Monte Carlo standard errors from zero, which is the expected signature of stochastic approximation against a one-shot regression on identical data rather than evidence against the equivalence. The unadjusted count coefficient converges to $-0.2870$ with Monte Carlo standard error $0.0023$ and selects no visits in every large-cohort replication. The regression reads the greater needs of frequently visited families as a harmful treatment association and cannot represent a rule that changes with family status.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Off-Policy Evaluation}
@@ -376,7 +376,7 @@ At the population-score level, its expectation equals $J(\pi_e)$ if either $q$ i
 \qquad t = H, \ldots, 1,
 \label{eq:ope_dr_seq}
 \end{equation}
-and $\hat{J}_{\mathrm{DR}}$ averages $\hat{V}_{\mathrm{DR}}^{H}$ over trajectories. Their Theorem~1 gives an exact variance decomposition showing that the $\hat{Q}$-dependent term enters through the error $\hat{Q} - Q$, so an accurate value model reduces action-induced variance. With correct known behavior ratios and a $Q$ function fixed independently of the scored trajectory, unbiasedness survives an inaccurate $Q$; per-decision IS is the special case $\hat{Q} \equiv 0$. For tree-structured MDPs, their Theorem~2 gives a constrained Cramér-Rao lower bound and Observation~1 shows that DR with the true $Q$ attains it. \citet{thomasBrunskill2016magic} self-normalize the weights inside the same score to obtain the \emph{weighted doubly robust} (WDR) estimator, and blend partial-horizon WDR estimates with the model estimate by minimizing an estimated mean-squared error. The resulting model and guided importance sampling combining (MAGIC) estimator accepts finite-sample bias to reduce variance. \citet{farajtabar2018mrdr} train $\hat{Q}$ to minimize the DR estimator's variance rather than a generic regression loss.
+and $\hat{J}_{\mathrm{DR}}$ averages $\hat{V}_{\mathrm{DR}}^{H}$ over trajectories. Their Theorem~1 gives an exact variance decomposition showing that the $\hat{Q}$-dependent term enters through the error $\hat{Q} - Q$, so an accurate value model reduces action-induced variance. With correct known behavior ratios and a $Q$ function fixed independently of the scored trajectory, unbiasedness survives an inaccurate $Q$; per-decision IS is the special case $\hat{Q} \equiv 0$. For discrete tree MDPs, their Theorem~2 gives a constrained Cramér-Rao lower bound and Observation~1 shows that DR with the true $Q$ attains it. \citet{thomasBrunskill2016magic} self-normalize the weights inside the same score to obtain the \emph{weighted doubly robust} (WDR) estimator, and blend partial-horizon WDR estimates with the model estimate by minimizing an estimated mean-squared error. The resulting model and guided importance sampling combining (MAGIC) estimator accepts finite-sample bias to reduce variance. \citet{farajtabar2018mrdr} train $\hat{Q}$ to minimize the DR estimator's variance rather than a generic regression loss.
 
 For inference, the nuisance functions are fitted out of fold, and $\hat\phi_i^{\mathrm{DR}}$ is the complete trajectory score returned by the recursion. The estimator and its standard error are
 \begin{equation}
@@ -456,10 +456,11 @@ The stylized Fast Track MDP has $\gamma=1$ and five family-functioning states $S
 \caption{OPE performance over 500 replications. Panel (a) shows relative RMSE against the number of logged trajectories at $H=16$. Panel (b) shows relative RMSE against horizon at $n=500$. Panel (c) shows estimator bias under nuisance misspecification with 95\% Monte Carlo confidence intervals for mean bias. These error bars are distinct from the estimator-level intervals in Equations~\eqref{eq:ope_is_se} and \eqref{eq:ope_dr_se}.}
 \label{fig:simA_ope}
 \end{figure}
+\FloatBarrier
 
 The mechanism behind the horizon gap is measured rather than inferred from the estimators. Regressing the log of the exact $\operatorname{var}(\rho_{1:H})$ on $H$ gives a slope of $0.356$ per step with residual standard deviation $0.085$, while regressing it on $\log H$ gives residual standard deviation $2.72$, so the growth is geometric and not polynomial. The variance of the marginal state-density ratio that MIS carries instead runs $0.13$, $0.47$, $1.27$, $2.92$, $6.28$ over the same horizons, which is the polynomial behaviour of Theorem~4.1 of \citet{xie2019marginalized}.
 
-Panel B separates consistency from precision. The two one-sided misspecification cells are statistically indistinguishable from zero, while the both-wrong cell is five standard errors from zero. The wrong-propensity cell also has nearly the RMSE of the both-wrong cell, so double robustness delivers consistency there and not precision. Panel C shows calibrated uncertainty for IS, PDIS, and cross-fitted DR.
+Panel B of Table~\ref{tab:simA_ope} separates consistency from precision. The two one-sided misspecification cells are statistically indistinguishable from zero, while the both-wrong cell is five standard errors from zero. The wrong-propensity cell also has nearly the RMSE of the both-wrong cell, so double robustness delivers consistency there and not precision. Panel C shows calibrated uncertainty for IS, PDIS, and cross-fitted DR. Figure~\ref{fig:simA_ope} plots the same comparisons against sample size and horizon.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Dynamic Double Machine Learning for Structural Nested Mean Models}
@@ -497,7 +498,7 @@ The system is upper triangular. Backward estimation starts with $\psi_T$, subtra
 
 \subsubsection*{Asymptotic normality at $\sqrt n$ rates}
 
-Neyman orthogonality makes the leading nuisance bias a product of first-stage errors. Theorem~4 of \citet{lewisSyrgkanis2021dynamicDML} gives asymptotic normality under a product-rate condition; a convenient symmetric sufficient condition is $o_p(n^{-1/4})$ error in population $L_2$ norm for each cross-fitted nuisance. Then
+Neyman orthogonality makes the leading nuisance bias a product of first-stage errors. Theorem~8 of \citet{lewisSyrgkanis2021dynamicDML} gives asymptotic normality for a structural nested mean model under a product-rate condition, and their Theorem~4 gives the same result for the partially linear specialization the simulation below uses. A convenient symmetric sufficient condition is $o_p(n^{-1/4})$ error in population $L_2$ norm for each cross-fitted nuisance. Then
 \begin{equation}
 \sqrt{n}\,(\hat\psi - \psi^*) \xrightarrow{d} \mathcal{N}(0,\, V),
 \label{eq:dynamic_dml_clt}
@@ -605,8 +606,9 @@ The design sets $\|B\|_{\mathrm{op}}=0.5$, $\alpha=(1,0,\ldots,0)^\prime$, $\|\g
 \caption{Dynamic DML over 200 replications. The left panel shows absolute bias of $\hat\psi_2$ against sample size. The right panel shows empirical coverage of nominal 95\% confidence intervals.}
 \label{fig:simB1}
 \end{figure}
+\FloatBarrier
 
-Panel A shows that Dynamic DML is nearly unbiased with coverage near 95 percent, while naive OLS and the IPTW MSM retain second-stage bias and undercoverage. Panel B shows that the joint sandwich tracks the Monte Carlo covariance. Dropping the cross-stage block changes the contrast standard error by $2.4$ percent and leaves coverage unchanged in this design. This is consistent with the binary-treatment bound discussed in Section~\ref{subsec:dml_dte}. The joint sandwich remains the correct object, but the cost of ignoring the cross-stage block is too small to detect at $200$ replications.
+Panel A of Table~\ref{tab:simB1} shows that Dynamic DML is nearly unbiased with coverage near 95 percent, while naive OLS and the IPTW MSM retain second-stage bias and undercoverage. Figure~\ref{fig:simB1} traces both quantities across sample sizes. Panel B of the same table shows that the joint sandwich tracks the Monte Carlo covariance. Dropping the cross-stage block changes the contrast standard error by $2.4$ percent and leaves coverage unchanged in this design. This is consistent with the binary-treatment bound discussed in Section~\ref{subsec:dml_dte}. The joint sandwich remains the correct object, but the cost of ignoring the cross-stage block is too small to detect at $200$ replications.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Dynamic Offline Policy Learning}
@@ -697,8 +699,9 @@ The threshold regime $\pi_t=\mathbbm 1\{S_t^{(1)}<c_t\}$ assigns visits below th
 \caption{Offline threshold-policy learning over 40 replications. Panel (a) shows regret against sample size. Panel (b) shows regret under outcome-model and propensity misspecification at $n=1000$, with 95\% Monte Carlo confidence intervals for mean regret. Panel (c) shows the learned AIPW thresholds at $n=250$ and $n=4000$ relative to the oracle pair.}
 \label{fig:dtr_policy_learning}
 \end{figure}
+\FloatBarrier
 
-Equation~\eqref{eq:sakaguchi_regret} is an upper bound, so a fitted slope steeper than $-1/2$ is consistent with it but is not evidence for it. The direct check is whether regret multiplied by $\sqrt n$ remains bounded across the sweep. It does for all three methods, with plug-in $Q$ converging fastest under correct specification.
+Equation~\eqref{eq:sakaguchi_regret} is an upper bound, so a fitted slope steeper than $-1/2$ is consistent with it but is not evidence for it. The direct check is whether regret multiplied by $\sqrt n$ remains bounded across the sweep. It does for all three methods, with plug-in $Q$ converging fastest under correct specification. Table~\ref{tab:dtr_policy_learning} reports the values at the largest cohort and Figure~\ref{fig:dtr_policy_learning} shows the sweep.
 
 The doubly robust score does not improve the rate. Under one-sided misspecification, AIPW regret remains low while the affected single-robust estimator deteriorates. AIPW also survives the cell in which both nuisances are wrong. The learned thresholds show that this is genuine recovery rather than a flat value surface. AIPW remains near the oracle thresholds, while the plug-in treats everyone. Policy learning needs only the sign of the stagewise contrast, so a nuisance error that shifts the contrast without reordering it leaves the argmax where it was. The both-wrong cell is not the failure that double robustness predicts for value estimation. Equation~\eqref{eq:sakaguchi_regret} bounds welfare loss, not uncertainty in either threshold. For the selected policy's value, an independent evaluation sample supports the standard error
 \[
