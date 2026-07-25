@@ -75,14 +75,11 @@
 \usepackage{thmtools, thm-restate}
 
 
-% Select what to do with todonotes:
-\usepackage[disable]{todonotes} % notes not showed
-% markup for editing
-% \setlength{\marginparwidth}{2cm}
-% \usepackage[draft,textsize=small]{todonotes}   % notes showed
-\newcommand{\moveto}[2]{\todo[backgroundcolor=white, bordercolor=red, inline]{{\bf Move to $\longrightarrow$ #1}\\#2}}
+% todonotes and its \moveto / \movedto helpers were drafting aids and are dropped
+% for submission; neither macro was ever called. To bring them back while editing,
+% re-add \usepackage[draft,textsize=small]{todonotes} together with
+% \setlength{\marginparwidth}{2cm}.
 \usepackage[normalem]{ulem}
-\newcommand{\movedto}[2]{\todo[backgroundcolor=white, bordercolor=red, inline]{{\bf Moved to $\longrightarrow$ #1}\\\sout{#2}}}
 \newcommand{\note}[1]{\par {\bfseries \color{blue} #1 \par}} %comment shown
 
 

@@ -240,65 +240,15 @@ fi
 rm -f main.aux main.log main.out main.blg main.pdf main.luabridge.lua main.toc
 
 # --- Create 00README.XXX to prevent arXiv from deleting input'ed files ---
-cat > 00README.XXX <<'READMEEOF'
-noop main.bbl
-noop ch04_control_problems/sims/bus_engine_results.tex
-noop ch05_econ_models/sims/nfxp_ccp_td_results.tex
-noop ch06_games/sims/cournot_bertrand_results.tex
-noop ch06_games/sims/kuhn_poker_results.tex
-noop ch06_games/sims/durable_goods_results.tex
-noop ch07_bandits/sims/knowledge_ladder_results.tex
-noop ch08_offline_rl/sims/offline_rl_pricing_results.tex
-noop ch09_rlhf/sims/job_search_results.tex
-noop ch09_rlhf/sims/job_search_diagnostics.tex
-noop ch09_rlhf/sims/job_search_horizon.tex
-noop ch10_causal/sims/confounded_ope_results.tex
-noop ch10_causal/sims/counterfactual_ope_table.tex
-noop ch03_theory/sims/brock_mirman_results.tex
-noop ch03_theory/sims/td_lambda_corridor.tex
-noop ch03_theory/sims/lqc_fvi_fqi_weights.tex
-noop ch03_theory/sims/wind_farm_curse_study_results.tex
-noop ch03a_bm/sims/bm_fvi_fqi_results.tex
-noop ch06_macro/sims/lq_mfg_results.tex
-noop ch06_macro/sims/rbc_dp_vs_drl_results.tex
-noop ch10c_adaptive_experiments/sims/causal_bandit_results.tex
-noop ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex
-noop ch10b_rl_for_ci/sims/ope_estimators_results.tex
-noop ch10b_rl_for_ci/sims/ope_estimators_dr_ablation.tex
-noop ch10b_rl_for_ci/sims/ope_estimators_inference.tex
-noop ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
-noop ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex
-noop ch10b_rl_for_ci/sims/dtr_policy_learning_results.tex
-noop ch11_dist_robust_constrained/sims/carbon_constrained_production_table.tex
-noop ch11_dist_robust_constrained/sims/risk_sensitive_inventory_table.tex
-noop ch11_dist_robust_constrained/sims/robust_consumption_savings_table.tex
-noop ch12_world_models/sims/cobweb_paradigms_final_recovery.tex
-noop ch12_world_models/sims/cobweb_paradigms_results.tex
-noop ch12_world_models/sims/dyna_maze_results.tex
-noop ch12_world_models/sims/fishery_paradigms_results.tex
-noop ch12_world_models/sims/multi_echelon_paradigms_results.tex
-noop ch07_bandits/sims/curve_learning_pricing_summary.tex
-noop ch06_games/sims/durable_goods_coase_results.tex
-noop ch09_rlhf/sims/axiom_aware_aggregation.tex
-noop ch13_field_deployments/sims/field_ope_reliability_macros.tex
-noop ch13_field_deployments/sims/field_ope_reliability_table.tex
-noop ch13_field_deployments/sims/field_ope_reliability_candidates.tex
-noop ch10c_adaptive_experiments/sims/causal_bandit_mabuc_results.tex
-noop ch12_world_models/sims/fishery_paradigms_recovery.tex
-noop appA_preliminaries/sims/banach_contraction.tex
-noop appA_preliminaries/sims/envelope_theorem.tex
-noop appA_preliminaries/sims/gradient_descent.tex
-noop appA_preliminaries/sims/hilbert_projection.tex
-noop appA_preliminaries/sims/jensen_gap.tex
-noop appA_preliminaries/sims/lagrangian_duality.tex
-noop appA_preliminaries/sims/lipschitz_continuity.tex
-noop appA_preliminaries/sims/lln_clt.tex
-noop appA_preliminaries/sims/markov_stationary.tex
-noop appA_preliminaries/sims/martingale_convergence.tex
-noop appA_preliminaries/sims/neumann_series.tex
-noop appA_preliminaries/sims/robbins_monro.tex
-noop appA_preliminaries/sims/spectral_radius.tex
-READMEEOF
+# Generated from the TABLES manifest rather than hardcoded, so the retention list
+# cannot drift out of step with what is actually shipped. arXiv prunes files it
+# believes are unreferenced; a `noop` line tells it to keep one untouched.
+{
+    echo "noop main.bbl"
+    for t in "${TABLES[@]}"; do
+        echo "noop $t"
+    done
+} > 00README.XXX
 echo "  Created 00README.XXX (prevents arXiv file deletion)"
 
 # --- 7. Create tarball ---
