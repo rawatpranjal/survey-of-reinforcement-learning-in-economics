@@ -1,0 +1,48 @@
+% Shared beamer preamble for the per-chapter slide decks.
+% Each deck is a single slides/chNN.tex that starts with \input{preamble}.
+% Build from slides/:  latexmk -pdf chNN.tex
+%
+% notheorems: beamer predefines theorem/lemma/definition/corollary, which collide
+% with the \newtheorem block in docs/main.tex. The decks do not use those
+% environments, so the option simply suppresses beamer's versions.
+\documentclass[10pt,notheorems]{beamer}
+\usetheme[progressbar=frametitle]{metropolis}
+
+\usepackage{amsmath,amssymb,amsfonts,bbm}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{xspace}
+\usepackage[round]{natbib}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc, decorations.pathreplacing}
+
+% Palette copied from docs/main.tex, which matches sims/plot_style.py.
+\definecolor{rlblue}{HTML}{4878A8}
+\definecolor{rlorange}{HTML}{D4915C}
+\definecolor{rlgreen}{HTML}{6BA368}
+\definecolor{rlred}{HTML}{C25B56}
+\definecolor{rlpurple}{HTML}{8B7BAF}
+\definecolor{rlgray}{HTML}{888888}
+\definecolor{rlblack}{HTML}{2D2D2D}
+
+% Math macros from docs/main.tex. \note and \renewcommand{\max} are deliberately
+% not carried over: the first collides with beamer's \note, the second breaks the
+% amsmath max operator.
+\newcommand{\indicator}[1]{\mathbbm{1}\{#1\}}
+\def\argmin{\mathop{\it argmin}}
+\def\argmax{\mathop{\it argmax}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Vsoft}{V^{\mathrm{soft}}}
+
+% Bottom-of-frame source line, small and grey so it does not compete with the math.
+\newcommand{\srcnote}[1]{\vfill{\scriptsize\color{rlgray}#1}}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamerfont{footnote}{size=\scriptsize}
+\setbeamercolor{alerted text}{fg=rlred}
+
+\institute{Georgetown University}
+\author{Pranjal Rawat}
