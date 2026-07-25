@@ -1,0 +1,5 @@
+RL THEORY GEOMETRY
+Artifact type	diagram-only
+Panels	4
+Random seeds	not applicable
+Output figure	/Users/pranjal/Code/rl/appA_preliminaries/sims/rl_theory_geometry.png
