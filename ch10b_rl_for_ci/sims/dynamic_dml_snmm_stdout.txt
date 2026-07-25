@@ -1,9 +1,13 @@
-  Cache hit: shared
-  Cache hit: naive_ols
-  Cache hit: msm_iptw
-  Cache hit: dynamic_dml
+  Computing: shared
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dynamic_dml_snmm__shared.pkl
+  Computing: naive_ols
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dynamic_dml_snmm__naive_ols.pkl
+  Computing: msm_iptw
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dynamic_dml_snmm__msm_iptw.pkl
+  Computing: dynamic_dml
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dynamic_dml_snmm__dynamic_dml.pkl
   Computing: joint_inference
-  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/dynamic_dml_snmm__joint_inference.pkl
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dynamic_dml_snmm__joint_inference.pkl
 
 ======================================================================
   Dynamic DML in a stylized Fast Track home-visiting SNMM
@@ -53,9 +57,9 @@
   Contrast 95% CI: coverage=0.950, tail misses=0.025/0.025
 
   Output files:
-     /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
-     /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
-     /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex
-  Figure saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
-  Table saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
-  Joint-inference table saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex
+     /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
+     /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
+     /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex
+  Figure saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/dynamic_dml_snmm_coverage.png
+  Table saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/dynamic_dml_snmm_results.tex
+  Joint-inference table saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/dynamic_dml_snmm_joint_inference.tex

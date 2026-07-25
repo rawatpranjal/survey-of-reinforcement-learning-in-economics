@@ -1,5 +1,5 @@
   Computing: shared
-  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/ope_estimators__shared.pkl
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/ope_estimators__shared.pkl
   Computing: sweep_n
   sweep_n: n=50 done
   sweep_n: n=100 done
@@ -7,18 +7,18 @@
   sweep_n: n=500 done
   sweep_n: n=1000 done
   sweep_n: n=2000 done
-  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/ope_estimators__sweep_n.pkl
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/ope_estimators__sweep_n.pkl
   Computing: sweep_h
   sweep_h: H=4 done
   sweep_h: H=8 done
   sweep_h: H=16 done
   sweep_h: H=32 done
   sweep_h: H=64 done
-  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/ope_estimators__sweep_h.pkl
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/ope_estimators__sweep_h.pkl
   Computing: ablation
-  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/ope_estimators__ablation.pkl
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/ope_estimators__ablation.pkl
   Computing: inference
-  Cache saved: /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/cache/ope_estimators__inference.pkl
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/ope_estimators__inference.pkl
 ==============================================================================
 OPE estimators on the stylized Fast Track home-visiting MDP
 ==============================================================================
@@ -93,7 +93,7 @@ Checks (3 MC-SE criterion for bias):
   rel. RMSE at H=64, IS vs MIS:              2.847 vs 0.134 (ratio 21.3x)
 
 Output files:
-  /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/ope_estimators.png
-  /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/ope_estimators_results.tex
-  /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/ope_estimators_dr_ablation.tex
-  /Users/pranjal/Code/rl-ch10b-audit/ch10b_rl_for_ci/sims/ope_estimators_inference.tex
+  /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/ope_estimators.png
+  /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/ope_estimators_results.tex
+  /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/ope_estimators_dr_ablation.tex
+  /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/ope_estimators_inference.tex

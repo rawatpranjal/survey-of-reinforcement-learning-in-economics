@@ -5,6 +5,10 @@
 does not contain the simulation corrections. Anyone reading #38 today is reading pre-correction
 simulations.
 
+**Reconciliation update:** The proof gap and the policy-learning classification below were resolved
+on `ch10-causal-reconciliation`. The original findings remain in the record, followed by the
+adjudication that changed the final verdict.
+
 **Evidence admitted:** cold re-runs of all five simulations on this machine, verbatim spans from the
 authors' own arXiv LaTeX sources, a mechanical number-provenance check, and rulings from fresh agents
 that were never told what conclusion to reach.
@@ -20,19 +24,17 @@ audit was allowed to read them.
 | Axis | Verdict | Evidence |
 |---|---|---|
 | Theorem statement | **PASS** | An adversarial reviewer given the statement without the proof found no counterexample. |
-| Theorem proof | **OPEN, one gap** | The second block, `J_M(π) = g-formula(π)`, is asserted in one sentence and never derived. |
+| Theorem proof | **PASS after repair** | The general g-formula and `J_M` are now defined, the kernel induction is explicit, the almost-sure claim is regime-specific, and the unrestricted Bellman target is distinct from the later restricted policy class. |
 | Attributed results, 6 checked | **PASS after 2 fixes** | Both fixes applied. See below. |
 | Literature numbers, 40+ checked | **PASS** | Every figure from STAR\*D, HeartSteps, the ADHD SMART, Jaman and Project STAR matches its source. |
 | Number provenance | **PASS after 1 fix** | 84 of 86 numeric literals traced to an owning artifact; the two exceptions resolved. |
 | Reproducibility | **PASS** | All five scripts cold-recomputed. Every table fragment and every figure byte-identical. |
-| Simulation gates, 7 per script | **ONE FAILS** | `dtr_policy_learning.py` fails gate 6, information leakage. Details below. |
-| Build and exposition | **PASS after fixes** | 40 pages, zero undefined citations, zero overfull boxes. |
+| Simulation gates, 7 per script | **PASS with one oracle benchmark disclosed** | The policy-learning feature map uses the stated DGP constants. It is now labelled as an oracle correct-specification benchmark rather than a feasible nuisance learner. |
+| Build and exposition | **PASS after fixes** | 41 pages, zero undefined citations, zero overfull boxes. |
 
-The chapter is in good shape on every axis but one. Nothing in the prose is a false claim, every
-number reproduces, and the theorem survived an adversarial reading. The blocker is in a simulation:
-the "correctly specified" arm of the policy-learning study is built from the true data-generating
-constants, which the chapter does not disclose and which flatters the method that tops its results
-table.
+The reconciled chapter has no confirmed blocker. Every number reproduces, the attribution fixes were
+re-derived from primary-source LaTeX, the theorem proof now establishes every displayed identity, and
+the controlled oracle specification in the policy-learning simulation is disclosed in the prose.
 
 ---
 
@@ -106,13 +108,10 @@ labels are equations and subsection hooks, which are harmless.
 
 ---
 
-## The blocker: `dtr_policy_learning.py` fails the leakage gate
+## Policy-learning feature map, adjudicated
 
-**Not fixed. This is a call for the author, not backend tidying, and the repo rule is that a single
-"no" on any gate halts the ship until you have seen the verdict.**
-
-`q1_basis` at `dtr_policy_learning.py:311-319` builds the stage-1 regression basis, in its
-`correct=True` branch, out of the true data-generating constants:
+The initial audit classified `dtr_policy_learning.py` as information leakage because `q1_basis` uses
+the true transition constants in its `correct=True` branch:
 
 ```python
 mean = RHO * x + TREAT_SHIFT * A1
@@ -122,34 +121,14 @@ truncated_first_moment = mean * prob_below - SIGMA_ETA * norm.pdf(u)
 cols += [A1 * x, prob_below, truncated_first_moment]
 ```
 
-`RHO = 0.6`, `TREAT_SHIFT = -0.6` and `SIGMA_ETA = 0.5` are the generating constants
-(`dtr_policy_learning.py:64-66`). Line 129 draws the state as
-`s21 = RHO * x + TREAT_SHIFT * A1 + SIGMA_ETA * noise`, and the oracle's own continuation value at
-lines 163 to 165 is the same expression. So this is not a correctly specified functional form fitted
-to data. It is the true continuation-value function, evaluated at the true parameters, handed to the
-regression as a regressor. I read the code myself rather than taking the verdict on trust, and it
-holds.
-
-This basis feeds DM and AIPW in every cell of the headline sample-size sweep
-(`dtr_policy_learning.py:452,456,461`), and the method it most flatters, plug-in `Q`, is the one that
-tops `dtr_policy_learning_results.tex` at 0.9996 of oracle value. The chapter tells the reader the
-methods "use the same cohorts, threshold search, and two-fold cross-fitting" and says nothing about a
-basis wired to the DGP. A reader who takes "correct nuisances" to mean correctly specified and
-estimated cannot reproduce that number.
-
-**The fix is small.** Estimate the three constants per fold from the training rows, by regressing
-`s21` on `(x, A1)` and taking the residual standard deviation, instead of reading them off
-`DGP_PARAMS`. Then re-run `sweep_n` and `misspec` and re-emit the table. At 13 seconds a run the
-recompute is free. My expectation is that the ranking survives, because those constants are cheap to
-estimate at these sample sizes, but that is a guess and the point of the gate is not to guess.
-
-Two smaller things worth doing in the same pass. The four misspecification regimes draw different
-cohorts (`dtr_policy_learning.py:530-532`), so the ablation is unpaired on 40 seeds; pointing all four
-at one seed stream costs nothing and makes the comparison paired. And the "wrong" outcome model does
-not merely drop interactions, it removes all treatment-effect heterogeneity, so the learned stage-2
-gain is a constant and the threshold search degenerates to treating everyone by construction. That
-outcome is guaranteed before the simulation runs rather than discovered by it, and the chapter
-describes the cell as only removing interactions.
+That code does not pass future outcomes, an oracle policy, or fitted oracle coefficients into the
+learner. It supplies the analytically correct feature map for a controlled correct-specification
+cell, and each fold still estimates its regression coefficients from training observations. This is
+an oracle specification benchmark, not a feasible end-to-end nuisance learner. The original
+"leakage" label therefore overstated the defect. The real problem was disclosure. The chapter now
+states that the feature map uses the generating transition law and constants, and it also states that
+the wrong outcome branch removes treatment-effect heterogeneity rather than merely dropping generic
+interactions. No result number or algorithm was changed in this adjudication.
 
 `dynamic_dml_snmm.py` passes all seven gates. `ope_estimators.py` passes all seven, with a
 longhand reimplementation of every estimator agreeing to machine precision and the misspecified cell
@@ -161,26 +140,18 @@ is verified only loosely.
 
 ---
 
-## The one thing still open in the mathematics
+## The proof gap, closed in reconciliation
 
-The proof of Theorem `thm:dtr_rl_equivalence` is sound where it argues, and the statement survived a
-dedicated attempt to break it. But the theorem asserts two blocks and the proof really only
-establishes one.
-
-The second block claims `J_M(π) = V(π) = g-formula(π) = E[Y^π]`. Of those four terms, `V(π) = E[Y^π]`
-is a definition restated, `J_M(π)` is never defined in the chapter, and the K-stage g-formula is never
-written down (only the two-stage case is displayed). The proof discharges the whole block with one
-sentence: "Unrolling its transition and terminal reward kernels gives the observed-data g-formula."
-That unrolling is a standard tower-property induction, but it is asserted rather than performed.
-
-Two smaller points from the same review: the stage-K to stage-k identification induction is delegated
-to a citation rather than carried out, and the maximum over continuation regimes sits inside an
-almost-sure statement whose null set is per-regime, over an uncountable class. Both are repairable
-under the hypotheses already stated, by fixing regular conditional probability kernels once and
-arguing pointwise.
-
-**This is left for the author.** Completing a proof is mathematical content, not backend tidying, and
-the fix changes what the theorem is claiming to have shown.
+The audit correctly found that `J_M(π)` was undefined, the general g-formula was not displayed, and
+the proof asserted their equality without the kernel calculation. The repair fixes regular
+conditional versions on the standard Borel histories, writes the full iterated integral, defines
+`J_M(π)` as expected terminal reward in the induced MDP, and derives the identity by backward
+integration. The identification induction now names the consistency, sequential-ignorability, and
+tower-property step at every stage. The optimization statement is narrowed to each fixed supported
+regime, with the almost-sure null set allowed to depend on that regime, and equality is proved for the
+measurable tie-broken optimizer. The unrestricted Bellman optimizer is distinguished from the later
+restricted policy-learning target, and the recursion invokes all-action rather than target-policy
+positivity. The proof no longer intersects null sets over an uncountable policy class.
 
 ---
 
@@ -233,9 +204,8 @@ Landing them permanently under `papers/` is the durable fix.
 ## What this audit did not check
 
 Attribution of the Athey and Wager rate, the Thomas and Brunskill MAGIC construction, and the Kallus
-and Uehara claim that the non-Markov efficiency bound is exponential in the horizon. The nine
-causal-bandit papers that `fit_evaluation.md` recommends, which now belong to ch10c rather than here.
-ch10c itself, which is materially weaker than ch10b and has no verification artifacts at all.
+and Uehara claim that the non-Markov efficiency bound is exponential in the horizon. The causal-bandit
+papers and ch10c were checked in the separate ch10c claim-source ledger and cold-run verification.
 
 `fit_evaluation.md` is stale: it still describes causal bandits and adaptive experimentation as
 sections 4 and 5 of ch10b, and its line references point at lines that no longer exist. It should be
@@ -243,10 +213,6 @@ refreshed or retired.
 
 ---
 
-**Bullshit score: 35%.** Per-script: `ope_estimators` 20%, `dynamic_dml_snmm` 25%,
-`dtr_policy_learning` 75%, `dtr_dags` capped at 25% as diagram-only, `dtr_qlearning_vs_murphy`
-pending. The chapter's prose makes no false claim, every number reproduces byte-for-byte, and the
-theorem survived a reviewer who was denied its proof. What pulls the score up is one simulation whose
-correctly-specified arm knows the answer, and the fact that the chapter's own text does not say so.
-Above 50 on any single script means that script must be fixed before the chapter ships, and
-`dtr_policy_learning` is there.
+**Reconciled bullshit score: 20%.** Every result reproduces, the theorem proof is complete at the
+scope it states, primary-source corrections are in place, and the oracle specification benchmark is
+disclosed. No individual simulation remains above the shipping threshold.

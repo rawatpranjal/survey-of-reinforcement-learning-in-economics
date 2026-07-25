@@ -29,7 +29,7 @@ Beginning in the spring semester of first grade, a family counselor completes si
 
 An A/B test assigns each participant to one fixed protocol and compares average outcomes across the two groups. Fast Track uses that design to estimate the effect of the full prevention program relative to control. The home-visiting question is different because it asks how many visits to assign after each new family assessment. Assigning a high-visit or low-visit schedule at baseline would compare two fixed schedules even when family needs later diverge. The Fast Track team also avoids giving every family the highest level because it worries that excessive visiting can foster dependency, pejorative labeling, and attrition. A direct comparison of families with many and few visits is not an A/B comparison, since the lower family-functioning scores that trigger more visits already separate the groups before their later outcomes are measured. Regressing the final outcome on the total number of visits has the same problem because the visit count records both treatment and prior need.
 
-Murphy writes this longitudinal record as $S_1,A_1,S_2,\ldots,A_K,Y$. In the Fast Track example, $S_k$ is the family information available at the $k$th semester decision, $A_k$ is the home-visit level assigned for the coming semester, and $Y$ is the terminal child or family outcome chosen for analysis. A visit at decision $k$ may change $S_{k+1}$, which may then change later visit assignments and the terminal outcome. The model does not rule out these delayed effects. A dynamic treatment regime $\pi=(\pi_1,\ldots,\pi_K)$ maps the information available at each decision to a visit level. The target is the regime $\pi^*$ that maximises the expected terminal outcome. The potential-outcome notation makes the counterfactual states and outcomes under other visit sequences explicit.
+Murphy writes this longitudinal record as $S_1,A_1,S_2,\ldots,A_K,Y$. In the Fast Track example, $S_k$ is the family information available at the $k$th semester decision, $A_k$ is the home-visit level assigned for the coming semester, and $Y$ is the terminal child or family outcome chosen for analysis. A visit at decision $k$ may change $S_{k+1}$, which may then change later visit assignments and the terminal outcome. The model does not rule out these delayed effects. A dynamic treatment regime $\pi=(\pi_1,\ldots,\pi_K)$ maps the information available at each decision to a visit level. The unrestricted target is a measurable regime that maximises the expected terminal outcome. The potential-outcome notation makes the counterfactual states and outcomes under other visit sequences explicit.
 
 \subsubsection*{Sequential treatments as a graph}
 
@@ -52,11 +52,11 @@ $\bar A_k=(A_1,\ldots,A_k)$ and $\bar S_k=(S_1,\ldots,S_k)$ denote the treatment
 \]
 In the running example, $\bar H_k$ contains the family measures and visit levels recorded before the $k$th assignment, and $\bar a_k$ is a hypothetical sequence of visit levels through that semester. The potential state $S_{k+1}(\bar a_k)$ is the family status that would be recorded at the next decision time if the family had received $\bar a_k$. The potential outcome $Y(\bar a_K)$ is the terminal child or family outcome under a complete hypothetical visit sequence. Only the potential states and outcome under the visit sequence actually received are observed.
 
-A dynamic treatment regime $\pi=(\pi_1,\ldots,\pi_K)$ is a sequence of maps from histories to actions. It induces counterfactual actions recursively through $A_k^\pi=\pi_k(\bar H_k^\pi)$, counterfactual histories $\bar H_k^\pi=\bar H_k(\bar A_{k-1}^\pi)$, and outcome $Y^\pi=Y(\bar A_K^\pi)$. The value and optimization target are
+A dynamic treatment regime $\pi=(\pi_1,\ldots,\pi_K)$ is a sequence of maps from histories to actions. It induces counterfactual actions recursively through $A_k^\pi=\pi_k(\bar H_k^\pi)$, counterfactual histories $\bar H_k^\pi=\bar H_k(\bar A_{k-1}^\pi)$, and outcome $Y^\pi=Y(\bar A_K^\pi)$. Let $\Pi_{\mathrm{all}}$ be the class of measurable deterministic regimes. The value and unrestricted optimization target are
 \[
 V(\pi)=\mathbb E[Y^\pi],
 \qquad
-\pi^*\in\arg\max_{\pi\in\Pi}V(\pi).
+\pi^{\mathrm B}\in\arg\max_{\pi\in\Pi_{\mathrm{all}}}V(\pi).
 \]
 For Fast Track, $\pi_k$ takes the family's recorded history and selects the coming semester's visit level. The counterfactual outcome $Y^\pi$ is the terminal outcome if that rule is used at every semester decision.
 
@@ -77,12 +77,12 @@ The first three assumptions give causal meaning to observed conditional laws, wh
 
 \subsubsection*{The backward recursion}
 
-Under these four assumptions, the optimal value functions satisfy the finite-horizon backward recursion
+For unrestricted optimization, strengthen assumption 4 to require positivity for every action at every history in the observed support. Under assumptions 1--3 and this all-action positivity condition, the optimal value functions satisfy the finite-horizon backward recursion
 \begin{align}
 Q_K(\bar h_K, a_K) &= \mathbb{E}\!\left[Y \mid \bar H_K = \bar h_K,\ A_K = a_K\right], \label{eq:dtr_terminal}\\
 Q_k(\bar h_k, a_k) &= \mathbb{E}\!\left[V_{k+1}(\bar H_{k+1}) \mid \bar H_k = \bar h_k,\ A_k = a_k\right], \qquad k<K, \label{eq:dtr_qfunc}\\
 V_k(\bar h_k) &= \max_{a_k \in \mathcal A_k} Q_k(\bar h_k, a_k), \qquad
-\pi_k^*(\bar h_k) = \min\arg\max_{a_k \in \mathcal A_k} Q_k(\bar h_k, a_k). \label{eq:dtr_bellman}
+\pi_k^{\mathrm B}(\bar h_k) = \min\arg\max_{a_k \in \mathcal A_k} Q_k(\bar h_k, a_k). \label{eq:dtr_bellman}
 \end{align}
 Murphy calls $V_k$ the \emph{optimal benefit-to-go}. The fixed ordering of each finite action set makes the final expression a measurable tie-breaking rule.
 
@@ -105,6 +105,23 @@ V(\pi)=\mathbb E[Y^\pi]=\mathbb E[m_1^\pi(\bar H_1)].
 \label{eq:two_stage_gformula}
 \end{equation}
 The $K$-stage recursion repeats these three operations at each decision point.
+Fix regular conditional versions
+\[
+P_k(d\bar h_{k+1}\mid \bar h_k,a_k)
+=\mathbb P(d\bar h_{k+1}\mid \bar H_k=\bar h_k,A_k=a_k)
+\]
+and
+$\mu_K(\bar h_K,a_K)=\mathbb E[Y\mid\bar H_K=\bar h_K,A_K=a_K]$.
+For a deterministic regime $\pi$, the observed-data $K$-stage g-formula is
+\begin{equation}
+G(\pi)
+=\int \mu_K\{\bar h_K,\pi_K(\bar h_K)\}\,
+\mathbb P_{\bar H_1}(d\bar h_1)
+\prod_{k=1}^{K-1}
+P_k\{d\bar h_{k+1}\mid\bar h_k,\pi_k(\bar h_k)\}.
+\label{eq:k_stage_gformula}
+\end{equation}
+The product denotes iterated integration in increasing stage order.
 
 \subsubsection*{The equivalence, formally}
 
@@ -114,20 +131,19 @@ Suppose each state space is standard Borel, each action set $\mathcal A_k$ is fi
 \[
 \mathbb P(A_k=a\mid \bar H_k=\bar h_k)>0
 \]
-for every $a\in\mathcal A_k$ and for $\mathbb P_{\bar H_k}$-almost every $\bar h_k$. Define $(Q_k,V_k)$ by \eqref{eq:dtr_terminal}--\eqref{eq:dtr_bellman}. Then, almost surely,
+for every $a\in\mathcal A_k$ and for $\mathbb P_{\bar H_k}$-almost every $\bar h_k$. Define $(Q_k,V_k)$ by \eqref{eq:dtr_terminal}--\eqref{eq:dtr_bellman}. For every fixed measurable continuation regime $\pi_{k:K}$ covered by positivity,
 \[
-V_k(\bar h_k)
-=\max_{\pi_{k:K}}
 \mathbb E\!\left[
 Y(\bar a_{k-1},\pi_{k:K})
 \mid \bar H_k=\bar h_k
-\right],
+\right]
+\leq V_k(\bar h_k)
 \]
-where $\bar a_{k-1}$ is the treatment component of $\bar h_k$ and the maximum is over measurable continuation regimes applied recursively to future potential histories. The regime $\pi^*=(\pi_1^*,\ldots,\pi_K^*)$ attains the maximum and satisfies $V(\pi^*)=\mathbb E[V_1(\bar H_1)]$.
+almost surely, with the null set allowed to depend on the fixed regime. Here $\bar a_{k-1}$ is the treatment component of $\bar h_k$. Equality holds for the recursively defined regime $\pi^{\mathrm B}=(\pi_1^{\mathrm B},\ldots,\pi_K^{\mathrm B})$, which is optimal over $\Pi_{\mathrm{all}}$ and satisfies $V(\pi^{\mathrm B})=\mathbb E[V_1(\bar H_1)]$. For a restricted class $\Pi\subset\Pi_{\mathrm{all}}$, this Bellman regime is also a $\Pi$-optimizer only when $\pi^{\mathrm B}\in\Pi$.
 
-Let $\mathcal M$ have initial law $\mathbb P_{\bar H_1}$, stage-$k$ state $\bar H_k$, action set $\mathcal A_k$, the observed transition kernels for $\bar H_{k+1}$ given $(\bar H_k,A_k)$, zero intermediate rewards, the terminal reward kernel $\mathbb P(dy\mid \bar H_K,A_K)$, and $\gamma=1$. Then $(Q_k,V_k)$ solves the Bellman optimality equations of $\mathcal M$. For every measurable regime covered by positivity,\footnote{The induced MDP uses the full observed history as its state. Replacing $\bar H_k$ by $S_k$ requires an additional Markov or state-sufficiency assumption. For nonfinite action spaces, the maximum may need to be replaced by a supremum unless compactness, continuity, and measurable-selection conditions guarantee an attaining policy.}
+Let $\mathcal M$ have initial law $\mathbb P_{\bar H_1}$, stage-$k$ state $\bar H_k$, action set $\mathcal A_k$, transition kernels $P_k$, zero intermediate rewards, terminal mean reward $\mu_K$, and $\gamma=1$. Let $J_{\mathcal M}(\pi)$ denote its expected terminal reward under $\pi$. Then $(Q_k,V_k)$ solves the Bellman optimality equations of $\mathcal M$. For every measurable regime covered by positivity,\footnote{The induced MDP uses the full observed history as its state. Replacing $\bar H_k$ by $S_k$ requires an additional Markov or state-sufficiency assumption. For nonfinite action spaces, the maximum may need to be replaced by a supremum unless compactness, continuity, and measurable-selection conditions guarantee an attaining policy.}
 \[
-J_{\mathcal M}(\pi)=V(\pi)=\textnormal{g-formula}(\pi)=\mathbb E[Y^\pi].
+J_{\mathcal M}(\pi)=G(\pi)=V(\pi)=\mathbb E[Y^\pi].
 \]
 \end{theorem}
 
@@ -141,7 +157,7 @@ v_{k+1}^\pi(\bar H_{k+1})
 \right],
 \qquad k<K.
 \]
-At stage $K$, consistency replaces the observed outcome by the corresponding potential outcome, positivity makes the conditional mean well defined, and sequential ignorability removes conditioning on the realized action. Repeating these operations through the earlier state kernels gives the conditional g-formula
+At stage $K$, consistency replaces the observed outcome by the corresponding potential outcome, positivity makes the conditional mean well defined, and sequential ignorability removes conditioning on the realized action. Suppose the same identity holds at stage $k+1$. Substituting it into the recursion for $v_k^\pi$ and integrating against $P_k$ gives the conditional mean of the potential outcome under the fixed prefix and regime continuation. Consistency identifies the realized next history with its potential counterpart, sequential ignorability identifies its conditional law with $P_k$, and iterated expectation removes the intermediate history. Backward induction therefore gives
 \[
 v_k^\pi(\bar h_k)
 =\mathbb E\!\left[
@@ -149,7 +165,7 @@ Y(\bar a_{k-1},\pi_{k:K})
 \mid \bar H_k=\bar h_k
 \right]
 \]
-almost surely \citep{murphy2003dtr}.
+almost surely for each fixed $\pi$ \citep{murphy2003dtr}.
 
 For every $\pi$, $v_K^\pi\leq V_K$. If $v_{k+1}^\pi\leq V_{k+1}$, then
 \[
@@ -157,9 +173,15 @@ v_k^\pi(\bar h_k)
 \leq Q_k(\bar h_k,\pi_k(\bar h_k))
 \leq V_k(\bar h_k).
 \]
-Backward induction therefore gives $v_k^\pi\leq V_k$ for every continuation regime. Finite action sets and the fixed tie-breaking rule make each $\pi_k^*$ measurable, and the same induction gives equality under $\pi^*$. Thus $\pi^*$ attains the maximum without interchanging a pointwise maximum and an expectation.
+Backward induction therefore gives $v_k^\pi\leq V_k$ for each fixed continuation regime. Finite action sets and the fixed tie-breaking rule make each $\pi_k^{\mathrm B}$ measurable, and the same induction gives equality under $\pi^{\mathrm B}$. Thus $\pi^{\mathrm B}$ is optimal over $\Pi_{\mathrm{all}}$ without taking an intersection of regime-specific almost-sure sets.
 
-The policy-evaluation and optimality recursions in $\mathcal M$ are \eqref{eq:dtr_terminal}--\eqref{eq:dtr_bellman}. Unrolling its transition and terminal reward kernels gives the observed-data g-formula, which the first part identifies with $\mathbb E[Y^\pi]$.
+The policy-evaluation and optimality recursions in $\mathcal M$ are \eqref{eq:dtr_terminal}--\eqref{eq:dtr_bellman}. By the definition of expected terminal reward under its fixed kernels,
+$J_{\mathcal M}(\pi)$ is the iterated integral in \eqref{eq:k_stage_gformula}, so $J_{\mathcal M}(\pi)=G(\pi)$. Integrating the evaluation recursion backward gives
+\[
+G(\pi)=\int v_1^\pi(\bar h_1)\,\mathbb P_{\bar H_1}(d\bar h_1).
+\]
+The identification induction at $k=1$ and iterated expectation give
+$G(\pi)=\mathbb E[Y^\pi]$, which equals $V(\pi)$ by definition.
 \end{proof}
 
 \subsubsection*{Expository example: depression treatment in STAR*D}
@@ -195,7 +217,7 @@ Terminal objective $Y$ & Rewards $R_k^{\mathcal M}=0$ for $k<K$ and terminal ret
 Assignment law $e_k(a\mid\bar h_k)=\mathbb P(A_k=a\mid\bar H_k=\bar h_k)$ & Behavior policy $\mu_k(a\mid S_k^{\mathcal M})=e_k(a\mid\bar h_k)$ \\
 Fixed-regime recursion $v_k^\pi(\bar h_k)$ & Bellman policy-evaluation recursion for $\pi$ \\
 Optimal-benefit recursion $(Q_k,V_k)$ & Bellman optimality recursion $(Q_k^{\mathcal M},V_k^{\mathcal M})$ \\
-Optimal rule $\pi_k^*(\bar h_k)$ with fixed tie-breaking & Greedy optimal policy $\pi_k^{\mathcal M,*}(S_k^{\mathcal M})$ with the same tie-breaking \\
+Unrestricted optimal rule $\pi_k^{\mathrm B}(\bar h_k)$ with fixed tie-breaking & Greedy optimal policy $\pi_k^{\mathcal M,\mathrm B}(S_k^{\mathcal M})$ with the same tie-breaking \\
 $V(\pi)=\mathbb E[Y^\pi]=\textnormal{g-formula}(\pi)$ & Policy value $J_{\mathcal M}(\pi)$ \\
 \bottomrule
 \end{tabularx}
@@ -649,8 +671,6 @@ This is fitted-Q evaluation under sequential ignorability \citep{sakaguchi2024dy
 \end{equation}
 and the procedure selects $\hat\pi_T = \arg\max_{\pi_T \in \Pi_T} \tfrac{1}{n}\sum_{i=1}^n \hat\Gamma_{i,T}(\pi_T(\bar H_{i,T}))$. Given $\hat\pi_T$, it refits $\hat Q^{\hat\pi_T}_{T-1}$ against the calibrated next-stage value, builds the stage-$T{-}1$ AIPW score from Equation~\eqref{eq:sakaguchi_aipw}, and selects $\hat\pi_{T-1}$. The same step continues backward to $\hat\pi_1$. Each stage solves one classification-style policy optimization on cross-fitted scores; the nuisances at stage $t$ depend only on the estimated future policies $\hat\pi_{(t+1):T}$, never on the candidate $\pi_t$.
 
-\subsubsection*{The $\sqrt n$ welfare regret bound}
-
 \citet[Theorem~4.3]{sakaguchi2024dynamicpolicy} requires sequential ignorability, overlap, an entropy bound on $\Pi$, and correct specification of the later-stage policy classes. Its nuisance condition is a uniform product-rate bound between fitted-$Q$ and inverse-propensity errors; one symmetric sufficient condition is root-mean-square error of order $n^{-1/4}$ for each. Under these conditions,
 \begin{equation}
 V(\pi^*) - V(\hat\pi) = O_p\!\left(\kappa(\Pi)\, n^{-1/2}\right),
@@ -684,7 +704,7 @@ Y&=1-0.5S_{21}+0.4Z+0.4S_{22}
 &\quad+0.6A_1(-0.6-X)+0.8A_2(0.4-S_{21})+\varepsilon,\\
 \varepsilon&\sim\mathcal N(0,1).
 \end{align*}
-The threshold regime $\pi_t=\mathbbm 1\{S_t^{(1)}<c_t\}$ assigns visits below the score level at which their incremental effect changes sign. Its oracle is $(c_1^*,c_2^*)=(0.5156,0.4000)$ with $V^*=1.9224$. Backward AIPW, plug-in $Q$, and inverse-propensity weighting (IPW) use the same cohorts, threshold search, and two-fold cross-fitting. The misspecification design removes treatment interactions from the outcome model or replaces each propensity with its marginal treatment rate. Adaptive quadrature computes policy values, and one million Monte Carlo draws independently check the oracle and behavior values.
+The threshold regime $\pi_t=\mathbbm 1\{S_t^{(1)}<c_t\}$ assigns visits below the score level at which their incremental effect changes sign. Its oracle is $(c_1^*,c_2^*)=(0.5156,0.4000)$ with $V^*=1.9224$. Backward AIPW, plug-in $Q$, and inverse-propensity weighting (IPW) use the same cohorts, threshold search, and two-fold cross-fitting. The correctly specified outcome branch uses an oracle feature map derived from the stated Gaussian transition law, including its generating constants, while estimating the regression coefficients within each training fold. It is a controlled correct-specification benchmark rather than an end-to-end feasible nuisance-learning pipeline. The misspecified outcome branch removes treatment-effect heterogeneity, and the misspecified propensity branch replaces each propensity with its marginal treatment rate. Adaptive quadrature computes policy values, and one million Monte Carlo draws independently check the oracle and behavior values.
 
 \begin{table}[htbp]
 \centering

@@ -17,8 +17,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from sims.plot_style import apply_style, COLORS
 
 apply_style()
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.patches as mpatches  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # DAG drawing utilities (pattern of ch10_causal/sims/identification_dags.py)

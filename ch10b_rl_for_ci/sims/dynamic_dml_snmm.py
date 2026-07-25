@@ -61,15 +61,15 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-from sims.plot_style import apply_style, COLORS, BENCH_STYLE, FIG_DOUBLE
-from sims.sim_cache import (
+from sims.plot_style import apply_style, COLORS, BENCH_STYLE, FIG_DOUBLE  # noqa: E402
+from sims.sim_cache import (  # noqa: E402
     compute_or_load,
     add_component_args,
     parse_force_set,
 )
 
 apply_style()
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -699,7 +699,6 @@ def make_figure(summary):
 
     for method in ["naive_ols", "msm_iptw", "dynamic_dml"]:
         bias_2 = summary[method]["bias"][:, 1]  # psi_2 bias
-        rmse_2 = summary[method]["rmse"][:, 1]  # psi_2 RMSE
         cov_2 = summary[method]["coverage"][:, 1]
         axes[0].plot(
             n_grid,

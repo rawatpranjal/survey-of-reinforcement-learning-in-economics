@@ -1,8 +1,9 @@
   Computing: regret_vs_m
-  Cache saved: /Users/pranjal/Code/rl-ope-split/ch10c_adaptive_experiments/sims/cache/causal_bandit_parallel__regret_vs_m.pkl
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10c_adaptive_experiments/sims/cache/causal_bandit_parallel__regret_vs_m.pkl
   Computing: regret_vs_T
-  Cache saved: /Users/pranjal/Code/rl-ope-split/ch10c_adaptive_experiments/sims/cache/causal_bandit_parallel__regret_vs_T.pkl
-  Cache hit: mabuc
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10c_adaptive_experiments/sims/cache/causal_bandit_parallel__regret_vs_T.pkl
+  Computing: mabuc
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10c_adaptive_experiments/sims/cache/causal_bandit_parallel__mabuc.pkl
   Self-checks: PASS (hardness, arm values, budgets, Table 1 marginals, published MABUC targets)
 
 ======================================================================
@@ -67,9 +68,9 @@
      400       1.13 (0.16)       0.00 (0.00)
 
   Output files:
-     /Users/pranjal/Code/rl-ope-split/ch10c_adaptive_experiments/sims/causal_bandit_combined.png
-     /Users/pranjal/Code/rl-ope-split/ch10c_adaptive_experiments/sims/causal_bandit_results.tex
-     /Users/pranjal/Code/rl-ope-split/ch10c_adaptive_experiments/sims/causal_bandit_mabuc_results.tex
-  Figure saved: /Users/pranjal/Code/rl-ope-split/ch10c_adaptive_experiments/sims/causal_bandit_combined.png
-  Table saved: /Users/pranjal/Code/rl-ope-split/ch10c_adaptive_experiments/sims/causal_bandit_results.tex
-  Table saved: /Users/pranjal/Code/rl-ope-split/ch10c_adaptive_experiments/sims/causal_bandit_mabuc_results.tex
+     /Users/pranjal/Code/rl-causal-final/ch10c_adaptive_experiments/sims/causal_bandit_combined.png
+     /Users/pranjal/Code/rl-causal-final/ch10c_adaptive_experiments/sims/causal_bandit_results.tex
+     /Users/pranjal/Code/rl-causal-final/ch10c_adaptive_experiments/sims/causal_bandit_mabuc_results.tex
+  Figure saved: /Users/pranjal/Code/rl-causal-final/ch10c_adaptive_experiments/sims/causal_bandit_combined.png
+  Table saved: /Users/pranjal/Code/rl-causal-final/ch10c_adaptive_experiments/sims/causal_bandit_results.tex
+  Table saved: /Users/pranjal/Code/rl-causal-final/ch10c_adaptive_experiments/sims/causal_bandit_mabuc_results.tex
