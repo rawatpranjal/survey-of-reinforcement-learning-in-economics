@@ -28,7 +28,7 @@ Parameter selection
     logging keep-probability of 0.5 the two laws coincide, so the
     modulus falls back below one; expansion grows continuously with the drift
 
-  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/running_example__search.pkl
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__search.pkl
   Computing: shared
 ======================================================================
 A.2  THE MDP
@@ -74,7 +74,7 @@ A.2  THE MDP
   action gap at good (keep over replace) : 1.0345
   action gap at worn (replace over keep) : 0.2310
 
-  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/running_example__shared.pkl
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__shared.pkl
   Computing: vi
 ======================================================================
 A.3  VALUE ITERATION AND THE ENVELOPE
@@ -114,7 +114,7 @@ A.3  VALUE ITERATION AND THE ENVELOPE
       0.90          10.0          59
       0.99         100.0         847
 
-  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/running_example__vi.pkl
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__vi.pkl
   Computing: neumann
 ======================================================================
 A.4  THE RESOLVENT AND THE NEUMANN SERIES
@@ -135,7 +135,7 @@ A.4  THE RESOLVENT AND THE NEUMANN SERIES
      10      3.7758      2.7412      1.5692      3.1381
     the bound is gamma^(M+1) ||r^pi||_inf / (1 - gamma) with ||r^pi||_inf = 1.000
 
-  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/running_example__neumann.pkl
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__neumann.pkl
   Computing: occupancy
 ======================================================================
 A.5  MARKOV CHAINS, OCCUPANCY AND COVERAGE
@@ -171,7 +171,7 @@ A.5  MARKOV CHAINS, OCCUPANCY AND COVERAGE
     (worn , keep    )    0.5 percent, never used by the target
     (worn , replace )    4.2 percent, used by the target
 
-  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/running_example__occupancy.pkl
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__occupancy.pkl
   Computing: projection
 ======================================================================
 A.6  APPROXIMATION GEOMETRY AND THE DEADLY TRIAD
@@ -211,7 +211,7 @@ A.6  APPROXIMATION GEOMETRY AND THE DEADLY TRIAD
       1.00    0.9474    0.0526    1.2048
     the modulus crosses one at alpha = 0.7048
 
-  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/running_example__projection.pkl
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__projection.pkl
   Computing: td
 ======================================================================
 A.7  STOCHASTIC APPROXIMATION: TABULAR TD(0) UNDER FOUR STEP SIZES
@@ -250,8 +250,8 @@ A.7  STOCHASTIC APPROXIMATION: TABULAR TD(0) UNDER FOUR STEP SIZES
   At 20000 steps the smallest error is one_over_n_pow_0.7. Both Robbins-Monro
   conditions are necessary for convergence and neither is sufficient for speed.
 
-  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/running_example__td.pkl
-  Table saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/running_example.tex
-  Table saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/running_example_td.tex
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__td.pkl
+  Table saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/running_example.tex
+  Table saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/running_example_td.tex
 
 Done.

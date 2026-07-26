@@ -12,6 +12,21 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from sims.sim_cache import compute_or_load, add_component_args, parse_force_set
 
+# The MDP primitives and solvers live in the shared Engine module (sims/engine.py),
+# the book-wide running example. This script narrates the same instance in the
+# appendix's good/worn language and pins the numbers Appendix A quotes.
+from sims.engine import (
+    build_mdp,
+    policy_matrices,
+    stochastic_policy_matrices,
+    exact_value,
+    bellman_optimality,
+    solve_optimal,
+    stationary_distribution,
+    discounted_occupancy,
+    projected_modulus,
+)
+
 import numpy as np
 
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "cache")
@@ -66,94 +81,6 @@ TD_CONFIG = {
     ],
     "constant_step": 0.05,
 }
-
-
-# ---------------------------------------------------------------------------
-# The MDP
-# ---------------------------------------------------------------------------
-
-
-def build_mdp(r_keep_good, r_keep_worn, replace_cost, degrade_prob):
-    """Return (P, r) with P[s, a, s'] and r[s, a].
-
-    Keeping a good machine earns r_keep_good and degrades it with probability
-    degrade_prob. Keeping a worn machine earns r_keep_worn and leaves it worn.
-    Replacing costs replace_cost from either state and returns the machine to good.
-    """
-    p = degrade_prob
-    P = np.zeros((2, 2, 2))
-    P[GOOD, KEEP] = [1.0 - p, p]
-    P[GOOD, REPLACE] = [1.0, 0.0]
-    P[WORN, KEEP] = [0.0, 1.0]
-    P[WORN, REPLACE] = [1.0, 0.0]
-    r = np.array(
-        [[r_keep_good, -replace_cost], [r_keep_worn, -replace_cost]], dtype=float
-    )
-    return P, r
-
-
-def policy_matrices(P, r, policy):
-    """P^pi (2x2) and r^pi (2,) for a deterministic policy given as an action per state."""
-    P_pi = np.array([P[s, policy[s]] for s in range(2)])
-    r_pi = np.array([r[s, policy[s]] for s in range(2)])
-    return P_pi, r_pi
-
-
-def stochastic_policy_matrices(P, r, keep_prob):
-    """P^mu and r^mu for the logging policy that keeps with probability keep_prob."""
-    b = np.array([[keep_prob, 1.0 - keep_prob]] * 2)
-    P_mu = np.einsum("sa,sat->st", b, P)
-    r_mu = np.einsum("sa,sa->s", b, r)
-    return P_mu, r_mu, b
-
-
-def exact_value(P_pi, r_pi, gamma):
-    """The resolvent solve V = (I - gamma P^pi)^{-1} r^pi."""
-    return np.linalg.solve(np.eye(2) - gamma * P_pi, r_pi)
-
-
-def bellman_optimality(P, r, V, gamma):
-    """(T*V)(s) and the greedy action per state."""
-    q = r + gamma * P @ V
-    return q.max(axis=1), q.argmax(axis=1), q
-
-
-def solve_optimal(P, r, gamma, tol=1e-12, max_iter=10000):
-    V = np.zeros(2)
-    for _ in range(max_iter):
-        V_new, _, _ = bellman_optimality(P, r, V, gamma)
-        if np.max(np.abs(V_new - V)) < tol:
-            V = V_new
-            break
-        V = V_new
-    _, greedy, q = bellman_optimality(P, r, V, gamma)
-    return V, greedy, q
-
-
-def stationary_distribution(P_pi):
-    """Left eigenvector of P^pi for eigenvalue one, normalized to a probability vector."""
-    w, vl = np.linalg.eig(P_pi.T)
-    idx = int(np.argmin(np.abs(w - 1.0)))
-    d = np.real(vl[:, idx])
-    d = d / d.sum()
-    return d
-
-
-def discounted_occupancy(P_pi, gamma, nu):
-    """d^pi_nu = (1 - gamma) nu (I - gamma P^pi)^{-1}."""
-    return (1.0 - gamma) * nu @ np.linalg.inv(np.eye(2) - gamma * P_pi)
-
-
-def projected_modulus(phi, d, P_pi, gamma):
-    """Modulus of Pi_d T^pi restricted to span(phi), a scalar because phi has one column.
-
-    Pi_d T^pi (phi theta) = phi theta' with theta' = gamma (phi^T D P^pi phi / phi^T D phi) theta
-    plus a constant, so the contraction modulus is the absolute value of that coefficient.
-    """
-    D = np.diag(d)
-    num = phi @ D @ P_pi @ phi
-    den = phi @ D @ phi
-    return abs(gamma * num / den), gamma * num / den
 
 
 # ---------------------------------------------------------------------------
