@@ -1,0 +1,19 @@
+\begin{table}[h]
+\centering
+\caption{Eight algorithm families on the running example, 10 seeds each, ranked by mean sup-norm distance from $V^\star = (5.3448,\ 4.3103)$. Standard errors across seeds in brackets. Rows carry different data budgets and three scoring modes, so the ordering is not a race. Prediction rows evaluate $\pi^\star$; control rows learn from exploratory behavior and report $\max_a \hat{Q}$; policy-gradient rows report the exact value of the final learned policy.}
+\label{tab:engine_algorithms}
+\begin{tabular}{llrrr}
+\hline
+algorithm & family & $\hat{V}(\text{low})$ & $\hat{V}(\text{high})$ & $\|\hat{V} - V^\star\|_\infty$ \\
+\hline
+MC & prediction of $\pi^\star$, 2000 episodes & 5.3416 (0.0059) & 4.3078 (0.0039) & 0.0136 (0.0040) \\
+Q-learning & off-policy control, 50000 steps & 5.3296 (0.0076) & 4.2928 (0.0064) & 0.0216 (0.0064) \\
+FQI & batch value iteration, 20000 transitions & 5.3571 (0.0105) & 4.3214 (0.0095) & 0.0292 (0.0058) \\
+SARSA & on-policy control, 50000 steps & 5.3122 (0.0087) & 4.2754 (0.0081) & 0.0389 (0.0065) \\
+TD(0) & prediction of $\pi^\star$, 20000 steps & 5.3172 (0.0124) & 4.2874 (0.0118) & 0.0413 (0.0073) \\
+REINFORCE & policy gradient, 5000 episodes & 5.2967 (0.0038) & 4.2594 (0.0045) & 0.0510 (0.0045) \\
+Actor-critic & policy gradient, 2000 episodes & 5.2909 (0.0008) & 4.2538 (0.0007) & 0.0566 (0.0007) \\
+DQN & deep value learning, 40000 steps & 5.3852 (0.0248) & 4.3333 (0.0165) & 0.0821 (0.0123) \\
+\hline
+\end{tabular}
+\end{table}

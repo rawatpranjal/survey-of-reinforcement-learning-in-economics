@@ -28,6 +28,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REGISTRY = [
     # ch02
     ("ch02", "ch02_rl_algorithms/sims/algorithm_architectures.py", "B"),
+    ("ch02", "ch02_rl_algorithms/sims/engine_algorithms.py", "A"),
     # ch03_theory
     ("ch03_theory", "ch03_theory/sims/brock_mirman_newton.py", "A"),
     ("ch03_theory", "ch03_theory/sims/lqc_fvi_fqi.py", "A"),

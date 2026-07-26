@@ -1,5 +1,34 @@
 % Chapter: Reinforcement Learning Algorithms
-% Two sections: Classical Synthesis (Sutton-Baird), Deep Learning Era (Mnih-AlphaGo)
+% Running example introduction, then two sections: Classical Synthesis (Sutton-Baird),
+% Deep Learning Era (Mnih-AlphaGo)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{A Running Example: Bus Engine Replacement}
+\label{engine:model}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The algorithms of this chapter, and much of the theory in the chapters that follow, are computed on one fixed model. A maintenance manager watches a bus engine that sits at low or high mileage, so $\mathcal{S} = \{\text{low}, \text{high}\}$, and each period either keeps it or replaces it, so $\mathcal{A} = \{\text{keep}, \text{replace}\}$. Keeping a low-mileage engine yields output $1$ and wears the engine to high mileage with probability $\tfrac{1}{2}$. Keeping a high-mileage engine yields output $0.2$ and leaves it there. Replacement costs $0.5$ from either state and returns the engine to low mileage with certainty, and the discount factor is $\gamma = 0.9$. The model is a two-state instance of the bus engine replacement problem of \citet{Rust1987}, with per-period output standing in for operating profit net of the maintenance cost $\theta_1$ and the replacement charge standing in for the fixed cost $RC$. Figure~\ref{fig:engine_digraph} draws the process.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[>=Stealth, semithick]
+\node[circle, draw=rlblack, minimum size=1.15cm] (l) at (0,0) {low};
+\node[circle, draw=rlblack, minimum size=1.15cm] (h) at (5,0) {high};
+\draw[->, rlblue] (l) to[loop left, looseness=6] node[left, align=right, font=\footnotesize] {keep\\$0.5$, $r = 1$} (l);
+\draw[->, rlblue] (l) to[bend left=22] node[above, font=\footnotesize] {keep, $0.5$} (h);
+\draw[->, rlorange] (h) to[bend left=22] node[below, font=\footnotesize] {replace, $1$, $r = -0.5$} (l);
+\draw[->, rlblue] (h) to[loop right, looseness=6] node[right, align=left, font=\footnotesize] {keep\\$1$, $r = 0.2$} (h);
+\draw[->, rlorange] (l) to[loop above, looseness=6] node[above, font=\footnotesize] {replace, $1$, $r = -0.5$} (l);
+\end{tikzpicture}
+\caption{The running example as a labelled directed graph. Each arc carries its action and its transition probability, and, where the action is first named from that state, its reward. Blue arcs are the keep action and orange arcs the replace action.}
+\label{fig:engine_digraph}
+\end{figure}
+
+The instance is small enough that everything can be checked by hand. The optimal policy keeps at low mileage and replaces at high mileage, with $V^\star = (5.3448,\ 4.3103)$ and action-value gaps $1.0345$ at the low state and $0.2310$ at the high state. Appendix~\ref{prelim:mdp} computes every step of this solution, narrating the same instance as a machine in good or worn condition, and the shared simulation module pins each of these values with exact-arithmetic oracle tests. These values recur through the book. When a chapter introduces a method, this model is the first thing the method runs on, and the estimate it produces is compared against the same $V^\star$.
+
+Table~\ref{tab:engine_algorithms} previews the chapter by running its eight algorithm families on the model. Every family recovers the optimal values to within a tenth of a unit, though the rows are not a race, since the families consume different data budgets and are scored in three different modes. The two policy-gradient rows sit a visible step below $V^\star$ because their final policies remain stochastic, and a sigmoid policy attains the deterministic optimum only in the limit of infinite logits. What separates the families is the object they estimate along the way, a value function for a fixed policy, an action-value function from exploratory data, or the policy itself, and the sections below take them up in roughly that order.
+
+\input{../ch02_rl_algorithms/sims/engine_algorithms.tex}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{The Classical Synthesis}
