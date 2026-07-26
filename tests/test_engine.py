@@ -238,6 +238,17 @@ def test_module_never_calls_pinv():
     assert "pinv" not in src
 
 
+def test_policy_square_script_never_calls_pinv():
+    path = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "ch03_theory",
+        "sims",
+        "engine_policy_square.py",
+    )
+    assert "pinv" not in open(path).read()
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for fn in fns:
