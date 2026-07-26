@@ -8,6 +8,10 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="$REPO_ROOT/arxiv_submission"
 TARBALL="$REPO_ROOT/arxiv_submission.tar.gz"
 
+echo "=== Checking bibliography ==="
+python3 "$REPO_ROOT/scripts/check_bib.py" --main "$REPO_ROOT/docs/main.tex"
+echo ""
+
 echo "=== Packaging arXiv submission ==="
 echo "Repo root: $REPO_ROOT"
 

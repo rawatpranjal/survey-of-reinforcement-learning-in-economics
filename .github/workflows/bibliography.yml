@@ -1,0 +1,44 @@
+name: Bibliography
+
+on:
+  pull_request:
+    paths:
+      - "**/*.tex"
+      - "docs/refs.bib"
+      - "scripts/check_bib.py"
+      - "scripts/package_arxiv.sh"
+      - "tests/test_check_bib.py"
+      - ".github/workflows/bibliography.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.tex"
+      - "docs/refs.bib"
+      - "scripts/check_bib.py"
+      - "scripts/package_arxiv.sh"
+      - "tests/test_check_bib.py"
+      - ".github/workflows/bibliography.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-bibliography:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run checker tests
+        run: python3 -m unittest discover -s tests -p "test_check_bib.py" -v
+
+      - name: Check active bibliography
+        run: python3 scripts/check_bib.py --main docs/main.tex
