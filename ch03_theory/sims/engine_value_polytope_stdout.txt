@@ -1,0 +1,69 @@
+======================================================================
+THE VALUE POLYTOPE: VALUE SPACE, ITERATION AND IMPROVEMENT
+======================================================================
+
+The four deterministic-policy value functions (exact fractions):
+  (keep, keep)         V = (38/11, 2) = (3.4545, 2.0000)
+  (keep, replace)      V = (155/29, 125/29) = (5.3448, 4.3103)
+  (replace, keep)      V = (-5, 2) = (-5.0000, 2.0000)
+  (replace, replace)   V = (-5, -5) = (-5.0000, -5.0000)
+
+Area of the value polytope against its convex hull:
+  raster area at pixel size 0.01: 27.9963
+  raster area at pixel size 0.005: 27.9999
+  convex hull area: 39.3574, 4 hull vertices
+  the hull vertices coincide with the four deterministic-policy values
+  (a property of this instance, not of MDPs in general)
+
+Non-convexity witness:
+  midpoint of V^(keep,replace) and V^(replace,keep): (5/29, 183/58) = (0.1724, 3.1552)
+  distance to the nearest value function: 1.1552 (= 67/58)
+
+Value iteration from V^(replace,replace) = (-5, -5):
+  iter    V(low)    V(high)   dist to polytope
+     0   -5.0000   -5.0000    0.0000
+     1   -3.5000   -4.3000    0.4831
+     2   -2.5100   -3.6500    0.6623
+     3   -1.7720   -2.7590    0.4937
+     4   -1.0390   -2.0948    0.4904
+     5   -0.4102   -1.4351    0.4206
+     6    0.1696   -0.8692    0.3879
+     7    0.6852   -0.3473    0.3449
+     8    1.1521    0.1167    0.3123
+    20    4.1606    3.1261    0.0009
+    40    5.2009    4.1664    0.0020
+   100    5.3446    4.3101    0.0004
+  iterates farther than 0.02 from the polytope: 13 of 101 iterates, max distance 0.6623
+
+Policy iteration from the same start: (replace, replace) -> (keep, keep) -> (keep, replace)
+  2 improvement steps, every iterate a deterministic-policy value
+
+Convergence to V* = (5.3448, 4.3103):
+  iter    VI error    gamma^k bound
+     0   1.034e+01   1.034e+01
+     1   8.845e+00   9.310e+00
+     2   7.960e+00   8.379e+00
+     3   7.117e+00   7.541e+00
+     4   6.405e+00   6.787e+00
+     5   5.755e+00   6.109e+00
+     6   5.180e+00   5.498e+00
+     7   4.660e+00   4.948e+00
+     8   4.194e+00   4.453e+00
+    20   1.184e+00   1.258e+00
+    40   1.440e-01   1.529e-01
+   100   2.587e-04   2.748e-04
+  PI after 0 improvement step(s): error 1.034e+01
+  PI after 1 improvement step(s): error 2.310e+00
+  PI after 2 improvement step(s): error 8.242e-12
+
+Greedy partition of the value plane (x = V(low), y = V(high)):
+  greedy action at low  is keep iff x - y <= 10/3 = 3.3333
+  greedy action at high is keep iff x - y <= 7/9  = 0.7778
+  three parallel cells: (keep, keep) | (keep, replace) | (replace, replace)
+  the pair (replace, keep) is greedy nowhere in the plane
+  V* has x - y = 1.0345, inside the (keep, replace) cell: the optimal policy is greedy with respect to its own value
+
+  Figure saved: /Users/pranjal/Code/rl-engine/ch03_theory/sims/engine_value_polytope.png
+  Table saved: /Users/pranjal/Code/rl-engine/ch03_theory/sims/engine_value_polytope.tex
+
+Done.

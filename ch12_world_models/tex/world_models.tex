@@ -1,0 +1,24 @@
+% Chapter master file: Forecasting, Dreaming and Learning (v6)
+% Inputs into docs/main.tex as a \section{}; section files live under
+% ch12_world_models/tex/. v3 (the previous DFL + forecaster-as-policy
+% organisation) is in v3_archived/. v1/v2 in v1_archived/ and v2_archived/.
+%
+% v6 replaces the two-part DFL/dreaming split with a single linear
+% chapter on model-based RL: family-of-paradigms framing, the two 1990
+% origins, Dyna-Q in proper notation, then the deep era (Ha-Schmidhuber,
+% the RSSM line, value-aware models + MuZero, MBPO and ensembles,
+% TD-MPC2), a dual simulation on cobweb + fishery, and a short
+% synthesis. Decision-Transformer / RvS material moves to ch08_offline_rl.
+%
+% Style: natbib citations, no em dashes, no colons in prose,
+% no \textbf{}, no \paragraph*{} headers, no bullet points outside
+% numbered lists.
+
+\input{../ch12_world_models/tex/s01_intro}
+\input{../ch12_world_models/tex/s03_dyna_q}
+\input{../ch12_world_models/tex/s04_deep_mbrl}
+\input{../ch12_world_models/tex/s06_objectives_convergence}
+\input{../ch12_world_models/tex/s09_dual_sim}
+\input{../ch12_world_models/tex/s11_high_dim_sims}
+\input{../ch12_world_models/tex/s09_engine_model_learning}
+\input{../ch12_world_models/tex/s10_synthesis}

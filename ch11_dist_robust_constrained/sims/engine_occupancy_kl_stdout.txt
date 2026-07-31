@@ -1,0 +1,38 @@
+Parameters
+  discount factor                 0.9000
+  evaluation start               [1.0, 0.0]
+  geometry start                 [0.5, 0.5]
+  normalized replacement budget  0.2000
+
+Deterministic policies from the low-mileage start
+  policy                 return    replacement occupancy    feasible
+  (keep, keep)             3.4545                   0.0000    yes
+  (keep, replace)          5.3448                   0.3103    no
+  (replace, keep)         -5.0000                   1.0000    no
+  (replace, replace)      -5.0000                   1.0000    no
+  best feasible deterministic return  3.4545
+
+Constrained occupancy solutions
+  start             return    pi(replace|low)    pi(replace|high)    cost    lambda
+  low only        4.6727             0.0000              0.4074  0.2000    6.0909
+  uniform         3.9455             0.0000              0.3437  0.2000    6.0909
+
+Budget sensitivity around the cap
+  half-width       V(B-h)       V(B+h)    centered slope
+      0.0100     4.611818     4.733636          6.090909
+      0.0050     4.642273     4.703182          6.090909
+      0.0010     4.666636     4.678818          6.090909
+      0.0005     4.669682     4.675773          6.090909
+  maximum slope versus multiplier error  1.274e-12
+
+KL worst-case continuation kernels
+  theta      p(low)     p(high)    shift low    shift high
+   10.0    0.476741    0.523259    -0.023259      0.023259
+    0.5    0.134462    0.865538    -0.365538      0.365538
+
+Degenerate-start guard
+  raised AssertionError as required  Occupancy-polytope figure requires positive mass on every starting state
+
+Output files
+  figure  /Users/pranjal/Code/rl-engine/ch11_dist_robust_constrained/sims/engine_occupancy_kl.png
+  table   /Users/pranjal/Code/rl-engine/ch11_dist_robust_constrained/sims/engine_occupancy_kl_table.tex

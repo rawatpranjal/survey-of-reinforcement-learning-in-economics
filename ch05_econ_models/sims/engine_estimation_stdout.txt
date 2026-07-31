@@ -1,0 +1,92 @@
+========================================================================
+STRUCTURAL ESTIMATION ON THE +EV ENGINE REPLACEMENT MDP
+========================================================================
+discount factor: 0.9
+Type-I extreme-value shock scale: 0.4
+generating parameters: high-mileage keep reward = 0.2000, replacement cost = 0.5000
+population CCP at low mileage: [0.9395718547108411, 0.060428145289158734]
+population CCP at high mileage: [0.43485704782775725, 0.5651429521722428]
+integrated values: [6.225201203865032, 5.330951710335143]
+choice-specific values: [[6.200268811390079, 5.102681083478529], [4.99785653930163, 5.102681083478529]]
+
+Population recovery
+method        high keep  replacement    max abs error
+NFXP         0.20000001   0.49999998        1.634e-08
+CCP          0.20000000   0.50000000        3.886e-16
+TD-CCP       0.20000000   0.50000000        3.886e-16
+
+Finite samples: 20 seeds, 300 agents, 30 periods, 9000 transitions per seed
+ seed method        high keep  replacement
+    0 NFXP           0.198654     0.505874
+    0 CCP            0.199034     0.504984
+    0 TD-CCP         0.196730     0.507288
+    1 NFXP           0.187931     0.516960
+    1 CCP            0.188320     0.516051
+    1 TD-CCP         0.180700     0.523670
+    2 NFXP           0.209006     0.464763
+    2 CCP            0.209359     0.463949
+    2 TD-CCP         0.213725     0.459582
+    3 NFXP           0.183882     0.523324
+    3 CCP            0.184269     0.522420
+    3 TD-CCP         0.190258     0.516431
+    4 NFXP           0.234744     0.458519
+    4 CCP            0.235096     0.457688
+    4 TD-CCP         0.234103     0.458682
+    5 NFXP           0.203225     0.487846
+    5 CCP            0.203592     0.486992
+    5 TD-CCP         0.207614     0.482970
+    6 NFXP           0.181991     0.531238
+    6 CCP            0.182388     0.530308
+    6 TD-CCP         0.177597     0.535098
+    7 NFXP           0.229119     0.475810
+    7 CCP            0.229484     0.474948
+    7 TD-CCP         0.225275     0.479156
+    8 NFXP           0.177393     0.517553
+    8 CCP            0.177777     0.516664
+    8 TD-CCP         0.179996     0.514445
+    9 NFXP           0.176112     0.527716
+    9 CCP            0.176500     0.526814
+    9 TD-CCP         0.185377     0.517938
+   10 NFXP           0.196478     0.493553
+   10 CCP            0.196847     0.492698
+   10 TD-CCP         0.205213     0.484332
+   11 NFXP           0.199508     0.502327
+   11 CCP            0.199881     0.501455
+   11 TD-CCP         0.207442     0.493894
+   12 NFXP           0.201131     0.489751
+   12 CCP            0.201498     0.488897
+   12 TD-CCP         0.204764     0.485632
+   13 NFXP           0.192650     0.528095
+   13 CCP            0.193040     0.527175
+   13 TD-CCP         0.202557     0.517659
+   14 NFXP           0.198040     0.491923
+   14 CCP            0.198409     0.491066
+   14 TD-CCP         0.201517     0.487958
+   15 NFXP           0.173790     0.510424
+   15 CCP            0.174171     0.509548
+   15 TD-CCP         0.173062     0.510657
+   16 NFXP           0.209251     0.481178
+   16 CCP            0.209616     0.480328
+   16 TD-CCP         0.208693     0.481251
+   17 NFXP           0.219874     0.448121
+   17 CCP            0.220217     0.447330
+   17 TD-CCP         0.226551     0.440997
+   18 NFXP           0.197176     0.487431
+   18 CCP            0.197542     0.486582
+   18 TD-CCP         0.202151     0.481974
+   19 NFXP           0.216947     0.443513
+   19 CCP            0.217287     0.442735
+   19 TD-CCP         0.224474     0.435548
+
+Finite-sample summary
+method     parameter                         mean         SE       RMSE
+NFXP       high-mileage keep reward      0.199345   0.003800   0.016575
+NFXP       replacement cost              0.494296   0.005954   0.026573
+CCP        high-mileage keep reward      0.199716   0.003797   0.016551
+CCP        replacement cost              0.493432   0.005946   0.026735
+TD-CCP     high-mileage keep reward      0.202390   0.003891   0.017126
+TD-CCP     replacement cost              0.490758   0.006150   0.028357
+  Cache saved: /Users/pranjal/Code/rl-engine/ch05_econ_models/sims/cache/engine_estimation.pkl
+
+Output files
+  ch05_econ_models/sims/engine_estimation_results.tex

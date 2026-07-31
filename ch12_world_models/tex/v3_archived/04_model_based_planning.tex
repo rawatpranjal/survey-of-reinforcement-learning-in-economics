@@ -1,0 +1,209 @@
+% Section 4: Forecasting for RL -- model-based planning (Story 2, part 1)
+\subsection{Forecasting for RL: model-based planning}
+\label{sec:model_based_planning}
+
+Section~\ref{sec:rl_for_forecasting} kept the forecaster as the artifact.
+This section and the next invert the relation. The forecaster becomes a
+component inside a reinforcement-learning agent, and the artifact is a
+policy. The boundary established in \S\ref{sec:madeka} marks the entry.
+Once the agent's actions feed back into the data-generating process, the
+reduction to supervised learning fails and the problem is genuinely
+reinforcement learning.
+
+The object the agent now needs is a forecaster of its own environment.
+Given a state $s$ and an action $a$, it must predict the next state and
+reward, $\widehat P(s', r \mid s, a)$. An economist will recognise this
+object. Strip the action argument and it is the state-space model that
+underlies the Kalman filter and the ARIMA family. Restore the action and
+it is the controlled state-space model, the autoregressive system with
+exogenous inputs that control engineers and macroeconometricians have
+fitted for decades.\footnote{The state-space forecasting tradition is
+surveyed in \citet{DurbinKoopman2012}. The controlled generalisation, in
+which an exogenous input enters the transition equation, is standard in
+both the control literature and the macroeconometric vector-autoregression
+literature.} The recurrent state-space model at the core of the Dreamer
+architecture below is the neural generalisation of exactly that object.
+Two ingredients separate a world model from its classical ancestor. The
+action enters the transition, and the model is trained against a value
+functional rather than a likelihood. The first ingredient is structural.
+The second is the sequential form of the bridge of
+Section~\ref{sec:bridge}, and it is the subject of \S\ref{sec:vaml_ve}.
+The empirical architectures that put the two ingredients together are the
+subject of \S\ref{sec:world_models}.
+
+\subsubsection{Value-aware model learning}
+\label{sec:vaml_ve}
+
+The bridge of Section~\ref{sec:bridge} has a sequential form. Estimating
+the transition kernel $\widehat P$ by maximum likelihood treats every
+component of the next-state distribution as equally informative. The
+downstream planner cares about only one functional of it, namely
+$(\widehat P V)(s, a) = \mathbb E_{s' \sim \widehat P(\cdot \mid s, a)}
+[V(s')]$ for value functions $V$ in some candidate class. A value-aware
+loss aligns the model-learning objective with that functional, in direct
+analogy to the single-period decision-focused losses of \S\ref{sec:dfl}.
+
+\citet{FarahmandVAML2017} formalise the alignment as the value-aware
+model-learning (VAML) loss
+\begin{equation}
+\mathcal L_{\mathrm{VAML}}(\widehat P)
+= \sup_{V \in \mathcal V} \bigl\| (\widehat P V) - (P^\star V) \bigr\|_\mu,
+\label{eq:vaml_loss}
+\end{equation}
+where $\mathcal V$ is the candidate value class, $P^\star$ is the true
+kernel, and $\| \cdot \|_\mu$ is an $L^2$ norm under a state-action
+distribution $\mu$. They prove a finite-sample upper bound on the
+value-suboptimality of the policy planned in $\widehat P$ that decomposes
+into a model-approximation term, an estimation term that shrinks at the
+parametric rate, and a complexity term in
+$\mathcal V$.\footnote{An alternative regularity-restricted form is the
+Wasserstein-VAML equivalence of \citet{AsadiWasserstein2018}. When
+$\mathcal V$ is the class of $1$-Lipschitz value functions,
+$\mathcal L_{\mathrm{VAML}}$ coincides with the $1$-Wasserstein distance
+between $\widehat P(\cdot \mid s, a)$ and $P^\star(\cdot \mid s, a)$ by
+Kantorovich-Rubinstein duality, which gives an optimal-transport reading
+of value-aware learning.} \citet{FarahmandIterVAML2018} embeds
+\eqref{eq:vaml_loss} inside approximate value iteration. At iteration $k$,
+the model is fit to minimise the value-prediction error against the
+current iterate $V_k$ rather than against the full class $\mathcal V$,
+which turns the optimisation into a tractable regression and yields an
+LSPI-style performance bound on the converged policy.
+
+The full generalisation is \citet{GrimmVALEQ2020}'s value-equivalence
+principle. Two models $\widehat P_1, \widehat P_2$ are value-equivalent
+with respect to a policy set $\Pi$ and a value-function set $\mathcal V$
+when $(T_{\widehat P_1}^\pi V)(s) = (T_{\widehat P_2}^\pi V)(s)$ for every
+$\pi \in \Pi$ and $V \in \mathcal V$, where $T_{\widehat P}^\pi$ is the
+Bellman operator under model $\widehat P$ and policy $\pi$. The
+equivalence class shrinks monotonically as $\Pi$ and $\mathcal V$ grow,
+collapsing to the singleton $\{P^\star\}$ in the limit of all policies and
+all value functions. The principle subsumes Value Iteration Networks, the
+Predictron, Value Prediction Networks, TreeQN, and the MuZero family of
+\S\ref{sec:world_models} as instances that train a learned model against
+narrow $(\Pi, \mathcal V)$ rather than against observation
+likelihood.\footnote{\citet{GrimmPVE2021} sharpen the result for the
+MuZero loss specifically. Their proper value equivalence relaxes the
+equivalence relation to the $k$-step Bellman operator and bounds the
+value suboptimality of the planned policy in terms of the model's loss on
+a value-policy pair drawn from the planner. The bound formalises why
+MuZero can plan well with models that fail at observation prediction.}
+
+\citet{AyoubVTR2020} convert the value-aware idea into a regret
+guarantee. In their value-targeted regression (VTR) algorithm, the model
+at episode $k$ is fit by
+\begin{equation}
+\widehat P_k \in \arg\min_{P \in \mathcal P}
+\sum_{t < k} \Bigl(
+  (P V_t)(s_t, a_t) - V_t(s_{t+1})
+\Bigr)^2,
+\label{eq:vtr_loss}
+\end{equation}
+where $V_t$ is the most recent value-function iterate and $\mathcal P$ is
+a linear-mixture model class. They prove a regret bound of
+$\widetilde O\bigl(d \sqrt{H^3 T}\bigr)$, where $d$ is the model-class
+dimension, $H$ is the horizon, and $T$ is the number of episodes. The
+result is the first regret guarantee in which model fitting is driven by
+a value-prediction loss rather than by a likelihood, and the rate matches
+a known $\Omega(\sqrt{d H T})$ lower bound up to $H$ and logarithmic
+factors. The value targets in \eqref{eq:vtr_loss} are themselves
+policy-dependent and evolve through the learning loop, which is what
+makes value-aware model learning irreducibly reinforcement learning
+rather than the supervised special case of \S\ref{sec:madeka}.
+
+Value-aware losses are not without pitfalls. \citet{VoelckerCalib2025}
+show that the MuZero loss and several of its variants are uncalibrated in
+the surrogate-loss sense of Section~\ref{sec:bridge}. The population
+minimiser of the MuZero loss can be a transition kernel whose induced
+value function differs from $V^\star$ even when $V^\star$ lies in the
+function class. They propose a calibration correction that couples the
+model class with a stochastic latent architecture and recovers the right
+population minimiser. The result transfers the calibration question that
+occupied Section~\ref{sec:bridge} into the sequential setting and ties the
+value-aware programme back to the proper scoring-rule machinery.
+
+\subsubsection{Dyna and the world-model line}
+\label{sec:world_models}
+
+The idea of using a learned forecaster to generate experience for a
+planner is old. \citet{sutton1990} introduced the Dyna architecture as
+an integrated loop of three operations executed at every time step.
+The agent acted in the real environment and collected a transition. It
+updated a learned dynamics model from that transition. It then drew
+simulated transitions from the learned model and ran value-iteration
+backups on those simulations between every pair of real-environment
+steps. The classical Dyna-Q instance kept a tabular maximum-likelihood
+estimate of the transition and reward functions and used the simulated
+backups to amortise the cost of real interaction. Dyna's lasting
+contribution was conceptual rather than algorithmic. It made explicit
+that the data the agent collects through interaction can be amplified
+by a forecaster of the environment, that the forecaster's update and
+the planner's update can run in the same outer loop, and that the
+forecaster need not be a maximum-likelihood estimate even though the
+original Dyna-Q chose it to be one. The classical caveat applied
+already in 1990 and applies to every descendant. When the model is
+inaccurate, the simulated transitions inject bias into the value
+function, and the planner amplifies rather than corrects the error.
+The value-aware programme of \S\ref{sec:vaml_ve} is the direct response
+to that caveat at the loss-function level.
+
+What the modern world-model literature adds is that the forecaster, the
+value function, and the planner are trained jointly against the same
+planning-relevant targets, which is the empirical face of the
+value-equivalence principle of \S\ref{sec:vaml_ve}. Three architectural
+families anchor the literature.
+
+\citet{Schrittwieser2020MuZero} introduce the MuZero algorithm. A
+representation network embeds the observation into a latent state $h_0$.
+A dynamics network unrolls latent transitions
+$h_{k+1}, r_{k+1} = g(h_k, a_k)$. A prediction network outputs a value
+$v(h_k)$ and a policy prior $\pi(h_k)$ at each unrolled step. The three
+networks are trained jointly against three planning-relevant targets at
+every unrolled depth $k$, namely the empirical Bellman target for $v$,
+the bootstrapped policy prior for $\pi$, and the realised reward for $r$.
+No observation-reconstruction loss is used. The latent dynamics network
+is therefore a value-equivalent model in the sense of
+\citet{GrimmVALEQ2020} rather than a generative forecaster of pixels.
+Embedded inside Monte Carlo Tree Search, the resulting agent matches
+AlphaZero on Go, chess, and shogi without access to game rules, and
+attains state of the art on $57$ Atari games without a simulator.
+\citet{Antonoglou2022StochMuZero} extend the algorithm to stochastic
+environments by replacing the deterministic latent dynamics with
+afterstate-plus-chance-node representations, with matching performance on
+$2048$ and backgammon.
+
+A complementary line of work uses an explicit probabilistic model of the
+dynamics together with model-predictive control. \citet{Chua2018PETS}
+introduce probabilistic ensembles with trajectory sampling. The dynamics
+model is an ensemble of probabilistic neural networks that captures both
+aleatoric uncertainty, through the per-network output variance, and
+epistemic uncertainty, through ensemble disagreement. At each control
+step, candidate action sequences are scored by Monte Carlo rollouts
+through the ensemble and the first action of the best sequence is
+executed. The model-predictive-control step is a one-step rollout in the
+sense of \citet{BertsekasRollout2022}, and the ensemble is the
+probabilistic forecast that feeds it. The combination attains the
+asymptotic performance of model-free baselines such as soft actor-critic
+and proximal policy optimisation while using between $8$ and $125$ times
+fewer environment samples on standard continuous-control tasks, which is
+the cleanest empirical case for probabilistic-dynamics-plus-rollout on a
+benchmark suite that an econometrician would recognise.
+
+The third family is the Dreamer line of recurrent state-space models.
+\citet{HafnerDreamer2020} train a recurrent latent dynamics model from
+pixels, plan in the compact latent space rather than in observation
+space, and update the actor by backpropagating analytic value gradients
+through imagined trajectories. DreamerV3 \citep{HafnerDreamerV3_2025}
+scales the recipe across more than $150$ control tasks under a single
+hyperparameter configuration and is the first algorithm to collect
+diamonds in Minecraft from pixels and sparse rewards without human
+demonstrations.\footnote{The Dreamer architecture keeps an
+observation-reconstruction term in the world-model loss, which makes it
+not strictly value-equivalent. The reconstruction loss regularises the
+latent representation in ways that the MuZero-style pure value-target
+objective does not. The \citet{VoelckerCalib2025} calibration analysis of
+\S\ref{sec:vaml_ve} applies most directly to the MuZero family and remains
+an open question for Dreamer-style models.}
+
+These architectures still treat the forecaster as a component that feeds
+a separate planner or value function. The next section turns to the more
+radical inversion, in which the forecaster is the policy itself.

@@ -1,0 +1,123 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.bbl
+*.blg
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.dvi
+
+# Downloaded reference PDFs (large, copyrighted)
+**/papers/
+!ch09_rlhf/papers/
+ch09_rlhf/papers/*
+!ch09_rlhf/papers/source_manifest.md
+!ch09_rlhf/papers/summaries/
+ch09_rlhf/papers/summaries/*
+!ch09_rlhf/papers/summaries/ai_alignment_economics_sources.md
+
+# Sister survey (separate repo)
+ORE_main/
+
+# Paper download script cache
+scripts/.paper_cache.json
+
+# Lua bridge build artifacts
+*.luabridge.lua
+
+# Worktrees
+.worktrees/
+
+# Local project config
+AGENTS.md
+.serena/
+
+# Internal project management
+changelog.md
+summary.md
+
+# Old repo structure (archived)
+archive/
+
+# Internal tooling docs
+docs/superpowers/
+
+# arXiv build artifacts
+arxiv_submission/
+arxiv_submission 2/
+arxiv_submission.tar.gz
+arxiv_submission.verify.txt
+
+# Cached simulation results (non-portable)
+**/sims/cache/
+
+# Internal scripts (paper downloaders, splitters, transcribers)
+scripts/download_*.sh
+scripts/generate_download_scripts.py
+scripts/split_*.py
+scripts/transcribe_*.py
+scripts/revert_dp_theory.sh
+
+# Internal notes
+ch10_conclusion/notes_for_conclusion.md
+
+# Timestamped tex backups (git history already covers these)
+**/tex/backups/
+
+# Compiled chapter PDFs are build outputs
+docs/*.pdf
+
+# /search skill scratch output
+search/
+
+# Journal submission strategy and correspondence (internal)
+journals/
+docs/journal_target.md
+
+# Keep working notes and review records out of the published repository.
+*.md
+!README.md
+!REPRODUCIBILITY.md
+!ch13_field_deployments/README.md
+!docs/index.md
+!docs/runbooks/arxiv-package.md
+!patches/mfax/README.md
+
+# Internal quality reviews
+audits/
+
+# Internal project memory and roadmap
+memory.md
+roadmap.md
+
+# Dissertation drafts
+thesis/
+thesis_v2/
+
+# Internal chapter drafting notes
+ch01_history/notes/
+ch08_offline_rl/CHAPTER_NOTES.md
+ch12_world_models/CHAPTER_NOTES.md
+ch12_world_models/PHASE5_ENRICHMENT_NOTES.md
+ch12_world_models/economist_readability_notes.md
+
+# Third-party reference PDFs outside papers/ dirs, and own compiled draft PDFs
+/1-s2.0-S0304406821001737-main.pdf
+/ibarz-et-al-2021-how-to-train-your-robot-with-deep-reinforcement-learning-lessons-we-have-learned.pdf
+ch03_theory/planning_learning.pdf
+ch03_theory/sims/brock_mirman_convergence.pdf
+ch07_bandits/*.pdf

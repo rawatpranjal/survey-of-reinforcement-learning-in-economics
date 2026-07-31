@@ -1,0 +1,30 @@
+\begin{table}[htbp]
+\centering
+\caption{Theorem~\ref{thm:factored_complexity} in two parts, for a system of 100 components with 10 states each and $|\mathcal{A}| = 2$, so the unstructured problem has $|\mathcal{S}||\mathcal{A}| = 2.0 \times 10^{100}$. Panel (a) is what the factorization buys: the scope sum that enters \eqref{eq:lu_samples} in place of $|\mathcal{S}||\mathcal{A}|$, as the maximum parent-set size $k$ grows. Panel (b) is what it costs: the bias floor $\mathcal{E}_\omega$ of \eqref{eq:lu_bias} at $\Delta_R = 0$, which bounds accuracy from below however many samples are drawn. Cells exceeding a target $\epsilon = 0.01$ are the settings where the target is unreachable.}
+\label{tab:curse_factored}
+\begin{tabular}{rrr}
+\multicolumn{3}{l}{(a) Scope sizes against the full state-action count} \\
+\toprule
+Parent-set size $k$ & One scope & Scope sum \\
+\midrule
+1 & 20 & 2,000 \\
+2 & 200 & $2.0 \times 10^{4}$ \\
+3 & 2,000 & $2.0 \times 10^{5}$ \\
+4 & $2.0 \times 10^{4}$ & $2.0 \times 10^{6}$ \\
+6 & $2.0 \times 10^{6}$ & $2.0 \times 10^{8}$ \\
+\bottomrule
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{rrrrrr}
+\multicolumn{6}{l}{(b) Misspecification bias floor $\mathcal{E}_\omega$ by coupling error} \\
+\toprule
+$\gamma$ & $\Delta_P = 10^{-4}$ & $\Delta_P = 10^{-3}$ & $\Delta_P = 10^{-2}$ & $\Delta_P = 10^{-1}$ & Break-even $\Delta_P$ \\
+\midrule
+0.9 & 0.009 & 0.09 & 0.9 & 9 & $1.1 \times 10^{-4}$ \\
+0.95 & 0.038 & 0.38 & 3.8 & 38 & $2.6 \times 10^{-5}$ \\
+0.99 & 0.99 & 9.9 & 99 & 990 & $10^{-6}$ \\
+\bottomrule
+\end{tabular}
+\end{table}

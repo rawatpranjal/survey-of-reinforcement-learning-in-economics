@@ -1,0 +1,15 @@
+\begin{table}[H]
+\centering
+\caption{Target-policy evaluation on the $+U$ Engine Replacement MDP. Monte Carlo entries are means and standard errors over twenty fixed seeds.}
+\label{tab:engine_confounding}
+\begin{tabular}{lrrr}
+\hline
+transition estimate & $P(\mathrm{degrade})$ & $V(\mathrm{low})$ & bias \\
+\hline
+interventional truth & 0.5000 & 5.3448 & 0.0000 \\
+naive population formula & 0.6000 & 4.7403 & -0.6046 \\
+naive simulation & 0.5992 & 4.7451 & -0.5998 $\,(0.0044)$ \\
+backdoor simulation & 0.4983 & 5.3560 & 0.0112 $\,(0.0063)$ \\
+\hline
+\end{tabular}
+\end{table}

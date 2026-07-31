@@ -1,0 +1,18 @@
+\begin{table}[h]
+\centering
+\caption{Structural parameter recovery in the $+\mathrm{EV}$ Engine Replacement MDP. Population columns use exact choice and transition probabilities. Finite-sample columns report means and standard errors across 20 fixed seeds, with 9,000 transitions per seed.}
+\label{tab:engine_estimation}
+\small
+\begin{tabular}{lrrrr}
+\hline
+ & \multicolumn{2}{c}{high-mileage keep reward} & \multicolumn{2}{c}{replacement cost} \\
+method & population & finite sample & population & finite sample \\
+\hline
+NFXP & 0.200000 & 0.1993 (0.0038) & 0.500000 & 0.4943 (0.0060) \\
+CCP & 0.200000 & 0.1997 (0.0038) & 0.500000 & 0.4934 (0.0059) \\
+TD-CCP & 0.200000 & 0.2024 (0.0039) & 0.500000 & 0.4908 (0.0062) \\
+\hline
+generating value & \multicolumn{2}{c}{0.200000} & \multicolumn{2}{c}{0.500000} \\
+\hline
+\end{tabular}
+\end{table}

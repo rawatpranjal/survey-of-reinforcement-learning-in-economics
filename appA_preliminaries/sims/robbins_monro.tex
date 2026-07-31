@@ -1,0 +1,15 @@
+\begin{table}[h]
+\centering
+\caption{Robbins-Monro stochastic approximation for the root of $x = \gamma x + b$ ($x^\star = 2$) with i.i.d. observation noise. A schedule converges to $x^\star$ only when $\sum_t \alpha_t = \infty$ and $\sum_t \alpha_t^2 < \infty$ both hold. Final RMS error over 100 seeds after 5000 steps.}
+\label{tab:prelim_robbins_monro}
+\begin{tabular}{lccc}
+\hline
+$\alpha_t$ & $\sum \alpha_t = \infty$ & $\sum \alpha_t^2 < \infty$ & Final RMS error \\
+\hline
+$1/t$ & yes & yes & 0.0451 \\
+$1/t^{0.6}$ & yes & yes & 0.0766 \\
+constant $0.1$ & yes & no & 0.3488 \\
+$1/t^{2}$ & no & yes & 1.0827 \\
+\hline
+\end{tabular}
+\end{table}

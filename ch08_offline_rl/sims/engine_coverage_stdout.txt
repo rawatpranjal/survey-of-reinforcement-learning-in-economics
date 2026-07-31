@@ -1,0 +1,40 @@
+  Cache saved: /Users/pranjal/Code/rl-engine/ch08_offline_rl/sims/cache/engine_coverage.pkl
+==============================================================================
+ENGINE REPLACEMENT COVERAGE AND EXTRAPOLATION
+==============================================================================
+Parameters
+  gamma                         0.9
+  logging keep probability      0.1
+  transitions per observed pair 40
+  fitted-Q iterations           100
+  CQL alpha                     0.010
+  ridge coefficient             1.0e-05
+
+Discounted state-action occupancies
+  state action     log pct  target pct observed  ratio
+  low   keep      9.5288    68.9655     True  7.2376
+  low   replace  85.7592     0.0000     True  0.0000
+  high  keep      0.4712     0.0000     True  0.0000
+  high  replace   4.2408    31.0345    False  7.3180
+  C_inf = 7.318008
+
+Final action values
+  state action       exact       FQI       CQL
+  low   keep        5.3448    3.4538    3.4473
+  low   replace     4.3103    2.6083    2.6064
+  high  keep        4.0793    1.9993    2.0002
+  high  replace     4.3103    0.0000   -2.7789
+
+Missing-pair path by iteration
+  iteration       FQI       CQL
+          1    0.0000   -4.1688
+          2    0.0000   -4.0244
+          5    0.0000   -3.6766
+         10    0.0000   -3.3016
+         20    0.0000   -2.9583
+         50    0.0000   -2.7870
+        100    0.0000   -2.7789
+
+Output files
+  /Users/pranjal/Code/rl-engine/ch08_offline_rl/sims/engine_coverage.tex
+  /Users/pranjal/Code/rl-engine/ch08_offline_rl/sims/engine_coverage.png

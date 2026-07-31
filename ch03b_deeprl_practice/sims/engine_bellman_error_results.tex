@@ -1,0 +1,27 @@
+\begin{table}[H]
+\centering
+\caption{Bellman residuals and Gaussian maximum bias in the Engine Replacement MDP. The target policy keeps at low mileage and replaces at high mileage. The data omit the high-mileage replacement pair.}
+\label{tab:engine_bellman_error}
+\small
+\begin{tabular}{llcrrr}
+\hline
+state & action & in data & $Q^\pi$ & $\widehat Q$ & $|\widehat Q-Q^\pi|$ \\
+\hline
+low & keep & yes & 5.3448 & 13.5266 & 8.1818 \\
+low & replace & yes & 4.3103 & 11.6740 & 7.3636 \\
+high & keep & yes & 4.0793 & 13.0793 & 9.0000 \\
+high & replace & no & 4.3103 & 14.3103 & 10.0000 \\
+\hline
+\multicolumn{3}{l}{maximum observed-pair residual} & \multicolumn{3}{c}{1.8e-15} \\
+\hline
+$\sigma$ & \multicolumn{2}{c}{Gaussian maximum bias} & \multicolumn{3}{c}{bias divided by the $0.2310$ gap} \\
+\hline
+0.05 & \multicolumn{2}{c}{0.000010} & \multicolumn{3}{c}{0.0000} \\
+0.10 & \multicolumn{2}{c}{0.003035} & \multicolumn{3}{c}{0.0131} \\
+0.20 & \multicolumn{2}{c}{0.033003} & \multicolumn{3}{c}{0.1428} \\
+0.30 & \multicolumn{2}{c}{0.078233} & \multicolumn{3}{c}{0.3386} \\
+0.40 & \multicolumn{2}{c}{0.128723} & \multicolumn{3}{c}{0.5572} \\
+0.50 & \multicolumn{2}{c}{0.181502} & \multicolumn{3}{c}{0.7856} \\
+\hline
+\end{tabular}
+\end{table}

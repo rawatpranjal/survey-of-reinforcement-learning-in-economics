@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering
+\caption{Discounted state-action occupancy under the logging and target policies, finite-log coverage, and final action values. The log contains forty transitions for each marked pair and none for high mileage with replacement.}
+\label{tab:engine_coverage}
+{\small\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{llrrrrrr}
+\toprule
+state & action & log share & target share & in log & exact $Q^*$ & FQI & CQL \\
+\midrule
+low & keep & 9.5\% & 69.0\% & yes & 5.345 & 3.454 & 3.447 \\
+low & replace & 85.8\% & 0.0\% & yes & 4.310 & 2.608 & 2.606 \\
+high & keep & 0.5\% & 0.0\% & yes & 4.079 & 1.999 & 2.000 \\
+high & replace & 4.2\% & 31.0\% & no & 4.310 & 0.000 & -2.779 \\
+\bottomrule
+\end{tabular}}
+\end{table}

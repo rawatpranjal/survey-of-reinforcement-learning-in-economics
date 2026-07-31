@@ -1,0 +1,21 @@
+\begin{table}[H]
+\centering
+\small
+\caption{DPO reward inversion on the Engine Replacement MDP at $\lambda_{KL}=0.5$. The four rows report the exponential tilt and the normalized policy. The final column is the reward representative selected by the DPO normalization.}
+\label{tab:engine_preferences}
+\begin{tabular}{llrrrrrr}
+\hline
+state & action & $r$ & $\pi^{SFT}$ & $e^{r/\lambda_{KL}}$ & $\pi^{SFT}e^{r/\lambda_{KL}}$ & $\pi^*$ & $\lambda_{KL}\log(\pi^*/\pi^{SFT})$ \\
+\hline
+low & keep & 1.0000 & 0.6000 & 7.3891 & 4.4334 & 0.9679 & 0.2391 \\
+low & replace & -0.5000 & 0.4000 & 0.3679 & 0.1472 & 0.0321 & -1.2609 \\
+high & keep & 0.2000 & 0.4000 & 1.4918 & 0.5967 & 0.7300 & 0.3008 \\
+high & replace & -0.5000 & 0.6000 & 0.3679 & 0.2207 & 0.2700 & -0.3992 \\
+\hline
+state & \multicolumn{2}{l}{$Z(s)$} & \multicolumn{2}{l}{$\lambda_{KL}\log Z(s)$} & \multicolumn{3}{l}{inverse reward minus $r(s,a)$} \\
+\hline
+low & \multicolumn{2}{l}{4.5806} & \multicolumn{2}{l}{0.7609} & \multicolumn{3}{l}{-0.7609} \\
+high & \multicolumn{2}{l}{0.8175} & \multicolumn{2}{l}{-0.1008} & \multicolumn{3}{l}{0.1008} \\
+\hline
+\end{tabular}
+\end{table}

@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\small
+\caption{Off-policy selection reliability of three estimators (direct method, DM; per-decision importance sampling, PDIS; doubly robust, DR) under three logging regimes, on the targeted-promotions MDP. Regret@1 is the value gap between the selected and the best deployment policy (reward units, lower is better); rank correlation is Spearman between estimated and true policy value (higher is better). Cells are mean (standard error) over 10 seeds.}
+\label{tab:field_ope_reliability}
+\begin{tabular}{lcccccc}
+\toprule
+ & \multicolumn{2}{c}{A/B (uniform)} & \multicolumn{2}{c}{Incumbent (narrow)} & \multicolumn{2}{c}{Historical mixture} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+Estimator & Regret@1 & Rank corr. & Regret@1 & Rank corr. & Regret@1 & Rank corr. \\
+\midrule
+DM & 0.210 (0.048) & -0.040 (0.116) & 0.246 (0.039) & -0.326 (0.136) & 0.038 (0.018) & 0.697 (0.053) \\
+DR & 0.175 (0.046) & 0.051 (0.127) & 0.181 (0.043) & -0.166 (0.116) & 0.073 (0.033) & 0.423 (0.113) \\
+PDIS & 0.265 (0.035) & -0.297 (0.110) & 0.326 (0.010) & -0.646 (0.083) & 0.268 (0.040) & 0.029 (0.103) \\
+\bottomrule
+\end{tabular}
+\end{table}

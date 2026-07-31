@@ -1,0 +1,34 @@
+======================================================================
+STRUCTURAL ESTIMATION: NFXP vs CCP vs TD-CCP
+  Model: Multi-component bus engine (M=20)
+  True params: RC=5.0, theta1=2.0, theta2=4.0
+  gamma=0.95
+======================================================================
+
+======================================================================
+SUMMARY: per-method, per-K results with standard errors
+  Seeds per cell: 10
+======================================================================
+  Method            K     |S|   Time(s)   RC Bias      SE   RC RMSE      SE  th1 RMSE      SE  th2 RMSE      SE
+  NFXP              1      20      0.23    +0.053   0.027     0.097   0.015     0.307   0.055     0.495   0.111
+  CCP               1      20      0.08    +0.055   0.027     0.099   0.015     0.316   0.055     0.510   0.112
+  TD-CCP Linear     1      20      0.07    -0.087   0.017     0.101   0.016     0.255   0.041     0.296   0.044
+  TD-CCP Neural     1      20     38.44    +0.054   0.026     0.094   0.013     0.260   0.054     0.423   0.082
+  NFXP              2     400      0.34    +0.027   0.028     0.087   0.018     0.270   0.061     0.344   0.077
+  CCP               2     400      0.08    +0.089   0.027     0.120   0.021     0.527   0.068     0.797   0.089
+  TD-CCP Linear     2     400      0.08    -0.171   0.021     0.182   0.021     0.131   0.027     0.888   0.060
+  TD-CCP Neural     2     400     32.88    +0.012   0.030     0.090   0.021     0.247   0.065     0.334   0.067
+  NFXP              3    8000      4.45    +0.011   0.014     0.044   0.009     0.236   0.046     0.364   0.081
+  CCP               3    8000    --- (no valid runs)
+  TD-CCP Linear     3    8000      0.11    -0.246   0.011     0.248   0.010     0.125   0.022     1.178   0.071
+  TD-CCP Neural     3    8000     35.86    +0.007   0.017     0.051   0.009     0.215   0.050     0.318   0.081
+  NFXP              4  160000    163.51    -0.034   0.017     0.061   0.012     0.153   0.027     0.143   0.024
+  CCP               4  160000    --- (no valid runs)
+  TD-CCP Linear     4  160000      0.23    -0.328   0.014     0.331   0.014     0.226   0.028     1.103   0.027
+  TD-CCP Neural     4  160000     40.68    -0.031   0.019     0.066   0.011     0.258   0.042     0.236   0.039
+  Saved: /Users/pranjal/Code/rl/ch05_econ_models/sims/nfxp_ccp_td_scaling_time.png
+  Saved: /Users/pranjal/Code/rl/ch05_econ_models/sims/nfxp_ccp_td_results.tex
+
+Output files:
+  [EXISTS] /Users/pranjal/Code/rl/ch05_econ_models/sims/nfxp_ccp_td_scaling_time.png
+  [EXISTS] /Users/pranjal/Code/rl/ch05_econ_models/sims/nfxp_ccp_td_results.tex

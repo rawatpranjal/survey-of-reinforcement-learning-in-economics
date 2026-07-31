@@ -1,0 +1,12 @@
+\begin{tabular}{lrr}
+\toprule
+Algorithm & Regret at $T = 100$ & Regret at $T = 1000$ \\
+\midrule
+Binary ETT warm start $+$ RDC & 0.10 & 0.19 (0.11) \\
+$\mathrm{TS}_C$ \citep{bareinboim2015mabuc} & 1.17 & 1.21 (0.08) \\
+Observational seed only & 1.60 & 1.68 (0.09) \\
+RDC only & 4.13 & 6.23 (0.14) \\
+$\mathrm{TS}_Z$ (context-conditional TS) & 5.92 & 11.04 (0.19) \\
+Vanilla Thompson sampling & 14.99 & 150.00 (0.21) \\
+\bottomrule
+\end{tabular}

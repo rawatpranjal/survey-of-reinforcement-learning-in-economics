@@ -1,0 +1,150 @@
+
+======================================================================
+DURABLE GOODS MONOPOLY: TWO-TYPE GAP SELLER-OFFER GAME
+Finite-horizon screening-vs-pooling (not asymptotic Coase)
+======================================================================
+
+Parameters: V_H=200, V_L=100
+Screening price formula: P*(delta) = 200 - 100*delta
+Critical pi threshold: pi* = 0.5
+Seeds per (pi, delta): 10, init regret noise std: 0.05
+======================================================================
+
+======================================================================
+pi-SWEEP: Two-Type Gap Seller-Offer Game (multi-seed)
+======================================================================
+Parameters: V_H=200, V_L=100, delta=0.5
+Screening price: P*(delta) = 150.0
+Critical threshold: pi* = 0.50
+CFR iterations: 5000, seeds: 10, init regret noise std: 0.05
+
+pi=0.10: P(Screen)=0.000 (SE 0.000), NashConv=4.037 (SE 0.587), Theory=Pooling
+pi=0.15: P(Screen)=0.000 (SE 0.000), NashConv=6.040 (SE 0.878), Theory=Pooling
+pi=0.20: P(Screen)=0.000 (SE 0.000), NashConv=8.043 (SE 1.169), Theory=Pooling
+pi=0.25: P(Screen)=0.000 (SE 0.000), NashConv=10.047 (SE 1.460), Theory=Pooling
+pi=0.30: P(Screen)=0.001 (SE 0.000), NashConv=12.051 (SE 1.752), Theory=Pooling
+pi=0.35: P(Screen)=0.001 (SE 0.000), NashConv=14.060 (SE 2.044), Theory=Pooling
+pi=0.40: P(Screen)=0.001 (SE 0.001), NashConv=16.579 (SE 2.373), Theory=Pooling
+pi=0.45: P(Screen)=0.202 (SE 0.133), NashConv=23.359 (SE 4.798), Theory=Pooling
+pi=0.50: P(Screen)=0.351 (SE 0.150), NashConv=23.849 (SE 4.319), Theory=Indifferent
+pi=0.55: P(Screen)=0.401 (SE 0.163), NashConv=23.592 (SE 3.970), Theory=Screening
+pi=0.60: P(Screen)=0.598 (SE 0.144), NashConv=23.197 (SE 3.782), Theory=Screening
+pi=0.65: P(Screen)=0.801 (SE 0.132), NashConv=22.408 (SE 3.108), Theory=Screening
+pi=0.70: P(Screen)=0.900 (SE 0.100), NashConv=19.409 (SE 2.747), Theory=Screening
+pi=0.75: P(Screen)=0.900 (SE 0.100), NashConv=16.164 (SE 2.290), Theory=Screening
+pi=0.80: P(Screen)=1.000 (SE 0.000), NashConv=14.920 (SE 1.274), Theory=Screening
+pi=0.85: P(Screen)=1.000 (SE 0.000), NashConv=11.173 (SE 0.961), Theory=Screening
+pi=0.90: P(Screen)=1.000 (SE 0.000), NashConv=7.417 (SE 0.651), Theory=Screening
+
+
+======================================================================
+delta-SWEEP: Screening Price Variation (multi-seed)
+======================================================================
+Parameters: V_H=200, V_L=100, pi=0.7
+CFR iterations: 5000, seeds: 10, init regret noise std: 0.05
+
+delta=0.10: P*=190, P(Screen)=1.000 (SE 0.000), NashConv=23.458 (SE 2.963)
+delta=0.15: P*=185, P(Screen)=1.000 (SE 0.000), NashConv=25.304 (SE 1.442)
+delta=0.20: P*=180, P(Screen)=1.000 (SE 0.000), NashConv=25.157 (SE 1.360)
+delta=0.25: P*=175, P(Screen)=1.000 (SE 0.000), NashConv=24.797 (SE 1.365)
+delta=0.30: P*=170, P(Screen)=1.000 (SE 0.000), NashConv=24.366 (SE 1.414)
+delta=0.35: P*=165, P(Screen)=1.000 (SE 0.000), NashConv=23.902 (SE 1.499)
+delta=0.40: P*=160, P(Screen)=0.900 (SE 0.100), NashConv=20.416 (SE 2.684)
+delta=0.45: P*=155, P(Screen)=0.900 (SE 0.100), NashConv=19.918 (SE 2.707)
+delta=0.50: P*=150, P(Screen)=0.900 (SE 0.100), NashConv=19.409 (SE 2.747)
+delta=0.55: P*=145, P(Screen)=0.900 (SE 0.100), NashConv=18.891 (SE 2.803)
+delta=0.60: P*=140, P(Screen)=0.801 (SE 0.132), NashConv=18.169 (SE 2.793)
+delta=0.65: P*=135, P(Screen)=0.700 (SE 0.152), NashConv=16.582 (SE 2.904)
+delta=0.70: P*=130, P(Screen)=0.609 (SE 0.159), NashConv=15.696 (SE 2.893)
+delta=0.75: P*=125, P(Screen)=0.503 (SE 0.166), NashConv=14.221 (SE 2.840)
+delta=0.80: P*=120, P(Screen)=0.500 (SE 0.167), NashConv=12.422 (SE 2.831)
+delta=0.85: P*=115, P(Screen)=0.500 (SE 0.167), NashConv=10.589 (SE 2.916)
+delta=0.90: P*=110, P(Screen)=0.500 (SE 0.167), NashConv=8.702 (SE 3.092)
+
+======================================================================
+VALIDATION SUMMARY
+======================================================================
+
+--- pi-Sweep Results (delta=0.5) ---
+Mean NashConv (avg of per-pi means): 15.079
+Max NashConv: 23.849
+Mean across-seed SE on P(Screen): 0.054
+Mean across-seed SE on NashConv: 2.245
+NashConv is reported on the same scale as utility (V_HIGH = 200); a NashConv of 10 = 5% of max single-player payoff.
+Pooling region accuracy (π<0.4, P(Screen)<0.15): 100.0%
+Screening region accuracy (π>0.6, P(Screen)>0.85): 83.3%
+
+--- delta-Sweep Results (pi=0.7) ---
+Mean NashConv: 18.941
+Max NashConv: 25.304
+Mean across-seed SE on P(Screen): 0.089
+Screening price formula verified: max error = 0.000000
+
+==========================================================================================
+DETAILED RESULTS: pi-SWEEP (means and SE across seeds)
+==========================================================================================
+    pi     P*   P(Scrn)       SE  Theory   NashConv       SE         Type
+------------------------------------------------------------------------------------------
+  0.10    150     0.000    0.000     0.0      4.037    0.587      Pooling
+  0.15    150     0.000    0.000     0.0      6.040    0.878      Pooling
+  0.20    150     0.000    0.000     0.0      8.043    1.169      Pooling
+  0.25    150     0.000    0.000     0.0     10.047    1.460      Pooling
+  0.30    150     0.001    0.000     0.0     12.051    1.752      Pooling
+  0.35    150     0.001    0.000     0.0     14.060    2.044      Pooling
+  0.40    150     0.001    0.001     0.0     16.579    2.373      Pooling
+  0.45    150     0.202    0.133     0.0     23.359    4.798      Pooling
+  0.50    150     0.351    0.150     0.5     23.849    4.319  Indifferent
+  0.55    150     0.401    0.163     1.0     23.592    3.970    Screening
+  0.60    150     0.598    0.144     1.0     23.197    3.782    Screening
+  0.65    150     0.801    0.132     1.0     22.408    3.108    Screening
+  0.70    150     0.900    0.100     1.0     19.409    2.747    Screening
+  0.75    150     0.900    0.100     1.0     16.164    2.290    Screening
+  0.80    150     1.000    0.000     1.0     14.920    1.274    Screening
+  0.85    150     1.000    0.000     1.0     11.173    0.961    Screening
+  0.90    150     1.000    0.000     1.0      7.417    0.651    Screening
+
+==========================================================================================
+DETAILED RESULTS: delta-SWEEP (means and SE across seeds)
+==========================================================================================
+ delta     P*   P(Scrn)       SE  Theory   NashConv       SE         Type
+------------------------------------------------------------------------------------------
+  0.10    190     1.000    0.000     1.0     23.458    2.963    Screening
+  0.15    185     1.000    0.000     1.0     25.304    1.442    Screening
+  0.20    180     1.000    0.000     1.0     25.157    1.360    Screening
+  0.25    175     1.000    0.000     1.0     24.797    1.365    Screening
+  0.30    170     1.000    0.000     1.0     24.366    1.414    Screening
+  0.35    165     1.000    0.000     1.0     23.902    1.499    Screening
+  0.40    160     0.900    0.100     1.0     20.416    2.684    Screening
+  0.45    155     0.900    0.100     1.0     19.918    2.707    Screening
+  0.50    150     0.900    0.100     1.0     19.409    2.747    Screening
+  0.55    145     0.900    0.100     1.0     18.891    2.803    Screening
+  0.60    140     0.801    0.132     1.0     18.169    2.793    Screening
+  0.65    135     0.700    0.152     1.0     16.582    2.904    Screening
+  0.70    130     0.609    0.159     1.0     15.696    2.893    Screening
+  0.75    125     0.503    0.166     1.0     14.221    2.840    Screening
+  0.80    120     0.500    0.167     1.0     12.422    2.831    Screening
+  0.85    115     0.500    0.167     1.0     10.589    2.916    Screening
+  0.90    110     0.500    0.167     1.0      8.702    3.092    Screening
+  Cache saved: /Users/pranjal/Code/rl/ch06_games/sims/cache/durable_goods_monopoly.pkl
+
+============================================================
+Generating π-sweep validation outputs...
+============================================================
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/durable_goods_coase.png
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/durable_goods_nashconv.png
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/durable_goods_strategies.png
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/durable_goods_results.tex
+
+============================================================
+Generating δ-sweep validation outputs...
+============================================================
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/durable_goods_delta_sweep.png
+
+======================================================================
+OUTPUT FILES
+======================================================================
+  durable_goods_coase.png        - Phase transition plot (π-sweep)
+  durable_goods_nashconv.png     - Convergence plot
+  durable_goods_strategies.png   - Strategy rationality check
+  durable_goods_delta_sweep.png  - δ-sweep plot
+  durable_goods_results.tex      - LaTeX validation table

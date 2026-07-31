@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\caption{Cost of one exact value-iteration sweep on a uniform grid, for models used elsewhere in this survey. States are $n^d$ over $d$ state variables at $n$ points each, one sweep costs $n^{2d}|\mathcal{A}|$ operations, and wall-clock assumes $10^{9}$ operations per second. Memory is one float64 value per state. Rows ordered by state count.}
+\label{tab:curse_grid_dp}
+\begin{tabular}{lrrrrrr}
+\toprule
+Model & $d$ & $n$ & $|\mathcal{A}|$ & $|\mathcal{S}|$ & Value table & One sweep \\
+\midrule
+Bus engine, one bus \citep{Rust1987} & 1 & 175 & 2 & 175 & 1.4 kB & 61 $\mu$s \\
+Wind farm, base state & 3 & 7 & 11 & 343 & 2.7 kB & 1 ms \\
+Brock--Mirman growth & 1 & 500 & 500 & 1,000 & 8.0 kB & 500 ms \\
+Wind farm, six state variables & 6 & 7 & 11 & $1.2 \times 10^{5}$ & 941 kB & 3 min \\
+Inventory, five products & 5 & 20 & 7,776 & $3.2 \times 10^{6}$ & 26 MB & 922 days \\
+Bus engine, fleet of 3 & 3 & 175 & 8 & $5.4 \times 10^{6}$ & 43 MB & 3 days \\
+Macro model, ten state variables & 10 & 10 & 10 & $10^{10}$ & 80 GB & $3.2 \times 10^{4}$ yr \\
+Bus engine, fleet of 5 & 5 & 175 & 32 & $1.6 \times 10^{11}$ & 1.3 TB & $2.7 \times 10^{7}$ yr \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,19 @@
+DPO REWARD INVERSION ON THE ENGINE REPLACEMENT MDP
+beta = 0.500
+reference policy rows [keep, replace]
+  low   0.600000  0.400000
+  high  0.400000  0.600000
+
+state action    reward    pi_ref   exp(r/beta)   unnormalized    pi_star   inverse_r
+low   keep     1.000000  0.600000      7.389056       4.433434   0.967875    0.239087
+low   replace -0.500000  0.400000      0.367879       0.147152   0.032125   -1.260913
+high  keep     0.200000  0.400000      1.491825       0.596730   0.729983    0.300778
+high  replace -0.500000  0.600000      0.367879       0.220728   0.270017   -0.399222
+
+state       Z(s)    beta log Z(s)   inverse shift
+low     4.580585         0.760913       -0.760913
+high    0.817458        -0.100778        0.100778
+
+maximum reconstruction error 5.551e-17
+maximum within-state reward-difference error 1.110e-16
+Table saved /Users/pranjal/Code/rl-engine/ch09_rlhf/sims/engine_preferences.tex

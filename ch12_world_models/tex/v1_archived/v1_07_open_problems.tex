@@ -1,0 +1,112 @@
+% Section 7: Open problems
+\subsection{Open problems}
+\label{sec:forecasting_rl_open}
+
+Four problems deserve attention from researchers who already understand
+econometric identification. We list them in the order of expected
+methodological yield and we sketch the credible attack on each.
+
+The first and most consequential is the construction of action-conditional
+time series foundation models. As laid out in Section~\ref{sec:tsfm}, every
+existing TSFM at scale, namely Chronos \citep{Ansari2024},
+TimesFM \citep{Das2024}, and Lag-Llama \citep{Rasul2023}, conditions the
+forecast on observed history but not on the agent's action. The
+closest existing work is \citet{Ada2025}, which uses Lag-Llama as a
+passive observation-process prior inside an offline-RL loop and combines it
+with a conditional diffusion model that handles within-episode dynamics. The
+Lag-Llama component does not model the action-conditional transition
+$p(y_{t+1} \mid y_{1:t}, a_t)$; the diffusion model does, and only on
+stationary offline data. The natural architectural step is a pretraining
+objective that explicitly models intervention. The technical questions are
+how to define an interventional pretraining objective on observational
+data, how to allocate the corpus between observational and interventional
+data, and how to validate the resulting forecaster's action-conditional
+calibration on held-out interventional benchmarks. The Drain Model of
+\citet{Amazon2025} is the closest current production example of an
+action-conditional probabilistic simulator, but it is trained on
+production-system data with explicit policy choices encoded and is not a
+pretrained foundation model.
+
+The second is identification under TSFM-induced counterfactuals. The
+structural-causal-model programme of \citet{Buesing2019} and
+\citet{Oberst2019} assumes a correctly specified causal graph, namely that
+the postulated exogenous noise is independent of past observations
+conditional on the state and action. The Lucas critique applies in
+its sharpest form when the agent's policy itself enters the data-generating
+process, because the SCM's noise marginals depend on the deployed policy
+through equilibrium considerations. The credible remedies are imported from
+the econometric identification toolkit. Instrumental variables, in the
+spirit of \citet{Chernozhukov2018} and the broader
+machine-learning-instruments literature, can restore identification of the
+action-conditional dynamics under exogeneity restrictions. The most
+plausible source of instruments in macroeconomic settings is the
+high-frequency monetary policy shock identification of Romer-Romer and the
+shadow-rate identification of Wu-Xia. In micro settings, the source is
+typically a randomised experiment or a quasi-experimental discontinuity.
+The methodological question is how to embed an instrumental variable
+restriction into the TSFM pretraining objective, which to our knowledge no
+existing work has addressed.
+
+The third is online decision-focused regret in non-stationary economic
+environments. \citet{Capitaine2025} provide the first sublinear regret
+bounds for online DFL, with the DF-FTPL algorithm attaining static regret
+$\widetilde O(m^{3/4} n^{1/2} T^{-1/4})$ and the DF-OGD algorithm attaining
+dynamic regret $\widetilde O((1 + P_T)^{1/4} T^{-1/4} n^{-1/2})$, both
+under a margin condition on the optimal vertex of the decision polytope.
+The bounds depend on the path variation $P_T$ of the comparator, which is
+the right quantity for non-stationary environments and is exactly the
+quantity that the macroeconomic shock literature spends most of its energy
+estimating. The open problem is the application to economic data. The
+synthetic knapsack experiment of \citet{Capitaine2025} is far from a
+demand-forecasting or asset-pricing benchmark on real data, and the gap
+between the formal regret rate and the empirical performance on noisy
+macroeconomic series remains uncharted. The natural project is to apply
+DF-OGD to the contextual newsvendor benchmark of \citet{BanRudin2019}, to
+the Cao-Xu microgrid task of \citet{CaoXu2025}, or to the macro reaction
+function of \citet{HinterlangTaenzer2024}, and to measure both the
+realised regret and the path variation $P_T$ on the historical data.
+
+The fourth is form-aware pretraining objectives so that TSFMs produce
+joint trajectory ensembles rather than the per-step marginal point or
+parametric forecasts that the form-and-function critique of
+\citet{PerezDiaz2025} identifies as the current operational limitation.
+Their Propositions 1-3 establish that path-dependent operational queries,
+including threshold-crossing inventory rules, value-at-risk over a
+multi-period horizon, and run-length distributions for predictive
+maintenance, are not answerable from marginally-calibrated forecasts
+without imposing a copula or another dependence structure that the data
+may not support. The credible remedy is a pretraining objective that
+elicits joint calibration directly, namely a strictly proper scoring rule
+on the joint trajectory distribution. The Energy Score is the natural
+candidate, but its computational cost scales with the trajectory length
+squared and the joint-Energy-Score-trained variants of Chronos or TimesFM
+do not yet exist at scale. A second route is to convert any marginally
+trained TSFM into a trajectory ensemble by autoregressive sampling and to
+fine-tune the resulting ensemble on a small dataset of path-dependent
+queries, in the spirit of decision-focused fine-tuning. The third and
+most ambitious route is to redesign the TSFM architecture so that the
+joint-distribution head is the default output, with the marginal heads
+derived as projections. The diffusion-trajectory approach of
+\citet{Janner2022diffuser} and \citet{Ajay2023} is the closest existing
+template, although applied to RL trajectories rather than to univariate
+time series.
+
+The four open problems are linked by a single methodological observation.
+The forecasting side of the chapter has matured into a stack of pretrained
+models with impressive marginal accuracy, and the decision side has matured
+into a stack of differentiable decision-focused training procedures with
+quantitative finite-sample guarantees. The interface between the two, namely
+the action-conditional and identification-aware foundation forecaster
+trained under a joint-calibration objective inside an online decision-focused
+loop, does not yet exist. An economist who understands the Lucas critique,
+the proper-scoring-rule literature, and the instrumental-variable toolkit is
+in an unusually good position to build it. The simulation in
+Section~\ref{sec:forecasting_rl_sim} is a deliberate stripped-down
+demonstration of the same principle on the simplest econometric substrate.
+Two forecasts that look identical on the MSE metric differ by a factor of
+nearly five on realised regret once the noise model is misspecified, and
+the corrective is a training objective that knows about the decision. The
+generalisation of that recipe to action-conditional pretraining, to
+identified counterfactual forecasting, to online non-stationary regret, and
+to joint trajectory ensembles is the chapter's research agenda for the next
+five years.

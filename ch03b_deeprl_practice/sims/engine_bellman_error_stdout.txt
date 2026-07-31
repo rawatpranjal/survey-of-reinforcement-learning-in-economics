@@ -1,0 +1,31 @@
+==========================================================================
+BELLMAN ERROR AND JENSEN BIAS ON THE ENGINE REPLACEMENT MDP
+==========================================================================
+discount factor: 0.9
+target policy: low -> keep, high -> replace
+dataset coverage: 3 of 4 state-action pairs
+missing pair: high, replace
+imposed value shift at missing pair: 10.0
+
+Incomplete-data construction
+state    action    in data        Q^pi      Q_hat     residual    abs error
+low      keep      True         5.3448    13.5266   0.0000e+00       8.1818
+low      replace   True         4.3103    11.6740  -1.7764e-15       7.3636
+high     keep      True         4.0793    13.0793   1.7764e-15       9.0000
+high     replace   False        4.3103    14.3103   2.6364e+00      10.0000
+
+maximum absolute residual on observed pairs: 1.7764e-15
+maximum absolute value error on observed pairs: 9.0000
+
+true high-state action gap: 0.2310344828
+Gaussian maximum bias
+     sigma           bias     bias / gap
+      0.05       0.000010         0.0000
+      0.10       0.003035         0.0131
+      0.20       0.033003         0.1428
+      0.30       0.078233         0.3386
+      0.40       0.128723         0.5572
+      0.50       0.181502         0.7856
+
+Output files
+  ch03b_deeprl_practice/sims/engine_bellman_error_results.tex

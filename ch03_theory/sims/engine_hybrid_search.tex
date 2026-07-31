@@ -1,0 +1,22 @@
+\begin{table}[h]
+\centering
+\caption{A one-step evaluate-improve proxy on the Engine Replacement MDP. The approximate value $v$ is the uniform policy's exact value; one greedy lookahead lands on the $(\text{keep},\text{keep})$ vertex of Figure~\ref{fig:engine_policy_square}. The bound is Theorem~\ref{thm:singh_yee} at $\gamma = 0.9$.}
+\label{tab:engine_hybrid_search}
+\begin{tabular}{lrr}
+\hline
+ & low & high \\
+\hline
+network value $v = V^{(\mathrm{unif})}$ & 1.3387 & 0.8226 \\
+searched policy value $V^{\hat\pi}$ & 3.4545 & 2.0000 \\
+optimal value $V^\star$ & 5.3448 & 4.3103 \\
+\hline
+ & \multicolumn{2}{c}{value} \\
+\hline
+$\varepsilon = \|v - V^\star\|_\infty$ & \multicolumn{2}{c}{4.0061} \\
+actual loss $\|V^\star - V^{\hat\pi}\|_\infty$ & \multicolumn{2}{c}{2.3103} \\
+Singh--Yee constant $2\gamma/(1-\gamma)$ & \multicolumn{2}{c}{18.0000} \\
+Singh--Yee bound $2\gamma\varepsilon/(1-\gamma)$ & \multicolumn{2}{c}{72.1101} \\
+actual loss / bound & \multicolumn{2}{c}{0.0320} \\
+\hline
+\end{tabular}
+\end{table}

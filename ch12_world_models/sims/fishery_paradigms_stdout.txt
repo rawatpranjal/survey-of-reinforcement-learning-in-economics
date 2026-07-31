@@ -1,0 +1,54 @@
+=== fishery_paradigms ===
+Paradigms: ['Oracle', 'RLS', 'Model-Based DP', 'Q-Learning', 'Naive', 'Arifovic GA', 'Myopic']
+N_SEEDS = 20, T_EPISODE = 500
+
+  Computing: shared
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__shared.pkl
+  Computing: Oracle
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__Oracle.pkl
+  Computing: Naive
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__Naive.pkl
+  Computing: Myopic
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__Myopic.pkl
+  Computing: RLS
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__RLS.pkl
+  Computing: Q-Learning
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__Q-Learning.pkl
+  Computing: Arifovic_GA
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__Arifovic_GA.pkl
+  Computing: Model-Based_DP
+  Cache saved: /Users/pranjal/Code/rl/ch12_world_models/sims/cache/fishery_paradigms__Model-Based_DP.pkl
+  Figure saved: /Users/pranjal/Code/rl/ch12_world_models/sims/fishery_paradigms.png
+  Table saved: /Users/pranjal/Code/rl/ch12_world_models/sims/fishery_paradigms_results.tex
+
+=== Cumulative regret at T=500 (mean ± SE, n=20 seeds) ===
+
+Paradigm                   Final regret
+----------------------------------------
+Oracle                  0.00 ±  0.00
+RLS                    13.67 ±  0.43
+Model-Based DP         14.69 ±  0.73
+Q-Learning            274.71 ± 24.36
+Naive                 447.35 ±  3.24
+Arifovic GA           706.13 ± 16.65
+Myopic                753.11 ±  1.75
+
+=== Stock-collapse incidence: fraction of seeds with mean final regret >= 0.95 * Myopic floor (proxy for sustained collapse) ===
+
+Paradigm           frac collapsed
+----------------------------------
+Oracle                       0.00
+RLS                          0.00
+Model-Based DP               0.00
+Q-Learning                   0.00
+Naive                        0.00
+Arifovic GA                  0.60
+Myopic                       1.00
+
+=== Parameter recovery at t = T (true r = 0.4, K = 10.0) ===
+
+Paradigm                    r_hat            K_hat    |r_err|    |K_err|
+------------------------------------------------------------------------
+RLS                0.398±0.002   10.034±0.064       0.007      0.219
+Model-Based DP     0.400±0.002    9.965±0.050       0.006      0.180
+  Recovery table saved: /Users/pranjal/Code/rl/ch12_world_models/sims/fishery_paradigms_recovery.tex

@@ -1,0 +1,36 @@
+\begin{table}[H]
+\centering
+\caption{Every per-step and cumulative importance weight in the twelve-trajectory Engine Replacement MDP log. Panel B compares the five estimates with the exact finite-horizon dynamic-programming value.}
+\label{tab:engine_ope}
+{\scriptsize\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{crrrrr}
+\toprule
+& \multicolumn{4}{c}{$\rho_t\,/\,\rho_{1:t}$} & discounted return \\
+\cmidrule(lr){2-5}
+trajectory & $t=1$ & $t=2$ & $t=3$ & $t=4$ & $G_i$ \\
+\midrule
+1 & 0\,/\,0 & 0\,/\,0 & 0\,/\,0 & 0\,/\,0 & -1.720 \\
+2 & 2\,/\,2 & 0\,/\,0 & 0\,/\,0 & 0\,/\,0 & 1.488 \\
+3 & 0\,/\,0 & 2\,/\,0 & 2\,/\,0 & 0\,/\,0 & 1.356 \\
+4 & 0\,/\,0 & 2\,/\,0 & 0\,/\,0 & 0\,/\,0 & 0.708 \\
+5 & 2\,/\,2 & 0\,/\,0 & 2\,/\,0 & 2\,/\,0 & 1.504 \\
+6 & 0\,/\,0 & 0\,/\,0 & 0\,/\,0 & 0\,/\,0 & -1.720 \\
+7 & 0\,/\,0 & 0\,/\,0 & 0\,/\,0 & 0\,/\,0 & -1.720 \\
+8 & 0\,/\,0 & 0\,/\,0 & 0\,/\,0 & 0\,/\,0 & -1.720 \\
+9 & 2\,/\,2 & 0\,/\,0 & 0\,/\,0 & 2\,/\,0 & 0.978 \\
+10 & 2\,/\,2 & 2\,/\,4 & 2\,/\,8 & 2\,/\,16 & 2.224 \\
+11 & 2\,/\,2 & 0\,/\,0 & 0\,/\,0 & 2\,/\,0 & 0.978 \\
+12 & 0\,/\,0 & 2\,/\,0 & 2\,/\,0 & 2\,/\,0 & 1.939 \\
+\midrule
+\multicolumn{6}{c}{Panel B. Point estimates} \\
+\midrule
+estimator & \multicolumn{2}{c}{estimate} & \multicolumn{3}{c}{estimate minus exact value} \\
+Exact DP & \multicolumn{2}{c}{2.0502} & \multicolumn{3}{c}{+0.0000} \\
+DM & \multicolumn{2}{c}{2.0660} & \multicolumn{3}{c}{+0.0158} \\
+IS & \multicolumn{2}{c}{2.9653} & \multicolumn{3}{c}{+0.9151} \\
+PDIS & \multicolumn{2}{c}{1.8353} & \multicolumn{3}{c}{-0.2149} \\
+WIS & \multicolumn{2}{c}{2.2240} & \multicolumn{3}{c}{+0.1738} \\
+DR & \multicolumn{2}{c}{1.6915} & \multicolumn{3}{c}{-0.3587} \\
+\bottomrule
+\end{tabular}}
+\end{table}

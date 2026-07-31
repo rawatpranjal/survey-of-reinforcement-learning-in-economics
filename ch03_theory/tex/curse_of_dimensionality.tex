@@ -1,0 +1,215 @@
+% Section file: the curse of dimensionality.
+% Inputs into ch03_theory/tex/planning_learning_v3.tex, immediately after
+% \subsubsection{Sample Complexity of Planning}, so its headings live inside
+% \section{The Theory of Reinforcement Learning}. It carried its own \section
+% until 2026-07-25; too short to stand alone, and the theory chapter already
+% forward-referenced sec:breaking_curse.
+%
+% Covers complexity results and structural conditions for tractability.
+% Primary references: Chow-Tsitsiklis (1989), Du et al. (2021), Liu et al. (2022),
+% Lu et al. (2025). Every number in the tables comes from
+% ch03_theory/sims/curse_arithmetic.py; none is typed by hand.
+%
+% Style: natbib citations, no em dashes, no colons in prose, no \textbf{},
+% no \paragraph{} headers, no bullet points outside numbered lists.
+
+\subsection{The Curse of Dimensionality}
+\label{sec:curse_of_dimensionality}
+
+Exact solution methods must visit every state, and the number of states grows exponentially in the problem's natural dimension. With $d$ state variables each taking $n$ discrete values, the state space has $n^d$ elements and value iteration requires $O(n^{2d} \cdot |\mathcal{A}|)$ time per sweep.\footnote{The term ``curse of dimensionality'' is due to \citet{Bellman1957}.} Table~\ref{tab:curse_grid_dp} evaluates this for models that appear elsewhere in this survey. The barrier is not reached only by problems a reader would call large. The bus engine of \citet{Rust1987}, on its published 175-point mileage grid, sweeps in microseconds. Three such engines with a joint replacement decision, a model whose transition law still fits on one line, take days. Five put a single sweep into geological time and need more than a terabyte to hold the value function alone.
+
+\input{../ch03_theory/sims/curse_grid_dp.tex}
+
+The theoretical foundations of this barrier were established through a sequence of results in computational complexity. \citet{papadimitriou1987} proved that computing an optimal policy for finite-horizon MDPs is P-complete, placing it among the hardest problems solvable in polynomial time. For infinite-horizon discounted MDPs, they showed that policy iteration terminates in polynomial time, but the polynomial depends on the number of states and actions, which may themselves be exponential in the natural problem dimension.
+
+The decisive complexity result for continuous-state MDPs comes from \citet{chow1989complexity}. The class of interest is discounted MDPs with $d_s$-dimensional continuous state spaces and $d_a$-dimensional continuous action spaces, where the transition density and reward function are Lipschitz continuous. The computational problem is to compute an $\epsilon$-accurate approximation of the optimal value function in the supremum norm, from oracle evaluations of the reward function and transition density in a real-number model of computation. \citeauthor{chow1989complexity} characterize the worst-case complexity of this problem, and the answer turns on one extra condition on the transition density. Say that the problem \emph{mixes} at rate $\rho > 0$ if $\int_{\mathcal{S}} \min_{s, a} P(s'|s,a) \, ds' \geq \rho$, so that from every state and every action some fixed mass of the next-state distribution lands on a common set and the influence of the initial condition washes out at a fixed rate.
+
+\begin{theorem}[Chow-Tsitsiklis, 1989]
+\label{thm:chow_tsitsiklis}
+Consider Lipschitz-continuous discounted MDPs with $d_s$-dimensional states, $d_a$-dimensional actions, and discount factor $\gamma$, and let $C(\gamma, \epsilon)$ be the minimum, over correct algorithms, of the worst-case number of oracle queries needed to compute an $\epsilon$-approximation of the optimal value function. On the subclass that mixes at some rate $\rho > 0$,
+\begin{equation}
+C(\gamma, \epsilon) = \Theta\left( \left( \frac{1}{(1-\gamma)\,\epsilon} \right)^{2d_s + d_a} \right).
+\label{eq:ct_mixing}
+\end{equation}
+Without the mixing condition, and likewise when the kernel is only a subprobability measure,
+\begin{equation}
+C(\gamma, \epsilon) = \Theta\left( \left( \frac{1}{(1-\gamma)^2\,\epsilon} \right)^{2d_s + d_a} \right).
+\label{eq:ct_general}
+\end{equation}
+\end{theorem}
+
+Both are tight, the upper bounds coming from discretization procedures and the lower bounds from an adversary argument that constructs two instances an algorithm making too few queries cannot distinguish.\footnote{The lower bound without mixing is proved for some Lipschitz constant rather than for every one. \citeauthor{chow1989complexity} note that a small enough constant satisfies the mixing condition automatically, in which case the tighter bound \eqref{eq:ct_mixing} is the best available.} Counting queries rather than arithmetic is the natural measure here, since the oracle supplies the only information the algorithm has about the reward and the transition density. Translating the bounds into arithmetic operations is the subject of a companion multigrid algorithm \citep{chow1989multigrid}, which attains \eqref{eq:ct_mixing} exactly under mixing and comes within a factor $(1-\gamma)^{-1}$ of \eqref{eq:ct_general} without it.
+
+Three things follow. Backward induction on uniform discretization grids attains the exponent $2d_s + d_a$, so no cleverer deterministic scheme improves on simple grids by more than constant and logarithmic factors.\footnote{The exponent falls if more smoothness is available. \citeauthor{chow1989complexity} expect that bounding derivatives of order $r$ replaces $2d_s + d_a$ by a smaller exponent depending on $r$, which is the same mechanism Section~\ref{sec:smoothness_pathway} develops for neural approximation; they state this as an extension rather than prove it. When the action space is a single point the problem is a linear Fredholm equation of the second kind, and there they do show the exponent drops to $2d_s$.} The lower bound proves that no algorithm can do better without additional structural assumptions. And the discount factor is exponentiated alongside the dimensions, so a horizon that a reader would call long is as costly as several extra state variables; mixing is worth exactly one power of $(1-\gamma)$ inside that exponentiated base. Table~\ref{tab:curse_chow_tsitsiklis} evaluates both regimes.
+
+\input{../ch03_theory/sims/curse_chow_tsitsiklis.tex}
+
+The exponent $2d_s + d_a$ admits a heuristic decomposition into the three numerical subproblems nested in the Bellman operator \citep{rust1996numerical}. Maximizing over the action space contributes $\Theta(\epsilon^{-d_a})$, integrating over the transition density contributes $\Theta(\epsilon^{-d_s})$, and approximating the value function over the state space contributes another $\Theta(\epsilon^{-d_s})$; the complexity bound is the product of the three. The result holds for continuous-action problems, deterministic algorithms, and worst-case complexity, and relaxing each of these three qualifications is a way to escape the barrier, most notably the random Bellman operators discussed below.
+
+This complexity result extends the work of \citet{traub1988} on information-based complexity, which established similar exponential lower bounds for multivariate integration and function approximation. The connection is direct. Computing expected values under the Bellman operator involves integrating over the transition density, inheriting the curse from numerical integration. \citeauthor{traub1988} showed that for functions in standard Sobolev spaces, no integration method can achieve error $\epsilon$ with fewer than $\Theta(\epsilon^{-d})$ function evaluations. The MDP problem compounds this with the need to solve a fixed-point equation.
+
+\citet{rust1996numerical} surveys these computational barriers in the context of structural econometric estimation of dynamic discrete choice models. The nested fixed-point algorithm (NFXP) requires solving the Bellman equation to compute choice probabilities at each parameter guess, making the curse of dimensionality a binding constraint on the complexity of estimable models.\footnote{This limitation motivated the development of conditional choice probability methods \citep{HotzMiller1993} and simulation-based estimators that avoid full solution of the dynamic program. \citet{rust1997randomization} showed that a random Bellman operator breaks the curse of dimensionality for discrete-choice MDPs, exploiting the fact that randomization breaks the curse of multivariate integration. \citet{bray2022comment} shows that this class of dynamic programs is limited, in that it requires all but a vanishingly small fraction of the state variables to behave arbitrarily similarly to i.i.d.\ uniform random variables.}
+
+
+\subsection{Breaking the Curse: Three Pathways}
+\label{sec:breaking_curse}
+
+Recent theoretical work has identified three distinct structural conditions under which the curse of dimensionality can be circumvented: bilinear structure in the Bellman error, smoothness exploitable by neural networks, and factorization arising from weak coupling. What the three share is visible in Figure~\ref{fig:curse_arithmetic}. Each replaces the ambient state dimension with a structural quantity, an inherent rank or a parent-set size, so its cost is flat in the dimension that makes exact dynamic programming explode. Each also carries a large constant and a condition that has to be checked, which is what the rest of this section quantifies.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\textwidth]{../ch03_theory/sims/curse_arithmetic.png}
+\caption{Operation and sample counts against ambient state dimension, on a log scale, at $\epsilon = 0.01$. Exact grid dynamic programming and the Chow-Tsitsiklis lower bound of Theorem~\ref{thm:chow_tsitsiklis} grow exponentially in $d$; the bilinear and factored bounds of Theorems~\ref{thm:bilinear_sample} and~\ref{thm:factored_complexity} are constant in $d$ at fixed structural parameters. Dashed lines mark one second, one day and one year at $10^9$ operations per second. The Chow-Tsitsiklis curve leaves the panel because it bounds a harder class, continuous states and actions to a fixed supremum-norm accuracy.}
+\label{fig:curse_arithmetic}
+\end{figure}
+
+\subsubsection{Bilinear Structure}
+\label{sec:bilinear_pathway}
+
+\citet{du2021} introduce the Bilinear Class framework, which unifies and extends prior structural conditions for sample-efficient reinforcement learning. The unifying observation is that many tractable RL settings share a common algebraic property, namely that the Bellman error can be written as a bilinear form.
+
+\begin{definition}[Bilinear Class, Du et al. 2021]
+\label{def:bilinear_class}
+Consider an MDP $M$, a hypothesis class $\mathcal{H}$, a discrepancy function $\ell_f$, and a set of estimation policies $\Pi_{\text{est}}$. The tuple $(\mathcal{H}, \ell_f, \Pi_{\text{est}}, M)$ is a Bilinear Class if $\mathcal{H}$ is realizable in $M$ and there exist functions $W_h: \mathcal{H} \to \mathcal{V}$ and $X_h: \mathcal{H} \to \mathcal{V}$ for some Hilbert space $\mathcal{V}$ such that for all $f \in \mathcal{H}$ and $h \in [H]$:
+\begin{enumerate}
+\item The Bellman error decomposes as $\mathbb{E}_{a_{0:h} \sim \pi_f}[Q_{h,f}(s_h, a_h) - r_h - V_{h+1,f}(s_{h+1})] = \langle W_h(f) - W_h(f^*), X_h(f) \rangle$.
+\item The discrepancy measure permits estimation. For any $g \in \mathcal{H}$, $|\mathbb{E}_{a_{0:h-1} \sim \pi_f, a_h \sim \pi_{\text{est}}}[\ell_f(o_h, g)]| = |\langle W_h(g) - W_h(f^*), X_h(f) \rangle|$.
+\end{enumerate}
+\end{definition}
+
+The bilinear structure enables a key computational advantage. Data collected under one hypothesis can be reused to estimate the Bellman error for all hypotheses in the class simultaneously, analogous to uniform convergence in supervised learning. The resulting algorithm, BiLin-UCB, has a sample complexity stated as a reduction to the generalization error of that supervised problem. Writing $\varepsilon_{\text{gen}}(m, \mathcal{H})$ for the uniform-convergence rate of the discrepancy functions over $\mathcal{H}$ at batch size $m$, the suboptimality of the returned hypothesis is bounded by $3H \varepsilon_{\text{gen}}(m, \mathcal{H})$ times $1 + \sqrt{\tilde{d}_m}\,\mathrm{conf}(\cdot)$, where $\tilde{d}_m = H \lceil 3d \ln(1 + 3B_X^2 B_W^2 / \varepsilon_{\text{gen}}^2) \rceil$ is an effective dimension. The amplification is therefore of order $H^{3/2}\sqrt{d}$ up to logarithmic and confidence factors, not $H$ alone, and it is what produces the horizon powers in the explicit count below. Any hypothesis class whose generalization error decays polynomially in $m$ is learnable. Specializing to a finite hypothesis class makes the count explicit:
+
+\begin{theorem}[Du et al. 2021, Corollary 5.1]
+\label{thm:bilinear_sample}
+Let $(\mathcal{H}, \ell, \Pi_{\text{est}}, M)$ be a Bilinear Class of inherent dimension $d$, with a finite hypothesis class $\mathcal{H}$ and bounded discrepancy. For any $\epsilon \in (0,1)$ and $\delta \in (0, 1/3)$, BiLin-UCB returns an $\epsilon$-optimal policy with probability at least $1 - \delta$, using
+\begin{equation}
+O\left( \frac{d^2 H^7 \ln(d H^2)\, \ln(|\mathcal{H}|)\, \ln(1/\delta)}{\epsilon^2} \cdot \ln^2\!\left( \frac{d H B_X B_W \ln(|\mathcal{H}|) \ln(1/\delta)}{\epsilon} \right) \right)
+\label{eq:bilin_samples}
+\end{equation}
+trajectories, where $B_X$ and $B_W$ bound the norms of the two bilinear factors.
+\end{theorem}
+
+The dependence on the ambient state dimension is gone, replaced by the inherent dimension $d$ of the bilinear factorization. What replaces it is a seventh power of the horizon, and Table~\ref{tab:curse_sample_complexity} shows what that costs at horizons an applied problem would treat as short. Two qualifications limit what the theorem delivers. It bounds trajectories, not arithmetic, and BiLin-UCB searches over $\mathcal{H}$ at each iteration, so a class large enough to be realizable need not be one that can be optimized over. And realizability is assumed, not tested.
+
+\input{../ch03_theory/sims/curse_sample_complexity.tex}
+
+The Bilinear Class framework subsumes several previously studied settings, including tabular MDPs, linear MDPs \citep{jin2020}, linear mixture MDPs \citep{AyoubVTR2020}, linear Bellman complete models \citep{zanette2020}, and factored MDPs \citep{kearns1999}. It also introduces new tractable settings, including the Linear $Q^*/V^*$ model where both the optimal Q-function and V-function are linear in known features. The unifying observation is that low Bellman rank (the dimension of the bilinear factorization) implies polynomial learnability.\footnote{The Bilinear Class is related to but distinct from the Bellman Eluder dimension of \citet{jin2021}. Neither framework strictly contains the other; they capture different structural properties that enable efficient learning.}
+
+
+\subsubsection{Smoothness and Neural Function Approximation}
+\label{sec:smoothness_pathway}
+
+The second pathway exploits smoothness of the value function, which neural networks can approximate efficiently. \citet{liu2022deep} analyze deep Q-learning with $\epsilon$-greedy exploration, characterizing when neural function approximation provably works beyond the linear regime.
+
+The key assumption is that the optimal Q-function lies in a Besov space $\mathcal{B}^{\alpha}_{p,q}(\mathcal{X})$, where $\alpha > 0$ is the smoothness parameter. Besov spaces generalize Sobolev and H\"{o}lder spaces, allowing for spatially inhomogeneous smoothness with spikes and jumps. The smoothness parameter $\alpha$ controls the approximation rate, with smoother functions (larger $\alpha$) admitting more efficient approximation.
+
+\begin{assumption}[Bellman Smoothness, Liu et al. 2022]
+\label{ass:bellman_smoothness}
+Let $\tilde{R}$ be a fixed constant. Define $\mathcal{B}_{\tilde{R}} = \{f \in \mathcal{B}^{\alpha}_{p,q}(\mathcal{X}): \|f\|_{\mathcal{B}} \leq \tilde{R}\}$. For any $h \in [H]$ and $Q: \mathcal{S} \times \mathcal{A} \to [0, H]$, the Bellman operator satisfies $T^*_h Q \in \mathcal{B}_{\tilde{R}}$.
+\end{assumption}
+
+Since $Q$ takes values in $[0, H]$, the radius $\tilde{R}$ grows with the horizon, $\tilde{R} \asymp H$. Under this assumption, \citeauthor{liu2022deep} prove that value iteration with deep ReLU networks achieves sublinear regret:
+
+\begin{theorem}[Liu et al. 2022, Theorem 1]
+\label{thm:deep_rl_regret}
+Under Assumption~\ref{ass:bellman_smoothness} with smoothness $\alpha > d(1/p - 1/4)_+$, value iteration via deep ReLU networks with depth and width
+\begin{equation}
+L \asymp \frac{d}{2\alpha + d} \log T, \qquad m \asymp \frac{d}{2\alpha + d}\, T^{\frac{d}{2\alpha + d}} \log T
+\label{eq:liu_architecture}
+\end{equation}
+achieves, for an MDP-dependent constant $K \in [1, H]$ and an action set of size $A$, regret
+\begin{equation}
+\text{Regret}(T) = \tilde{O}\left( H^{\frac{H+4}{H+2}} K^{\frac{2}{K+2}} A^{\frac{K}{K+2}}\, T^{\frac{\alpha K + (\alpha + d)(K+2)}{(2\alpha + d)(K+2)}} \right).
+\label{eq:liu_regret}
+\end{equation}
+\end{theorem}
+
+The constant $K$ measures how myopic the problem is under $\epsilon$-greedy exploration, $K = 1$ under dense informative rewards and $K = H$ in the sparse-reward worst case. The regret exponent improves with smoothness. As $\alpha \to \infty$ it approaches $(K+1)/(K+2)$, matching the $\epsilon$-greedy contextual bandit rate; at $K = 1$ that is $T^{2/3}$. For the Barron space of two-layer networks, width $m = \Omega(\sqrt{T})$ suffices and the exponent becomes $(2K+3)/(2K+4)$, free of $d$ altogether.
+
+The mechanism is that smooth functions can be approximated by neural networks with polynomially many parameters in the accuracy $\epsilon$, rather than the exponential scaling that generic Lipschitz functions require. The curse shifts from state-space size to the smoothness-to-dimension ratio $\alpha/d$. That is a shift, not a removal. Table~\ref{tab:curse_smoothness} evaluates the exponent and the width \eqref{eq:liu_architecture} the theorem demands: at a ratio below roughly one the exponent sits close to unity, the guarantee is sublinear only in the formal sense, and the network the theorem prescribes is wider than any that gets trained. The condition $\alpha > d(1/p - 1/4)_+$ binds before that: at ten state variables a twice-differentiable $Q$-function is already inadmissible, and at fifty even an eight-times-differentiable one is.
+
+\input{../ch03_theory/sims/curse_smoothness.tex}
+
+
+\subsubsection{Factorization and Weak Coupling}
+\label{sec:factored_pathway}
+
+The third pathway exploits structural sparsity in the transition dynamics. \citet{lu2025} study factored MDPs where the state vector $s = (s_1, \ldots, s_n)$ consists of $n$ components, and transitions factorize across components:
+\begin{equation}
+P(s'|s, a) = \prod_{i=1}^{n} P_i(s'_i | s_{\text{pa}(i)}, a),
+\end{equation}
+where $\text{pa}(i) \subseteq [n]$ denotes the parent set of component $i$. In an exactly factored MDP, each component's next value depends only on a small subset of current components, encoded in a directed graph.
+
+The challenge is that exact factorization rarely holds in practice. \citeauthor{lu2025} extend the theory to approximate factorization, where the true transition kernel is close to a product of component kernels but not equal to it. Writing $x = (s,a)$ for a state-action pair, $Z^S_k$ and $Z^P_k$ for the scopes of component $k$ on the state and on the state-action space, and $x[Z]$ for the restriction of $x$ to a scope $Z$, the approximation error of a scheme $\omega$ is
+\begin{equation}
+\Delta_P^\omega = \sup_{P_1, \ldots, P_{K_\omega}} \; \max_{s' \in \mathcal{S},\, x \in \mathcal{X}} \left| P(s' \mid x) - \prod_{k=1}^{K_\omega} P_k\!\left( s'[Z^S_k] \mid x[Z^P_k] \right) \right|,
+\label{eq:lu_coupling}
+\end{equation}
+the largest pointwise gap between the true kernel and the factored one, over every admissible choice of component marginals.\footnote{This is a pointwise maximum, not a total-variation distance, so it carries neither a sum over successor states nor a factor of one half. The supremum over component marginals makes the guarantee hold for whichever choice the algorithm makes.} A matching quantity $\Delta_R^\omega$ measures the reward decomposition. Weak coupling, a common property of networked systems, is what makes $\Delta_P^\omega$ small.
+
+\begin{definition}[Weak Coupling]
+\label{def:weak_coupling}
+An MDP exhibits weak coupling if the transition of each state component $s_i$ depends strongly on a small set of parents $\text{pa}(i)$ and only weakly on the remaining components, so that the approximation error $\Delta_P^\omega$ of a scheme that drops the remaining dependencies is small.
+\end{definition}
+
+Approximate factorization buys a smaller sample requirement but does not deliver an exact solution. The error it introduces never vanishes with more data:
+
+\begin{theorem}[Lu et al. 2025, Theorem 5.1]
+\label{thm:factored_complexity}
+Fix a factorization scheme $\omega$ with scope sets $Z^P_k$ for the transition components and $Z^R_i$ for the reward components, and write $|\mathcal{X}[Z]|$ for the number of state-action configurations a scope $Z$ can take. Define the misspecification bias
+\begin{equation}
+\mathcal{E}_\omega = \frac{\gamma}{(1-\gamma)^2}\, \Delta_P^\omega + \frac{1}{1-\gamma}\, \Delta_R^\omega .
+\label{eq:lu_bias}
+\end{equation}
+For any $\epsilon \in (0,1)$ and $\delta > 0$, with probability at least $1 - \delta$, model-based Q-value iteration on the factored estimate returns $\hat{Q}^*_\omega$ satisfying
+\begin{equation}
+\|\hat{Q}^*_\omega - Q^*\|_\infty \leq \epsilon + \mathcal{E}_\omega
+\label{eq:lu_accuracy}
+\end{equation}
+once the sample count satisfies
+\begin{equation}
+D_\omega \gtrsim \frac{\left( \sum_{k \in [\kappa_p]} |\mathcal{X}[Z^P_k]| \right) \log\left( |\mathcal{X}[\cup_k Z^P_k]| / \delta \right)}{\epsilon^2 (1-\gamma)^3} + \sum_{i \in [\kappa_r]} |\mathcal{X}[Z^R_i]| .
+\label{eq:lu_samples}
+\end{equation}
+\end{theorem}
+
+The comparison is against the minimax rate $\tilde{O}(|\mathcal{S}||\mathcal{A}| / (\epsilon^2 (1-\gamma)^3))$ for an unstructured MDP \citep{azar2013}. The dependence on the discount factor and the accuracy is identical; what changes is that the full state-action count $|\mathcal{S}||\mathcal{A}|$ is replaced by a sum of scope sizes, which is exponentially smaller because each scope covers a few components rather than all of them.
+
+Equation~\eqref{eq:lu_accuracy} is where the restriction sits. The guarantee is $\epsilon + \mathcal{E}_\omega$, not $\epsilon$, and $\mathcal{E}_\omega$ is a floor that no amount of additional data lowers. Chasing an accuracy below the floor is wasted sampling. The $(1-\gamma)^{-2}$ multiplying $\Delta_P$ makes the floor sharply sensitive to the discount factor, so a coupling error that is negligible at $\gamma = 0.9$ can dominate the target accuracy at $\gamma = 0.99$. Table~\ref{tab:curse_factored} reports both blocks, the scope sizes that make the escape work and the coupling error at which it stops working. Panel (b) puts a number on the word small. At $\gamma = 0.9$ a coupling error of one part in ten thousand leaves the floor just inside a target accuracy of $0.01$; at $\gamma = 0.99$ the same coupling error puts the floor two orders of magnitude above that target, and the coupling would have to fall to roughly one part in a million to recover it.
+
+\input{../ch03_theory/sims/curse_factored.tex}
+
+The practical implication is that networked systems, such as supply chains, power grids, and multi-agent coordination problems, are amenable to methods that exploit the factored structure even when exact independence fails. The scheme $\omega$ is a choice, and it trades the two terms against each other. Coarser scopes shrink $\sum_k |\mathcal{X}[Z^P_k]|$ and so the sample requirement \eqref{eq:lu_samples}, while raising $\Delta_P^\omega$ and so the floor \eqref{eq:lu_bias}. Consistency holds only in the exactly factored case, where $\mathcal{E}_\omega = 0$.
+
+
+\subsubsection{Simulation Study: Wind Farm Storage Control}
+\label{sec:wind_farm_simulation}
+
+The barrier of Theorem~\ref{thm:chow_tsitsiklis} and the structural escape routes of Section~\ref{sec:breaking_curse} can both be exhibited in a single control problem, a wind farm with battery storage adapted from the scaling experiment in \citet{lu2025}. Each hour the operator chooses a charge or discharge rate $a_t \in [-20, 20]$ kW, facing stochastic wind generation, spot prices, and demand, over a finite horizon of $H = 24$ hours with discount factor $\gamma = 0.95$. The base state ($d = 3$) is $s_t = (w_t, p_t, c_t)$, where $w_t \in [0, 100]$ is wind generation (kW), $p_t \in [0, 1]$ is the spot price (\$/kWh), and $c_t \in [0, 50]$ is the battery state of charge (kWh); scaling experiments append auxiliary state variables $x_t^{(4)}, \ldots, x_t^{(d)} \in [0, 1]$ that follow AR(1) processes weakly coupled to wind. Transitions are
+\begin{align}
+w_{t+1} &= 0.7 w_t + \epsilon_t^w, \quad \epsilon_t^w \sim \mathcal{N}(30, 25), \\
+p_{t+1} &= 0.6 p_t + 0.05 (w_t / 100) + \epsilon_t^p, \quad \epsilon_t^p \sim \mathcal{N}(0.4, 0.01), \\
+c_{t+1} &= c_t + 0.9 a_t, \\
+x_{t+1}^{(i)} &= 0.8 x_t^{(i)} + 0.01(w_t/100 - 0.5) + 0.1 + \epsilon_t^{(i)}, \quad \epsilon_t^{(i)} \sim \mathcal{N}(0, 0.0025),
+\end{align}
+with all variables clipped to their bounds, and the reward is
+\begin{equation}
+r(s_t, a_t) = p_t \cdot \min(w_t + a_t, D_t) - 0.01 c_t - 5 \cdot \max(0, D_t - w_t - a_t),
+\end{equation}
+where demand $D_t \sim \text{Poisson}(50 + 10 \sin(2\pi t / 24))$ follows a diurnal pattern. The reward depends only on the base state, so the auxiliary dimensions are payoff-irrelevant yet inflate the state space that any tabular method must enumerate. Four solution methods run at each $d \in \{3, 4, 5, 6\}$. Tabular DP discretizes each dimension into 7 bins and solves by backward induction with Monte Carlo integration over transitions, a benchmark under coarse discretization rather than an exact optimum, granted a 10 minute budget per dimension. Factored RL runs Q-learning with one Q-table per state dimension, aggregated additively; it is given the identity of the three reward-relevant dimensions in advance, so it instantiates the known-structure premise of factored MDPs rather than the algorithms of \citet{lu2025}. DQN is a standard deep Q-network with experience replay and a target network, illustrating the neural function-approximation pathway rather than the specific algorithm analyzed by \citet{liu2022deep}. Linear AC is an actor-critic with linear value and policy functions in polynomial features (intercept, linear, squared, and pairwise cross terms), illustrating the linear function-approximation pathway rather than the BiLin-UCB algorithm of Theorem~\ref{thm:bilinear_sample}. The three RL implementations are illustrative analogies to the three pathways of Section~\ref{sec:breaking_curse}, not implementations of the cited algorithms.\footnote{All methods share the same 11-point action grid. RL methods train for 3{,}000 episodes per seed across 10 seeds; DP uses 20 Monte Carlo samples per state-action pair with a fixed integration seed. Policies are evaluated greedily over 50 episodes on a common evaluation environment (seed 99), so all methods face the same shock sequences. Factored RL uses 30 bins per dimension, learning rate 0.2, and exploration rate 0.2. DQN uses two hidden layers of 128 units, learning rate $5 \times 10^{-4}$, a replay buffer of 10{,}000 transitions, batch size 64, target updates every 100 steps, and $\epsilon$-greedy exploration decaying from 0.3 to 0.01. Linear AC uses actor and critic learning rates of 0.02 and 0.08.}
+
+Table~\ref{tab:curse_results} reports average returns and Figure~\ref{fig:curse_scaling} reports computation times. Tabular DP completes at $d = 3$ (36.7 seconds) and $d = 4$ (317.5 seconds) and exhausts its budget at $d \geq 5$; the exponential fit through its two completed runs grows by a factor of 8.6 per added dimension, implying roughly 45.7 minutes at $d = 5$ and 6.6 hours at $d = 6$. That measured factor is well below the $n^2 = 49$ that Table~\ref{tab:curse_grid_dp} charges an exact sweep at seven bins, because this solver integrates each transition with a fixed 20-sample Monte Carlo draw rather than summing over all $n^d$ successor cells, so it pays one factor of $n^d$ rather than two. The barrier is the same; the constant is smaller because the integral is approximated. The three RL methods train in under a minute per seed at every dimension. Where DP completes, DQN reaches within one percent of the DP return, Factored RL sits roughly two to three percent below it, and Linear AC attains DP-level returns on some seeds while collapsing to substantially worse policies on others, visible in its standard errors. The ranking is unchanged at $d = 5$ and $d = 6$ where DP is intractable. The cost profiles are consistent with the polynomial-complexity scaling predicted by the structural results of Section~\ref{sec:breaking_curse}, with the caveat that the cheapest method is also the least reliable.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.7\textwidth]{../ch03_theory/sims/wind_farm_curse_study_times.png}
+\caption{Computation time versus state dimension on a log scale. Circles trace completed tabular DP runs and crosses mark runs stopped at the 10 minute budget (dashed reference line); the dotted line extrapolates the exponential fit through the completed DP runs. RL curves show mean training time per seed over 10 seeds.}
+\label{fig:curse_scaling}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Average return per episode (\$/day) by method and state dimension. RL cells are mean $\pm$ standard error over 10 training seeds, each evaluated over 50 episodes with common random shocks; the DP row is a single deterministic solve, with TIMEOUT marking dimensions where backward induction exceeded its 10 minute budget. Rows ordered by mean return at $d = 3$.}
+\label{tab:curse_results}
+\input{../ch03_theory/sims/wind_farm_curse_study_results.tex}
+\end{table}

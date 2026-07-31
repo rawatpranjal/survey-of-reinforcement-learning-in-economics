@@ -1,0 +1,41 @@
+Brock-Mirman Optimal Growth: VI vs PI vs LP
+Parameters: α=0.36, β=0.96, z∈[0.9, 1.1]
+Timing protocol: median of 5 independent wall-clock runs per algorithm.
+  Computing: shared_r1
+  States: 1000, Actions: 500
+  Parameters: α=0.36, β=0.96
+  Cache saved: /Users/pranjal/Code/rl/ch03_theory/sims/cache/brock_mirman__shared_r1.pkl
+  Computing: VI_r1
+  VI: 567 iterations, median 30.55s over 5 runs (min 29.44s, max 36.34s), final error=9.68e-11
+  Cache saved: /Users/pranjal/Code/rl/ch03_theory/sims/cache/brock_mirman__VI_r1.pkl
+  Computing: PI_r1
+  PI: 11 iterations, median 0.76s over 5 runs (min 0.67s, max 0.81s)
+  Cache saved: /Users/pranjal/Code/rl/ch03_theory/sims/cache/brock_mirman__PI_r1.pkl
+  Computing: lp_r2
+  States: 40, Actions: 20, SA pairs: 800
+  VI baseline: median 0.007s over 5 runs
+  LP primal: median 0.017s over 5 runs
+  ||V_LP - V_VI||_inf = 2.32e-09
+  LP policy matches VI: 100.0%
+  Occupation measures: min=0.0250, max=7.2938, sum=25.0000
+  Cache saved: /Users/pranjal/Code/rl/ch03_theory/sims/cache/brock_mirman__lp_r2.pkl
+  Computing: timing_sweep
+  Grid 10: VI 567 iters (median 0.003s over 5 runs), PI 7 iters (median 0.000s over 5 runs)
+  Grid 20: VI 567 iters (median 0.006s over 5 runs), PI 7 iters (median 0.000s over 5 runs)
+  Grid 50: VI 567 iters (median 0.050s over 5 runs), PI 9 iters (median 0.001s over 5 runs)
+  Grid 100: VI 567 iters (median 0.549s over 5 runs), PI 9 iters (median 0.012s over 5 runs)
+  Grid 200: VI 567 iters (median 2.467s over 5 runs), PI 10 iters (median 0.051s over 5 runs)
+  VI per-iteration cost: O(40x20) = 800
+  PI per-iteration cost: O(40^3+40x20) = 64800
+  VI total operations: 453,600
+  PI total operations: 453,600
+  Ratio (VI/PI): 1.0x
+  Cache saved: /Users/pranjal/Code/rl/ch03_theory/sims/cache/brock_mirman__timing_sweep.pkl
+  ||V_VI - V_PI||_inf = 2.32e-09
+
+Saved: /Users/pranjal/Code/rl/ch03_theory/sims/brock_mirman_convergence.png
+
+Saved: /Users/pranjal/Code/rl/ch03_theory/sims/brock_mirman_convergence.pdf
+Saved: /Users/pranjal/Code/rl/ch03_theory/sims/brock_mirman_results.tex
+
+Done.

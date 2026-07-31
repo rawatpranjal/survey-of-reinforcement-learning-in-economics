@@ -1,0 +1,112 @@
+% Section 1: Introduction
+\subsection{Introduction}
+\label{sec:forecasting_rl_intro}
+
+Forecasting and reinforcement learning have evolved on adjacent benches. Time series
+forecasters minimise mean squared error or a strictly proper scoring rule.
+Reinforcement learners maximise expected discounted reward. The two fields share an
+underlying object, namely the conditional distribution of a future state, yet they
+disagree on which functional of that distribution counts as evaluation.
+\citet{GrangerPesaran2000} stated the problem two decades ago in a sentence that has
+not been fully absorbed in econometrics. ``The literature on forecast evaluation in
+econometrics has been primarily concerned with statistical accuracy measures of point
+forecasts, and little attention has been paid to the economic importance of these
+forecasts.'' Forecasts are not made in isolation, they are designed for use in a
+decision, and the decision is rarely a point estimate of conditional expectation.
+
+The classical argument is easiest to state in the two-state two-action setting of
+\citet{GrangerPesaran2000}. Let $y_t \in \{0, 1\}$ index a Bad and a Good state and
+let $a_t \in \{0, 1\}$ index a No and a Yes action. The four-cell payoff matrix
+$\{U_{yg}, U_{nb}, U_{yb}, U_{ng}\}$ defines a cost-benefit ratio
+$c_t = (U_{nb} - U_{yb}) / (U_{yg} - U_{ng} + U_{nb} - U_{yb})$ and the optimal
+decision is to act if and only if the forecast probability $\hat\pi_t$ of the Bad
+event exceeds the threshold $\theta_t = c_t / (1 + c_t)$, namely
+$\hat a_t = \mathbf 1\{\hat\pi_t > \theta_t\}$. The economic value of using the
+forecast $\hat\pi_t$ to decide, taken in expectation over the data generating process,
+is maximised at $\hat\pi_t = \pi_t$, the true conditional probability. This is the
+\emph{supreme solution} of \citet{GrangerPesaran2000} and it has the convenient
+property that it does not depend on the payoff ratio $\theta_t$, so the same forecast
+serves all decision makers regardless of their cost structure.
+
+Two scoring devices arise as soon as one tries to evaluate a forecast against this
+benchmark. The Brier score \citep{Brier1950}
+$B = T^{-1} \sum_{t=1}^T (y_t - \hat\pi_t)^2$ is the cross-sectional analogue of
+mean squared error and admits the decomposition of \citet{Murphy1973} into
+reliability, resolution, and uncertainty. The Kuipers score
+$\mathrm{KS} = H(\theta) - F(\theta)$, where $H$ and $F$ are the hit rate and the
+false alarm rate at threshold $\theta$, is the directional analogue used in
+meteorology and is shown by \citet{GrangerPesaran2000} to coincide with a
+standardised version of the \citet{PesaranTimmermann1992} market-timing test up to
+the variance scaling, $\hat\pi - \tilde\pi^\star = 2 P_B (1 - P_B) \,\mathrm{KS}$.
+The relationship between the average economic value and the Kuipers score is exact
+only in the knife-edge case $\theta_t = \bar y$, namely when the payoff ratio
+coincides with the unconditional event frequency. Outside this case a forecast that
+ranks higher on Brier or on Kuipers can rank lower in realised economic value, and
+two forecasts with identical statistical accuracy can be ordered in opposite
+directions by the relevant decision loss.
+
+\citet{GneitingRaftery2007} formalised the statistical complement of the argument.
+A scoring rule $S(P, y)$ is proper, with respect to a class of distributions
+$\mathcal P$, if for every $P, Q \in \mathcal P$ the expected score satisfies
+$\mathbb E_{y \sim Q}[S(Q, y)] \ge \mathbb E_{y \sim Q}[S(P, y)]$, and it is strictly
+proper if the inequality is strict for $P \neq Q$. Their Theorem 1 establishes that
+every regular proper scoring rule arises from a convex generating function $G$ on
+$\mathcal P$ via $S(P, \omega) = G(P) + G^\star(P, \omega) - \int G^\star(P, \cdot)\,
+\mathrm dP$, where $G^\star$ is a subtangent of $G$ at $P$. The Brier score
+corresponds to the convex function $G(p) = \|p\|_2^2$ on the simplex, the logarithmic
+score to negative Shannon entropy, and the continuous ranked probability score and
+the energy score follow from generalisations of the same construction to richer
+sample spaces. The decision-theoretic interpretation due to \citet{Dawid1998} closes
+the loop. Given an outcome space $\Omega$, an action space $\mathcal A$, a utility
+$U(\omega, a)$, and the Bayes act $a_P = \arg\max_a \mathbb E_{P}[U(\omega, a)]$, the
+score $S(P, \omega) = U(\omega, a_P)$ is proper with respect to $\mathcal P$, with
+strict propriety holding when the optimal Bayes act is unique for each forecast.
+
+The two halves of the present chapter sit on either side of this observation.
+Reinforcement learning has, since the early 2000s, been brought \emph{to} forecasting
+in four interlocking ways. RL is used as a meta-algorithm that selects ensemble
+weights for a portfolio of base forecasters, as a mechanism for training a
+probabilistic forecaster directly on a proper scoring rule that doubles as the
+downstream decision loss, as the unifying frame for approximate dynamic programming
+in sequential estimation, and most consequentially as the engine behind
+decision-focused learning, where the predictor is trained on an estimate of the
+realised decision regret rather than on a prediction-accuracy loss. The
+methodological frontier here is \citet{ElmachtoubGrigas2022} and
+\citet{DontiAmosKolter2017}. Conversely, forecasting has been brought \emph{to} RL
+through world models, trajectory generative models, counterfactual outcome predictors
+for off-policy evaluation, and the recent generation of pretrained time series
+foundation models. The methodological frontier here is the Dreamer family of
+\citet{Hafner2025} on the world-model side and the Chronos line of \citet{Ansari2024}
+on the foundation-model side.
+
+The bridge between the two halves is the question of which loss should govern the
+training of the forecaster when the forecast is destined for use inside a decision.
+\citet{ElmachtoubGrigas2022} and \citet{DontiAmosKolter2017} can be read as Wald
+(1950) statistical decision theory made differentiable. Wald defined the loss of a
+decision rule as the expected payoff under the true distribution and the optimal
+procedure as the minimax rule against the worst admissible distribution. SPO$^+$
+and task-based learning operationalise this principle by parametrising the
+predictor, defining a differentiable estimate of the decision-induced loss, and
+fitting the parameters by stochastic gradient descent. The risk bounds of
+\citet{LiuGrigas2021} and \citet{HuangGupta2024} turn the qualitative argument into
+a quantitative statement about sample complexity. The picture across these strands
+is that the Granger-Pesaran question has a constructive answer at scale, conditional
+on misspecification and conditional on the downstream decision being expressible in
+a differentiable way.
+
+We are economists, so we frame each piece by what it adds beyond ordinary least
+squares with a plug-in decision rule. The chapter is organised in seven sections.
+Section~\ref{sec:rl_for_forecasting} covers RL for forecasting, starting with the
+shallow uses (RL as an ensemble combiner, RL as a vehicle for Brier-loss reward
+training) and ending with the deepest use (decision-focused learning).
+Section~\ref{sec:forecasting_for_rl} covers forecasting for RL, organised around
+world models, trajectory generative models, counterfactual forecasting for
+off-policy evaluation, and time series foundation models.
+Section~\ref{sec:bridge} returns to the loss question, with explicit attention to
+the three obstacles that prevent the immediate replacement of standalone forecasting
+by decision-focused training. Section~\ref{sec:forecasting_rl_applications} surveys
+four application domains where the prediction-and-decision interaction is the active
+research question. Section~\ref{sec:forecasting_rl_sim} is a synthetic simulation on
+AR(1) demand under heteroscedastic misspecification, designed to make the central
+methodological point concrete on a familiar substrate. Section~\ref{sec:forecasting_rl_open}
+closes with four problems an economist is well placed to attack.

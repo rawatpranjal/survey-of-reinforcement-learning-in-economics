@@ -1,0 +1,48 @@
+============================================================
+Kuhn Poker Equilibrium Computation
+Chapter 6: RL in Games
+============================================================
+
+Nash equilibrium exploitability: 0.000000
+(Should be ~0 for exact Nash equilibrium)
+Running experiments: 2000 iterations, 10 seeds
+--------------------------------------------------
+Seed 1/10 complete
+Seed 2/10 complete
+Seed 3/10 complete
+Seed 4/10 complete
+Seed 5/10 complete
+Seed 6/10 complete
+Seed 7/10 complete
+Seed 8/10 complete
+Seed 9/10 complete
+Seed 10/10 complete
+
+============================================================
+RESULTS SUMMARY
+============================================================
+
+CFR:
+  Final exploitability: 0.009004
+  Iterations to ε < 0.01: 930
+  Time: 0.86s ± 0.03s
+
+CFR+:
+  Final exploitability: 0.007575
+  Iterations to ε < 0.01: 340
+  Time: 0.87s ± 0.03s
+
+FP:
+  Final exploitability: 0.332834
+  Iterations to ε < 0.01: >2000
+  Time: 0.68s ± 0.03s
+  Cache saved: /Users/pranjal/Code/rl/ch06_games/sims/cache/kuhn_poker_equilibrium.pkl
+
+============================================================
+GENERATING OUTPUTS
+============================================================
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/kuhn_poker_exploitability.png
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/kuhn_poker_strategies.png
+Saved: /Users/pranjal/Code/rl/ch06_games/sims/kuhn_poker_results.tex
+
+Done!

@@ -1,0 +1,33 @@
+======================================================================
+LAW OF LARGE NUMBERS AND CENTRAL LIMIT THEOREM
+======================================================================
+
+LLN: the sample mean of i.i.d. draws converges to the population mean.
+CLT: sqrt(n)(Xbar_n - mu) converges in distribution to N(0, sigma^2),
+  whatever the (finite-variance) base distribution.
+
+  Computing: lln_clt
+LLN + CLT: sample mean of non-normal draws
+  distributions: ['exponential', 'uniform', 'bernoulli']
+  CLT histogram at n=1000 over 40000 replicates
+  rate grid n_grid=[10, 30, 100, 300, 1000, 3000, 10000, 30000], 2000 replicates per n
+
+  LLN (exponential): mu=1.0000, final running mean range over 25 seeds at n=100000: [0.9941, 1.0066]
+  LLN deviation E|Xbar-mu| at n=10: 0.2525 (pred 0.2523); at n=30000: 0.00449 (pred 0.00461)
+  KS distance to N(0,sigma^2) vs n (exponential, rate check):
+    n=    10: D_KS=0.0512
+    n=    30: D_KS=0.0303
+    n=   100: D_KS=0.0302
+    n=   300: D_KS=0.0276
+    n=  1000: D_KS=0.0200
+    n=  3000: D_KS=0.0253
+    n= 10000: D_KS=0.0151
+    n= 30000: D_KS=0.0216
+  CLT exponential: mu=1.0000, sigma^2=1.0000, emp var(sqrt(n)(Xbar-mu))=0.9972 (ratio 0.9972), skew=+0.0589, exkurt=-0.0176, KS=0.0046
+  CLT uniform    : mu=0.5000, sigma^2=0.0833, emp var(sqrt(n)(Xbar-mu))=0.0840 (ratio 1.0085), skew=+0.0108, exkurt=-0.0299, KS=0.0047
+  CLT bernoulli  : mu=0.3000, sigma^2=0.2100, emp var(sqrt(n)(Xbar-mu))=0.2094 (ratio 0.9970), skew=+0.0235, exkurt=-0.0510, KS=0.0223
+  Cache saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/cache/lln_clt__lln_clt.pkl
+  Figure saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/lln_clt.png
+  Table saved: /Users/pranjal/Code/rl/appA_preliminaries/sims/lln_clt.tex
+
+Done.

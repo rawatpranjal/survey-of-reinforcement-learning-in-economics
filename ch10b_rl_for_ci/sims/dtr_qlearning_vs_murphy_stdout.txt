@@ -1,0 +1,75 @@
+Config:
+  TABULAR: N_seeds=50, N_GRID=[100, 300, 1000, 3000, 10000], N_EPOCHS_GRID=[1, 3, 10, 30, 100], alpha_qlearn=0.1, n_epochs_default=100, N_panel=300
+  TABULAR DGP: S in 1..5, beta=(1.0,-0.3,1.5), sigma_Y=0.5, S_TREAT=2
+  HIGH-DIM: p=10, N_seeds=20, N_GRID_HD=[500, 2000, 5000, 20000], FQI epochs=1000 (fixed), DQN data passes=50, target update passes=5, hidden=64, lr=0.001
+  HIGH-DIM DGP: T_decay=0.5, delta=0.5, sigma_eta=0.5, sigma_Y=0.5, smooth_tau=0.25, threshold_center=0.0, GH_nodes=32
+  Computing: oracle
+    Tabular Oracle V* = 3.5820
+    Optimal stage-1 policy: s=1: a=1, s=2: a=1, s=3: a=0, s=4: a=0, s=5: a=0
+    Optimal stage-2 policy: s2=1: a=1, s2=2: a=1, s2=3: a=0, s2=4: a=0, s2=5: a=0
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__oracle.pkl
+  Computing: murphy
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__murphy.pkl
+  Computing: naive_count
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__naive_count.pkl
+  Computing: qlearn_N
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__qlearn_N.pkl
+  Computing: qlearn_epochs
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__qlearn_epochs.pkl
+  Computing: oracle_hd
+    High-dim Oracle V* = 0.7423 (nested Gauss-Hermite); stage-1 rule = always action 1, stage-2 threshold = 0.3466
+    Oracle MC cross-check = 0.7404 (MC SE 0.0016, |diff|/MC SE 1.20)
+    High-dim V(behavior policy) = 0.3529
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__oracle_hd.pkl
+  Computing: fqi_hd
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__fqi_hd.pkl
+  Computing: dqn_hd
+  Cache saved: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/cache/dtr_qlearning_vs_murphy__dqn_hd.pkl
+
+========================================================================
+  Stylized Fast Track home visiting: g-computation vs Q-learning
+========================================================================
+
+  (Q0) Exact check of the equivalence identity (no sampling)
+    History-MDP states 56, value iteration reached its fixed point in 3 sweeps.
+    Murphy backward recursion        V = 3.581999999999999
+    Bellman optimality, value iter   V = 3.581999999999999
+    g-formula at the optimal regime  V = 3.581999999999999
+    |gap| Bellman vs Murphy            0.000e+00
+    |gap| Bellman vs g-formula         0.000e+00
+    |gap| Murphy vs g-formula          0.000e+00
+    |gap| worst over random regimes    8.882e-16
+    Identity holds to floating point: True (optimal regime, and 200 random regimes)
+
+  (Q1) Tabular V(pi_hat)/V* vs cohort size N [Q-learn 100 replays, alpha=0.1]
+  Tabular Oracle V* = 3.5820
+       N     Plug-in g-comp (MC SE)       Q-learn mean (MC SE)     Count OLS beta (MC SE)
+     100         0.9743 (0.0025)         0.9739 (0.0026)        -0.2596 (0.0199)
+     300         0.9907 (0.0012)         0.9914 (0.0012)        -0.2904 (0.0143)
+    1000         0.9978 (0.0005)         0.9953 (0.0007)        -0.2841 (0.0067)
+    3000         0.9995 (0.0002)         0.9979 (0.0006)        -0.2866 (0.0042)
+   10000         1.0000 (0.0000)         0.9968 (0.0007)        -0.2870 (0.0023)
+  Paired seed-wise contrast at largest N (Q-learn - plug-in): -0.0032 (MC SE 0.0007)
+  Count-OLS implied policy at largest N: 0.8124 (MC SE 0.0000); never visit 0.8124; always visit 0.9422
+
+  (Q2) Tabular Q-learn V(pi_hat)/V* vs replay epochs at N=300
+  epochs       Q-learn mean (MC SE)
+       1         0.9842 (0.0023)
+       3         0.9913 (0.0010)
+      10         0.9913 (0.0011)
+      30         0.9904 (0.0012)
+     100         0.9906 (0.0011)
+  Plug-in g-computation reference at N=300: 0.9907
+
+  (Q3) High-dim V(pi_hat)/V* vs cohort size N [FQI 1000 full-batch epochs, DQN 50 data passes, target update every 5 passes]
+  High-dim Oracle V* = 0.7423 (behavior policy 0.3529)
+       N     NN-FQI plug-in (MC SE)           DQN mean (MC SE)
+     500         0.8155 (0.0058)         0.9491 (0.0044)
+    2000         0.8402 (0.0029)         0.9537 (0.0022)
+    5000         0.9060 (0.0021)         0.9544 (0.0019)
+   20000         0.9842 (0.0013)         0.9740 (0.0012)
+  Paired seed-wise contrast at largest N (DQN - NN-FQI): -0.0101 (MC SE 0.0013)
+  NN-FQI realized epochs per stage (mean over seeds/stages): N=500: 1000, N=2000: 1000, N=5000: 1000, N=20000: 1000
+
+  Figure: /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy.png
+  Table:  /Users/pranjal/Code/rl-causal-final/ch10b_rl_for_ci/sims/dtr_qlearning_vs_murphy_results.tex

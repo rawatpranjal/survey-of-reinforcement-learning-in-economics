@@ -1,0 +1,23 @@
+\FloatBarrier
+\subsection{Engine Replacement MDP: Learning the Engine's Transitions}
+\label{engine:ch12}
+
+\input{../ch12_world_models/sims/engine_model_learning}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{../ch12_world_models/sims/engine_model_learning.png}
+\caption{Optimal-value error and its simulation-lemma bound against transition samples per state-action pair. Lines show means and shaded regions show one standard error over two hundred fixed seeds.}
+\label{fig:engine_model_learning}
+\end{figure}
+
+For each sample size $N$, the empirical model estimates the probability of a high-mileage successor separately for all four state-action pairs and solves its Bellman optimality equation. Let $\epsilon_P=\max_{s,a}\|\widehat P(\cdot\mid s,a)-P(\cdot\mid s,a)\|_1$. Since rewards are unchanged and $R_{\max}=1$, the discounted simulation lemma gives
+\[
+\|\widehat V^\star-V^\star\|_\infty
+\leq \frac{\gamma R_{\max}}{(1-\gamma)^2}\epsilon_P.
+\]
+The inequality links transition-estimation error to optimal-value error, and the simulation measures both sides.
+Every one of the $1{,}600$ fitted models satisfies this inequality. Three transition rows are deterministic in this example, so their empirical probabilities equal their population values at every $N$. Sampling error enters through the low-mileage keep transition.
+
+Table~\ref{tab:engine_model_learning} and Figure~\ref{fig:engine_model_learning} show that the mean value error falls from $0.5015$ at $N=25$ to $0.0362$ at $N=5{,}000$. The mean bound falls from $14.0040$ to $1.0154$. Both log-log slopes equal $-0.484$, close to the $-0.5$ parametric sampling rate for estimating the Bernoulli transition probability. The empirical optimal policy equals the true keep-then-replace policy in every replication, so the experiment separates value calibration error from policy regret.
+\FloatBarrier

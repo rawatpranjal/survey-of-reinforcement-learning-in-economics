@@ -1,0 +1,61 @@
+======================================================================
+SAMPLING THE BELLMAN OPERATOR ON THE ENGINE REPLACEMENT MDP
+======================================================================
+
+V* = (5.3448, 4.3103), Q* =
+  [[5.34482759 4.31034483]
+ [4.07931034 4.31034483]]
+
+Q_5 = F^5 Q_0 after 5 Q-iteration backups from Q_0 = 0:
+  [[2.5422625 1.517395 ]
+ [1.26713   1.517395 ]]
+exact Bellman-optimality target (F Q_5)(low, keep) = 2.826846
+
+Monte Carlo estimate of the same target, r(low,keep) + gamma * E[max_a' Q_5(s',a')]:
+  N sampled    mean estimate       SE     mean |error|
+          10       2.743832  0.050427      0.138357
+         100       2.826846  0.009915      0.027671
+        1000       2.835885  0.004356      0.012360
+       10000       2.825195  0.001190      0.002979
+      100000       2.825444  0.000507      0.001607
+     1000000       2.826837  0.000140      0.000359
+
+Tabular Q-learning over 10 fixed seeds, step size alpha_n = n^-0.6 per (s,a), 40000 synchronous sweeps:
+  sweep      mean error          SE
+       0        4.810345    0.000000
+       1        4.223220    0.001452
+       2        4.003830    0.044808
+       5        3.520859    0.052050
+      10        3.096086    0.085871
+      50        1.725894    0.043219
+     100        1.216907    0.039745
+     500        0.296964    0.045274
+    1000        0.164061    0.027189
+    5000        0.043092    0.007970
+   10000        0.033254    0.005746
+   39999        0.031189    0.002687
+  final error range: [0.019230, 0.042292]
+  seed-mean final Q table: [[5.3551224  4.32539392]
+ [4.09511057 4.32539392]]
+
+Stationary distribution of P^(pi*): d = (0.6667, 0.3333)
+Projected TD(lambda) contraction modulus for phi = (1,-1), compared with kappa_lambda = gamma(1-lambda)/(1-lambda*gamma)
+  lambda       bound     projected norm
+    0.00    0.900000        0.519615
+    0.50    0.818182        0.323060
+    0.90    0.473684        0.160756
+    1.00    0.000000        0.000000
+
+State-action discounted occupancies and target-to-log ratios:
+  state action        target         log       ratio
+  low   keep       0.689655    0.095288    7.237590
+  low   replace    0.000000    0.857592    0.000000
+  high  keep       0.000000    0.004712    0.000000
+  high  replace    0.310345    0.042408    7.318008
+  C_inf = 7.318008
+
+  Cache saved: /Users/pranjal/Code/rl-engine/ch03_theory/sims/cache/engine_value_learning.pkl
+  Figure saved: /Users/pranjal/Code/rl-engine/ch03_theory/sims/engine_value_learning.png
+  Table saved: /Users/pranjal/Code/rl-engine/ch03_theory/sims/engine_value_learning.tex
+
+Done.

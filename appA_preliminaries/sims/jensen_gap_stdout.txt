@@ -1,0 +1,64 @@
+======================================================================
+MAXIMIZATION BIAS AS A JENSEN GAP
+======================================================================
+
+  Computing: bias_grid
+Equal true action values: the entire expected maximum is overestimation.
+  Monte Carlo over 400000 replicates per cell.
+   actions   sigma   measured gap   sigma*E[max Z]   rel. error
+         2    0.10         0.0561           0.0564     4.36e-03
+         2    0.25         0.1413           0.1409     2.59e-03
+         2    0.50         0.2809           0.2819     3.54e-03
+         2    1.00         0.5663           0.5637     4.59e-03
+         8    0.10         0.1424           0.1423     4.57e-04
+         8    0.25         0.3559           0.3558     3.20e-04
+         8    0.50         0.7116           0.7116     5.89e-05
+         8    1.00         1.4232           1.4233     5.97e-05
+        32    0.10         0.2069           0.2068     3.54e-04
+        32    0.25         0.5174           0.5171     5.10e-04
+        32    0.50         1.0347           1.0342     4.69e-04
+        32    1.00         2.0697           2.0684     5.92e-04
+
+  E[max of n standard normals], the shape factor:
+    n =   2: 0.5637
+    n =   3: 0.8478
+    n =   4: 1.0295
+    n =   6: 1.2687
+    n =   8: 1.4233
+    n =  12: 1.6294
+    n =  16: 1.7649
+    n =  24: 1.9483
+    n =  32: 2.0684
+  It grows like sqrt(2 log n), so doubling the actions adds less each time.
+
+  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/jensen_gap__bias_grid.pkl
+  Computing: separation
+Separated true action values: one action better than the rest by 'gap'.
+   actions   sigma   true gap       bias
+         2    0.25       0.00     0.1405
+         2    0.25       0.25     0.0502
+         2    0.25       1.00     0.0009
+         2    1.00       0.00     0.5631
+         2    1.00       0.25     0.4483
+         2    1.00       1.00     0.2024
+         8    0.25       0.00     0.3558
+         8    0.25       0.25     0.1659
+         8    0.25       1.00     0.0016
+         8    1.00       0.00     1.4239
+         8    1.00       0.25     1.2114
+         8    1.00       1.00     0.6658
+        32    0.25       0.00     0.5174
+        32    0.25       0.25     0.2889
+        32    0.25       1.00     0.0045
+        32    1.00       0.00     2.0699
+        32    1.00       0.25     1.8299
+        32    1.00       1.00     1.1568
+
+  The bias never turns negative, as Jensen requires, and it falls as the
+  best action pulls clear of the field relative to the noise.
+
+  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/jensen_gap__separation.pkl
+  Figure saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/jensen_gap.png
+  Table saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/jensen_gap.tex
+
+Done.

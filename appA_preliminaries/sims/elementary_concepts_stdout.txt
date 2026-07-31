@@ -1,0 +1,7 @@
+======================================================================
+ELEMENTARY OBJECTS (diagram-only)
+======================================================================
+
+  Figure saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/elementary_concepts.png
+
+Done.

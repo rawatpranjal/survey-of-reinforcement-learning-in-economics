@@ -1,0 +1,64 @@
+
+Figure saved to /Users/pranjal/Code/rl/ch04_control_problems/sims/bus_engine_scaling.png
+LaTeX table saved to /Users/pranjal/Code/rl/ch04_control_problems/sims/bus_engine_results.tex
+======================================================================
+  Bus Engine Replacement Benchmark: Scaling Analysis (Chapter 4)
+======================================================================
+  Fleet sizes N:        [1, 2, 3, 4, 5, 6]
+  Mileage bins M:       6
+  Capacity:             3 engines/period
+  Cost weights:         alpha=1.0, beta=5.0
+  Discount gamma:       0.95
+  Train horizon:        50
+  Eval horizon:         100, eval episodes: 200
+  DQN seeds:            10 -> [42, 123, 7, 11, 19, 23, 31, 47, 61, 83]
+  Paired-eval init seed:2026 (shared initial states per N)
+  DP feasible threshold:10,000 states
+
+======================================================================
+  SCALING SUMMARY
+======================================================================
+
+  --------------------------------------------------------------------------------------
+    N |     |S| |  DP Time |  DP Return |   DQN Return (mean +/- SE) |  Thresh(3) |    Never
+  --------------------------------------------------------------------------------------
+    1 |       6 |    0.71s |     -54.76 |           -54.76 +/- 0.000 |     -55.62 |   -93.31
+    2 |      36 |    0.06s |    -110.05 |          -110.05 +/- 0.000 |    -111.76 |  -187.54
+    3 |     216 |    0.54s |    -165.13 |          -165.14 +/- 0.006 |    -167.70 |  -281.45
+    4 |   1,296 |    6.61s |    -220.40 |          -220.41 +/- 0.003 |    -223.81 |  -375.59
+    5 |   7,776 |   77.82s |    -276.74 |          -276.86 +/- 0.022 |    -281.10 |  -471.28
+    6 |  46,656 |      --- |        --- |          -334.65 +/- 1.855 |    -336.69 |  -563.80
+  --------------------------------------------------------------------------------------
+
+  Per-Seed DQN Returns:
+    N=1: -54.76, -54.76, -54.76, -54.76, -54.76, -54.76, -54.76, -54.76, -54.76, -54.76
+    N=2: -110.05, -110.05, -110.05, -110.05, -110.05, -110.05, -110.05, -110.05, -110.05, -110.05
+    N=3: -165.13, -165.18, -165.13, -165.13, -165.13, -165.16, -165.14, -165.13, -165.13, -165.13
+    N=4: -220.40, -220.41, -220.41, -220.40, -220.43, -220.41, -220.40, -220.42, -220.42, -220.42
+    N=5: -276.82, -276.80, -276.81, -276.93, -276.89, -276.79, -276.95, -276.80, -276.97, -276.87
+    N=6: -336.66, -331.52, -336.12, -331.67, -332.04, -332.31, -332.00, -331.92, -331.80, -350.46
+
+  Q-Error and Policy Agreement (where DP available):
+  ----------------------------------------
+    N |    Q-Error |  Agreement
+  ----------------------------------------
+    1 |     20.097 |    100.0%
+    2 |     24.020 |     99.7%
+    3 |     21.661 |     98.3%
+    4 |     17.251 |     93.0%
+    5 |     13.390 |     81.1%
+  ----------------------------------------
+
+  DQN Gap vs DP (where both available):
+    N=1: DQN is +0.0% vs DP
+    N=2: DQN is -0.0% vs DP
+    N=3: DQN is -0.0% vs DP
+    N=4: DQN is -0.0% vs DP
+    N=5: DQN is -0.0% vs DP
+
+  Output Files:
+    /Users/pranjal/Code/rl/ch04_control_problems/sims/bus_engine_scaling.png
+    /Users/pranjal/Code/rl/ch04_control_problems/sims/bus_engine_results.tex
+    /Users/pranjal/Code/rl/ch04_control_problems/sims/benchmark_bus_engine_stdout.txt
+
+Benchmark complete.

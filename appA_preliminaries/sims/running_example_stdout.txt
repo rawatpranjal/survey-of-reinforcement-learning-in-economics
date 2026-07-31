@@ -1,0 +1,257 @@
+======================================================================
+APPENDIX A RUNNING EXAMPLE: TWO-STATE MACHINE REPLACEMENT
+======================================================================
+
+  Computing: search
+Parameter selection
+  MDP primitives, fixed at round values for hand-checkability:
+    r(good, keep) = 1.0, r(worn, keep) = 0.2, replacement cost = 0.5
+    P(worn | good, keep) = 0.5, gamma = 0.9
+  property 1, optimal policy is (keep, replace): True, action gaps 1.0345 at good and 0.2310 at worn
+  property 2, envelope kink at t = 4.5670 sits 0.2567 above V*(worn) = 4.3103: True
+  property 3, searched 360 (logging keep-probability, feature ratio) pairs, 63 give on-policy contraction and an off-policy modulus of at least 1.2
+    mildest survivor: logging keep-probability 0.1, feature ratio 2.1
+    on-policy modulus 0.7301, off-policy modulus 1.2048
+    largest off-policy modulus attainable at each logging keep-probability, over the feature grid:
+       keep prob   d^mu(good)   best modulus   at ratio
+            0.05       0.9744         1.7000        5.0
+            0.10       0.9474         1.3092        3.4
+            0.15       0.9189         1.1441        2.6
+            0.20       0.8889         1.0516        2.1
+            0.25       0.8571         0.9935        1.8
+            0.30       0.8235         0.9548        1.6
+            0.35       0.7879         0.9269        1.5
+            0.40       0.7500         0.9000        1.5
+            0.45       0.7097         0.8734        1.5
+            0.50       0.6667         0.8471        1.5
+    the target policy's own stationary law is d^pi(good) = 0.6667, and at a
+    logging keep-probability of 0.5 the two laws coincide, so the
+    modulus falls back below one; expansion grows continuously with the drift
+
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__search.pkl
+  Computing: shared
+======================================================================
+A.2  THE MDP
+======================================================================
+  states  : ['good', 'worn']
+  actions : ['keep', 'replace']
+  gamma   : 0.9
+  reward r(s,a):
+    r(good , keep    ) = +1.000
+    r(good , replace ) = -0.500
+    r(worn , keep    ) = +0.200
+    r(worn , replace ) = -0.500
+  transition P(s'|s,a):
+    P(.|good , keep    ) = [good 0.500, worn 0.500]
+    P(.|good , replace ) = [good 1.000, worn 0.000]
+    P(.|worn , keep    ) = [good 0.000, worn 1.000]
+    P(.|worn , replace ) = [good 1.000, worn 0.000]
+
+  The four deterministic policies, with P^pi, r^pi and V^pi:
+    keep-always
+      P^pi = [[0.500, 0.500], [0.000, 1.000]]
+      r^pi = [+1.000, +0.200]
+      V^pi = [good 3.4545, worn 2.0000]
+    replace-always
+      P^pi = [[1.000, 0.000], [1.000, 0.000]]
+      r^pi = [-0.500, -0.500]
+      V^pi = [good -5.0000, worn -5.0000]
+    optimal (keep, replace)
+      P^pi = [[0.500, 0.500], [1.000, 0.000]]
+      r^pi = [+1.000, -0.500]
+      V^pi = [good 5.3448, worn 4.3103]
+    reverse (replace, keep)
+      P^pi = [[1.000, 0.000], [0.000, 1.000]]
+      r^pi = [-0.500, +0.200]
+      V^pi = [good -5.0000, worn 2.0000]
+
+  V* = [good 5.3448, worn 4.3103]
+  Q*(s,a):
+    Q*(good , keep    ) = 5.3448
+    Q*(good , replace ) = 4.3103
+    Q*(worn , keep    ) = 4.0793
+    Q*(worn , replace ) = 4.3103
+  action gap at good (keep over replace) : 1.0345
+  action gap at worn (replace over keep) : 0.2310
+
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__shared.pkl
+  Computing: vi
+======================================================================
+A.3  VALUE ITERATION AND THE ENVELOPE
+======================================================================
+   k   V_k(good)   V_k(worn)   sup error    ratio  greedy
+   0      0.0000      0.0000      5.3448         
+   1      1.0000      0.2000      4.3448   0.8129  (keep, keep)
+   2      1.5400      0.4000      3.9103   0.9000  (keep, replace)
+   3      1.8730      0.8860      3.4718   0.8879  (keep, replace)
+   4      2.2416      1.1857      3.1246   0.9000  (keep, replace)
+   5      2.5423      1.5174      2.8026   0.8969  (keep, replace)
+   6      2.8268      1.7880      2.5223   0.9000  (keep, replace)
+   7      3.0767      2.0442      2.2681   0.8992  (keep, replace)
+   8      3.3044      2.2690      2.0413   0.9000  (keep, replace)
+   9      3.5080      2.4739      1.8368   0.8998  (keep, replace)
+  10      3.6919      2.6572      1.6531   0.9000  (keep, replace)
+  11      3.8571      2.8227      1.4877   0.9000  (keep, replace)
+  12      4.0059      2.9714      1.3389   0.9000  (keep, replace)
+  largest ratio over the 12 steps: 0.9000, which is at most gamma = 0.9
+  mean of the last four ratios: 0.8999, so the error settles into decay at rate gamma
+  the early ratios fall below gamma because the second mode of gamma P^pi has
+  modulus below gamma and dies out first; the contraction gives an upper bound
+  on each step, not an equality
+  eigenvalue moduli of gamma P^pi: leading 0.9000 (= gamma), second 0.4500
+  the second mode decays faster, which is why early ratios fall below gamma
+
+  Envelope slice at the worn state, V = (V*(good), t):
+    keep line    : (T^keep V)(worn)    = +0.200 + 0.9 t          (slope 0.9)
+    replace line : (T^replace V)(worn) = -0.500 + 0.9 * 5.3448 = 4.3103   (slope 0)
+    kink at t    = 4.5670
+    fixed point  V*(worn) = 4.3103, which is 0.2567 below the kink
+    so replace is greedy at the optimum, and keep takes over for t > 4.5670
+
+  Iterations of value iteration to reach sup-norm error below 0.01:
+     gamma   1/(1-gamma)  iterations
+      0.50           2.0           6
+      0.90          10.0          59
+      0.99         100.0         847
+
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__vi.pkl
+  Computing: neumann
+======================================================================
+A.4  THE RESOLVENT AND THE NEUMANN SERIES
+======================================================================
+  Evaluating the optimal policy pi* = (keep, replace).
+    P^pi   = [[0.500, 0.500], [1.000, 0.000]]
+    r^pi   = [+1.000, -0.500]
+    I - gamma P^pi = [[0.5500, -0.4500], [-0.9000, 1.0000]]
+    determinant = 0.145000
+    (I - gamma P^pi)^-1 = [[6.8966, 3.1034], [6.2069, 3.7931]]
+    row sums of the resolvent = [10.0000, 10.0000], both equal 1/(1-gamma) = 10.0000
+    V^pi = [good 5.3448, worn 4.3103]
+
+  Truncating the Neumann series sum_{m=0}^{M} (gamma P^pi)^m r^pi:
+      M   V_M(good)   V_M(worn)   sup error       bound
+      1      1.2250      0.4000      4.1198      8.1000
+      3      2.0502      1.0581      3.2946      6.5610
+     10      3.7758      2.7412      1.5692      3.1381
+    the bound is gamma^(M+1) ||r^pi||_inf / (1 - gamma) with ||r^pi||_inf = 1.000
+
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__neumann.pkl
+  Computing: occupancy
+======================================================================
+A.5  MARKOV CHAINS, OCCUPANCY AND COVERAGE
+======================================================================
+  Target policy pi* = (keep, replace). Logging policy mu keeps with probability 0.1.
+    P^pi = [[0.500, 0.500], [1.000, 0.000]]
+    P^mu = [[0.950, 0.050], [0.900, 0.100]]
+    stationary d^pi = [good 0.6667, worn 0.3333]
+    stationary d^mu = [good 0.9474, worn 0.0526]
+    second eigenvalue modulus |lambda_2|: pi 0.5000, mu 0.0500
+    mixing: after k steps the distribution is within C |lambda_2|^k of stationary
+
+  Discounted occupancy from nu = [1, 0] (start good), d = (1-gamma) nu (I - gamma P)^-1:
+    d^pi_nu = [good 0.6897, worn 0.3103]  (sums to 1.0000)
+    d^mu_nu = [good 0.9529, worn 0.0471]  (sums to 1.0000)
+
+  Change of measure, state-level ratio w(s) = d^pi_nu(s) / d^mu_nu(s):
+    w(good ) = 0.7238
+    w(worn ) = 6.5862
+    concentrability C_inf = max_s w(s) = 6.5862
+
+  State-action occupancy:
+                 (s,a)      d^pi      d^mu     ratio
+    (good , keep    )    0.6897    0.0953    7.2376
+    (good , replace )    0.0000    0.8576    0.0000
+    (worn , keep    )    0.0000    0.0047    0.0000
+    (worn , replace )    0.3103    0.0424    7.3180
+    state-action concentrability C_inf = 7.3180
+
+  Share of the log's discounted weight, by state-action pair:
+    (good , keep    )    9.5 percent, used by the target
+    (good , replace )   85.8 percent, never used by the target
+    (worn , keep    )    0.5 percent, never used by the target
+    (worn , replace )    4.2 percent, used by the target
+
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__occupancy.pkl
+  Computing: projection
+======================================================================
+A.6  APPROXIMATION GEOMETRY AND THE DEADLY TRIAD
+======================================================================
+  One feature, Phi = [1.0, 2.1]^T, so the representable
+  value functions are the line span(Phi) through the origin.
+  V^pi points in the direction (1, 0.8065), so the feature is
+  deliberately far from the direction that would approximate well.
+
+  Weighting by on-policy d^pi = [good 0.6667, worn 0.3333]:
+    Pi_d = [[0.3120, 0.3276], [0.6552, 0.6880]]
+    Pi_d is idempotent: max|Pi^2 - Pi| = 0.00e+00
+    best representable approximation Pi_d V^pi = [good 3.0798, worn 6.4675]
+    modulus of Pi_d T^pi on span(Phi) = 0.7301 (absolute value 0.7301)
+    fixed point of Pi_d T^pi = [good 0.5491, worn 1.1532]
+
+  Weighting by off-policy d^mu = [good 0.9474, worn 0.0526]:
+    Pi_d = [[0.8032, 0.0937], [1.6867, 0.1968]]
+    Pi_d is idempotent: max|Pi^2 - Pi| = 4.44e-16
+    best representable approximation Pi_d V^pi = [good 4.6969, worn 9.8636]
+    modulus of Pi_d T^pi on span(Phi) = 1.2048 (absolute value 1.2048)
+    fixed point of Pi_d T^pi = [good -3.6928, worn -7.7549]
+
+  V^pi (exact) = [good 5.3448, worn 4.3103]
+  The on-policy modulus 0.7301 is below gamma = 0.9.
+  The off-policy modulus 1.2048 exceeds one, so the same
+  algebra now expands and the iterates diverge. Nothing about T^pi changed;
+  only the weighting that defines the projection did.
+
+  Tilting the weighting from d^pi toward d^mu, w(good) = mixture of the two:
+     alpha   d(good)   d(worn)   modulus
+      0.00    0.6667    0.3333    0.7301
+      0.20    0.7228    0.2772    0.7877
+      0.40    0.7789    0.2211    0.8578
+      0.60    0.8351    0.1649    0.9451
+      0.80    0.8912    0.1088    1.0568
+      1.00    0.9474    0.0526    1.2048
+    the modulus crosses one at alpha = 0.7048
+
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__projection.pkl
+  Computing: td
+======================================================================
+A.7  STOCHASTIC APPROXIMATION: TABULAR TD(0) UNDER FOUR STEP SIZES
+======================================================================
+  Evaluating pi* = (keep, replace) from sampled transitions, 20 seeds,
+  20000 steps each, target V^pi = [good 5.3448, worn 4.3103].
+
+                schedule       sum a_t     sum a_t^2   final sup error      s.e.
+                constant       1000.00       50.0000            0.1711    0.0220
+              one_over_n         19.46        3.2896            1.7125    0.0235
+      one_over_n_pow_0.7         98.82        6.0813            0.0450    0.0057
+      one_over_n_squared          3.29        2.1646            4.0291    0.0229
+
+  Reading the two Robbins-Monro conditions off the two sums, where n counts
+  visits to the state being updated:
+    constant   : sum a_n diverges, which is what the first condition asks, but
+                 sum a_n^2 diverges too, so the noise is never damped and the
+                 iterate settles into a floor set by the step size.
+    1/n^2      : sum a_n^2 converges, but sum a_n converges as well, so the
+                 total movement available is finite and the iterate stalls
+                 short of the target no matter how long it runs.
+    1/n        : both conditions hold, so this converges, but only in the
+                 limit. Its total movement grows like log n, so after 20000
+                 steps it is still further from the target than the constant
+                 step, which converges fast and then stops improving. The
+                 conditions are asymptotic and say nothing about the rate.
+    1/n^0.7    : both conditions also hold, and the total movement grows like
+                 n^0.3 instead of log n, which is why the polynomial family is
+                 what reinforcement learning actually uses.
+
+  Ranked by final sup-norm error at this budget:
+      one_over_n_pow_0.7  0.0450  (s.e. 0.0057)
+                constant  0.1711  (s.e. 0.0220)
+              one_over_n  1.7125  (s.e. 0.0235)
+      one_over_n_squared  4.0291  (s.e. 0.0229)
+  At 20000 steps the smallest error is one_over_n_pow_0.7. Both Robbins-Monro
+  conditions are necessary for convergence and neither is sufficient for speed.
+
+  Cache saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/cache/running_example__td.pkl
+  Table saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/running_example.tex
+  Table saved: /Users/pranjal/Code/rl-engine/appA_preliminaries/sims/running_example_td.tex
+
+Done.

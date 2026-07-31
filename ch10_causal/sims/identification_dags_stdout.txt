@@ -1,0 +1,3 @@
+Saved: /Users/pranjal/Code/rl/ch09_causal/sims/identification_dags.png
+Saved: /Users/pranjal/Code/rl/ch09_causal/sims/simulation_dag.png
+Done.

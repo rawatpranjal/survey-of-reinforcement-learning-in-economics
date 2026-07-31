@@ -1,0 +1,92 @@
+  Cache saved: /Users/pranjal/Code/rl-engine/ch10b_rl_for_ci/sims/cache/engine_ope.pkl
+==============================================================================
+ENGINE REPLACEMENT OFF-POLICY EVALUATION
+==============================================================================
+Parameters
+  gamma                         0.9
+  demonstration horizon         4
+  demonstration trajectories    12
+  demonstration seed            42
+  nuisance trajectories          200
+  nuisance seed                  31415
+  Monte Carlo seeds              40
+  trajectories per MC seed       500
+  behavior keep probability      0.5000 at both states
+  target policy                  keep at low, replace at high
+
+Independent nuisance-log counts
+  state      keep    replace
+  low          711        710
+  high         285        294
+
+Every demonstration importance weight
+  traj time state action   rho_t   rho_1:t  reward
+     1    1   low replace   0.000     0.000  -0.500
+     1    2   low replace   0.000     0.000  -0.500
+     1    3   low replace   0.000     0.000  -0.500
+     1    4   low replace   0.000     0.000  -0.500
+     2    1   low    keep   2.000     2.000   1.000
+     2    2  high    keep   0.000     0.000   0.200
+     2    3  high    keep   0.000     0.000   0.200
+     2    4  high    keep   0.000     0.000   0.200
+     3    1   low replace   0.000     0.000  -0.500
+     3    2   low    keep   2.000     0.000   1.000
+     3    3   low    keep   2.000     0.000   1.000
+     3    4  high    keep   0.000     0.000   0.200
+     4    1   low replace   0.000     0.000  -0.500
+     4    2   low    keep   2.000     0.000   1.000
+     4    3  high    keep   0.000     0.000   0.200
+     4    4  high    keep   0.000     0.000   0.200
+     5    1   low    keep   2.000     2.000   1.000
+     5    2  high    keep   0.000     0.000   0.200
+     5    3  high replace   2.000     0.000  -0.500
+     5    4   low    keep   2.000     0.000   1.000
+     6    1   low replace   0.000     0.000  -0.500
+     6    2   low replace   0.000     0.000  -0.500
+     6    3   low replace   0.000     0.000  -0.500
+     6    4   low replace   0.000     0.000  -0.500
+     7    1   low replace   0.000     0.000  -0.500
+     7    2   low replace   0.000     0.000  -0.500
+     7    3   low replace   0.000     0.000  -0.500
+     7    4   low replace   0.000     0.000  -0.500
+     8    1   low replace   0.000     0.000  -0.500
+     8    2   low replace   0.000     0.000  -0.500
+     8    3   low replace   0.000     0.000  -0.500
+     8    4   low replace   0.000     0.000  -0.500
+     9    1   low    keep   2.000     2.000   1.000
+     9    2  high    keep   0.000     0.000   0.200
+     9    3  high    keep   0.000     0.000   0.200
+     9    4  high replace   2.000     0.000  -0.500
+    10    1   low    keep   2.000     2.000   1.000
+    10    2   low    keep   2.000     4.000   1.000
+    10    3  high replace   2.000     8.000  -0.500
+    10    4   low    keep   2.000    16.000   1.000
+    11    1   low    keep   2.000     2.000   1.000
+    11    2  high    keep   0.000     0.000   0.200
+    11    3  high    keep   0.000     0.000   0.200
+    11    4  high replace   2.000     0.000  -0.500
+    12    1   low replace   0.000     0.000  -0.500
+    12    2   low    keep   2.000     0.000   1.000
+    12    3   low    keep   2.000     0.000   1.000
+    12    4   low    keep   2.000     0.000   1.000
+
+Point estimates on the demonstration log
+  estimator       estimate       error
+  Exact DP       2.050187    0.000000
+  DM             2.065962    0.015775
+  IS             2.965333    0.915146
+  PDIS           1.835333   -0.214854
+  WIS            2.224000    0.173813
+  DR             1.691532   -0.358655
+
+Horizon experiment
+  H  exact Var(weight)  empirical Var(weight)      SE       IS RMSE  PDIS RMSE  WIS RMSE  WIS n   DR RMSE
+   2              3.000                  3.015    0.030    0.1396     0.0942    0.0641     40    0.0431
+   4             15.000                 14.998    0.404    0.4057     0.2107    0.1081     40    0.0654
+   6             63.000                 64.487    3.575    1.0038     0.3472    0.1803     40    0.1261
+   8            255.000                264.396   28.095    2.3511     0.6213    0.2926     38    0.2010
+  10           1023.000               1100.585  198.324    4.9572     0.8857    0.4272     19    0.3589
+
+Output files
+  /Users/pranjal/Code/rl-engine/ch10b_rl_for_ci/sims/engine_ope.tex
+  /Users/pranjal/Code/rl-engine/ch10b_rl_for_ci/sims/engine_ope.png

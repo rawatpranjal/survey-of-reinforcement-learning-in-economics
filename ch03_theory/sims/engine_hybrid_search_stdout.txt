@@ -1,0 +1,18 @@
+======================================================================
+SEARCH AS A PARTIAL IMPROVEMENT STEP ON THE ENGINE REPLACEMENT MDP
+======================================================================
+
+V* = (5.3448, 4.3103)
+network value v = V^(uniform) = (1.3387, 0.8226)
+search step: greedy(v) = (keep, keep)
+actual value of the searched policy V^(pi_hat) = (3.4545, 2.0000)
+
+epsilon = ||v - V*||_inf = 4.0061
+actual loss ||V* - V^(pi_hat)||_inf = 2.3103
+Singh-Yee constant 2*gamma/(1-gamma) at gamma=0.9 = 18.0000
+Singh-Yee bound (Theorem thm:singh_yee) = 72.1101
+actual loss / bound = 0.0320
+bound holds: True
+  Table saved: /Users/pranjal/Code/rl-engine/ch03_theory/sims/engine_hybrid_search.tex
+
+Done.

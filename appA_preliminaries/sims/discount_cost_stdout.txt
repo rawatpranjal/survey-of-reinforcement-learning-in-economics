@@ -1,0 +1,40 @@
+======================================================================
+WHAT A DISCOUNT FACTOR NEAR ONE COSTS
+======================================================================
+
+  Computing: measure
+Random 50-state Markov reward processes, 30 seeds,
+tolerance 0.001 in the supremum norm, rewards drawn in [0, 1].
+
+   gamma    1/(1-g)   VI iters     se   Neumann M   ||(I-gP)^-1||   ||V||_inf
+   0.500        2.0       10.4   0.09         9.4            2.00        1.47
+   0.800        5.0       35.5   0.09        34.5            5.00        2.95
+   0.900       10.0       81.2   0.17        80.2           10.00        5.41
+   0.950       20.0      179.7   0.29       178.7           20.00       10.34
+   0.990      100.0     1075.1   1.50      1074.1          100.00       49.71
+   0.995      200.0     2293.5   3.04      2292.5          200.00       98.92
+   0.999     1000.0    13097.1  15.23     13096.1         1000.00      492.65
+
+  amplification against 1/(1-gamma): worst relative deviation 9.95e-16
+  Value iteration from V_0 = 0 and Neumann truncation are the same computation
+  written two ways: after k backups the iterate is the partial sum through
+  m = k-1, so the two counters differ by exactly one at every discount factor.
+  measured difference in counts, over all discount factors: [1.0]
+
+  Iteration count against the effective horizon:
+     gamma   iters / (1/(1-g))
+     0.500                5.18
+     0.800                7.09
+     0.900                8.12
+     0.950                8.98
+     0.990               10.75
+     0.995               11.47
+     0.999               13.10
+  The ratio drifts up rather than staying flat, because the count is
+  log(||V*||/tol) / log(1/gamma) and the numerator grows with gamma too.
+
+  Cache saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/cache/discount_cost__measure.pkl
+  Figure saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/discount_cost.png
+  Table saved: /Users/pranjal/Code/rl-appA/appA_preliminaries/sims/discount_cost.tex
+
+Done.

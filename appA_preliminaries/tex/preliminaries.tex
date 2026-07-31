@@ -1,0 +1,722 @@
+\section{Mathematical Preliminaries}
+\label{appendix:mathprelim}
+
+This appendix collects the mathematical results the survey rests on but does not develop in the main text. It assumes only probability, calculus, and linear algebra at the level of a first graduate sequence.
+
+\subsection{Elementary Objects and Inequalities}
+\label{prelim:elementary}
+
+This section holds targeted clarifications, objects one level below the sections that follow. Each entry states a definition in plain words, gives a small numerical example, and notes where the survey uses it. Chapter footnotes point here directly.
+
+\subsubsection{Maxima, Suprema, and the Set of Maximizers}
+\label{prelim:argopt}
+
+The \emph{maximum} $\max_{a \in \mathcal{A}} f(a)$ is the largest value $f$ attains, and it exists whenever $\mathcal{A}$ is finite. The \emph{supremum} $\sup_{a \in \mathcal{A}} f(a)$ is the least upper bound, which exists whenever $f$ is bounded above but need not be attained by any $a$. On $\mathcal{A} = (0,1)$ with $f(a) = a$ the supremum is $1$ and there is no maximum, since no point of the open interval equals $1$. The survey writes $\max$ where the action set is finite, which covers every algorithm it states, and $\sup$ where the set is a continuum or where the statement should not presume attainment. The \emph{infimum} and \emph{minimum} are the mirror images.
+
+The maximum is a number. The \emph{set of maximizers} $\argmax_{a} f(a) = \{a : f(a) \geq f(a') \text{ for all } a'\}$ is a set, and it can hold more than one element. For $f = (3, 5, 5)$ on three actions the maximum is $5$ while the set of maximizers is $\{2, 3\}$. A \emph{greedy} policy picks some element of that set, so when the set is not a singleton there is more than one greedy policy. That is the situation at a kink of the Bellman envelope (Section~\ref{prelim:affine_envelope}), where two actions tie and the optimality operator is not differentiable.
+
+\subsubsection{The Indicator}
+\label{prelim:indicator}
+
+The \emph{indicator} $\indicator{E}$ of an event or condition $E$ equals one when $E$ holds and zero otherwise. It turns a logical condition into a number that can be summed or averaged. If $S_1, \ldots, S_n$ are sampled states then $\frac{1}{n}\sum_t \indicator{S_t = s}$ is the fraction of the sample spent in state $s$, and its expectation is $\mathbb{P}(S = s)$. Counting visits, restricting a sum to a subset, and writing an empirical distribution are all this one device. It appears in eligibility traces, in occupancy counts, and in the quantile losses of Section~\ref{section:dist_robust_constrained}.
+
+\subsubsection{Affine Functions and Upper Envelopes}
+\label{prelim:affine_envelope}
+
+A function is \emph{affine} if its graph is a straight line, $f(x) = a + bx$, a linear part plus a constant shift. The \emph{pointwise maximum} of finitely many affine functions, $g(x) = \max_i \{a_i + b_i x\}$, takes at each $x$ the value of whichever line is highest there. Its graph is an \emph{upper envelope}, a convex piecewise-linear curve that follows one line until another overtakes it, with a kink at each crossing. Take $f_1(x) = 1 + \tfrac{1}{2}x$ and $f_2(x) = 2 - x$. The second line is higher for $x < \tfrac{2}{3}$ and the first for $x > \tfrac{2}{3}$, so the envelope $g(x) = \max\{f_1(x), f_2(x)\}$ has its kink at the crossing $x = \tfrac{2}{3}$, where $g = \tfrac{4}{3}$ (Figure~\ref{fig:prelim_elementary}, panel a). A line that touches the graph of a convex function at a point and never rises above the graph is a \emph{supporting line}, in higher dimensions a supporting hyperplane, and each $f_i$ supports $g$ on the piece where it attains the maximum. The Bellman optimality operator is exactly such an envelope, the pointwise maximum of affine policy operators, and Section~\ref{prelim:operators} builds it that way.
+
+\subsubsection{A Difference of Maxima}
+\label{prelim:maxdiff}
+
+For any two real-valued functions $f$ and $g$ on a finite set,
+\begin{equation}
+\big| \max_a f(a) - \max_a g(a) \big| \;\leq\; \max_a |f(a) - g(a)|.
+\label{eq:prelim_maxdiff}
+\end{equation}
+Maximizing cannot amplify a disagreement, the two maxima differ by no more than the largest pointwise gap. The proof is two lines. Let $a_1$ attain $\max_a f$. Then $\max_a f - \max_a g \leq f(a_1) - g(a_1) \leq \max_a |f(a) - g(a)|$, since $g(a_1) \leq \max_a g$, and exchanging the roles of $f$ and $g$ bounds the other sign. As a numerical example with two actions, let $f = (3, 5)$ and $g = (4.5, 4)$. The maxima are $5$ and $4.5$, a gap of $0.5$, while the pointwise gaps are $1.5$ and $1$, so the bound $0.5 \leq 1.5$ holds with room to spare. This is the first of the three results proved in full here, and it is the only reason the nonlinear Bellman optimality operator inherits the contraction modulus of the affine policy operators it envelopes (Section~\ref{prelim:operators}). It also carries the Q-factor contraction (Theorem~\ref{thm:q_factor_contraction}).
+
+\subsubsection{Norms for Value Functions}
+\label{prelim:norms}
+
+A \emph{norm} assigns a vector a single nonnegative size. The $L^p$ family on $\mathbb{R}^n$ is $\|x\|_p = (\sum_i |x_i|^p)^{1/p}$. At $p = 1$ it sums absolute entries and at $p = 2$ it is Euclidean length. As $p$ grows the largest entry dominates the sum, and in the limit $\|x\|_\infty = \max_i |x_i|$, the \emph{supremum norm}, the size of the worst coordinate. For $x = (3, -4, 1)$ the values are $\|x\|_1 = 8$, $\|x\|_2 = \sqrt{26} \approx 5.10$, and $\|x\|_\infty = 4$. The unit balls, the sets of vectors of size one, are drawn in Figure~\ref{fig:prelim_elementary}, panel b. A value function on a finite state space is such a vector with one entry per state, so the supremum norm reads as the worst-case error over states. A \emph{weighted} $L^2$ norm $\|V\|_d^2 = \sum_s d(s)\, V(s)^2$, with $d$ a probability distribution over states, instead counts each state in proportion to its weight. In the survey that weight is how often a policy visits the state, so errors at rarely visited states barely register. Which norm is in force is not a matter of taste, and Section~\ref{prelim:approximation} exhibits one operator that contracts in a weighted norm under one weighting and expands under another.
+
+\subsubsection{Telescoping Sums and the Geometric Series}
+\label{prelim:telescoping}
+
+Two summation identities recur in every convergence argument of the survey. A \emph{telescoping sum} of consecutive differences collapses to its endpoints, $\sum_{k=0}^{K-1} (x_{k+1} - x_k) = x_K - x_0$, because each interior term is added once and subtracted once. The \emph{geometric series} $\sum_{k=0}^{\infty} \gamma^k = \frac{1}{1-\gamma}$ for $|\gamma| < 1$ converts a per-step shrink factor $\gamma$ into a finite total. At $\gamma = 0.9$ the total is $10$ and at $\gamma = 0.99$ it is $100$, which is why bounds carry factors of $1/(1-\gamma)$ that grow as the discount approaches one.
+
+\subsubsection{Asymptotic Notation}
+\label{prelim:sequences_rates}
+
+Rates are compared up to constants. Writing $f(n) = O(g(n))$ means there are a constant $C$ and a threshold $n_0$ with $f(n) \leq C\,g(n)$ for every $n \geq n_0$, so $g$ envelopes the growth of $f$ and the constant is suppressed. Then $\Omega(g)$ is the matching lower bound, $\Theta(g)$ is both at once, and $o(g)$ is the strictly smaller case $f(n)/g(n) \to 0$. For $f(n) = 3n^2 + 100n$ one has $f = O(n^2)$, $f = \Theta(n^2)$, and $f = o(n^3)$, and the $100n$ term is invisible in the notation even though it dominates until $n = 33$. The tilde form $\widetilde{O}(g)$ suppresses logarithmic factors as well, so $\widetilde{O}(n)$ covers $n \log n$ and $n \log^3 n$ alike. Sample-complexity and regret statements throughout the survey are written in $\widetilde{O}$, because their logarithmic factors track the proof technique rather than the problem.\footnote{Suppressing a logarithm is harmless when comparing $\sqrt{T}$ against $T^{2/3}$ and misleading when comparing two bounds that differ only by logarithms. The survey uses $\widetilde{O}$ only for the first kind of comparison.}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{../appA_preliminaries/sims/elementary_concepts.png}
+\caption{Panel (a): two affine functions (dashed) and their upper envelope (solid), with the kink at $x = 2/3$. Panel (b): unit balls of the $L^1$, $L^2$, and $L^\infty$ norms in the plane.}
+\label{fig:prelim_elementary}
+\end{figure}
+
+\subsection{The Markov Decision Process}
+\label{prelim:mdp}
+
+Everything in this survey is a statement about one object. This section defines it, fixes the notation the chapters use, and introduces the worked example the rest of the appendix computes with.
+
+\subsubsection{The Objects}
+
+A \emph{Markov decision process} is a tuple $(\mathcal{S}, \mathcal{A}, P, r, \gamma)$. The \emph{state space} $\mathcal{S}$ is the set of situations the decision maker can face, taken finite here with $|\mathcal{S}|$ elements. The \emph{action space} $\mathcal{A}$ is the set of choices available, also finite. The \emph{transition kernel} $P(s' \mid s, a)$ gives the probability of landing in $s'$ after taking $a$ in $s$, so $P(\cdot \mid s,a)$ is a probability distribution over $\mathcal{S}$ for each pair. The \emph{reward function} $r(s,a)$ gives the payoff collected on that step. The \emph{discount factor} $\gamma \in [0,1)$ weights a payoff one period later by $\gamma$ relative to one collected now.
+
+The defining restriction is in the name. The transition and the reward depend on the current state and action alone, not on how the state was reached. This is the \emph{Markov property}, and it is what makes the state a sufficient summary of the past and what makes everything below possible.
+
+A \emph{policy} $\pi(a \mid s)$ assigns a distribution over actions to each state. It is \emph{deterministic} when that distribution puts all its mass on one action, in which case $\pi(s)$ names the action directly. Fixing a policy and an initial state generates a \emph{trajectory} $S_0, A_0, R_0, S_1, A_1, R_1, \ldots$ with $A_t \sim \pi(\cdot \mid S_t)$, $R_t = r(S_t, A_t)$, and $S_{t+1} \sim P(\cdot \mid S_t, A_t)$. The \emph{discounted return} from time $t$ is
+\begin{equation}
+G_t = \sum_{k=0}^{\infty} \gamma^k R_{t+k},
+\label{eq:prelim_return}
+\end{equation}
+finite whenever the rewards are bounded, since $|G_t| \leq \max_{s,a}|r(s,a)| / (1-\gamma)$ by the geometric series of Section~\ref{prelim:telescoping}.
+
+The \emph{state-value function} of a policy is the expected return from each state,
+\begin{equation}
+V^\pi(s) = \mathbb{E}_\pi\bigl[G_t \mid S_t = s\bigr],
+\label{eq:prelim_vpi}
+\end{equation}
+and the \emph{action-value function}, or Q-function, conditions on the first action as well,
+\begin{equation}
+Q^\pi(s,a) = \mathbb{E}_\pi\bigl[G_t \mid S_t = s, A_t = a\bigr].
+\label{eq:prelim_qpi}
+\end{equation}
+Their difference is the \emph{advantage} $A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)$, which measures how much better taking $a$ once and following $\pi$ thereafter is than following $\pi$ throughout. An \emph{optimal policy} $\pi^\star$ attains $V^\star(s) = \max_\pi V^\pi(s)$ simultaneously at every state, and for a finite discounted Markov decision process one always exists and may be taken deterministic \citep{puterman1994}. In chess terms, $V^\pi$ scores a position under a fixed way of playing, $Q^\pi$ scores a position together with the move about to be made, and the advantage is how much that move gains over the player's habit.
+
+Two notational conventions hold throughout the survey. Reward is $r(s,a)$ for the function and $R_t$ for the realized draw. Estimated or perturbed quantities carry a hat or a tilde, $\widehat{V}$ and $\widetilde{V}$, and iterates of an algorithm carry a subscript, $V_k$.
+
+\subsubsection{Value Functions Are Vectors}
+
+The reframe that carries the rest of this appendix is that none of these objects is a function in any difficult sense. With $|\mathcal{S}|$ states a value function is a list of $|\mathcal{S}|$ numbers, which is a point in $\mathbb{R}^{|\mathcal{S}|}$. Fixing a policy $\pi$ collapses the transition kernel to a single $|\mathcal{S}| \times |\mathcal{S}|$ matrix and the reward to a single vector,
+\begin{equation}
+P^\pi(s, s') = \sum_a \pi(a \mid s) P(s' \mid s, a),
+\qquad
+r^\pi(s) = \sum_a \pi(a \mid s)\, r(s,a).
+\label{eq:prelim_ppi}
+\end{equation}
+The matrix $P^\pi$ is \emph{row-stochastic}, meaning every entry is nonnegative and every row sums to one. Algorithms are then maps on $\mathbb{R}^{|\mathcal{S}|}$, convergence is convergence of points in that space, and the questions of the next six sections become questions about matrices and vectors. Value functions sit as columns under $P^\pi V$, and state distributions sit as rows under $d_{t+1} = d_t P^\pi$.
+
+\FloatBarrier
+\subsubsection{The Engine Replacement MDP}
+
+The Engine Replacement MDP has two engine grades and two actions. It makes the vector and matrix representation in~\eqref{eq:prelim_ppi} two-dimensional. The state space is $\mathcal{S} = \{\text{good}, \text{worn}\}$ and the action space is $\mathcal{A} = \{\text{keep}, \text{replace}\}$, with $\gamma = 0.9$. Keeping a good machine earns $1$ and degrades it to worn with probability $\tfrac{1}{2}$. Keeping a worn machine earns $0.2$ and leaves it worn. Replacing costs $0.5$ from either state and returns the machine to good with certainty. Table~\ref{tab:prelim_running_example} collects the primitives and the quantities computed from them, and Figure~\ref{fig:prelim_mdp_graph} draws the process.
+
+With two states, value functions are points in the plane and transition matrices are $2 \times 2$. Contraction, iteration, projection, the Bellman envelope, the resolvent, stationary distributions, and occupancy measures are therefore available in two dimensions. A one-dimensional feature space shows orthogonal and oblique projection as lines in the same plane.
+
+The optimal policy keeps a good machine and replaces a worn one, with $V^\star = (5.3448, 4.3103)$, and the two action gaps are $1.0345$ at the good state and $0.2310$ at the worn state, so neither choice is marginal.\footnote{The economics is fixed at round numbers so a reader can redo the arithmetic. The two parameters the economics does not determine, the feature ratio of Section~\ref{prelim:approximation} and the logging probability of Section~\ref{prelim:markov_data}, are chosen by a search over 360 pairs.} Under the optimal policy the matrix and vector of~\eqref{eq:prelim_ppi} are
+\begin{equation}
+P^{\pi^\star} = \begin{pmatrix} 0.5 & 0.5 \\ 1 & 0 \end{pmatrix},
+\qquad
+r^{\pi^\star} = \begin{pmatrix} 1 \\ -0.5 \end{pmatrix},
+\label{eq:prelim_running_ppi}
+\end{equation}
+with the good state first.
+
+\input{../appA_preliminaries/sims/running_example.tex}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[>=Stealth, semithick]
+\node[circle, draw=rlblack, minimum size=1.15cm] (g) at (0,0) {good};
+\node[circle, draw=rlblack, minimum size=1.15cm] (w) at (5,0) {worn};
+\draw[->, rlblue] (g) to[loop left, looseness=6] node[left, align=right, font=\footnotesize] {keep\\$0.5$, $r = 1$} (g);
+\draw[->, rlblue] (g) to[bend left=22] node[above, font=\footnotesize] {keep, $0.5$} (w);
+\draw[->, rlorange] (w) to[bend left=22] node[below, font=\footnotesize] {replace, $1$, $r = -0.5$} (g);
+\draw[->, rlblue] (w) to[loop right, looseness=6] node[right, align=left, font=\footnotesize] {keep\\$1$, $r = 0.2$} (w);
+\draw[->, rlorange] (g) to[loop above, looseness=6] node[above, font=\footnotesize] {replace, $1$, $r = -0.5$} (g);
+\end{tikzpicture}
+\caption{The Engine Replacement MDP as a labelled directed graph. Each arc carries its action and its transition probability, and, where the action is first named from that state, its reward. Blue arcs are the keep action and orange arcs the replace action. The optimal policy takes the blue self-loop at the good state and the orange arc at the worn state.}
+\label{fig:prelim_mdp_graph}
+\end{figure}
+
+\FloatBarrier
+\subsection{Operators, Contraction, and Fixed Points}
+\label{prelim:operators}
+
+The question here is whether an algorithm that repeatedly applies an update has a target at all, and whether it reaches it. For dynamic programming the answer is that the update is a contraction, a contraction has exactly one fixed point, and the iterates approach it geometrically.
+
+\FloatBarrier
+\subsubsection{Lipschitz Constants and Contractions}
+
+The \emph{Lipschitz constant} is the steepest slope a function ever reaches. The line $f(x) = 2x$ has slope $2$ everywhere, so it is $2$-Lipschitz. The wave $\sin x$ has slope at most $1$, so it is $1$-Lipschitz. A \emph{contraction} is the case where that steepest slope stays below one. That is exactly what makes an iteration pull points together instead of driving them apart.
+
+\begin{theorem}[Lipschitz continuity, \citet{nesterov2018}]
+\label{thm:prelim_lipschitz}
+A map $f$ between normed spaces is \emph{$L$-Lipschitz} if $\|f(x) - f(y)\| \leq L\|x - y\|$ for all $x, y$. For a differentiable real-valued $f$ on $\mathbb{R}^n$ the least such constant is the supremum of the gradient norm,
+\begin{equation}
+L = \sup_x \|\nabla f(x)\|,
+\label{eq:prelim_lipschitz}
+\end{equation}
+and for a linear map $A$ it is the induced operator norm $\|A\| = \sup_{x \neq 0}\|Ax\| / \|x\|$.
+\end{theorem}
+
+Two consequences for a row-stochastic $P$, both in the supremum norm and both exact rather than merely upper bounds. The policy-evaluation operator $T V = r + \gamma P V$ is $\gamma$-Lipschitz, and the resolvent solve $r \mapsto (I - \gamma P)^{-1} r$ is $\tfrac{1}{1-\gamma}$-Lipschitz \citep{puterman1994}. The norm has to be named, because the second constant is specific to it. With $P = \left[\begin{smallmatrix} 0 & 1 \\ 0 & 1 \end{smallmatrix}\right]$ and $\gamma = 0.9$ the resolvent is $\left[\begin{smallmatrix} 1 & 9 \\ 0 & 10 \end{smallmatrix}\right]$, whose supremum-norm constant is exactly $10 = 1/(1-\gamma)$ while its Euclidean constant is $13.47$.
+
+A map is a \emph{$\gamma$-contraction} on a metric space $(X,d)$ when $d(Tx, Ty) \leq \gamma\, d(x,y)$ for all $x, y$ with a fixed $\gamma \in [0,1)$, the special case $L = \gamma < 1$ of the definition above. It pulls every pair of points strictly closer, by at least the factor $\gamma$, each time it is applied.
+
+\begin{theorem}[Banach fixed-point theorem, \citet{banach1922}]
+\label{thm:prelim_banach}
+Let $(X, d)$ be a complete metric space.\footnote{A \emph{metric space} is a set $X$ with a distance $d(x,y)$ between points. It is \emph{complete} if every sequence whose terms bunch up without limit, a Cauchy sequence, actually has a limit inside $X$. The space $\mathbb{R}^n$ under any norm is complete, so this hypothesis is automatic everywhere the survey applies the theorem.} Let $T : X \to X$ be a $\gamma$-contraction. Then $T$ has a unique fixed point $x^\star = Tx^\star$, and for any starting point $x_0$ the iterates $x_{k+1} = Tx_k$ satisfy
+\begin{equation}
+d(x_k, x^\star) \leq \gamma^k\, d(x_0, x^\star).
+\label{eq:prelim_banach_rate}
+\end{equation}
+\end{theorem}
+
+The scalar case shows the mechanism. Take $T(x) = \tfrac{1}{2}x + 1$ on the real line. Solving $x = \tfrac{1}{2}x + 1$ gives the fixed point $x^\star = 2$. Start anywhere, say $x_0 = 0$, and the iterates are $1, 1.5, 1.75, \ldots$, each closing half the remaining gap to $2$. The distance to $x^\star$ halves every step, which is $\gamma^k$ with $\gamma = \tfrac{1}{2}$.
+
+\begin{proof}
+Show the iterates form a Cauchy sequence, so completeness gives a limit, then read off that the limit is the unique fixed point and that the error shrinks by $\gamma$ each step. First bound the distance between two consecutive iterates.\footnote{An \emph{iterate} is one term $x_k$ of the sequence built by applying $T$ over and over, starting from $x_0$ and setting $x_{k+1} = Tx_k$.} Applying the contraction to $x_k$ and $x_{k-1}$,
+\begin{align*}
+d(x_{k+1}, x_k) = d(Tx_k, Tx_{k-1})
+  &\leq \gamma\, d(x_k, x_{k-1}) && \text{($T$ is a $\gamma$-contraction)} \\
+  &\leq \gamma^k\, d(x_1, x_0) && \text{(apply the same step $k$ times).}
+\end{align*}
+Now bound the distance between any two iterates $x_m$ and $x_k$ with $m > k$.
+\begin{align*}
+d(x_m, x_k)
+  &\leq \sum_{j=k}^{m-1} d(x_{j+1}, x_j) && \text{(triangle inequality)} \\
+  &\leq d(x_1, x_0) \sum_{j=k}^{\infty} \gamma^j && \text{(previous bound, extend the sum)} \\
+  &= \frac{\gamma^k}{1-\gamma}\, d(x_1, x_0) && \text{(geometric series).}
+\end{align*}
+The right-hand side tends to $0$ as $k \to \infty$. The iterates therefore bunch up without limit, so the sequence is Cauchy. Completeness gives a limit $x^\star \in X$.\footnote{This is the only place completeness is used, and it cannot be dropped. On the incomplete space $X = (0,1]$ the map $Tx = x/2$ is a contraction, yet its iterates march toward $0$, which is not in $X$, so no fixed point exists.} A contraction is continuous, so it commutes with the limit,
+\begin{align*}
+Tx^\star = T\Bigl(\lim_k x_k\Bigr) = \lim_k Tx_k = \lim_k x_{k+1} = x^\star .
+\end{align*}
+Thus $x^\star$ is a fixed point, a point the map leaves unchanged. For uniqueness, suppose $x^\star$ and $y^\star$ are both fixed points. Then
+\begin{align*}
+d(x^\star, y^\star) = d(Tx^\star, Ty^\star) &\leq \gamma\, d(x^\star, y^\star) && \text{(contraction),}
+\end{align*}
+so $(1-\gamma)\, d(x^\star, y^\star) \leq 0$. Since $\gamma < 1$, this forces $d(x^\star, y^\star) = 0$, and the two points coincide. Finally the rate. Apply the contraction to $x_{k-1}$ and the fixed point,
+\begin{align*}
+d(x_k, x^\star) = d(Tx_{k-1}, Tx^\star)
+  &\leq \gamma\, d(x_{k-1}, x^\star) && \text{(contraction)} \\
+  &\leq \gamma^k\, d(x_0, x^\star) && \text{(apply the same step $k$ times),}
+\end{align*}
+which is~\eqref{eq:prelim_banach_rate}.
+\end{proof}
+
+This proof earns its space because the rate is not a separate assumption. It falls out of the contraction inequality applied $k$ times, which is why every convergence statement in this survey that names a rate names $\gamma^k$.
+
+\subsubsection{The Bellman Operators}
+
+Fix a policy $\pi$. The \emph{policy-evaluation operator}, or Bellman expectation operator, is
+\begin{equation}
+T^\pi V = r^\pi + \gamma P^\pi V,
+\label{eq:prelim_tpi}
+\end{equation}
+one backup of the return under $\pi$. In the vector language of Section~\ref{prelim:mdp} it is affine in $V$, a fixed matrix times $V$ plus a fixed vector, the object of Section~\ref{prelim:affine_envelope} with $V$ in place of $x$. It is $\gamma$-Lipschitz in the supremum norm by Theorem~\ref{thm:prelim_lipschitz}, because $T^\pi V - T^\pi V' = \gamma P^\pi (V - V')$ and a row-stochastic matrix has $\|P^\pi\|_\infty = 1$, so averaging can never enlarge the biggest coordinate.\footnote{The \emph{supremum operator norm} $\|B\|_\infty = \max_i \sum_j |B_{ij}|$ is the largest absolute row sum. Every row of $P^\pi$ sums to one and every entry is nonnegative, so $\|P^\pi\|_\infty = 1$ exactly.}
+
+The \emph{Bellman optimality operator} maximizes over actions at each state,
+\begin{equation}
+(T^\star V)(s) = \max_{a} \Bigl\{ r(s,a) + \gamma \sum_{s'} P(s' \mid s,a) V(s') \Bigr\}
+= \max_{\pi} (T^\pi V)(s).
+\label{eq:prelim_tstar}
+\end{equation}
+The second equality is the point. The optimality operator is the pointwise upper envelope of the affine policy operators, so it is convex and piecewise-linear in $V$ with a kink wherever the maximizing action changes. It is neither linear nor differentiable, so it cannot inherit a contraction modulus from matrix algebra and needs its own argument. Equation~\eqref{eq:prelim_maxdiff} supplies it. Applying that inequality at each state to the two bracketed expressions, the reward terms cancel and
+\begin{align*}
+\bigl|(T^\star V)(s) - (T^\star V')(s)\bigr|
+  &\leq \max_a \gamma \Bigl| \sum_{s'} P(s' \mid s,a)\bigl(V(s') - V'(s')\bigr) \Bigr|
+  \leq \gamma \|V - V'\|_\infty ,
+\end{align*}
+where the last step is again that each row of $P$ averages. Taking the supremum over $s$ makes $T^\star$ a $\gamma$-contraction in the supremum norm, with the same modulus as every $T^\pi$ it envelopes.
+
+Theorem~\ref{thm:prelim_banach} now delivers the two facts the survey uses constantly. Each $T^\pi$ has a unique fixed point, which is $V^\pi$. And $T^\star$ has a unique fixed point, which is $V^\star$. Neither existence nor uniqueness needs a separate argument.
+
+\subsubsection{Value Iteration}
+
+\emph{Value iteration} is the Picard iteration $V_{k+1} = T^\star V_k$ from an arbitrary start.\footnote{\emph{Picard iteration} is the generic name for repeatedly applying a map to its own output. Value iteration, policy evaluation by repeated backup, and the gradient step of Section~\ref{prelim:convex} are all instances.} Equation~\eqref{eq:prelim_banach_rate} gives $\|V_k - V^\star\|_\infty \leq \gamma^k \|V_0 - V^\star\|_\infty$, so reaching a tolerance $\varepsilon$ takes on the order of $\log(1/\varepsilon) / \log(1/\gamma)$ iterations, and since $\log(1/\gamma) \approx 1 - \gamma$ for $\gamma$ near one, that count grows like the \emph{effective horizon} $1/(1-\gamma)$.
+
+The Engine Replacement MDP makes the rate concrete. Starting from $V_0 = 0$, the first four iterates are $(1, 0.2)$, $(1.54, 0.4)$, $(1.873, 0.886)$, and $(2.2416, 1.1857)$, with supremum-norm errors $4.3448$, $3.9103$, $3.4718$, and $3.1246$. The per-step ratios are $0.813$, $0.900$, $0.888$, and $0.900$. Every ratio is at most $\gamma = 0.9$, as Theorem~\ref{thm:prelim_banach} requires. The ratios differ because $\gamma P^{\pi^\star}$ has a second mode of modulus $0.45$ that decays faster than the first, so the contraction bounds each step without fixing it.\footnote{Theorem~\ref{thm:prelim_banach} is an upper bound on $d(x_k, x^\star)$, not an identity. A reader who expects the error to fall by exactly $\gamma$ every step, and finds it falling faster, has met the second mode rather than an error.} The greedy policy is (keep, keep) after one step and settles at the optimal (keep, replace) from the second step onward, long before the values themselves are close, which is why policy iteration can finish while value iteration is still moving.
+
+The cost of a discount factor near one is easy to state and easy to underestimate. Reaching a supremum-norm error below $0.01$ in this example takes $6$ iterations at $\gamma = 0.5$, $59$ at $\gamma = 0.9$, and $847$ at $\gamma = 0.99$. The same pattern holds on larger problems. On random fifty-state Markov reward processes, reaching an error below $10^{-3}$ takes $10$ backups at $\gamma = 0.5$, $81$ at $\gamma = 0.9$, $1075$ at $\gamma = 0.99$, and $13{,}097$ at $\gamma = 0.999$ (Table~\ref{tab:prelim_discount_cost}). The count grows slightly faster than the effective horizon itself, because it is $\log(\|V^\pi\|_\infty/\varepsilon)/\log(1/\gamma)$ and the value function also grows as the discount rises. Figure~\ref{fig:prelim_envelope_running} draws the operator being iterated, in the slice through the worn state, and Figure~\ref{fig:prelim_discount_cost} puts the two costs of a long horizon side by side.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{../appA_preliminaries/sims/discount_cost.png}
+\caption{Left: backups of $T^\pi$ from $V_0 = 0$ needed to reach a supremum-norm error below $10^{-3}$ on random fifty-state Markov reward processes, against the effective horizon, on log-log axes with the identity for reference. Right: the reward-to-value amplification $\|(I - \gamma P)^{-1}\|_\infty$ against the same axis, which coincides with the effective horizon exactly.}
+\label{fig:prelim_discount_cost}
+\end{figure}
+
+\input{../appA_preliminaries/sims/discount_cost.tex}
+
+\emph{Policy iteration} instead alternates evaluating the current policy exactly and acting greedily with respect to that evaluation. In the envelope picture each evaluation solves for the fixed point of one affine piece, which is a Newton step on $V = T^\star V$, and the finite number of pieces is why it terminates finitely. Section~\ref{sec:newton_connection} develops that connection, and this appendix owes only the geometry it rests on.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[>=Stealth, x=3.2cm, y=1.9cm]
+% axes over t in [3.4, 5.6], value in [3.4, 5.6]
+\draw[->] (3.4,3.4) -- (5.75,3.4) node[right, font=\footnotesize] {$t = V(\text{worn})$};
+\draw[->] (3.4,3.4) -- (3.4,5.75) node[above, font=\footnotesize] {value};
+\foreach \x in {3.5,4.0,4.5,5.0,5.5} \draw (\x,3.4) -- (\x,3.36) node[below, font=\scriptsize] {\x};
+\foreach \y in {3.5,4.0,4.5,5.0,5.5} \draw (3.4,\y) -- (3.36,\y) node[left, font=\scriptsize] {\y};
+% 45 degree line
+\draw[rlgray, thin] (3.45,3.45) -- (5.6,5.6);
+\node[rlgray, font=\scriptsize, anchor=south east] at (5.62,5.58) {$45^\circ$};
+% keep line: 0.2 + 0.9 t ; enters the window at t = 3.5556, reaches 5.24 at t = 5.6
+\draw[rlblue, dashed, thick] (3.5556,3.4) -- (5.6,5.24);
+\node[rlblue, font=\scriptsize, anchor=north west] at (3.86,3.60) {keep, $0.2 + 0.9\,t$};
+% replace line: constant 4.3103
+\draw[rlorange, dashed, thick] (3.4,4.3103) -- (5.6,4.3103);
+\node[rlorange, font=\scriptsize, anchor=south west] at (3.45,4.35) {replace, $4.3103$};
+% envelope
+\draw[rlblack, very thick] (3.4,4.3103) -- (4.5670,4.3103) -- (5.6,5.24);
+% annotations led out into the empty lower-right region
+\filldraw[rlblack] (4.5670,4.3103) circle (1.7pt);
+\draw[rlblack, thin] (4.5670,4.3103) -- (5.02,3.97);
+\node[rlblack, font=\scriptsize, anchor=west] at (5.04,3.97) {kink, $t = 4.567$};
+\filldraw[rlred] (4.3103,4.3103) circle (1.9pt);
+\draw[rlred, thin] (4.3103,4.3103) -- (4.70,3.63);
+\node[rlred, font=\scriptsize, anchor=west] at (4.72,3.63) {$V^\star(\text{worn}) = 4.3103$};
+\end{tikzpicture}
+\caption{The Bellman optimality operator at the worn state of the Engine Replacement MDP, along the slice $V = (V^\star(\text{good}), t)$. The keep action gives the affine map $0.2 + 0.9\,t$ and the replace action the constant $4.3103$. Their upper envelope, in black, is $T^\star$ restricted to this slice, and it kinks at $t = 4.567$ where the greedy action changes. The fixed point, where the envelope meets the $45^\circ$ line, sits at $4.3103$ on the replace branch, $0.257$ below the kink.}
+\label{fig:prelim_envelope_running}
+\end{figure}
+
+\subsection{The Linear Algebra of Policy Evaluation}
+\label{prelim:policy_evaluation}
+
+Section~\ref{prelim:operators} reached $V^\pi$ by iterating $T^\pi$. For a fixed policy there is no need to iterate at all, because the fixed-point equation is linear and can be solved outright. Writing $V = r^\pi + \gamma P^\pi V$ and collecting terms,
+\begin{equation}
+(I - \gamma P^\pi) V^\pi = r^\pi .
+\label{eq:prelim_evaluation_system}
+\end{equation}
+This section is about the matrix $(I - \gamma P^\pi)^{-1}$, called the \emph{resolvent}, which is where the factor $1/(1-\gamma)$ in every error bound in the survey comes from.
+
+\subsubsection{The Neumann Series}
+
+Start with one state. Then $P = [1]$, and $I - \gamma P$ is just the number $1 - \gamma$, so its inverse is $(1-\gamma)^{-1} = 1 + \gamma + \gamma^2 + \cdots$. The value of that single state is $r/(1-\gamma)$, the reward collected now, then again discounted by $\gamma$, then by $\gamma^2$, and so on forever. The theorem is this same geometric series, with the matrix $\gamma P$ standing in for the number $\gamma$.
+
+\begin{theorem}[Neumann series, \citet{hornjohnson2013}]
+\label{thm:prelim_neumann}
+Let $P$ be a row-stochastic matrix and $\gamma \in [0, 1)$. Then $I - \gamma P$ is invertible and
+\begin{equation}
+(I - \gamma P)^{-1} = \sum_{m=0}^{\infty} (\gamma P)^m,
+\label{eq:prelim_neumann}
+\end{equation}
+with the truncation error of the first $M{+}1$ terms bounded, in the supremum operator norm, by
+\begin{equation}
+\Bigl\| (I - \gamma P)^{-1} - \sum_{m=0}^{M} (\gamma P)^m \Bigr\|_\infty \leq \frac{\gamma^{M+1}}{1 - \gamma}.
+\label{eq:prelim_neumann_bound}
+\end{equation}
+\end{theorem}
+
+The identity is why a value function is a discounted sum of rewards.\footnote{The exact value $V^\pi = (I - \gamma P^\pi)^{-1} r^\pi$ equals $\sum_m \gamma^m (P^\pi)^m r^\pi$, which is the expected discounted return written out. Truncating the series at $M$ terms is the same thing as truncating the planning horizon at $M$ steps, and~\eqref{eq:prelim_neumann_bound} prices that truncation.} Two consequences are used repeatedly. Every row of the resolvent sums to exactly $1/(1-\gamma)$, because $(I - \gamma P)^{-1}\mathbf{1} = \sum_m \gamma^m \mathbf{1} = \tfrac{1}{1-\gamma}\mathbf{1}$, so the resolvent has supremum operator norm exactly $1/(1-\gamma)$. That number is the \emph{effective horizon}, the number of periods that matter, and it is the amplification factor by which any error in $r^\pi$ is magnified in $V^\pi$.
+
+In the Engine Replacement MDP, evaluating the optimal policy means inverting
+\begin{equation*}
+I - \gamma P^{\pi^\star} = \begin{pmatrix} 0.55 & -0.45 \\ -0.9 & 1 \end{pmatrix},
+\qquad
+\det = 0.145,
+\qquad
+(I - \gamma P^{\pi^\star})^{-1} = \begin{pmatrix} 6.8966 & 3.1034 \\ 6.2069 & 3.7931 \end{pmatrix}.
+\end{equation*}
+Both rows sum to $10$, which is $1/(1-0.9)$, exactly as the identity requires. Multiplying by $r^{\pi^\star} = (1, -0.5)$ returns $V^{\pi^\star} = (5.3448, 4.3103)$, the same vector value iteration was approaching in Section~\ref{prelim:operators}. Truncating the series instead gives $(1.2250, 0.4000)$ at $M = 1$, $(2.0502, 1.0581)$ at $M = 3$, and $(3.7758, 2.7412)$ at $M = 10$, with supremum-norm errors $4.1198$, $3.2946$, and $1.5692$ against bounds of $8.1000$, $6.5610$, and $3.1381$ from~\eqref{eq:prelim_neumann_bound}. Even at ten terms the truncated value is still a third short, which is the same statement as the $59$ iterations Section~\ref{prelim:operators} needed at this discount factor.
+
+\subsubsection{Spectral Radius against Operator Norm}
+
+The resolvent exists because $\gamma P$ has all its eigenvalues inside the unit disc. That condition, and not the size of the entries, is what governs whether repeated multiplication dies away.
+
+A tiny case first. Take the diagonal matrix $A = \operatorname{diag}(0.9, 0.5)$, whose powers are $A^k = \operatorname{diag}(0.9^k, 0.5^k)$. Both entries sit below one, so both shrink to zero, and the larger one sets the pace. Now tilt one entry off the diagonal, $A = \left[\begin{smallmatrix} 0.9 & 2 \\ 0 & 0.9 \end{smallmatrix}\right]$. This matrix is large, so its powers grow at first. They still vanish in the end, because the eigenvalues are still $0.9$. The eigenvalues, not the size of the entries, decide the fate of the powers.
+
+\begin{theorem}[Spectral radius governs decay, \citet{hornjohnson2013}]
+\label{thm:prelim_spectral}
+Let $A$ be a square matrix with spectral radius $\rho(A) = \max_i |\lambda_i|$, the largest modulus among its eigenvalues.\footnote{An \emph{eigenvalue} $\lambda$ of $A$ is a number for which $Av = \lambda v$ has a nonzero solution $v$, the \emph{eigenvector}. Applying $A$ to $v$ merely rescales it by $\lambda$. The \emph{spectral radius} is the largest such $|\lambda|$.} Then the matrix powers vanish, $A^k \to 0$ as $k \to \infty$, if and only if $\rho(A) < 1$. In that case $\|A^k\|^{1/k} \to \rho(A)$.
+\end{theorem}
+
+The distinction between $\rho(A)$ and the norm $\|A\|$ matters in practice.\footnote{The spectral radius sets the target-network and composed-operator stability conditions of Section~\ref{sec:planning_learning} and the low-rank and manipulation-cost arguments of Section~\ref{section:bandits}.} A matrix can have $\|A\| > 1$, so its powers grow at first. They still decay in the end, because $\rho(A) < 1$. Non-normality permits transient growth before the asymptotic decay begins. Figure~\ref{fig:prelim_spectral} shows this transient for a non-normal matrix, one whose eigenvectors are not orthogonal. The powers rise to a peak, then fall, and the per-step decay ratio settles at $\rho(A)$ (Table~\ref{tab:prelim_spectral_radius}). The two quantities answer different questions, and Section~\ref{prelim:approximation} turns on exactly this gap.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.78\textwidth]{../appA_preliminaries/sims/spectral_radius.png}
+\caption{Operator norm $\|A^k\|_2$ of the powers of the non-normal matrix $A = \left[\begin{smallmatrix} \rho & 2 \\ 0 & \rho \end{smallmatrix}\right]$, on a log scale. The solid curves grow to a transient peak before decaying. The dashed curves are $\rho^k$. Both share the asymptotic slope, so $\rho$ sets the decay rate even though $\|A\|_2 > 1$.}
+\label{fig:prelim_spectral}
+\end{figure}
+
+\input{../appA_preliminaries/sims/spectral_radius.tex}
+
+\subsection{Markov Chains and Where the Data Comes From}
+\label{prelim:markov_data}
+
+Sections~\ref{prelim:operators} and~\ref{prelim:policy_evaluation} assumed the model was known. A learning agent instead sees states as they arrive. This section is about which states arrive, how that differs from the states the agent cares about, and how to price the difference. It is the last section before function approximation, and it supplies the two distributions that Section~\ref{prelim:approximation} weighs against each other.
+
+\subsubsection{The Stationary Distribution}
+
+Take two states with a $30\%$ chance of flipping between them each step, and start all the probability on state one. After one step the split is $(0.7, 0.3)$, after another $(0.58, 0.42)$, and it keeps sliding toward the balance point $d^\star = (0.5, 0.5)$, then stops. Where the chain began is forgotten. The theorem says every such chain has exactly one balance point, reaches it from any start, and it pins down the speed.
+
+\begin{theorem}[Perron-Frobenius and mixing, \citet{levinperes2017}]
+\label{thm:prelim_markov}
+Let $P$ be the transition matrix of an irreducible, aperiodic Markov chain on a finite state space.\footnote{\emph{Irreducible} means every state can eventually reach every other state. \emph{Aperiodic} means the chain does not cycle with a fixed period. Together they make the chain \emph{primitive}, so that some power $P^k$ has all entries positive.} Then $P$ has a unique stationary distribution $d^\star$, meaning $d^\star P = d^\star$ with $d^\star \geq 0$ and $\sum_s d^\star_s = 1$, and for every initial distribution $d_0$ the iterates $d_k = d_0 P^k$ converge to $d^\star$. If in addition $P$ is diagonalizable, the total-variation distance, the largest gap between the probabilities the two distributions assign to any single event, obeys
+\begin{equation}
+\| d_0 P^k - d^\star \|_{\mathrm{TV}} \leq C\, |\lambda_2|^k,
+\label{eq:prelim_markov_rate}
+\end{equation}
+where $\lambda_2$ is the second-largest eigenvalue in modulus and $C$ depends on the chain.\footnote{Diagonalizability cannot be dropped from~\eqref{eq:prelim_markov_rate} as stated. If $P$ has a Jordan block of size $m$ at modulus $|\lambda_2|$, the correct bound carries a polynomial factor, $C\,k^{m-1}|\lambda_2|^k$, and no finite $C$ makes the clean form hold. A three-state chain with all entries positive and a defective eigenvalue at $0.5$ has $\|d_0P^k - d^\star\|_{\mathrm{TV}} / |\lambda_2|^k$ equal to $1.96$ at $k=5$ and $12.57$ at $k=40$, growing without bound. The clean form is safe whenever the chain is reversible, since a reversible chain is diagonalizable, and every chain satisfies $\|d_0P^k - d^\star\|_{\mathrm{TV}} \leq C_\varepsilon(|\lambda_2| + \varepsilon)^k$ for each $\varepsilon > 0$.}
+\end{theorem}
+
+The quantity $1 - |\lambda_2|$ is the \emph{spectral gap}, and it sets how fast the chain forgets its start, much as a lazily shuffled deck keeps its original order far longer than a thoroughly shuffled one. In the Engine Replacement MDP the optimal policy induces $P^{\pi^\star}$ with stationary distribution $d^{\pi^\star} = (0.6667, 0.3333)$ and $|\lambda_2| = 0.5$, so the chain spends two thirds of its time with a good machine and forgets its start within a handful of steps.\footnote{For a $2 \times 2$ stochastic matrix the second eigenvalue is the trace minus one, so $\lambda_2 = 0.5 + 0 - 1 = -0.5$ here. The negative sign makes the approach to $d^\star$ alternate rather than monotone.}
+
+\subsubsection{Discounted Occupancy}
+
+The stationary distribution describes the long run with no discounting. Discounted objectives weigh early visits more, and the matching object is built from the resolvent of Section~\ref{prelim:policy_evaluation}. For an initial distribution $\nu$, the \emph{normalized discounted occupancy} is
+\begin{equation}
+d^\pi_\nu = (1-\gamma)\, \nu\, (I - \gamma P^\pi)^{-1},
+\qquad \text{equivalently} \qquad
+d^\pi_\nu = (1-\gamma)\nu + \gamma\, d^\pi_\nu P^\pi .
+\label{eq:prelim_occupancy}
+\end{equation}
+Expanding the resolvent by~\eqref{eq:prelim_neumann} shows what it measures, $d^\pi_\nu(s) = (1-\gamma)\sum_{t \geq 0} \gamma^t \mathbb{P}_\pi(S_t = s)$, the discounted share of visits to $s$. The factor $(1-\gamma)$ is exactly what makes the entries sum to one, since the rows of the resolvent sum to $1/(1-\gamma)$. The \emph{state-action occupancy} is $d^\pi_\nu(s,a) = d^\pi_\nu(s)\,\pi(a \mid s)$. Every discounted expectation in the survey can be written against this measure, which is why it appears in policy-gradient and off-policy bounds alike.
+
+In the Engine Replacement MDP, starting from a good machine, the optimal policy has $d^{\pi^\star}_\nu = (0.6897, 0.3103)$, close to but not equal to the undiscounted $(0.6667, 0.3333)$, because discounting tilts weight toward the starting state.
+
+\subsubsection{Coverage, Change of Measure, and Concentrability}
+
+An agent learning offline does not choose which states it sees. The data is generated by a \emph{behavior}, or logging, policy $\mu$, while the quantity of interest concerns a \emph{target} policy $\pi$. Suppose the logging policy in the Engine Replacement MDP is a conservative maintenance crew that replaces the machine on nine inspections in ten, so $\mu$ keeps with probability $0.1$ in either state. Its chain is $P^\mu = \left[\begin{smallmatrix} 0.95 & 0.05 \\ 0.90 & 0.10 \end{smallmatrix}\right]$ with stationary distribution $d^\mu = (0.9474, 0.0526)$ and discounted occupancy $d^\mu_\nu = (0.9529, 0.0471)$. The crew almost never lets a machine become worn, so worn states are barely represented in the log, while the target policy spends nearly a third of its discounted time there.
+
+Any expectation under the target can be rewritten as an expectation under the log, provided the log reaches everywhere the target goes. Writing $d^\pi_\nu \ll \mu$ for that support condition, called \emph{absolute continuity},
+\begin{equation}
+\mathbb{E}_{d^\pi_\nu}\bigl[ f(S,A) \bigr]
+= \mathbb{E}_{\mu}\bigl[ w^\pi(S,A)\, f(S,A) \bigr],
+\qquad
+w^\pi(s,a) = \frac{d^\pi_\nu(s,a)}{\mu(s,a)} .
+\label{eq:prelim_change_of_measure}
+\end{equation}
+This is \emph{change of measure}, and $w^\pi$ is the \emph{importance ratio}. The identity is exact whenever the support condition holds, and it is the reason offline evaluation is possible at all.
+
+Support is qualitative and says only that the ratio is finite somewhere. The quantitative version is the \emph{concentrability coefficient}
+\begin{equation}
+C_\infty(\pi, \mu) = \Bigl\| \frac{d^\pi_\nu}{\mu} \Bigr\|_\infty
+= \sup_{s,a\, :\, \mu(s,a) > 0} \frac{d^\pi_\nu(s,a)}{\mu(s,a)},
+\label{eq:prelim_concentrability}
+\end{equation}
+which enters the error bounds of approximate dynamic programming as a multiplicative penalty \citep{MunosSzepesvari2008}. A large but finite $C_\infty$ leaves the estimate consistent and inflates its variance. A pair with $d^\pi_\nu(s,a) > 0$ and $\mu(s,a) = 0$ makes the corresponding contribution unrecoverable from the log at any sample size, no matter how the estimator is built.
+
+The Engine Replacement MDP puts numbers on this. At the state level the ratios are $w(\text{good}) = 0.7238$ and $w(\text{worn}) = 6.5862$, so $C_\infty = 6.5862$. At the state-action level the target uses only two pairs, and their ratios are $7.2376$ for keeping a good machine and $7.3180$ for replacing a worn one, giving $C_\infty = 7.3180$. Both pairs the target needs are logged, so the support condition holds and offline evaluation is feasible, but the log spends $85.8\%$ of its discounted weight on replacing a good machine, an action the target never takes, and only $4.2\%$ on replacing a worn one, the action the target most needs to learn about.\footnote{This is the ordinary situation rather than a pathology. A logging policy chosen for safety concentrates on the actions the target policy has already ruled out, so the effective sample size for the decision that matters is far smaller than the raw record suggests. Section~\ref{section:offline_rl} and Section~\ref{section:field_deployments} take up what to do about it.} Figure~\ref{fig:prelim_coverage} puts the two occupancies side by side.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\textwidth]{../appA_preliminaries/sims/coverage_geometry.png}
+\caption{Discounted state-action occupancy under the target policy and under the logging policy, on the Engine Replacement MDP from a good machine. The target uses two of the four pairs. The log puts most of its weight on a pair the target never uses and only a twentieth of it on the pair the target most needs. The support condition holds, so offline evaluation is possible, and the ratios at the two pairs the target uses are what the concentrability coefficient reports.}
+\label{fig:prelim_coverage}
+\end{figure}
+
+Nothing so far has gone wrong. Change of measure is exact, the concentrability coefficient is finite, and the target policy is identified from the log. Section~\ref{prelim:approximation} shows what breaks once the value function can no longer be stored exactly.
+
+\subsection{Approximation Geometry}
+\label{prelim:approximation}
+
+Every result so far stored a value function as one number per state. Beyond a few thousand states that is impossible, and the value function has to be approximated inside a small family. This section is about the geometry of that restriction. It is the thorniest material in the appendix, and it is where the norms of Section~\ref{prelim:norms} stop being a matter of bookkeeping.
+
+\subsubsection{Features and the Space They Span}
+\label{prelim:span_rank}
+
+A \emph{feature map} $\phi : \mathcal{S} \to \mathbb{R}^d$ attaches $d$ numbers to each state, and stacking them gives the \emph{feature matrix} $\Phi \in \mathbb{R}^{|\mathcal{S}| \times d}$ whose row $s$ is $\phi(s)^\top$. A linear approximation is $V_\theta = \Phi\theta$ for a parameter $\theta \in \mathbb{R}^d$, so the value functions the family can express are exactly the vectors in $\operatorname{span}(\Phi)$, the \emph{column space}, a $d$-dimensional subspace of $\mathbb{R}^{|\mathcal{S}|}$ when $\Phi$ has full column rank.\footnote{The \emph{rank} of $\Phi$ is the number of linearly independent columns. If two features are proportional the rank drops, $\Phi^\top D \Phi$ becomes singular, and the parameter is not identified even though the represented function still is. Adding a ridge term or dropping the redundant feature restores invertibility.} Approximation is therefore the question of how a point of $\mathbb{R}^{|\mathcal{S}|}$ relates to a subspace, and answering it requires a notion of angle.
+
+An \emph{inner product} supplies one. The \emph{weighted inner product} attached to a distribution $d$ over states is
+\begin{equation}
+\langle x, y \rangle_d = x^\top D y = \sum_s d(s)\, x(s)\, y(s),
+\qquad D = \operatorname{diag}(d),
+\label{eq:prelim_inner_product}
+\end{equation}
+and it induces the weighted norm $\|x\|_d^2 = \langle x, x\rangle_d$ of Section~\ref{prelim:norms}. Two vectors are \emph{orthogonal} in this geometry when $\langle x, y\rangle_d = 0$, which depends on $d$ and not on the vectors alone. Changing the weighting changes which vectors count as perpendicular, and that single fact is the content of this section. It changes lengths too. The vector $x = (1,3)$ has supremum norm $3$, weighted norm $2.236$ under the even weighting $(0.5, 0.5)$, and weighted norm $1.192$ under the logging weighting $(0.947, 0.053)$, which barely registers the second coordinate at all. Figure~\ref{fig:prelim_norm_balls} draws the three unit balls.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.62\textwidth]{../appA_preliminaries/sims/norm_balls.png}
+\caption{Unit balls in the plane. The supremum norm gives a square, and a $d$-weighted $L^2$ norm gives an ellipse with semi-axes $1/\sqrt{d(s)}$, so a state with small weight is stretched far out. Under the logging weighting the ellipse extends to roughly $4.4$ along the worn axis, meaning an error at the worn state has to be four times larger to count as much as an error at the good state.}
+\label{fig:prelim_norm_balls}
+\end{figure}
+
+\subsubsection{Least Squares and the Projection Matrix}
+\label{prelim:least_squares}
+
+\emph{Least squares} finds the best representable approximation to a target $V$,
+\begin{equation}
+\hat\theta = \argmin_{\theta} \|V - \Phi\theta\|_d^2,
+\qquad \text{solved by the normal equations} \qquad
+\Phi^\top D\,(V - \Phi\hat\theta) = 0 .
+\label{eq:prelim_least_squares}
+\end{equation}
+The normal equations say the residual is $d$-orthogonal to every feature, which is the defining property of a projection. Solving them gives the \emph{projection matrix}
+\begin{equation}
+\Pi_d = \Phi\bigl(\Phi^\top D \Phi\bigr)^{-1}\Phi^\top D ,
+\label{eq:prelim_projection}
+\end{equation}
+which is idempotent, $\Pi_d^2 = \Pi_d$, since projecting an already-projected vector changes nothing.
+
+\subsubsection{Projection Does Not Lengthen}
+
+Take the point $x = (1, 1)$ in the plane and drop it straight down onto the horizontal axis. The projection is $\Pi x = (1, 0)$, and the leftover $x - \Pi x = (0, 1)$ points straight up, at a right angle to the axis. The three vectors form a right triangle with $x$ as the hypotenuse, so $\Pi x$ is a leg and cannot be longer than $x$. A projection never lengthens a vector. The theorem repeats this in any number of dimensions and in any inner product.
+
+\begin{theorem}[Projection geometry, \citet{luenberger1969}]
+\label{thm:prelim_hilbert}
+Let $H$ be an inner-product space, let $M \subseteq H$ be a closed subspace, and let $\Pi$ be the orthogonal projection onto $M$.\footnote{The \emph{orthogonal projection} $\Pi x$ is the point of $M$ closest to $x$. Its defining property is that the residual $x - \Pi x$ is orthogonal to every vector in $M$, written $x - \Pi x \perp M$.} Then for every $x \in H$ the Pythagorean identity
+\begin{equation}
+\|x\|^2 = \|\Pi x\|^2 + \|x - \Pi x\|^2
+\label{eq:prelim_pythagoras}
+\end{equation}
+holds, and consequently $\Pi$ is nonexpansive, $\|\Pi x - \Pi y\| \leq \|x - y\|$.
+\end{theorem}
+
+\begin{proof}
+Split $x$ into its projection and its residual, use that the two are orthogonal, and expand the squared norm. By definition $\Pi x \in M$ and the residual satisfies $x - \Pi x \perp M$, so in particular the two pieces are orthogonal and $\langle \Pi x, x - \Pi x \rangle = 0$. Write $x$ as their sum and expand,
+\begin{align*}
+\|x\|^2 &= \|\Pi x + (x - \Pi x)\|^2 \\
+  &= \|\Pi x\|^2 + 2 \langle \Pi x, x - \Pi x \rangle + \|x - \Pi x\|^2 \\
+  &= \|\Pi x\|^2 + \|x - \Pi x\|^2
+     && \text{(the cross term vanishes),}
+\end{align*}
+which is~\eqref{eq:prelim_pythagoras}. Since $\|x - \Pi x\|^2 \geq 0$, dropping it gives $\|\Pi x\|^2 \leq \|x\|^2$, so $\|\Pi x\| \leq \|x\|$. Projection is linear, so applying this to $x - y$ gives $\|\Pi x - \Pi y\| = \|\Pi(x - y)\| \leq \|x - y\|$, which is nonexpansiveness.
+\end{proof}
+
+The proof is three lines and the picture is the proof, which is why it is one of the three kept here. Everything in the rest of this section is a consequence of reading its hypothesis carefully. The theorem says a projection is nonexpansive \emph{in the inner product that defines it}, and says nothing at all about any other.
+
+\subsubsection{The On-Policy Case Works}
+
+Fitted policy evaluation applies the Bellman operator and then projects back into the representable family, giving the \emph{projected Bellman operator} $\Pi_d T^\pi$. Its fixed point is the temporal-difference solution, the value that linear TD($0$) converges to.
+
+Take $d = d^\pi$, the stationary distribution of the policy being evaluated, so that states are weighted by how often the policy visits them. Then two facts line up. The operator $T^\pi$ is a $\gamma$-contraction in $\|\cdot\|_{d^\pi}$, not merely in the supremum norm, because $\|P^\pi x\|_{d^\pi} \leq \|x\|_{d^\pi}$ for the stationary weighting \citep{tsitsiklis1997}.\footnote{Stationarity is what makes this work. Applying $P^\pi$ averages, which by Jensen's inequality (Theorem~\ref{thm:prelim_jensen}) cannot increase a mean square, and $d^\pi P^\pi = d^\pi$ means the averaging is measured under the same weights it preserves. Replace $d^\pi$ by any other distribution and the step fails.} And $\Pi_{d^\pi}$ is nonexpansive in that same norm by Theorem~\ref{thm:prelim_hilbert}. Composing a nonexpansive map with a $\gamma$-contraction in one shared norm gives a $\gamma$-contraction, so $\Pi_{d^\pi}T^\pi$ has a unique fixed point and the iterates converge to it geometrically by Theorem~\ref{thm:prelim_banach}.
+
+The Engine Replacement MDP uses the single feature $\phi = (1, 2.1)$, so the representable value functions are the points of a line through the origin in the plane.\footnote{The feature is chosen to expose the geometry, not to fit well. The exact value $V^{\pi^\star} = (5.3448, 4.3103)$ points in the direction $(1, 0.806)$, nowhere near $(1, 2.1)$, so the best representable approximation is poor at either weighting. That is deliberate. A feature good enough to fit would leave nothing for this section to show, and Baird's counterexample \citep{Baird1995} is built the same way.} Under the on-policy weighting $d^{\pi^\star} = (0.6667, 0.3333)$ the projection is
+\begin{equation*}
+\Pi_{d^{\pi^\star}} = \begin{pmatrix} 0.3120 & 0.3276 \\ 0.6552 & 0.6880 \end{pmatrix},
+\end{equation*}
+the best representable approximation to $V^{\pi^\star}$ is $(3.0798, 6.4675)$, and the composed operator $\Pi_{d^{\pi^\star}} T^{\pi^\star}$ has modulus $0.7301$ on the feature line, comfortably below $\gamma = 0.9$. Its fixed point is $(0.5491, 1.1532)$, a poor approximation to $V^{\pi^\star}$ but a perfectly well defined one that the algorithm reaches and stays at.
+
+\subsubsection{The Off-Policy Case Need Not}
+
+Now change one thing. Keep the same target policy, the same operator $T^{\pi^\star}$, and the same features, and only replace the weighting by the logging distribution $d^\mu = (0.9474, 0.0526)$ of Section~\ref{prelim:markov_data}. This is what happens whenever the value of one policy is fitted from data generated by another, which is the ordinary situation in offline reinforcement learning. The projection becomes
+\begin{equation*}
+\Pi_{d^\mu} = \begin{pmatrix} 0.8032 & 0.0937 \\ 1.6867 & 0.1968 \end{pmatrix},
+\end{equation*}
+and the composed operator $\Pi_{d^\mu} T^{\pi^\star}$ has modulus $1.2048$. It expands. Its fixed point is $(-3.6928, -7.7549)$, on the wrong side of the origin from a value function whose entries are both above four, and the iterates do not approach it because a map with modulus above one repels rather than attracts.
+
+Nothing about $T^{\pi^\star}$ changed. It is the same affine map with the same $\gamma$-contraction in the supremum norm and the same fixed point $V^{\pi^\star}$. What changed is that $\Pi_{d^\mu}$ is orthogonal in the $d^\mu$ geometry and \emph{oblique} in the $d^{\pi^\star}$ geometry, the one in which $T^{\pi^\star}$ contracts. Theorem~\ref{thm:prelim_hilbert} still holds, and it simply does not say what is needed. Measured in $\|\cdot\|_{d^{\pi^\star}}$ the map $\Pi_{d^\mu}$ has norm above one, and the product of a map of norm above $1/\gamma$ with a $\gamma$-contraction can exceed one.
+
+Measured in the target policy's own geometry the logging projection has operator norm $\|\Pi_{d^\mu}\|_{d^{\pi^\star}} = 1.4574$, against exactly $1$ for $\Pi_{d^{\pi^\star}}$, and $1.4574$ exceeds $1/\gamma = 1.1111$, which is precisely the room a $\gamma$-contraction leaves before a composition can expand.
+
+This is the \emph{deadly triad}, the joint failure of function approximation, bootstrapping, and off-policy sampling \citep{sutton2018}. Each ingredient alone is harmless. Function approximation alone leaves a projection that never lengthens anything. Bootstrapping alone, in the tabular case, is the Bellman contraction of Section~\ref{prelim:operators}. Off-policy sampling alone is the exact change of measure~\eqref{eq:prelim_change_of_measure}. The three together break the shared-norm argument that made the composition contract. Nothing here is a sampling problem, and no amount of data repairs it. Every quantity in this subsection is computed from the exact operator with no sampling at all, which is the infinite-data limit, and the composition still expands.
+
+The transition is continuous rather than a threshold effect. Tilting the weighting along $d = (1-\alpha)d^{\pi^\star} + \alpha d^\mu$, the modulus rises from $0.7301$ at $\alpha = 0$ through $0.8578$ at $\alpha = 0.4$ and $0.9451$ at $\alpha = 0.6$, crossing one at $\alpha = 0.7048$ and reaching $1.2048$ at $\alpha = 1$. Sweeping the logging policy instead of the mixing weight tells the same story. A crew that keeps the machine with probability $0.30$ gives a best attainable modulus of $0.9548$ over the whole feature grid, at $0.20$ it is $1.0516$, and at $0.05$ it is $1.7000$. At a keep-probability of $0.50$ the logging chain has stationary distribution $(0.6667, 0.3333)$, identical to the target policy's, and the modulus falls back to the on-policy regime. How far the log has drifted from the target is the quantity that matters, and mild drift is genuinely safe here.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.98\textwidth]{../appA_preliminaries/sims/projection_geometry.png}
+\caption{Panel (a): the representable line $\operatorname{span}(\Phi)$ with $\phi = (1, 2.1)$, the exact value $V^{\pi^\star}$, and its two projections. The axes are Euclidean while the angles quoted in the legend are measured in the $d^{\pi^\star}$ inner product, so the on-policy residual is at a true right angle there ($90^\circ$) without appearing so on the page, and the off-policy residual is oblique in that same geometry ($137^\circ$). Panel (b): the modulus of $\Pi_d T^{\pi^\star}$ as the weighting is tilted from $d^{\pi^\star}$ to $d^\mu$, crossing one at $\alpha = 0.7048$. Panel (c): supremum-norm distance of the projected iterates from $V^{\pi^\star}$, from $V_0 = 0$. Below the crossing the iterates settle at their own fixed point, which sits $4.796$ from $V^{\pi^\star}$ and is further away than the best representable approximation at $2.265$. At the crossing they drift linearly, and above it they diverge geometrically.}
+\label{fig:prelim_projection_geometry}
+\end{figure}
+
+\input{../appA_preliminaries/sims/projection_geometry.tex}
+
+\subsection{Probability and Stochastic Approximation}
+\label{prelim:stochastic}
+
+Every operator so far has been available exactly. A learning agent cannot apply $T^\pi$, because doing so requires averaging over $P(\cdot \mid s,a)$, which it does not know. It sees one sampled successor state at a time. This section is about what survives that substitution.
+
+\subsubsection{The Probability Objects}
+
+A \emph{random variable} $X$ is a function from outcomes to numbers, and its \emph{expectation} $\mathbb{E}[X]$ is the probability-weighted average of the values it takes. A \emph{conditional expectation} $\mathbb{E}[X \mid Y]$ is the average of $X$ once $Y$ is known, and is itself a random variable, because it depends on which value $Y$ turned out to take.
+
+A \emph{filtration} $(\mathcal{F}_t)_{t \geq 0}$ is the growing record of what is known through time, with $\mathcal{F}_t$ holding everything observable by step $t$ and $\mathcal{F}_t \subseteq \mathcal{F}_{t+1}$. In a learning algorithm $\mathcal{F}_t$ contains the states visited, actions taken, and rewards received up to step $t$, so the current iterate $V_t$ is determined by $\mathcal{F}_t$ while the next sampled successor is not. Writing $\mathbb{E}[\,\cdot \mid \mathcal{F}_t]$ is how a statement conditions on the whole history rather than on one variable. A process is \emph{adapted} when each $X_t$ is determined by $\mathcal{F}_t$.
+
+A sequence of random variables converges \emph{almost surely} to $X$ when $\mathbb{P}(X_t \to X) = 1$, meaning the set of trajectories on which convergence fails has probability zero. This is the strongest of the usual modes and the one reinforcement learning needs, because an algorithm produces one trajectory rather than an ensemble, and a guarantee about the average behaviour across ensembles would not say that this run converges.\footnote{The weaker mode, \emph{convergence in probability}, says $\mathbb{P}(|X_t - X| > \varepsilon) \to 0$ for each $\varepsilon$, which permits a run that fails infinitely often as long as the failures thin out. Almost-sure convergence forbids that.}
+
+\subsubsection{Jensen's Inequality and Maximization Bias}
+
+A two-point example makes it obvious. Let $\varphi(x) = x^2$, and let $X$ be $0$ or $2$ with equal chance. The mean is $\mathbb{E}[X] = 1$, so $\varphi(\mathbb{E}[X]) = 1$. The average of the squares is $\mathbb{E}[\varphi(X)] = (0 + 4)/2 = 2$. Squaring after averaging gives $1$, averaging after squaring gives $2$, and the gap of $1$ is exactly the variance of $X$. Convexity forces the second number above the first.
+
+\begin{theorem}[Jensen's inequality, \citet{durrett}]
+\label{thm:prelim_jensen}
+Let $\varphi : \mathbb{R} \to \mathbb{R}$ be convex and let $X$ be an integrable random variable with $\varphi(X)$ also integrable.\footnote{A function $\varphi$ is \emph{convex} if its graph lies on or below every chord, equivalently $\varphi(\lambda x + (1-\lambda) y) \leq \lambda \varphi(x) + (1-\lambda)\varphi(y)$ for $\lambda \in [0,1]$. \emph{Integrable} means the expectation $\mathbb{E}[X]$ is finite.} Then
+\begin{equation}
+\varphi\bigl(\mathbb{E}[X]\bigr) \leq \mathbb{E}\bigl[\varphi(X)\bigr].
+\label{eq:prelim_jensen}
+\end{equation}
+The inequality reverses when $\varphi$ is concave, and holds with equality when $\varphi$ is affine.
+\end{theorem}
+
+The reinforcement-learning consequence is immediate and important. The maximum is a convex function of its arguments, so for noisy action-value estimates $\widehat{Q}_a$,
+\begin{equation}
+\mathbb{E}\bigl[\max_a \widehat{Q}_a\bigr] \;\geq\; \max_a \mathbb{E}\bigl[\widehat{Q}_a\bigr] .
+\label{eq:prelim_max_bias}
+\end{equation}
+Maximization selects positive action-value estimation errors more often than negative ones, so a bootstrapped maximum is biased upward. Double estimators reduce this \emph{maximization bias}, and Section~\ref{sec:planning_learning} treats the correction. Figure~\ref{fig:prelim_jensen} measures the gap as the number of actions and the noise level vary.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{../appA_preliminaries/sims/jensen_gap.png}
+\caption{The maximization-bias gap $\mathbb{E}[\max_a \widehat{Q}_a] - \max_a \mathbb{E}[\widehat{Q}_a]$ for independent Gaussian action-value estimates. Left: the gap against the number of actions at four noise levels. Right: the gap against the noise level at four action counts, against the equal-means reference $\sigma\,\mathbb{E}[\max_a Z_a]$ (dashed).}
+\label{fig:prelim_jensen}
+\end{figure}
+
+\input{../appA_preliminaries/sims/jensen_gap.tex}
+
+\subsubsection{Laws of Large Numbers and the Rate}
+
+Flip a fair coin over and over and track the running fraction of heads. Early on it swings around, then it settles down and hugs $1/2$. That settling is the law of large numbers. Now rescale the leftover wobble around $1/2$ by $\sqrt{n}$. The rescaled wobble does not vanish. It fills out a fixed bell-shaped spread, and that fixed shape is the central limit theorem.
+
+\begin{theorem}[Law of large numbers and central limit theorem, \citet{durrett}]
+\label{thm:prelim_lln_clt}
+Let $X_1, X_2, \ldots$ be independent and identically distributed with mean $\mu = \mathbb{E}[X_1]$ and finite variance $\sigma^2 = \operatorname{Var}(X_1)$, and let $\bar X_n = \frac{1}{n}\sum_{i=1}^n X_i$. Then
+\begin{equation}
+\bar X_n \to \mu \quad \text{almost surely},
+\label{eq:prelim_lln}
+\end{equation}
+and the rescaled fluctuation converges in distribution to a Gaussian,
+\begin{equation}
+\sqrt{n}\,(\bar X_n - \mu) \;\Rightarrow\; N(0, \sigma^2),
+\label{eq:prelim_clt}
+\end{equation}
+whatever the shape of the underlying distribution.\footnote{Convergence \emph{in distribution}, written $\Rightarrow$, means the cumulative distribution functions converge at every continuity point. It describes the shape of the fluctuation, not any single realization.}
+\end{theorem}
+
+The two results license the two things a sampled backup needs. The law of large numbers says a sample average has the right target, so replacing $\sum_{s'} P(s' \mid s,a) V(s')$ by an average over observed successors estimates the correct quantity. The central limit theorem prices that replacement, at $n^{-1/2}$ and no faster, which is what turns an estimate into a confidence interval and what sets the width of every bandit bound in Section~\ref{section:bandits}. The Gaussian shape appears whatever the individual draws look like, the Galton-board effect in which many small independent bounces add up to a bell curve.
+
+\subsubsection{Martingales}
+
+Picture a gambler in a fair game. The expected fortune next round equals the fortune now, no edge either way, so the fortune is a \emph{martingale}. Suppose it is also capped and can never leave a fixed range. Then it has no room to drift. A quantity with no drift and no room to run must eventually stop swinging and settle.
+
+\begin{theorem}[Martingale convergence, \citet{williamsprob1991}; \citet{robbinssiegmund1971}]
+\label{thm:prelim_martingale}
+Let $(M_n)$ be a supermartingale adapted to a filtration $(\mathcal{F}_n)$, meaning $\mathbb{E}[M_{n+1} \mid \mathcal{F}_n] \leq M_n$, and bounded in $L^1$, meaning $\sup_n \mathbb{E}|M_n| < \infty$.\footnote{A process is a \emph{martingale} if $\mathbb{E}[M_{n+1} \mid \mathcal{F}_n] = M_n$ and a \emph{supermartingale} if the conditional mean can only fall. A martingale confined to a bounded interval is automatically $L^1$-bounded.} Then $M_n$ converges almost surely to a finite limit. Moreover, if $(Z_n)$ is a nonnegative adapted process with
+\begin{equation}
+\mathbb{E}[Z_{n+1} \mid \mathcal{F}_n] \leq (1 + a_n) Z_n - b_n + c_n,
+\label{eq:prelim_robbins_siegmund}
+\end{equation}
+where $a_n, b_n, c_n \geq 0$ are $\mathcal{F}_n$-measurable with $\sum_n a_n < \infty$ and $\sum_n c_n < \infty$ almost surely, then $Z_n$ converges almost surely to a finite limit and $\sum_n b_n < \infty$ almost surely.
+\end{theorem}
+
+A \emph{martingale-difference} sequence is one with $\mathbb{E}[w_t \mid \mathcal{F}_t] = 0$, so each term adds no systematic bias given everything known before it. This is the exact shape of the error a sampled Bellman backup makes, since the sampled target is right on average given the current state and iterate. The second half of the theorem, due to \citet{robbinssiegmund1971}, is what handles a squared error that would shrink except for two small perturbations, and it is the probabilistic engine behind essentially every almost-sure convergence proof in reinforcement learning.
+
+\subsubsection{Stochastic Approximation}
+
+The simplest case is estimating an unknown mean. Noisy samples arrive one at a time and a running guess is nudged by $x \leftarrow x + \alpha_t(\text{sample} - x)$. At $\alpha_t = 1/t$ this is exactly the running average, and it converges to the true mean. The two conditions below are what keep such an update honest, steps large enough to reach any target and small enough to average the noise away.
+
+\begin{theorem}[Stochastic approximation for a contraction, \citet{jaakkola1994}; \citet{tsitsiklis1994}]
+\label{thm:prelim_robbins_monro}
+Let $g$ be a $\gamma$-contraction on $\mathbb{R}$ with fixed point $x^\star$, and let
+\begin{equation}
+x_{t+1} = x_t + \alpha_t\bigl(g(x_t) - x_t + w_t\bigr),
+\label{eq:prelim_rm_update}
+\end{equation}
+where the step sizes $\alpha_t \geq 0$ are $\mathcal{F}_t$-measurable and the noise $w_t$ is $\mathcal{F}_{t+1}$-measurable with $\mathbb{E}[w_t \mid \mathcal{F}_t] = 0$ and $\mathbb{E}[w_t^2 \mid \mathcal{F}_t] \leq \sigma^2$.\footnote{The measurability matters and is easy to get backwards. The noise on step $t$ is not known until the sample that produced it has been drawn, so $w_t$ enters the record at time $t+1$, not $t$. Requiring $w_t$ to be $\mathcal{F}_t$-measurable and mean-zero given $\mathcal{F}_t$ would force $w_t = 0$ and leave a theorem about a noiseless recursion.} If the step sizes satisfy the two Robbins-Monro conditions
+\begin{equation}
+\sum_{t} \alpha_t = \infty \qquad \text{and} \qquad \sum_{t} \alpha_t^2 < \infty,
+\label{eq:prelim_rm_conditions}
+\end{equation}
+then $x_t \to x^\star$ almost surely.
+\end{theorem}
+
+The first condition keeps the total movement unbounded, so the iterate can travel any finite distance to the target. The second makes the steps shrink fast enough that the accumulated noise is finite. Temporal-difference learning is~\eqref{eq:prelim_rm_update} with a Bellman operator in place of $g$, applied only at the state visited on that step, and Q-learning is the same recursion for $T^\star$.
+
+The two step-size conditions are due to \citet{robbinsmonro1951}, who introduced this recursion for root-finding and proved convergence in mean square. The almost-sure statement came later, and the form above, a contraction driven by martingale-difference noise with one component updated per step, is the version reinforcement learning needs and is due to \citet{jaakkola1994} and \citet{tsitsiklis1994}.\footnote{The conditions keep their original name because they are the ones \citet{robbinsmonro1951} imposed, and the survey follows that usage.}
+
+Running tabular TD($0$) on the example, evaluating the optimal policy from sampled transitions over $20$ seeds and $20{,}000$ steps against the target $V^{\pi^\star} = (5.3448, 4.3103)$, separates what the conditions do and do not promise. Table~\ref{tab:prelim_td_schedules} reports the two sums and the final error for four schedules. A constant step of $0.05$ has both sums infinite, violating the second condition, and it settles at an error of $0.1711$, a floor set by the step size rather than by the data. A step of $1/n^2$, where $n$ counts visits to the state being updated, has both sums finite, violating the first, and stalls at $4.0291$, having simply run out of total movement. The two valid schedules behave very differently from each other. A step of $1/n$ satisfies both conditions and converges, but its total movement grows only like $\log n$, and after $20{,}000$ steps it sits at $1.7125$, ten times worse than the invalid constant step. A step of $1/n^{0.7}$ satisfies the same two conditions with total movement growing like $n^{0.3}$ and reaches $0.0450$, the best of the four.
+
+The conditions in~\eqref{eq:prelim_rm_conditions} are asymptotic and say nothing about the rate, which is why the polynomial family rather than the harmonic one is what practice uses. A schedule can be provably convergent and useless within any budget a person will wait for.
+
+\input{../appA_preliminaries/sims/running_example_td.tex}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.78\textwidth]{../appA_preliminaries/sims/robbins_monro.png}
+\caption{Root-mean-square error $|x_t - x^\star|$ of the stochastic-approximation recursion~\eqref{eq:prelim_rm_update} for the fixed point of $x = \gamma x + b$ under four step-size schedules, averaged over 100 seeds, on log-log axes. Only the two schedules that satisfy both Robbins-Monro conditions~\eqref{eq:prelim_rm_conditions} reach the root. The constant schedule settles into a noise floor. The $1/t^2$ schedule stalls.}
+\label{fig:prelim_robbins_monro}
+\end{figure}
+
+\subsection{Curvature, Constraints, and Worst Cases}
+\label{prelim:convex}
+
+Policy optimization, reward-model fitting, and constrained control all reduce to minimizing a function rather than iterating an operator. This section collects the four facts about that problem the survey uses.
+
+\subsubsection{Convexity, Smoothness, and Conditioning}
+\label{prelim:quadratic_forms}
+
+Minimize $f(x) = x^2$. The slope is $2x$, so $f$ is $L$-smooth with $L = 2$, and gradient descent with step $1/L = 1/2$ updates $x \leftarrow x - \tfrac{1}{2}(2x) = 0$. One step lands exactly on the minimum. A rounder bowl could not exist. All the difficulty in the general case comes from bowls that are stretched and lopsided, and the theorem measures what that stretching costs.
+
+\begin{theorem}[Gradient descent convergence, \citet{nesterov2018}]
+\label{thm:prelim_gd}
+Let $f$ be convex and $L$-smooth, and let $x^\star$ minimize $f$.\footnote{A differentiable $f$ is \emph{$L$-smooth} if its gradient is $L$-Lipschitz, $\|\nabla f(x) - \nabla f(y)\| \leq L\|x - y\|$, which bounds how fast the slope can change. It is \emph{$\mu$-strongly convex} if $f(x) - \tfrac{\mu}{2}\|x\|^2$ is still convex, so $f$ curves up at least as fast as a quadratic of curvature $\mu$.} Gradient descent with step $1/L$, $x_{k+1} = x_k - \tfrac{1}{L}\nabla f(x_k)$, satisfies
+\begin{equation}
+f(x_k) - f(x^\star) \leq \frac{L\,\|x_0 - x^\star\|^2}{2k}.
+\label{eq:prelim_gd_sublinear}
+\end{equation}
+If in addition $f$ is $\mu$-strongly convex, with condition number $\kappa = L/\mu$, the iterates converge geometrically,
+\begin{equation}
+\|x_k - x^\star\| \leq \Bigl(1 - \tfrac{\mu}{L}\Bigr)^{k} \|x_0 - x^\star\|.
+\label{eq:prelim_gd_linear}
+\end{equation}
+\end{theorem}
+
+The split between the two rates is the split between hard and easy problems. On a general smooth convex objective the gap closes at the sublinear rate $O(1/k)$. Strong convexity, the curvature that keeps the objective from flattening near the optimum, upgrades this to the geometric rate $(1 - \mu/L)^k$, and the iterations needed for a fixed accuracy then scale with the \emph{condition number} $\kappa = L/\mu$. A well-conditioned objective is a round bowl, where the steps roll straight to the bottom. An ill-conditioned one is a long narrow valley, where the steps zig-zag across the walls and crawl along the floor. Equation~\eqref{eq:prelim_gd_linear} is Theorem~\ref{thm:prelim_banach} applied to the gradient map, which is a $(1 - \mu/L)$-contraction whose fixed point is the minimizer.\footnote{The Polyak-Lojasiewicz condition used in Section~\ref{sec:planning_learning} relaxes strong convexity to the inequality $\tfrac{1}{2}\|\nabla f(x)\|^2 \geq \mu\,(f(x) - f^\star)$, which is enough for the same geometric rate on the function values without requiring convexity anywhere.}
+
+A \emph{quadratic form} $x^\top A x$ with $A$ symmetric positive definite is the model case, and its \emph{eigenvalues} are the curvatures along the principal axes, so $\kappa(A) = \lambda_{\max}(A)/\lambda_{\min}(A)$ measures how far from round the bowl is.
+
+\subsubsection{Kullback-Leibler Divergence and the Fisher Matrix}
+
+Policy optimization needs a way to say that two policies are close. Euclidean distance between parameter vectors will not do, because the same parameter change can move a distribution a great deal or hardly at all. The natural measure is the \emph{Kullback-Leibler divergence}
+\begin{equation}
+D_{\mathrm{KL}}(p \,\|\, q) = \sum_x p(x) \log \frac{p(x)}{q(x)} \;\geq\; 0 ,
+\label{eq:prelim_kl}
+\end{equation}
+which is zero exactly when $p = q$ and is not symmetric in its two arguments, so it is not a metric. Nonnegativity is Jensen's inequality applied to $-\log$, which is convex. For a coin with $p = (0.5, 0.5)$ against $q = (0.9, 0.1)$ the divergence $D_{\mathrm{KL}}(p \| q) = 0.5\log(0.5/0.9) + 0.5\log(0.5/0.1) \approx 0.51$ nats, while the reverse $D_{\mathrm{KL}}(q \| p) \approx 0.37$, which shows the asymmetry directly.
+
+For a parametric family $\pi_\theta$ the divergence between nearby members is governed by a single matrix. Expanding $D_{\mathrm{KL}}(\pi_\theta \| \pi_{\theta + \Delta})$ to second order, the constant and linear terms vanish, because the divergence is nonnegative with a minimum of zero at $\Delta = 0$, and what remains is
+\begin{equation}
+D_{\mathrm{KL}}(\pi_\theta \,\|\, \pi_{\theta + \Delta}) = \tfrac{1}{2}\,\Delta^\top F(\theta)\, \Delta + O(\|\Delta\|^3),
+\qquad
+F(\theta) = \mathbb{E}\bigl[ \nabla_\theta \log \pi_\theta \, \nabla_\theta \log \pi_\theta^\top \bigr],
+\label{eq:prelim_fisher}
+\end{equation}
+where $F$ is the \emph{Fisher information matrix}, an average of outer products of the score and therefore positive semidefinite. The Fisher matrix is the local quadratic model of KL divergence, which makes it the quadratic form that measures distance in distribution space rather than parameter space.
+
+Two constructions follow. The \emph{natural gradient} is the steepest-ascent direction under that metric, obtained by solving the linear system $F v = \nabla_\theta J$ rather than by forming $F^{-1}$, which for a large parameter vector is neither necessary nor numerically sensible \citep{amari1998natural, Kakade2001}. And a \emph{trust region} of the form $\Delta^\top F \Delta \leq 2\delta$ is a KL ball to second order, which is the constraint that defines trust-region policy optimization \citep{Schulman2015}. In both cases the conditioning of $F$ plays the role $\kappa$ played above, so an anisotropic Fisher matrix is the ill-conditioned valley of the previous subsection expressed in distribution space. Panel (a) of Figure~\ref{fig:prelim_curvature} draws the two trust regions against each other.
+
+\subsubsection{Lagrangian Duality}
+
+Take the tiny program $\min x^2$ subject to $x \geq 1$. The constraint binds, so the answer is $x^\star = 1$ with value $p^\star = 1$. Now attach a price $\lambda \geq 0$ to the constraint and minimize $x^2 + \lambda(1 - x)$ over $x$ with no constraint. The minimizer is $x = \lambda/2$, giving the lower bound $q(\lambda) = \lambda - \lambda^2/4$. This bound is largest at $\lambda^\star = 2$, where $q = 1$. The best price reproduces the true optimum exactly, with no gap.
+
+\begin{theorem}[Weak and strong duality, \citet{boydvandenberghe2004}]
+\label{thm:prelim_duality}
+Consider $p^\star = \inf_x f(x)$ subject to $g_i(x) \leq 0$ for $i = 1, \ldots, m$, with Lagrangian $L(x, \lambda) = f(x) + \sum_i \lambda_i g_i(x)$ and dual function $q(\lambda) = \inf_x L(x, \lambda)$ for $\lambda \geq 0$.\footnote{The multipliers $\lambda_i \geq 0$ price the constraints. The \emph{dual function} is the best lower bound those prices can certify, and it is concave in $\lambda$ as an infimum of affine functions, whatever $f$ and $g_i$ are.} Let $d^\star = \sup_{\lambda \geq 0} q(\lambda)$. Then weak duality always holds,
+\begin{equation}
+d^\star \leq p^\star,
+\label{eq:prelim_weak_duality}
+\end{equation}
+and if $f$ and the $g_i$ are convex and a strictly feasible point exists, so that $g_i(\bar x) < 0$ for some $\bar x$ and all $i$ (Slater's condition), then strong duality holds, $d^\star = p^\star$, and the supremum defining $d^\star$ is attained by some $\lambda^\star \geq 0$. If in addition the primal infimum is attained at some $x^\star$, the pair is a saddle point,
+\begin{equation}
+L(x^\star, \lambda) \leq L(x^\star, \lambda^\star) \leq L(x, \lambda^\star) \quad \text{for all } x, \ \lambda \geq 0.
+\label{eq:prelim_saddle}
+\end{equation}
+\end{theorem}
+
+Primal attainment is a genuine extra hypothesis and not a formality. Minimizing $e^{-x}$ subject to $x \geq 0$ is convex and strictly feasible, and $p^\star = d^\star = 0$, so strong duality holds, yet the primal infimum is approached only as $x \to \infty$ and no saddle point exists.
+
+Duality converts a constrained problem into an unconstrained one. Rather than optimize subject to constraints, one forms the Lagrangian and searches for its saddle point, ascending in the multipliers and descending in the variables. Weak duality guarantees that every setting of the prices certifies a lower bound on the optimum, and strong duality guarantees that bound is tight. The multiplier at the optimum is a \emph{shadow price}, the rate at which the optimal value would improve if the constraint were relaxed, which is the reading constrained reinforcement learning gives it in Section~\ref{section:dist_robust_constrained}.
+
+\subsubsection{The Envelope Theorem}
+
+Take $V(\theta) = \max_a (\theta a - \tfrac{1}{2}a^2)$. The best $a$ solves $\theta - a = 0$, so $a^\star(\theta) = \theta$ and $V(\theta) = \tfrac{1}{2}\theta^2$. Differentiate directly and $V'(\theta) = \theta$. Now instead differentiate only the inside, $\partial_\theta(\theta a - \tfrac{1}{2}a^2) = a$, and plug in the winner $a^\star = \theta$, giving $\theta$ again. The two answers agree, and getting the second one never required differentiating $a^\star(\theta)$ at all.
+
+\begin{theorem}[Envelope theorem, \citet{milgromsegal2002}; \citet{danskin1967}]
+\label{thm:prelim_envelope}
+Let $V(\theta) = \max_{a \in A} f(a, \theta)$ with $A$ compact, $f$ and $\partial_\theta f$ jointly continuous, and $a^\star(\theta) \in \argmax_a f(a, \theta)$. If the maximizer is unique, then $V$ is differentiable at $\theta$ and
+\begin{equation}
+V'(\theta) = \frac{\partial f}{\partial \theta}\bigl(a^\star(\theta), \theta\bigr).
+\label{eq:prelim_envelope}
+\end{equation}
+The change in the maximizer contributes nothing to first order. When the maximizer is not unique, $V$ has one-sided derivatives given by the extreme values of $\partial_\theta f$ over the set of maximizers.\footnote{This is Danskin's directional-derivative statement. A unique maximizer collapses the interval of one-sided slopes to the single derivative~\eqref{eq:prelim_envelope}, and multiple maximizers leave a kink, which is the same kink Section~\ref{prelim:affine_envelope} located in the Bellman envelope and Section~\ref{prelim:argopt} attributed to a non-singleton set of maximizers.}
+\end{theorem}
+
+The maximizer's own movement drops out because at a peak one already stands at the top, so a small tilt of the ground changes one's height only through how the ground moved underfoot, not through any scramble to re-pick where to stand. In dynamic programming this is the statement that the derivative of the value with respect to a state or a parameter equals the derivative of the one-step return at the optimal action, which economists know as the Benveniste-Scheinkman identity. Danskin's form supplies the gradient of a worst-case objective as the gradient at the worst case, which is what makes the inner minimization of a robust Bellman operator differentiable in Section~\ref{section:dist_robust_constrained}, and the same identity underlies the policy-gradient theorem of Section~\ref{sec:policy_gradient}. Panel (b) of Figure~\ref{fig:prelim_curvature} draws the envelope and the member that supports it, the same construction Section~\ref{prelim:affine_envelope} used for the Bellman operator and Section~\ref{prelim:operators} used to derive its contraction.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{../appA_preliminaries/sims/curvature_geometry.png}
+\caption{Panel (a): a Euclidean ball of parameter steps against the Fisher trust region $\Delta\theta^\top F \Delta\theta \leq 1$ for a Fisher matrix with condition number $16$. Steps of equal parameter length move the policy distribution by very different amounts, and the Fisher region is the set that moves it equally. Panel (b): a family of payoffs and their upper envelope, which coincides with whichever member is active and kinks where the maximizer switches.}
+\label{fig:prelim_curvature}
+\end{figure}

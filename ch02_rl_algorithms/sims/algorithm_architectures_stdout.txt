@@ -1,0 +1,2 @@
+Output: /Users/pranjal/Code/rl/ch02_rl_algorithms/sims/algorithm_architectures.png
+Algorithm architectures diagram generated.

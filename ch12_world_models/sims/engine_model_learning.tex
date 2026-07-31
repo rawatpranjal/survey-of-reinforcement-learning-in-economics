@@ -1,0 +1,26 @@
+\begin{table}[H]
+\centering
+\small
+\caption{Learning the four Engine Replacement MDP transition rows. Value errors, bounds, and standard errors use two hundred fixed seeds.}
+\label{tab:engine_model_learning}
+\begin{tabular}{rrrrrr}
+\hline
+$N$ & mean kernel error & value error & s.e. & simulation bound & s.e. \\
+\hline
+25 & 0.1556 & 0.5015 & 0.0257 & 14.0040 & 0.7085 \\
+50 & 0.1028 & 0.3284 & 0.0168 & 9.2520 & 0.4764 \\
+100 & 0.0756 & 0.2435 & 0.0143 & 6.8040 & 0.3902 \\
+250 & 0.0502 & 0.1615 & 0.0087 & 4.5144 & 0.2407 \\
+500 & 0.0355 & 0.1138 & 0.0060 & 3.1950 & 0.1688 \\
+1,000 & 0.0259 & 0.0830 & 0.0045 & 2.3265 & 0.1276 \\
+2,500 & 0.0165 & 0.0529 & 0.0030 & 1.4821 & 0.0831 \\
+5,000 & 0.0113 & 0.0362 & 0.0021 & 1.0154 & 0.0581 \\
+\hline
+\multicolumn{6}{l}{Final mean estimates of $P(\mathrm{high}\mid s,a)$} \\
+\hline
+low, keep & low, replace & high, keep & high, replace & \multicolumn{2}{c}{optimal-policy matches} \\
+\hline
+0.4998 & 0.0000 & 1.0000 & 0.0000 & \multicolumn{2}{c}{1.000} \\
+\hline
+\end{tabular}
+\end{table}

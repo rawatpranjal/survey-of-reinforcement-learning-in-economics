@@ -1,0 +1,20 @@
+\begin{table}[h]
+\centering
+\caption{Value-learning quantities computed on the Engine Replacement MDP. The Bellman-operator identity and Monte Carlo estimate use the intermediate table $Q_{5}$ at $(s,a) = (\text{low}, \text{keep})$, the engine's one stochastic transition. The Q-learning trace uses 10 fixed seeds and 40,000 synchronous sweeps with step size $\alpha_n = n^{-0.6}$. Projected TD($\lambda$) moduli use $\phi=(1,-1)$ and the stationary distribution of $P^{\pi^\star}$. Concentrability uses the discounted occupancy from the low-mileage start.}
+\label{tab:engine_value_learning}
+\begin{tabular}{p{0.68\textwidth}r}
+\hline
+quantity & value \\
+\hline
+exact target $(FQ_5)(\text{low},\text{keep})$ & 2.8268 \\
+Monte Carlo mean, $N = 1,000,000$ & 2.8268 $\pm$ 0.0001 \\
+mean absolute sampling error, $N = 1,000,000$ & 0.0004 \\
+Q-learning final error, mean $\pm$ SE & 0.0312 $\pm$ 0.0027 \\
+projected TD($\lambda=0$) norm, bound 0.9000 & 0.5196 \\
+projected TD($\lambda=0.5$) norm, bound 0.8182 & 0.3231 \\
+projected TD($\lambda=0.9$) norm, bound 0.4737 & 0.1608 \\
+projected TD($\lambda=1$) norm, bound 0.0000 & 0.0000 \\
+state-action concentrability $C_\infty$ & 7.3180 \\
+\hline
+\end{tabular}
+\end{table}

@@ -1,0 +1,37 @@
+============================================================
+Majorization-Minimization Surrogate for TRPO
+============================================================
+
+Objective: J(theta) = sin(2*theta) + 0.3*theta - 0.08*theta^2
+Domain: [-1.0, 5.0]
+Global max: theta* = 0.8258, J(theta*) = 1.1899
+Trust region radius: delta = 1.2
+
+--- Single MM Step (left panel) ---
+theta_old = 1.0000
+c = 2.1201
+theta_new = 0.8367
+J(theta_old) = 1.1293
+J(theta_new) = 1.1897
+L(theta_new) = 1.1858
+Guaranteed improvement gap: J(theta_new) - L(theta_new) = 0.0039
+Actual improvement: J(theta_new) - J(theta_old) = 0.0604
+L <= J verification: 0 violations out of 1000 points
+
+--- Iterative MM Convergence (right panel) ---
+  k    theta_k   J(theta_k)    Delta_J        c_k
+--------------------------------------------------
+  0       0.0000       0.0000          --         --
+  1       0.8093       1.1893       1.1893       1.4209
+  2       0.8265       1.1899       0.0007       2.1832
+  3       0.8273       1.1899       0.0000       2.1816
+  4       0.8274       1.1899       0.0000       2.1815
+
+Monotonic improvement: YES
+  J(theta_0) = 0.000000
+  J(theta_1) = 1.189254
+  J(theta_2) = 1.189925
+  J(theta_3) = 1.189927
+  J(theta_4) = 1.189927
+
+Output: /Users/pranjal/Code/rl/ch03_theory/sims/mm_surrogate_trpo.png

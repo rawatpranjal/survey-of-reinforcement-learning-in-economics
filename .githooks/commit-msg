@@ -1,0 +1,6 @@
+#!/bin/sh
+# commit-msg: drop AI-attribution trailer lines (co-author, generated-with, session links).
+# Git's default cleanup strips the leftover blank line. Extend the regex if a new form appears.
+f="$1"
+grep -viE 'co-authored-by:.*(claude|anthropic)|generated with.*(claude|anthropic)|claude code|claude-session|claude\.ai/code|noreply@anthropic' "$f" > "$f.tmp" || true
+mv "$f.tmp" "$f"

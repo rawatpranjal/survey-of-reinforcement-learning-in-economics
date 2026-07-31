@@ -1,0 +1,18 @@
+\begin{table}[h]
+\centering
+\caption{Policy-gradient objects on the Engine Replacement MDP at the uniform policy $\theta = (0, 0)$, start distribution $\nu = \delta_{\text{low}}$. The Fisher matrix is diagonal under the one-logit-per-state parameterization; its inverse is taken entrywise, never a pseudo-inverse. Convergence counts iterations until $J^\star - J < 10^{-3}$ at step size 0.5.}
+\label{tab:engine_policy_square}
+\begin{tabular}{lrr}
+\hline
+ & low & high \\
+\hline
+occupancy $\rho(s)$ & 7.0968 & 2.9032 \\
+Fisher diagonal $\rho(s)\pi_k(s)\pi_r(s)$ & 1.7742 & 0.7258 \\
+gradient $\partial J / \partial \theta_s$ & -2.2492 & -0.1709 \\
+action-value gap $Q(s, \text{r}) - Q(s, \text{k})$ & -1.2677 & -0.2355 \\
+natural gradient $F^{-1} \nabla J$ & -1.2677 & -0.2355 \\
+policy-gradient iterations to $J^\star-J<10^{-3}$ & \multicolumn{2}{c}{not reached in 300} \\
+natural-gradient iterations to $J^\star-J<10^{-3}$ & \multicolumn{2}{c}{58} \\
+\hline
+\end{tabular}
+\end{table}

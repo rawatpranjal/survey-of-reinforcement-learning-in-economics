@@ -1,0 +1,17 @@
+\begin{table}[h]
+\centering
+\caption{Maximization bias for independent Gaussian action-value estimates, over 400000 Monte Carlo replicates per cell. With equal true action values the whole expected maximum is bias, and it equals $\sigma\,\mathbb{E}[\max_a Z_a]$ in closed form. The last column gives the bias once the best action is separated from the rest by one unit, at which point the maximum is nearly deterministic and the bias collapses.}
+\label{tab:prelim_jensen}
+\begin{tabular}{rrrrr}
+\hline
+actions & $\sigma$ & measured gap & $\sigma\,\mathbb{E}[\max_a Z_a]$ & bias at separation $1$ \\
+\hline
+2 & 0.25 & 0.1413 & 0.1409 & 0.0009 \\
+2 & 1.00 & 0.5663 & 0.5637 & 0.2024 \\
+8 & 0.25 & 0.3559 & 0.3558 & 0.0016 \\
+8 & 1.00 & 1.4232 & 1.4233 & 0.6658 \\
+32 & 0.25 & 0.5174 & 0.5171 & 0.0045 \\
+32 & 1.00 & 2.0697 & 2.0684 & 1.1568 \\
+\hline
+\end{tabular}
+\end{table}

@@ -1,0 +1,146 @@
+% Wrapper for compiling individual chapters
+% Usage: Set \chapterfile before \input{compile_chapter.tex}
+% Example: pdflatex "\def\chapterfile{../ch02_rl_algorithms/tex/rl_algorithms}\input{compile_chapter}"
+
+\documentclass[11pt,notitlepage,a4paper]{article}
+
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{booktabs}
+\usepackage[round]{natbib}
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{amsfonts}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[most]{tcolorbox}
+\usepackage{soul}
+\soulregister\ref7
+\usepackage{geometry}
+\geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in, rmargin=1in,}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{pdflscape}
+\usepackage[dvipsnames]{xcolor}
+\definecolor{linkcolor}{rgb}{0, 0, 0.35}
+\definecolor{linkbordercolor}{rgb}{.9, .9, .9}
+\definecolor{block-gray}{gray}{0.85}
+\newtcolorbox{blockquote}{colback=block-gray,grow to right by=-1mm,grow to left by=-1mm,boxrule=0pt,boxsep=0pt,breakable}
+
+% xr-hyper pulls the label table from main.aux so cross-chapter \ref commands
+% resolve to the monograph numbering instead of printing "??" in standalone builds.
+% Harmless when main.aux is absent: xr just warns.
+\usepackage{xr-hyper}
+\usepackage{hyperref}
+\externaldocument{main}
+\usepackage{listings}
+
+\usepackage{colortbl}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=linkcolor,
+    anchorcolor=linkcolor,
+    citecolor=linkcolor,
+    filecolor=linkcolor,
+    urlcolor=linkcolor,
+    bookmarks=true,
+    citebordercolor=linkbordercolor,
+    filebordercolor=linkbordercolor,
+    linkbordercolor=linkbordercolor,
+}
+\usepackage[doublespacing]{setspace}
+
+\usepackage{subfig}
+\renewcommand{\thesubfigure}{(\alph{subfigure})}
+\captionsetup[subfigure]{labelformat=default}
+
+\usepackage{fullpage}
+\usepackage{color,soul}
+\usepackage{verbatim}
+\usepackage{enumitem}
+
+\usepackage{minted}
+\definecolor{bg}{rgb}{0.95,0.95,0.95}
+
+% Palette colors matching sims/plot_style.py
+\definecolor{rlblue}{HTML}{4878A8}
+\definecolor{rlorange}{HTML}{D4915C}
+\definecolor{rlgreen}{HTML}{6BA368}
+\definecolor{rlred}{HTML}{C25B56}
+\definecolor{rlpurple}{HTML}{8B7BAF}
+\definecolor{rlgray}{HTML}{888888}
+\definecolor{rlblack}{HTML}{2D2D2D}
+\setlength{\fboxsep}{1mm}
+\setminted{
+    bgcolor=bg,
+    frame=none,
+    linenos=false,
+    fontsize=\normalsize,
+    breaklines=true,
+    breakanywhere=true,
+    tabsize=4,
+    breaksymbolleft={},
+    texcl=false,
+    escapeinside=||
+}
+\setmintedinline{
+    bgcolor=bg,
+    fontsize=\normalsize,
+    breaklines=true,
+}
+\definecolor{highlight}{rgb}{1,1,0.6}
+\usepackage[smartEllipses,hybrid]{markdown}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc, decorations.pathreplacing}
+\usepackage{lmodern}
+\usepackage{bbm}
+\newcommand{\indicator}[1]{\mathbbm{1}\{#1\}}
+
+\usepackage{thmtools, thm-restate}
+
+\setlength{\marginparwidth}{2cm}
+\usepackage[draft,textsize=small]{todonotes}
+\newcommand{\moveto}[2]{\todo[backgroundcolor=white, bordercolor=red, inline]{{\bf Move to $\longrightarrow$ #1}\\#2}}
+\usepackage[normalem]{ulem}
+\newcommand{\movedto}[2]{\todo[backgroundcolor=white, bordercolor=red, inline]{{\bf Moved to $\longrightarrow$ #1}\\\sout{#2}}}
+\newcommand{\note}[1]{\par {\bfseries \color{blue} #1 \par}}
+
+\setcounter{MaxMatrixCols}{10}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\renewcommand\thelemma{L\arabic{lemma}}
+\newtheorem{assumption}{Assumption}
+\renewcommand\theassumption{A\arabic{assumption}}
+\newtheorem{definition}{Definition}
+\renewcommand\thedefinition{D\arabic{definition}}
+\newtheorem{corollary}{Corollary}[theorem]
+\renewcommand\thecorollary{C\arabic{corollary}}
+\newtheorem{conjecture}{Conjecture}
+\renewcommand\theconjecture{J\arabic{conjecture}}
+
+\renewcommand{\baselinestretch}{1.5}
+
+\def\argmin{\mathop{\it argmin}}
+\def\argmax{\mathop{\it argmax}}
+\DeclareRobustCommand\iff{\;\Longleftrightarrow\;}
+
+\usepackage{titlesec}
+\newcommand{\sectionbreak}{\clearpage}
+\usepackage{appendix}
+
+\setlist{noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt}
+\newcommand\Tstrut{\rule{0pt}{2.6ex}}
+\newcommand\Bstrut{\rule[-0.9ex]{0pt}{0pt}}
+
+\begin{document}
+\large
+
+\input{\chapterfile}
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

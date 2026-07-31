@@ -1,0 +1,48 @@
+======================================================================
+THE POLICY SQUARE: PG, NPG, STEP-SIZE SWEEP AND PI ON THE RUNNING EXAMPLE
+======================================================================
+
+Setup
+  nu = [1, 0] (start at low mileage)
+  V* = [low 5.3448, high 4.3103], J* = 5.3448
+  optimal vertex: (pi(replace|low), pi(replace|high)) = (0, 1)
+
+At the uniform policy theta = (0, 0):
+  occupancy rho = [7.0968, 2.9032] (sums to 1/(1-gamma) = 10.0000)
+  Fisher F = diag(1.7742, 0.7258), det = 1.2877
+  gradient dJ/dtheta = [-2.2492, -0.1709]
+  action-value gaps Q(s,replace) - Q(s,keep) = [-1.2677, -0.2355]
+  natural gradient F^-1 dJ = [-1.2677, -0.2355]  (equals the gaps exactly)
+  the gap at high mileage is negative at the uniform policy: under uniform
+  continuation, keeping a high-mileage engine beats replacing it
+
+PG, step size 0.5: J rises 1.3387 -> 5.3311 over 300 steps; J* - J < 0.001 first at never
+NPG, step size 0.5: J rises 1.3387 -> 5.3448 over 300 steps; J* - J < 0.001 first at step 58
+
+One NPG step from the uniform policy, sweeping the step size alpha:
+  greedy policy of the CURRENT (uniform) iterate: (keep, keep), vertex (0, 0)
+  alpha =   0.5: policy (0.3466, 0.4706)
+  alpha =   1.0: policy (0.2196, 0.4414)
+  alpha =   2.0: policy (0.0734, 0.3844)
+  alpha =   4.0: policy (0.0062, 0.2805)
+  alpha =   8.0: policy (0.0000, 0.1319)
+  alpha =  16.0: policy (0.0000, 0.0226)
+  alpha =  32.0: policy (0.0000, 0.0005)
+  at alpha = 32.0, distance to the greedy vertex: 0.000534
+  the large-alpha NPG step IS the policy-improvement half-step: it lands on
+  the greedy vertex of the current policy, not on the optimal vertex
+
+Policy iteration from the uniform policy: (keep, keep) -> (keep, replace) -> (keep, replace)
+  reaches the optimal vertex in 2 improvement steps
+
+J over the 101x101 policy square: min -5.0000 at (1.00, 0.49), max 5.3448 (J* = 5.3448)
+  the four deterministic vertices:
+    (keep, keep)         J = 3.4545
+    (replace, keep)      J = -5.0000
+    (keep, replace)      J = 5.3448
+    (replace, replace)   J = -5.0000
+
+  Figure saved: /Users/pranjal/Code/rl-engine/ch03_theory/sims/engine_policy_square.png
+  Table saved: /Users/pranjal/Code/rl-engine/ch03_theory/sims/engine_policy_square.tex
+
+Done.

@@ -1,0 +1,15 @@
+\begin{table}[htbp]
+\centering
+\caption{Trajectories required by \eqref{eq:bilin_samples}, with the absolute constant set to one, at hypothesis-class cardinality $|\mathcal{H}| = 10^{6}$, failure probability $\delta = 0.05$ and $B_X = B_W = 1$. The horizon column isolates the factor $H^7$. Environment steps are trajectories times $H$. The inherent dimension $d$ is the rank of the bilinear factorization, not the ambient state dimension.}
+\label{tab:curse_sample_complexity}
+\begin{tabular}{rrrrrr}
+\toprule
+$d$ & $H$ & $\epsilon$ & $H^7$ & Trajectories & Environment steps \\
+\midrule
+5 & 10 & 0.1 & $10^{7}$ & $6.4 \times 10^{14}$ & $6.4 \times 10^{15}$ \\
+10 & 24 & 0.1 & $4.6 \times 10^{9}$ & $2.2 \times 10^{18}$ & $5.2 \times 10^{19}$ \\
+10 & 24 & 0.05 & $4.6 \times 10^{9}$ & $9.8 \times 10^{18}$ & $2.3 \times 10^{20}$ \\
+20 & 50 & 0.1 & $7.8 \times 10^{11}$ & $2.3 \times 10^{21}$ & $1.2 \times 10^{23}$ \\
+\bottomrule
+\end{tabular}
+\end{table}

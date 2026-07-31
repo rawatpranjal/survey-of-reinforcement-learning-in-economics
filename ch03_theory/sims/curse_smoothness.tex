@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+\centering
+\caption{What Theorem~\ref{thm:deep_rl_regret} asks of the problem, at Besov index $p = 2$, benign exploration $K = 1$ and $T = 10^{6}$ episodes. The admissibility condition $\alpha > d(1/p - 1/4)_+$ demands a minimum smoothness that grows linearly in the ambient dimension, reported in the second column. Each smoothness level then gives the regret exponent and the width \eqref{eq:liu_architecture} the theorem prescribes; n/a marks a level that fails the condition, where the theorem gives no guarantee at all. Regret is sublinear in every admissible cell, but the exponent approaches one as the smoothness-to-dimension ratio falls.}
+\label{tab:curse_smoothness}
+\begin{tabular}{rrrrrr}
+\toprule
+ & & \multicolumn{2}{c}{$\alpha = 2$} & \multicolumn{2}{c}{$\alpha = 8$} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6}
+$d$ & Required $\alpha$ & Exponent & Width $m$ & Exponent & Width $m$ \\
+\midrule
+1 & 0.25 & 0.733 & 44 & 0.686 & 2 \\
+2 & 0.50 & 0.778 & 461 & 0.704 & 7 \\
+3 & 0.75 & 0.810 & 2,207 & 0.719 & 19 \\
+5 & 1.25 & 0.852 & $1.7 \times 10^{4}$ & 0.746 & 88 \\
+10 & 2.50 & n/a & n/a & 0.795 & 1,079 \\
+20 & 5.00 & n/a & n/a & 0.852 & $1.7 \times 10^{4}$ \\
+50 & 12.50 & n/a & n/a & n/a & n/a \\
+\midrule
+\multicolumn{6}{l}{As $\alpha \to \infty$ the exponent falls to 0.667 for every $d$, and the width requirement vanishes.} \\
+\bottomrule
+\end{tabular}
+\end{table}
