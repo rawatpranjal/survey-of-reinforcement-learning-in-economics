@@ -9,9 +9,9 @@ The manuscript studies reinforcement learning as a sample-based extension of dyn
 programming, with applications to control, structural estimation, games, pricing, offline
 policy evaluation, causal inference, robust control, world models, and field deployments.
 
-The manuscript source and generated paper artifacts on this branch correspond to the source
-snapshot used for arXiv version 6, posted on July 27, 2026. The repository also contains the
-simulation scripts used to generate the paper's figures and tables.
+Commit `c83be05` records the source snapshot used for arXiv version 6, posted on July 27,
+2026. Later commits on `main` contain post-v6 manuscript revisions. The repository also
+contains the simulation scripts used to generate the paper's figures and tables.
 
 ## Build the paper
 
