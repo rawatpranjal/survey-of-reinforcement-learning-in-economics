@@ -71,6 +71,8 @@ REGISTRY = [
     ("ch07", "ch07_bandits/sims/curve_learning_pricing.py", "A"),
     ("ch07", "ch07_bandits/sims/regret_rates.py", "B"),
     ("ch07", "ch07_bandits/sims/uninformative_price.py", "B"),
+    # ch07a (online optimization and reinforcement learning)
+    ("ch07a", "ch07a_online_optimization/sims/online_optimization_rl.py", "A"),
     # ch08 (Offline RL)
     ("ch08_offline", "ch08_offline_rl/sims/offline_rl_pricing.py", "A"),
     ("ch08_offline", "ch08_offline_rl/sims/engine_coverage.py", "A"),

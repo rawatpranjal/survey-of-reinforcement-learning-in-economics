@@ -77,7 +77,7 @@ For fixed $d$, the gap between $O(d \log T)$ and $\Omega(\sqrt{T})$ grows like $
 \subsection{Strategic Buyers}
 \label{sec:liu}
 
-\citet{Liu2024strategic} introduce a different economic friction: buyers may respond strategically to the learning rule itself. At time $t$, a buyer arrives with true covariates $x_t^0 \in \mathbb{R}^d$ and valuation $v_t = \theta_0^\top x_t^0 + z_t$. The seller announces a pricing rule $p_t = g(\hat{\theta}_k^\top x_t)$, where $\hat{\theta}_k$ is the current parameter estimate. Crucially, the buyer observes this rule and can distort her reported features. She solves a cost-minimization problem:
+\citet{Liu2024strategic} introduce a different economic friction: buyers may respond strategically to the learning rule itself. At time $t$, a buyer arrives with true covariates $x_t^0 \in \mathbb{R}^d$ and valuation $v_t = \theta_0^\top x_t^0 + z_t$. The seller announces a pricing rule $p_t = g(\hat{\theta}_k^\top x_t)$, where $\hat{\theta}_k$ is the current parameter estimate. The buyer observes this rule and can distort her reported features. She solves a cost-minimization problem:
 \begin{equation}
 \label{eq:manipulation}
 \min_{\tilde{x}} \; (p - v_t) + \frac{1}{2}(\tilde{x} - x_t^0)^\top A (\tilde{x} - x_t^0)

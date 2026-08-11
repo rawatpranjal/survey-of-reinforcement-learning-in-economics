@@ -2,7 +2,7 @@
 
 Pranjal Rawat, Georgetown University
 
-Paper: [arXiv:2603.08956v6](https://arxiv.org/abs/2603.08956v6)
+Published paper: [arXiv:2603.08956v6](https://arxiv.org/abs/2603.08956v6)
 
 This repository contains the source and computational materials for the current arXiv paper.
 The manuscript studies reinforcement learning as a sample-based extension of dynamic
@@ -10,8 +10,9 @@ programming, with applications to control, structural estimation, games, pricing
 policy evaluation, causal inference, robust control, world models, and field deployments.
 
 Commit `c83be05` records the source snapshot used for arXiv version 6, posted on July 27,
-2026. Later commits on `main` contain post-v6 manuscript revisions. The repository also
-contains the simulation scripts used to generate the paper's figures and tables.
+2026. Later commits on `main` contain post-v6 manuscript revisions, including the chapter on
+online optimization and reinforcement learning. The repository also contains the simulation
+scripts used to generate the manuscript's figures and tables.
 
 ## Build the paper
 
@@ -41,6 +42,7 @@ ch05_econ_models/             Structural estimation
 ch06_macro/                   Macroeconomic models
 ch06_games/                   Games
 ch07_bandits/                 Bandits and dynamic pricing
+ch07a_online_optimization/    Online optimization and reinforcement learning
 ch08_offline_rl/              Offline reinforcement learning
 ch09_rlhf/                    Preference learning and RLHF
 ch10_causal/                  Causal inference for reinforcement learning
@@ -57,8 +59,8 @@ scripts/                      Build and verification tools
 ## Code and reproduction
 
 The repository includes the simulation programs, generated figures and tables, and captured
-stdout used by arXiv v6. The main runner lists 74 simulations and figure generators. Chapter 13
-contains one additional experiment with its own pinned dependencies.
+stdout for the checked-out manuscript revision. The main runner lists 75 simulations and figure
+generators. Chapter 13 contains one additional experiment with its own pinned dependencies.
 
 ```bash
 python3 -m venv .venv

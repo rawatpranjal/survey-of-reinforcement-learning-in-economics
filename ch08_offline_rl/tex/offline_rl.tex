@@ -66,7 +66,7 @@ Fitted Q-Iteration \citep[FQI,][]{Ernst2005} is the simplest offline RL algorith
 
 \subsubsection{Conservative Q-Learning}
 
-Conservative Q-Learning \citep[CQL,][]{Kumar2020} adds an explicit penalty that pushes down Q-values at actions not well-represented in the data. The key idea is to add a regularizer to the Bellman error objective that minimizes Q-values under a broad distribution over actions while maximizing Q-values at the actions actually taken in the dataset.
+Conservative Q-Learning \citep[CQL,][]{Kumar2020} adds a regularizer to the Bellman-error objective that lowers Q-values under a broad action distribution relative to the actions represented in the dataset.
 
 \begin{definition}[Conservative Q-Learning]
 \label{def:cql}

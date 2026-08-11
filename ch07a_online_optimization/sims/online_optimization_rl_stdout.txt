@@ -1,0 +1,11 @@
+One-step OO/MDP policy residual: 0.000e+00
+One-step OO/MDP value residual: 0.000e+00
+Maximum occupancy-flow residual: 2.776e-16
+Maximum occupancy/Bellman value residual: 7.105e-15
+Soil external regret: 23.8000
+Soil policy regret: 71.0000
+Known-MDP final O-REPS regret: 168.4575
+Known-model cold-storage final regret: 0.0196
+Unknown-MDP CE final regret: 98.2304
+Unknown-MDP optimistic final regret: 26.8574
+Saved six figures and online_optimization_summary.tex

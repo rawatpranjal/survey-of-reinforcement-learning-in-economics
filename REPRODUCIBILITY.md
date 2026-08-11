@@ -1,8 +1,9 @@
-# Reproducing the arXiv v6 code
+# Reproducing the manuscript code
 
 This repository contains the manuscript source, simulation programs, generated figures and
-tables, and captured stdout for arXiv version 6 of *A Survey of Reinforcement Learning For
-Economics*. The manuscript files are unchanged from the source submitted to arXiv.
+tables, and captured stdout for *A Survey of Reinforcement Learning For Economics*. Commit
+`c83be05` is the source snapshot submitted as arXiv version 6. The current `main` branch contains
+subsequent additions; the instructions below reproduce the checked-out revision.
 
 ## Verify the files
 
@@ -56,6 +57,7 @@ intermediate results are excluded because they can be regenerated from the progr
 | Macroeconomic Models | [`ch06_macro/sims/`](ch06_macro/sims/) | `--chapter ch06_macro` |
 | Games | [`ch06_games/sims/`](ch06_games/sims/) | `--chapter ch06` |
 | Bandits and Dynamic Pricing | [`ch07_bandits/sims/`](ch07_bandits/sims/) | `--chapter ch07` |
+| Online Optimization and Reinforcement Learning | [`ch07a_online_optimization/sims/`](ch07a_online_optimization/sims/) | `--chapter ch07a` |
 | Offline Reinforcement Learning | [`ch08_offline_rl/sims/`](ch08_offline_rl/sims/) | `--chapter ch08_offline` |
 | RLHF and AI Alignment | [`ch09_rlhf/sims/`](ch09_rlhf/sims/) | `--chapter ch09` |
 | Causal Inference for RL | [`ch10_causal/sims/`](ch10_causal/sims/) | `--chapter ch10` |
